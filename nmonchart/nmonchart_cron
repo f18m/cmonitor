@@ -1,0 +1,79 @@
+
+cd /home/nag/nmoncharttmp
+
+mv /webpages/docs/nmon_upload/*.nmon .  2>/dev/null
+if [[ $? == 1 ]]
+then
+	exit
+fi
+
+
+for i in *nmon
+do
+##DIR=`dirname $i`
+BASE=`basename $i .nmon`
+DIR=/webpages/docs/nmonchart/
+OUT=$DIR/$BASE.html
+#echo IN=$i OUT=$OUT
+#echo /home/nag/nmonchart/nmonchart $i $OUT
+     /home/nag/nmonchart/nmonchart $i $OUT &
+done
+
+# wait for them all to finish
+wait
+chmod ugo+r $DIR/*.html
+chown master:web $DIR/*.html
+
+mv *.nmon ../nmonchartfiles .  2>/dev/null
+
+# recreated the index.html
+main()
+{
+echo "<html><title>nmonchart</title>"
+echo "<body>"
+
+echo "<h2>nmonchart generated nmon Graphs</h2>"
+
+echo "<ul>"
+echo "<li> Last updated at " `date` 
+echo "<li> Small Sample graphs that loads quickly <a href='sampleC.html'>sampleC.html</a>"
+echo "<li> Upload most nmon data files at <a href='http://w3.aixncc.uk.ibm.com/nmon_upload.html'>http://w3.aixncc.uk.ibm.com/nmon_upload.html</a>"
+echo "</ul>"
+
+echo "<ol>"
+#integer NUM
+for i in `ls -1 *_*.html | awk -F _ '{print $1  }' | sort | uniq`
+do
+echo "<li><b>" $i "</b>"
+
+	echo "	<ul>"
+	for j in `ls $i*.html`
+	do
+#               NUM=`grep "^," <$j | wc -l`/25
+                NUM=`grep Snapshots $j | sed 's/<li>//'`
+		AIX=`grep "AIX Level" $j | sed 's/<li>//'`
+		LINUX=`grep "Linux" $j | sed 's/<li>//'`
+                LINUXMORE=""
+		if [[ $AIX == "" ]]
+		then
+			LINUXMORE="Linux."
+		fi
+
+		echo "	<li><a href=\""$j"\">" $j "</a> - $NUM snapshots. $AIX $LINUX $LINUXMORE" 
+	done
+	echo "	</ul>"
+
+done
+echo "</ol>"
+
+
+echo "</body></html>"
+}
+
+#echo Create index at $DIR
+cd $DIR
+main >index.html
+chmod ugo+r      index.html
+chown master:web index.html
+
+exit 0

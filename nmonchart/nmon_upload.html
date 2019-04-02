@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<title>nmon upload</title>
+<body>
+<h1>Use this webpage to upload your nmon files:</h1>
+
+<form action="nmon_upload.php" method="post" enctype="multipart/form-data">
+
+    Select nmon captured data file to upload::: 
+<ol>
+<li> <input type="file" name="fileToUpload" id="fileToUpload" size="60"> 
+<li> <input type="submit" value="Upload nmon file" name="submit">
+</ol>
+
+</form>
+Notes:
+<ol>
+<li>Currently available only inside IBM - I plan to release generally later.
+<li>Filenames:
+<ul>
+<li>Extention: Only files ending in <b>.nmon</b> are accepted.
+<li>Structure: The file name should be in the default nmon format: <i>hostname_date_time</i>.nmon or it will not get processed.
+<li>Size: Currently file size limit is 10 MB. If larger contact Nigel Griffiths or if you have lots of files to upload.
+</ul>
+<li>Reduce webpage and graph display times: 
+<ul>
+<li> Your nmon data files should have less than 300 snapshot or the nmon charts will take longer to display - but should still work.  
+<li> Testing with 720 snapshots show the graphs take 2 to 3 seconds to display.
+<li>Over 1000 snapshot while result in the timestamps showing up as T0001, T0002 etc. but graphs will display more quickly.
+<li> File with more the 150 disks will 1) have disks beyond 150 ignored and 2) below 150 it will take longer to display the graph - but will work.
+<li>Warning: If you nmon data has expanded disk sections like DISKBUSY1 to N then these are ignored.
+</ul>
+<li>When will your uploaded nmon file be ready? 
+	<ul>
+	<li>New nmon files are processed once a minute via cron.
+	<li>They appear at <a href="http://w3.aixncc.uk.ibm.com/nmonchart/index.html">this URL</a>.  
+	<li>To view sample output <a href="http://w3.aixncc.uk.ibm.com/nmonchart/sampleC.html">Click here</a>
+	</ul>
+<li> Feedback and comments are welcome - to Nigel Griffiths
+</ol>
+
+<hr>
+Current supported graphs:
+<table>
+<tr><th>Graphs <th>Graphs </tr>
+<tr><td>
+<ol>
+<li>PHYSICAL_CPU - PhysicalCPU, VirtualCPU and entitlement (AIX only LPAR stats))
+<li>POOLIDLE - If switched on at the LPAR level PoolIdle and Pool CPU count (AIX only
+<li>CPU_UTILisation - User%, System%, Wait% and Idle%
+<li>CPU_USE - Logical CPU Core Use (Power SMT or x86 Hyperthreads) Average(User%+System%)
+<li>RUNQ - Run Queue in number of processes
+<li>PSWITCH - Process Switches as the kernel rns different programs
+<li>SYSCALL - Systems calls of processes requesing Kernel operations - Total and read, wrtie calls 
+<li>READWRITE - Read and Write System calls only
+<li>FORKEXEC - Systems call fork (duplicate a process) and exec (overwrite current process with a new program)
+<li>FILEIO - System call - number of bytes on the read + write system call - includes disks, networ sockets and pipes
+<li>REALMEM - Total RAM (MB) and Free RAM (MB) (AIX only)
+<li>VIRTMEM - Virtual memort (paging space) Total (MB) and Free (MB) (AIX only)
+<li>MEM_LINUX - Total RAM, Free RAM (MB), and other Linux memory stats (Linux Only)
+<li>SWAP_LINUX - Swap size (MB) and Swap Free (MB (Linux only)
+<li>FSCACHE - Filesystem Cache (numperm) size in percent with minperm% and maxperm%
+<li>PAGING - Paging space: pages in (pgin) and out (pgout) plus Filesystem paging: in (pgsin) and out (psout)
+<li>SWAPIN - Process swap back in to memory per second
+<li>TOPSUM - If your nmon file includes TOP process (nmon -t or nmon -T) - Bubble diagram of top process by total CPU cycles, total I/O KB and max Memory size
+<li>TOPCMD - If your nmon file includes TOP process (nmon -t or nmon -T) - top 15 commands CPU use over time.
+</ol>
+<td>
+<ol>
+<li>NET - Network throughput read and write for each network in KByes per second
+<li>NETPACKET - Numbers of read and write packets per second for each network
+<li>NETSIZE - The average number of bytes in each packet for each network read and write
+<li>ADAPT_KPS - Throughput in KBytes per second read and write for each disk adapter
+<li>ADAPT_TPS - Transactions per second read and write for each disk adapter
+<li>DISKBUSY - Disk busy percentage for each disk  - Stacked lines
+<li>DISKBUSYu - Disk busy percentage for each disk - Unstacked lines
+<li>DISKREAD - Disk read throughput in KBytes per second for each disk - Stacked lines
+<li>DISKREADu - Disk read throughput in KBytes per second for each disk - Unstacked lines
+<li>DISKWRITE - Disk write throughput in KBytes per second for each disk - Stacked lines
+<li>DISKWRITEu - Disk write throughput in KBytes per second for each disk - Unstacked lines
+<li>DISKBSIZE - Disk block sizes 
+<li>DISKXTER - Disk Transerfer per second 
+<li>JFS - Journaled Filesystem Percent Full
+<li>IPC - Interprocess Communication meaning Semaphores and messages queues.
+</ol>
+</tr>
+</table>
+<hr>
+New features added recently with version 17 with 31 graphs 26th March 2015:
+<ul>
+<li><b>DONE</b> - Removed graph buttons on Linux data where the stats is not possible
+<li><b>DONE</b> - High Snapshot numbers 1000+ supported (you may wait a bit for them to graph)
+<li><b>DONE</b> - Must have faster graph graphing due to tuning work
+<li><b>DONE</b> - Working out the Linux Distro and version using huristics
+<li><b>DONE</b> - Stacked and unstacked graph versions - they both highlight different data aspects
+<li><b>DONE</b> - Linux memory stats are working OK
+<li><b>DONE</b> - SMTness / Hyprthreding so you see if they are all in use
+</ul>
+<hr>
+Graphs not curently supported:
+<ul>
+<li>More then 150 Disks - You have the adapter view for overall Disk stats. Data files with crazy numbers of disks in the thousands are just impossible or graph or manage (IMHO). The first 150 plus the adapter totals is a good compromise.
+<li>Disk service times - see above. Perhaps we need a different set of graphs just for the disk junkies!! Personally, we should get the disk subsystems to do the I/O spreading work and hid a disk mess from the UNIX / Linux Sysadmin team.
+<li><b>Not Going to Happen</b> - Individual Logical CPU Utilisation (up to 1536 with the new E880 with 192 cores)
+<ul>
+<li>Mostly pointless and misleading - they are timesharing the physical CPU cores.
+<li>Better to study the VM LPAR physical CPU use and UTIL graphs.
+</ul>
+</ul>
+<hr>
+</body>
+</html> 
