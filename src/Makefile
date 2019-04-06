@@ -1,15 +1,20 @@
-
-CFLAGS=-g -O4
-
+CFLAGS=-g -O0
+CXXFLAGS=-g -O0 -Wall
 LDFLAGS=-g
-
-FILE=njmon_linux_v22.c
 OUT=njmon
 
+OBJS =  \
+ njmon_linux_v22.o \
+ njmon_cgroups.o
 
-$(OUT): 
-	cc $(CFLAGS) -o $(OUT) $(FILE) $(LDFLAGS)
+$(OUT): $(OBJS)
+	g++ $(CFLAGS) -o $(OUT) $(OBJS) $(LDFLAGS)
 
 clean:
-	rm $(OUT)
+	rm -f $(OUT) $(OBJS)
 
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $< 
+
+%.o: %.cpp
+	$(CC) $(CXXFLAGS) -c -o $@ $< 
