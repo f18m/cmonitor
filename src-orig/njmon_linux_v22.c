@@ -85,28 +85,6 @@ long level = 0;
 char hostname[256] = { 0 };
 char shorthostname[256] = { 0 };
 
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- * PATCH FOR CGROUP AWARENESS
- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-extern int cgroup_found;
-extern void cgroup_init();
-extern int cgroup_is_allowed_cpu(int cpu);
-
-int exit_flag = 0;
-void exit_interrupt(int signum)  // another addition compared to original source to produce correct JSON on SIGTERM
-{
-	switch(signum) {
-	case SIGTERM:
-		exit_flag = 1;
-		break;
-	}
-}
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- * PATCH FOR CGROUP AWARENESS
- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-
 void   interrupt(int signum)
 {
 	switch(signum) {
@@ -1006,40 +984,38 @@ void proc_stat(double elapsed, int print)
 
 	if(!strncmp(line,"cpu", 3) ) { 
 	    if(!strncmp(line,"cpu ", 4) ) {
-		if(!cgroup_found) {
-			cpu_total=1;
-			count = sscanf(&line[4],  /* cpu USER */
-			   "%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld",
-				   &user, &nice, &sys, &idle,
-			   &iowait, &hardirq, &softirq,
-			   &steal, &guest, &guestnice);
-			if(print) {
-	#define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat)/(float)elapsed/((float)(max_cpuno + 1.0)))
-				psub("cpu_total" );
-				pdouble("user",    DELTA_TOTAL(user));       /* incrementing counter */
-				pdouble("nice",    DELTA_TOTAL(nice));       /* incrementing counter */
-				pdouble("sys",     DELTA_TOTAL(sys));        /* incrementing counter */
-				pdouble("idle",    DELTA_TOTAL(idle));       /* incrementing counter */
-	/*			pdouble("DEBUG IDLE idle: %lld %lld %lld\n", total_cpu.idle, idle, idle-total_cpu.idle); */
-				pdouble("iowait",  DELTA_TOTAL(iowait));     /* incrementing counter */
-				pdouble("hardirq", DELTA_TOTAL(hardirq));    /* incrementing counter */
-				pdouble("softirq", DELTA_TOTAL(softirq));    /* incrementing counter */
-				pdouble("steal",   DELTA_TOTAL(steal));      /* incrementing counter */
-				pdouble("guest",   DELTA_TOTAL(guest));      /* incrementing counter */
-				pdouble("guestnice",DELTA_TOTAL(guestnice));  /* incrementing counter */
-				psubend(0);
-			}
-			total_cpu.user = user;
-			total_cpu.nice = nice;
-			total_cpu.sys  = sys;
-			total_cpu.idle = idle;
-			total_cpu.iowait = iowait;
-			total_cpu.hardirq = hardirq;
-			total_cpu.softirq = softirq;
-			total_cpu.steal = steal;
-			total_cpu.guest = guest;
-			total_cpu.guestnice = guestnice;
-		} //else: do not report the TOTAL cpus if cgroup-mode is on: we report only the stats of CPUs in current cgroup
+		cpu_total=1;
+               	count = sscanf(&line[4],  /* cpu USER */
+                   "%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld",
+                           &user, &nice, &sys, &idle, 
+		   &iowait, &hardirq, &softirq,
+                   &steal, &guest, &guestnice);
+		if(print) {
+#define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat)/(float)elapsed/((float)(max_cpuno + 1.0)))
+			psub("cpu_total" );
+			pdouble("user",    DELTA_TOTAL(user));       /* incrementing counter */
+			pdouble("nice",    DELTA_TOTAL(nice));       /* incrementing counter */
+			pdouble("sys",     DELTA_TOTAL(sys));        /* incrementing counter */
+			pdouble("idle",    DELTA_TOTAL(idle));       /* incrementing counter */
+/*			pdouble("DEBUG IDLE idle: %lld %lld %lld\n", total_cpu.idle, idle, idle-total_cpu.idle); */
+			pdouble("iowait",  DELTA_TOTAL(iowait));     /* incrementing counter */
+			pdouble("hardirq", DELTA_TOTAL(hardirq));    /* incrementing counter */
+			pdouble("softirq", DELTA_TOTAL(softirq));    /* incrementing counter */
+			pdouble("steal",   DELTA_TOTAL(steal));      /* incrementing counter */ 
+			pdouble("guest",   DELTA_TOTAL(guest));      /* incrementing counter */
+			pdouble("guestnice",DELTA_TOTAL(guestnice));  /* incrementing counter */
+            		psubend(0);
+		}
+		total_cpu.user = user;
+		total_cpu.nice = nice;
+		total_cpu.sys  = sys;
+		total_cpu.idle = idle;
+		total_cpu.iowait = iowait;
+		total_cpu.hardirq = hardirq;
+		total_cpu.softirq = softirq;
+		total_cpu.steal = steal;
+		total_cpu.guest = guest;
+		total_cpu.guestnice = guestnice;
 	    }  else {
 		cpu_total=0;
             	count = sscanf(&line[3],  /* cpuNNN USER*/
@@ -1050,8 +1026,6 @@ void proc_stat(double elapsed, int print)
 		if(cpuno >max_cpuno) 
 			max_cpuno = cpuno;
 		if(cpuno >= MAX_LOGICAL_CPU) 
-			continue;
-		if(!cgroup_is_allowed_cpu(cpuno))
 			continue;
 		if(print) {
 			sprintf(label,"cpu%d", cpuno);
@@ -1691,8 +1665,6 @@ void proc_cpuinfo()
     while(fgets(buf, 1024, fp) != NULL) {
             buf[strlen(buf) - 1] = 0;     /* remove newline */
 		/* moronically cpuinfo file format has Tab characters !!! */
-
-            int processor_allowed = cgroup_is_allowed_cpu(processor);
             if (!strncmp("processor", buf, strlen("processor"))) {
 		if(processor != 0)
 		    psubend(0);
@@ -1703,39 +1675,39 @@ void proc_cpuinfo()
 	    }
             if (!strncmp("clock", buf, strlen("clock"))) { /* POWER ONLY */
 	        sscanf(&buf[9], "%lf", &value);
-	        if (processor_allowed) pdouble("mhz_clock",value);
+                pdouble("mhz_clock",value);
 		power_nominal_mhz = value;  /* save for sys_device_system_cpu() */
 		ispower = 1;
             }
             if (!strncmp("vendor_id", buf, strlen("vendor_id"))) {
-        	    if (processor_allowed) pstring("vendor_id",&buf[12]);
+                pstring("vendor_id",&buf[12]);
             }
             if (!strncmp("cpu MHz", buf, strlen("cpu MHz"))) {
 	        sscanf(&buf[11], "%lf", &value);
-	        if (processor_allowed) pdouble("cpu_mhz",value);
+                pdouble("cpu_mhz",value);
             }
             if (!strncmp("cache size", buf, strlen("cache size"))) {
 	        sscanf(&buf[13], "%lf", &value);
-	        if (processor_allowed) pdouble("cache_size",value);
+                pdouble("cache_size",value);
             }
             if (!strncmp("physical id", buf, strlen("physical id"))) {
 	        sscanf(&buf[14], "%d", &int_val);
-	        if (processor_allowed) plong("physical_id",int_val);
+                plong("physical_id",int_val);
             }
             if (!strncmp("siblings", buf, strlen("siblings"))) {
 	        sscanf(&buf[11], "%d", &int_val);
-	        if (processor_allowed) plong("siblings",int_val);
+                plong("siblings",int_val);
             }
             if (!strncmp("core id", buf, strlen("core id"))) {
 	        sscanf(&buf[10], "%d", &int_val);
-	        if (processor_allowed) plong("core_id",int_val);
+                plong("core_id",int_val);
 	    }
             if (!strncmp("cpu cores", buf, strlen("cpu cores"))) {
 	        sscanf(&buf[12], "%d", &int_val);
-	        if (processor_allowed) plong("cpu_cores",int_val);
+                plong("cpu_cores",int_val);
             }
             if (!strncmp("model name", buf, strlen("model name"))) {
-        	    if (processor_allowed) pstring("model_name",&buf[13]);
+                pstring("model_name",&buf[13]);
             } 
             if (!strncmp("timebase", buf, strlen("timebase"))) { /* POWER only */
 		ispower = 1;
@@ -2139,7 +2111,6 @@ int main(int argc, char **argv)
 	char	datastring[256];
 	pid_t 	childpid;
 	int   *crashptr = NULL;
-	int cgroup_mode = 0;
 
 	FUNCTION_START;
 	s = getenv("NJMON_SECRET");
@@ -2152,12 +2123,11 @@ int main(int argc, char **argv)
 	if(s != 0) 
 		strncpy(secret, s, 128);
 
-	signal(SIGTERM, exit_interrupt);
 	signal(SIGUSR1, interrupt);
 	signal(SIGUSR2, interrupt);
 
 
-   while (-1 != (ch = getopt(argc, argv, "?hfm:SMOs:c:kdi:p:X:x:C"))) {
+   while (-1 != (ch = getopt(argc, argv, "?hfm:SMOs:c:kdi:p:X:x"))) {
         switch (ch) {
         case '?': 
         case 'h': 
@@ -2207,9 +2177,6 @@ int main(int argc, char **argv)
 #endif /* NOREMOTE */
 	case 'x':
 		print_child_pid = 1;
-		break;
-	case 'C':
-		cgroup_mode = 1;
 		break;
 	}
     }
@@ -2343,8 +2310,6 @@ int main(int argc, char **argv)
 #ifndef NOGPFS
     gpfs_init();
 #endif /* NOGPFS */
-    if (cgroup_mode)
-	cgroup_init();
 
     gettimeofday(&tv, 0);
     current_time = (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
@@ -2383,10 +2348,7 @@ int main(int argc, char **argv)
 	proc_version();
 	lscpu();
 	proc_stat(elapsed,PRINT_TRUE);
-	if (!cgroup_mode)
-		proc_cpuinfo();
-	//else: do not list all CPU informations when cgroup mode is ON: don't put information
-	//      for CPUs outside current cgroup!
+	proc_cpuinfo();
 	read_data_number("meminfo");
 	read_data_number("vmstat");
 	proc_diskstats(elapsed,PRINT_TRUE);
@@ -2400,15 +2362,12 @@ int main(int argc, char **argv)
 #endif /* NOGPFS */
 
         DEBUG praw("Sample");
-        psampleend(loop == (maxloops -1) || exit_flag);
+        psampleend(loop == (maxloops -1));
         push();
 	/* debbuging - uncomment to crash here!
 	*crashptr = 42;
 	*crashptr = 42;
 	*/
-
-        if (exit_flag)
-            break; // graceful exit allows to produce a valid JSON on SIGTERM signals!
     } 
     /* finish-of */
     if(mode == ONE_LEVEL) {

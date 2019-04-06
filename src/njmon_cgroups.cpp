@@ -266,9 +266,15 @@ template std::string stl_container2string(const std::set<int>& par, const std::s
 
 
 extern "C" {
+
+// GLOBALS
+
 int cgroup_found = 0;
 std::set<int> cgroup_cpus;
 extern int debug;
+
+
+// FUNCTIONS
 
 void cgroup_init() {
 	cgroup_found = 0;
@@ -278,15 +284,12 @@ void cgroup_init() {
 	   (memLimit = read_from_system_memory_limit_in_bytes_for_current_cgroup()) == 0)
 		return;
 
-	cgroup_cpus.erase(1); // FIXME FOR TEST
-
 	// cpuset and memory cgroups found:
 	cgroup_found = 1;
 	if (debug) {
 		printf("Found cpuset cgroup limiting to CPUs: %s\n", stl_container2string(cgroup_cpus, ",").c_str());
 		printf("Found memory cgroup limiting to Bytes: %lu\n", memLimit);
 	}
-
 }
 
 int cgroup_is_allowed_cpu(int cpu) {
@@ -294,4 +297,5 @@ int cgroup_is_allowed_cpu(int cpu) {
 		return 1; // allowed
 	return cgroup_cpus.find(cpu) != cgroup_cpus.end();
 }
-}
+
+} // extern C section
