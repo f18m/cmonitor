@@ -740,6 +740,10 @@ void gpfs_data(double elapsed) {
 #endif /* NOGPFS */
 /* - - - End of GPFS - - - - */
 
+
+void cgroup_init() {
+}
+
 /*
  read files in format
  name number
@@ -2109,6 +2113,7 @@ void hint(char *program, char *version) {
 	 * (these can be large)\n"); */
 	printf("\t-?         : This output and stop\n");
 	printf("\t-d         : Switch on debugging\n");
+	printf("\t-C         : Switch on cgroup-aware mode\n");
 
 #ifndef NOREMOTE
 	printf("Push data to collector: add -h hostname -p port\n");
@@ -2166,6 +2171,7 @@ int main(int argc, char **argv) {
 	char *s;
 	FILE *fp;
 	int print_child_pid = 0;
+	int cgroup_mode = 0;
 	char datastring[256];
 	pid_t childpid;
 	int *crashptr = NULL;
@@ -2184,7 +2190,7 @@ int main(int argc, char **argv) {
 	signal(SIGUSR1, interrupt);
 	signal(SIGUSR2, interrupt);
 
-	while (-1 != (ch = getopt(argc, argv, "?hfm:SMOs:c:kdi:p:X:x"))) {
+	while (-1 != (ch = getopt(argc, argv, "?hfm:SMOs:c:kdi:p:X:x:C"))) {
 		switch (ch) {
 		case '?':
 		case 'h':
@@ -2238,6 +2244,9 @@ int main(int argc, char **argv) {
 #endif /* NOREMOTE */
 		case 'x':
 			print_child_pid = 1;
+			break;
+		case 'C':
+			cgroup_mode = 1;
 			break;
 		}
 	}
@@ -2367,6 +2376,8 @@ int main(int argc, char **argv) {
 #ifndef NOGPFS
 	gpfs_init();
 #endif /* NOGPFS */
+	cgroup_init();
+
 
 	gettimeofday(&tv, 0);
 	current_time = (double) tv.tv_sec + (double) tv.tv_usec * 1.0e-6;
