@@ -1,0 +1,10 @@
+language: cpp
+
+dist: xenial
+
+addons:
+  apt:
+    packages:
+    - valgrind
+
+script: make

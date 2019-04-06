@@ -1,5 +1,5 @@
 --- src-orig/njmon_linux_v22.c	2019-03-31 16:41:28.000000000 +0200
-+++ src/njmon_linux_v22.c	2019-04-06 12:19:56.497321537 +0200
++++ src/njmon_linux_v22.c	2019-04-06 12:27:47.098408050 +0200
 @@ -85,6 +85,28 @@
  char hostname[256] = { 0 };
  char shorthostname[256] = { 0 };
@@ -153,15 +153,18 @@
  
      gettimeofday(&tv, 0);
      current_time = (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
-@@ -2348,6 +2383,7 @@
+@@ -2348,7 +2383,10 @@
  	proc_version();
  	lscpu();
  	proc_stat(elapsed,PRINT_TRUE);
 +	if (!cgroup_mode)
  	proc_cpuinfo();
++	//else: do not list all CPU informations when cgroup mode is ON: don't put information
++	//      for CPUs outside current cgroup!
  	read_data_number("meminfo");
  	read_data_number("vmstat");
-@@ -2362,12 +2398,15 @@
+ 	proc_diskstats(elapsed,PRINT_TRUE);
+@@ -2362,12 +2400,15 @@
  #endif /* NOGPFS */
  
          DEBUG praw("Sample");
