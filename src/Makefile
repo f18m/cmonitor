@@ -13,12 +13,8 @@ clean:
 	rm -f $(OUT) $(OBJS)
 	
 install:
-ifndef DESTDIR
-	@echo "*** ERROR: please call this makefile supplying explicitly the DESTDIR variable"
-	@exit 1
-endif
-	mkdir -p $(DESTDIR)/bin
-	cp -f $(OUT) $(DESTDIR)/bin/
+	mkdir -p $(DESTDIR)/usr/local/bin
+	cp -f $(OUT) $(DESTDIR)/usr/local/bin/
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $< 
