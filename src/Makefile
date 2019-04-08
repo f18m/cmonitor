@@ -1,6 +1,5 @@
 CFLAGS=-g -O0
-CXXFLAGS=-g -O0 -Wall
-LDFLAGS=-g
+CXXFLAGS=-g -O0 -Wall -std=c++11
 OUT=njmon
 
 OBJS =  \
@@ -8,10 +7,18 @@ OBJS =  \
  njmon_cgroups.o
 
 $(OUT): $(OBJS)
-	g++ $(CFLAGS) -o $(OUT) $(OBJS) $(LDFLAGS)
+	g++ $(LDFLAGS) -o $(OUT) $(OBJS)
 
 clean:
 	rm -f $(OUT) $(OBJS)
+	
+install:
+ifndef DESTDIR
+	@echo "*** ERROR: please call this makefile supplying explicitly the DESTDIR variable"
+	@exit 1
+endif
+	mkdir -p $(DESTDIR)/bin
+	cp -f $(OUT) $(DESTDIR)/bin/
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $< 
