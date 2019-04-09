@@ -1,0 +1,2 @@
+srpm:
+	$(MAKE) -C .. srpm

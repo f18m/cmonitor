@@ -9,10 +9,12 @@ NOTE: this is actually a fork of "njmon", not "nmon". njmon provides no interact
 
 ## How to use
 
-Install and launch njmon inside your container:
+Install and launch njmon inside your container; e.g. if you use an LXC container
+based on a Centos/RHEL/Fedora distribution you can log into the container and run:
 
 ```
-yum install -y njmon
+yum copr enable f18m/nmon-cgroup-aware
+yum install -y nmon-cgroup-aware
 njmon -C -s3 -f -m /home
 ```
 
