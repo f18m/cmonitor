@@ -7,16 +7,28 @@ Fork of Nigel's performance Monitor for Linux, adding cgroup-awareness. Makes it
 NOTE: this is actually a fork of "njmon", not "nmon". njmon provides no interactive mode (often useless inside containers!) and is a more modern tool that produces a JSON output that can be used together with tools like InfluxDB (https://www.influxdata.com/) and Grafana (https://grafana.com/).
 
 
-## How to use
+## How to install
 
-Install and launch njmon inside your container; e.g. if you use an LXC container
+If you use an LXC container
 based on a Centos/RHEL/Fedora distribution you can log into the container and run:
 
 ```
 yum copr enable f18m/nmon-cgroup-aware
 yum install -y nmon-cgroup-aware
+```
+
+## How to use
+
+The RPM installs a single utility, `njmon` inside your container; launch it like that:
+
+```
 njmon -C -s3 -f -m /home
 ```
+
+to produce in the `/home` folder a JSON with CPU/memory/disk/network stats for the container.
+Whenever you want you can either 
+ - inject that JSON inside InfluxDB (mostly useful for **persistent** containers that you want to monitor in real-time);
+ - use the `njmonchart` utility to convert that JSON into a self-contained HTML file (mostly useful for **ephemeral** containers);
 
 ## Links
 

@@ -46,8 +46,10 @@ generate_rpm:
 srpm:
 	cd .. && \
 		tar cvzf nmon-cgroup-aware.tar.gz nmon-cgroup-aware/* && \
+		mkdir -p $(RPM_SOURCE_DIR)/ && \
 		cp -f nmon-cgroup-aware.tar.gz $(RPM_SOURCE_DIR)/
 	cd $(RPM_SOURCE_DIR) && \
 		tar xvzf nmon-cgroup-aware.tar.gz
-	rpmbuild -bs spec/nmon-cgroup-aware.spec
-	cp -f $(RPM_OUTPUT_SRPM_DIR)/nmon-cgroup-aware-*.src.rpm $(outdir)
+	rpmbuild -bs spec/nmon-cgroup-aware.spec && \
+		mkdir -p $(outdir)/ && \
+		cp -f $(RPM_OUTPUT_SRPM_DIR)/nmon-cgroup-aware-*.src.rpm $(outdir)/
