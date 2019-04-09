@@ -4,7 +4,7 @@ Release:        1%{?dist}
 Summary:        Fork of Nigel's performance Monitor for Linux, adding cgroup-awareness
 License:        GPL
 URL:            https://github.com/f18m/nmon-cgroup-aware
-Source0:        https://github.com/f18m/nmon-cgroup-aware/archive/v22.tar.gz
+##Source0:        https://github.com/f18m/nmon-cgroup-aware/archive/v22.tar.gz
 ##BuildRequires:  gcc-c++, libpcap-devel, make
 
 %description
