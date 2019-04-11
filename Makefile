@@ -23,32 +23,26 @@ ifndef DESTDIR
 	@echo "*** ERROR: please call this makefile supplying explicitly the DESTDIR variable"
 	@exit 1
 endif
-	$(MAKE) -C src install DESTDIR=$(DESTDIR)
+ifndef BINDIR
+	@echo "*** ERROR: please call this makefile supplying explicitly the BINDIR variable"
+	@exit 1
+endif
+	$(MAKE) -C src install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
 	
 generate_patch:
 	diff -U3 -w src-orig/njmon_linux_v22.c src/njmon_linux_v22.c > src-orig/cgroup.patch || true
 
-
-#
-# This is useful to produce a binary RPM:
-#
-
-rpm:
-	mkdir -p $(RPM_TMP_DIR)/
-	rm -rf $(RPM_TMP_DIR)/*
-	cd $(ROOT_DIR)/.. && \
-		tar cvzf $(RPM_TMP_DIR)/nmon-cgroup-aware-$(RPM_VERSION).tar.gz nmon-cgroup-aware/*
-	#cd $(RPM_TMP_DIR) && \
-	#	tar xvzf nmon-cgroup-aware.tar.gz
-	rpmbuild -bb $(ROOT_DIR)/spec/nmon-cgroup-aware.spec \
-	  --define "RPM_VERSION $(RPM_VERSION)" \
-	  --define "_topdir $(RPM_TMP_DIR)" \
-	  --define "_sourcedir $(RPM_TMP_DIR)" \
-	  --define "_builddir $(RPM_TMP_DIR)" \
-	  --define "_rpmdir $(RPM_TMP_DIR)" && \
-		mkdir -p $(outdir)/ && \
-		cp -f $(RPM_TMP_DIR)/x86_64/nmon-cgroup-aware-*.rpm $(outdir)/
-
+srpm_tarball:
+	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
+	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
+	# prepare the tarball with
+	#  a) the whole project inside a versioned folder
+	#  b) the spec file with the version inside it replaced
+	cp -arf $(THIS_DIR) $(RPM_TARBALL_DIR)/ && \
+		cd $(RPM_TARBALL_DIR) && \
+		mv nmon-cgroup-aware nmon-cgroup-aware-$(RPM_VERSION) && \
+		sed -i 's@__RPM_VERSION__@$(RPM_VERSION)@g' nmon-cgroup-aware-$(RPM_VERSION)/spec/nmon-cgroup-aware.spec && \
+		tar cvzf $(RPM_TMP_DIR)/nmon-cgroup-aware-$(RPM_VERSION).tar.gz nmon-cgroup-aware-$(RPM_VERSION)/*
 #
 # This target is used by Fedora COPR to automatically produce RPMs for lots of distros.
 # COPR will invoke this target like that:
@@ -56,20 +50,28 @@ rpm:
 # See https://docs.pagure.org/copr.copr/user_documentation.html#make-srpm.
 # E.g.:
 #   make -f /home/francesco/work/nmon-cgroup-aware/.copr/Makefile srpm outdir=/tmp/nmon-rpm
-srpm:
-	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
-	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
-	cp -arf $(THIS_DIR) $(RPM_TARBALL_DIR)/ && \
-		cd $(RPM_TARBALL_DIR) && \
-		mv nmon-cgroup-aware nmon-cgroup-aware-$(RPM_VERSION) && \
-		sed -i 's@__RPM_VERSION__@$(RPM_VERSION)@g' nmon-cgroup-aware-$(RPM_VERSION)/spec/nmon-cgroup-aware.spec && \
-		tar cvzf $(RPM_TMP_DIR)/nmon-cgroup-aware-$(RPM_VERSION).tar.gz nmon-cgroup-aware-$(RPM_VERSION)/*
-	#cd $(RPM_TMP_DIR) && \
-	#	tar xvzf nmon-cgroup-aware.tar.gz
+srpm: srpm_tarball
+ifndef outdir
+	@echo "*** ERROR: please call this makefile supplying explicitly the outdir variable"
+	@exit 1
+endif
+	# now build the SRPM and copy it to the $(outdir) provided by COPR
 	rpmbuild -bs $(RPM_TARBALL_DIR)/nmon-cgroup-aware-$(RPM_VERSION)/spec/nmon-cgroup-aware.spec \
 	  --define "_topdir $(RPM_TMP_DIR)" \
 	  --define "_sourcedir $(RPM_TMP_DIR)" \
 	  --define "_builddir $(RPM_TMP_DIR)" \
 	  --define "_rpmdir $(RPM_TMP_DIR)" && \
 		mkdir -p $(outdir)/ && \
-		cp -f $(RPM_TMP_DIR)/SRPMS/nmon-cgroup-aware-*.src.rpm $(outdir)/
+		cp -fv $(RPM_TMP_DIR)/SRPMS/nmon-cgroup-aware-*.src.rpm $(outdir)/
+
+
+#
+# This is useful to produce a binary RPM:
+#
+rpm: srpm
+ifndef outdir
+	@echo "*** ERROR: please call this makefile supplying explicitly the outdir variable"
+	@exit 1
+endif
+	cd $(outdir) && \
+		rpmbuild --rebuild nmon-cgroup-aware-*.src.rpm

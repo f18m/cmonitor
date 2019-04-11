@@ -25,7 +25,7 @@ Makes it easy to monitor your LXC/Docker container performances.
 
 %install
 rm -rf %{buildroot}
-%make_install
+%make_install BINDIR=%{_bindir}
 
 %files
 %{_bindir}/njmon
