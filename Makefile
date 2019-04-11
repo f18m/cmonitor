@@ -6,7 +6,8 @@
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR:=$(THIS_DIR)
 # default rpmbuild source folder
-RPM_TMP_DIR:=/tmp/rpm-nmon-cgroup-aware
+RPM_TMP_DIR:=/tmp/nmon-cgroup-aware/rpm
+RPM_TARBALL_DIR:=/tmp/nmon-cgroup-aware/tarball
 RPM_VERSION:=22
 
 # targets
@@ -56,14 +57,16 @@ rpm:
 # E.g.:
 #   make -f /home/francesco/work/nmon-cgroup-aware/.copr/Makefile srpm outdir=/tmp/nmon-rpm
 srpm:
-	mkdir -p $(RPM_TMP_DIR)/
-	rm -rf $(RPM_TMP_DIR)/*
-	cd $(ROOT_DIR)/.. && \
-		tar cvzf $(RPM_TMP_DIR)/nmon-cgroup-aware-$(RPM_VERSION).tar.gz nmon-cgroup-aware/*
+	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
+	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
+	cp -arf $(THIS_DIR) $(RPM_TARBALL_DIR)/ && \
+		cd $(RPM_TARBALL_DIR) && \
+		mv nmon-cgroup-aware nmon-cgroup-aware-$(RPM_VERSION) && \
+		sed -i 's@__RPM_VERSION__@$(RPM_VERSION)@g' nmon-cgroup-aware-$(RPM_VERSION)/spec/nmon-cgroup-aware.spec && \
+		tar cvzf $(RPM_TMP_DIR)/nmon-cgroup-aware-$(RPM_VERSION).tar.gz nmon-cgroup-aware-$(RPM_VERSION)/*
 	#cd $(RPM_TMP_DIR) && \
 	#	tar xvzf nmon-cgroup-aware.tar.gz
-	rpmbuild -bs $(ROOT_DIR)/spec/nmon-cgroup-aware.spec \
-	  --define "RPM_VERSION $(RPM_VERSION)" \
+	rpmbuild -bs $(RPM_TARBALL_DIR)/nmon-cgroup-aware-$(RPM_VERSION)/spec/nmon-cgroup-aware.spec \
 	  --define "_topdir $(RPM_TMP_DIR)" \
 	  --define "_sourcedir $(RPM_TMP_DIR)" \
 	  --define "_builddir $(RPM_TMP_DIR)" \
