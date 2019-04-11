@@ -56,6 +56,7 @@ ifndef outdir
 	@exit 1
 endif
 	# now build the SRPM and copy it to the $(outdir) provided by COPR
+	# IMPORTANT: use the spec file that has been edited by the "srpm_tarball" to replace __RPM_VERSION__ 
 	rpmbuild -bs $(RPM_TARBALL_DIR)/nmon-cgroup-aware-$(RPM_VERSION)/spec/nmon-cgroup-aware.spec \
 	  --define "_topdir $(RPM_TMP_DIR)" \
 	  --define "_sourcedir $(RPM_TMP_DIR)" \
@@ -63,7 +64,6 @@ endif
 	  --define "_rpmdir $(RPM_TMP_DIR)" && \
 		mkdir -p $(outdir)/ && \
 		cp -fv $(RPM_TMP_DIR)/SRPMS/nmon-cgroup-aware-*.src.rpm $(outdir)/
-
 
 #
 # This is useful to produce a binary RPM:
@@ -75,3 +75,5 @@ ifndef outdir
 endif
 	cd $(outdir) && \
 		rpmbuild --rebuild nmon-cgroup-aware-*.src.rpm
+
+.PHONY: all clean install generate_patch srpm_tarball srpm rpm

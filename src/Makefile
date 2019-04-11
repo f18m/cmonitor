@@ -7,7 +7,7 @@ OBJS =  \
     njmon_cgroups.o
 
 $(OUT): $(OBJS)
-	g++ $(LDFLAGS) -o $(OUT) $(OBJS)
+	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS)
 
 clean:
 	rm -f $(OUT) $(OBJS)

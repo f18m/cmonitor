@@ -2084,7 +2084,7 @@ void hint(char *program, char *version)
 /* not implemented yet printf("\t-P         : Also collect process stats (these can be large)\n"); */
         printf("\t-?         : This output and stop\n");
         printf("\t-d         : Switch on debugging\n");
-
+        printf("\t-C         : Switch on cgroup-aware mode\n");
 #ifndef NOREMOTE
 	printf("Push data to collector: add -h hostname -p port\n");
 	printf("\t-i ip      : IP address or hostname of the njmon central collector\n");
