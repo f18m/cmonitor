@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.com/f18m/nmon-cgroup-aware.svg?branch=master)](https://travis-ci.com/f18m/nmon-cgroup-aware)
+[COPR RPM Build](https://copr.fedorainfracloud.org/coprs/f18m/nmon-cgroup-aware/package/nmon-cgroup-aware/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/f18m/nmon-cgroup-aware/)
+
 
 # nmon-cgroup-aware
 
