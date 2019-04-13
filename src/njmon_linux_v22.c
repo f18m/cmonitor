@@ -1154,6 +1154,7 @@ void proc_diskstats(double elapsed, int print)
     long j;
     long len;
     char *ptr;
+    int filtered_out = 0;
 
 	FUNCTION_START;
     if (fp == (FILE *)0) {
@@ -1200,7 +1201,7 @@ void proc_diskstats(double elapsed, int print)
         }
     } else rewind(fp);
 
-    if(print) psection("disk");
+    if(print) psection("disks");
     while(fgets(buf, 1024, fp) != NULL) {
         buf[strlen(buf) - 1] = 0;     /* remove newline */
 	/*printf("DISKSTATS: \"%s\"", buf);*/
@@ -1243,14 +1244,18 @@ void proc_diskstats(double elapsed, int print)
 
         current.dk_time /= 10.0; /* in milli-seconds to make it upto 100%, 1000/100 = 10 */
 
-	/* loop**** disks are not real */
-	/*if(strncmp(current.dk_name,"loop", 4) )  
-	    break;*/
 
 	for(i=0;i<disks;i++) {
 	   /*printf("DEBUG disks new %s old %s\n", current.dk_name,previous[i].dk_name);*/
 	   if(!strcmp(current.dk_name,previous[i].dk_name)) {
-		if(print) {
+
+		/* loop**** disks are not real */
+		if(strncmp(current.dk_name, "loop", 4) == 0)
+			filtered_out = 1;
+		else
+			filtered_out = 0;
+
+		if(print && !filtered_out) {
 		psub(current.dk_name); 
 /*
 		printf("major",      current.dk_major); 
@@ -1391,7 +1396,7 @@ void proc_net_dev(double elapsed,int  print)
     if (fgets(buf, 1024, fp) == NULL)
         return;               /* throw away the header line */
 
-    if(print) psection("networks");
+    if(print) psection("network_interfaces");
     while(fgets(buf, 1024, fp) != NULL) {
         strip_spaces(buf);
 	bzero(&current,sizeof(struct netinfo));
@@ -1630,7 +1635,8 @@ void filesystems()
 
 	psection("filesystems");
 	while ((fs = getmntent(fp)) != NULL) {
-	    if (fs->mnt_fsname[0] == '/') {
+	// NOTE: /dev/loop* filesystems are not real filesystems - e.g. on Ubuntu they are used for SNAPs
+	    if (fs->mnt_fsname[0] == '/' && strncmp(fs->mnt_fsname, "/dev/loop", 9) != 0) {
 		    if (statfs(fs->mnt_dir, & vfs) != 0) {
 			sprintf(buf, "%s: statfs failed: %s\n", fs->mnt_dir, strerror(errno));
 			error(buf);
@@ -2107,7 +2113,7 @@ void hint(char *program, char *version)
         printf("    6 Crontab - for pumping data to the njmon central collector\n");
         printf("\t* 0 * * * /usr/local/bin/njmon -s 300 -c 288 -i admin.acme.com -p 8181 -X SECRET42 \n");
         printf("\n");
-
+        printf("NOTE: this is the cgroup-aware fork of original njmon software (https://github.com/f18m/nmon-cgroup-aware)\n");
 }
 
 
