@@ -1870,7 +1870,7 @@ void file_read_one_stat( char * file, char *name)
     }
 }
 
-void identity(char *command, char * version)
+void identity_and_njmon(char *command, char * version)
 {
     char buf[1024+1];
     int i;
@@ -2325,7 +2325,7 @@ int main(int argc, char **argv)
     }
     if(mode == MULTI_LEVEL) {
         pstart();
-	if(oldmode) identity(argv[0],VERSION);
+	if(oldmode) identity_and_njmon(argv[0],VERSION);
         praw("  \"samples\": [\n");
     }
     for (loop = 0; maxloops == -1 || loop < maxloops; loop++) {
@@ -2339,11 +2339,11 @@ int main(int argc, char **argv)
         elapsed = current_time - previous_time;
 
                 if(mode == ONE_LEVEL) {
-                        identity(argv[0],VERSION);
+                        identity_and_njmon(argv[0],VERSION);
                 }
 
 	date_time(seconds, loop, maxloops);
-        if(!oldmode) identity(argv[0],VERSION);
+        if(!oldmode) identity_and_njmon(argv[0],VERSION);
 	etc_os_release();
 	proc_version();
 	lscpu();

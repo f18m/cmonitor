@@ -91,7 +91,10 @@ char shorthostname[256] = { 0 };
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 extern int cgroup_found;
 extern void cgroup_init();
+extern void cgroup_config();
 extern int cgroup_is_allowed_cpu(int cpu);
+extern void cgroup_proc_memory();
+extern void cgroup_proc_cpuacct(double elapsed_sec);
 
 int exit_flag = 0;
 void exit_interrupt(int signum)  // another addition compared to original source to produce correct JSON on SIGTERM
@@ -1904,7 +1907,7 @@ void file_read_one_stat( char * file, char *name)
     }
 }
 
-void identity(char *command, char * version)
+void identity_and_njmon(char *command, char * version)
 {
     char buf[1024+1];
     int i;
@@ -1958,8 +1961,8 @@ void identity(char *command, char * version)
 			}
 			break;
 		default: 
-			sprintf(label,"%s_Not_Supported_%d", ifaddrs_ptr->ifa_name, ifaddrs_ptr->ifa_addr->sa_family);
-			pstring(label,"");
+			//sprintf(label,"%s_Not_Supported_%d", ifaddrs_ptr->ifa_name, ifaddrs_ptr->ifa_addr->sa_family);
+			//pstring(label,"");
 			break;
 		}
 	    } else {
@@ -1986,7 +1989,9 @@ void identity(char *command, char * version)
 	file_read_one_stat("/sys/devices/virtual/dmi/id/product_name", "model");
 	file_read_one_stat("/sys/devices/virtual/dmi/id/sys_vendor", "vendor");
     }
+    psectionend();
 
+    psection("njmon");
     pstring("njmon_command", command);
     pstring("njmon_version", version);
     uid = geteuid();
@@ -2079,9 +2084,9 @@ void hint(char *program, char *version)
         printf("\n");
         printf("\t-s seconds : seconds between snapshots of data (default 60 seconds)\n");
         printf("\t-c count   : number of snapshots (default forever)\n\n");
-        printf("\t-S         : Single level output format - section names form part of the value names\n");
-        printf("\t-M         : Multiple level output format - section & subsection names (default)\n");
-	printf("\t-O         : Old Multiple level output format - like -M but identity before samples\n\n");
+        //printf("\t-S         : Single level output format - section names form part of the value names\n");
+        //printf("\t-M         : Multiple level output format - section & subsection names (default)\n");
+	//printf("\t-O         : Old Multiple level output format - like -M but identity before samples\n\n");
         printf("\t-m directory : Program will cd to the directory before output\n");
         printf("\t-f         : Output to file (not stdout) to two files below\n");
         printf("\t           : Data:   hostname_<year><month><day>_<hour><minutes>.json\n");
@@ -2177,6 +2182,7 @@ int main(int argc, char **argv)
                   strncpy(directory, optarg, 4096);
                   directory[4096] = 0;
                   break;
+/* disable old modes that cgroup-aware njmon will not support:
         case 'S':
                   mode = ONE_LEVEL;
                   break;
@@ -2187,7 +2193,7 @@ int main(int argc, char **argv)
                   mode = MULTI_LEVEL;
                   oldmode = 1;
                   break;
-
+*/
         case 's': seconds = atoi(optarg); 
 		  if(seconds < 1) 
 			seconds = 1;
@@ -2361,14 +2367,16 @@ int main(int argc, char **argv)
 	sleep(60); /* if a long time between snapshot do a quick one now so we have one in the bank */ 
 
     /* pre-amble */
+/*
     if(mode == ONE_LEVEL) {
         praw("[\n");
-    }
+    }*/
     if(mode == MULTI_LEVEL) {
         pstart();
-	if(oldmode) identity(argv[0],VERSION);
+	//if(oldmode) identity_and_njmon(argv[0],VERSION);
         praw("  \"samples\": [\n");
     }
+
     for (loop = 0; maxloops == -1 || loop < maxloops; loop++) {
         psample();
 	if(loop != 0)
@@ -2380,19 +2388,35 @@ int main(int argc, char **argv)
         elapsed = current_time - previous_time;
 
                 if(mode == ONE_LEVEL) {
-                        identity(argv[0],VERSION);
+                        identity_and_njmon(argv[0],VERSION);
                 }
 
 	date_time(seconds, loop, maxloops);
-        if(!oldmode) identity(argv[0],VERSION);
-	etc_os_release();
-	proc_version();
-	lscpu();
+
+	if (loop == 0) {
+		identity_and_njmon(argv[0],VERSION);
+		etc_os_release();
+		proc_version();
+		lscpu();
+		if (cgroup_mode)
+			cgroup_config();
+	}
+	//else: avoid repeating stats that will never change!
+
 	proc_stat(elapsed,PRINT_TRUE);
+
 	if (!cgroup_mode)
 		proc_cpuinfo();
-	//else: do not list all CPU informations when cgroup mode is ON: don't put information
-	//      for CPUs outside current cgroup!
+	else
+	{
+		// do not list all CPU informations when cgroup mode is ON: don't put information
+		// for CPUs outside current cgroup!
+		cgroup_proc_cpuacct(elapsed);
+
+		// collect memory stats for current cgroup:
+		cgroup_proc_memory();
+	}
+
 	read_data_number("meminfo");
 	read_data_number("vmstat");
 	proc_diskstats(elapsed,PRINT_TRUE);

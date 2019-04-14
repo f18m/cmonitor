@@ -16,10 +16,10 @@ def nchart_start_script(file, title):
     file.write('  <title>' + title + '</title>\n')
     file.write('  <style>\n')
     file.write('     html,body {height:85%;}\n')
-    file.write('     h3 {margin-bottom: 0px;}\n')
+    file.write('     h3 {margin: 0px;}\n')
     file.write('     ul {margin: 0 0 0 0;padding-left: 20px;}\n')
     file.write('     #chart_master {width:100%; height:85%;}\n')
-    file.write('     #bottom_table {float:left;}\n')
+    file.write('     #bottom_table {float:left; border: darkgrey; border-style: solid; border-width: 3px; padding: 6px; margin: 6px;}\n')
     file.write('  </style>\n')
     file.write('  <script type="text/javascript" src="https://www.google.com/jsapi"></script>\n')
     file.write('  <script type="text/javascript">\n')
@@ -104,7 +104,7 @@ def nchart_end_script(file, config):
 def nchart_start_body(file, name, buttons):
     file.write('<body bgcolor="#EEEEFF">\n')
     file.write('  <h1>Monitoring data for hostname: ' + name + '</h1>\n')
-    file.write('  <button onclick="config()"><b>Configuration</b></button>\n')
+    file.write('  <button onclick="config()"><b>Full Configuration</b></button>\n')
     # - - - loop through the buttons and change colours
     colour = 'black' 
     for num, name in enumerate(buttons, start=1):
@@ -167,27 +167,27 @@ def bubbleit(web, column_names, data, title, button):
     buttonlist.append(button)
 
 
-def generate_config(jdata):
+def generate_config(jdata_first_sample):
 
     # ----- add config box 
-    def configdump(section, string):
-        newstr = ''
-        thing = jdata[0][section]
+    def configdump(section):
+        newstr = '<h3>' + section + '</h3>\\\n'
+        thing = jdata_first_sample[section]
         for label in thing:
             newstr = newstr + "%20s = %s<br>\\\n" % (label, str(thing[label]))
-        return string + newstr
+        return newstr
     
     config_str = ""
     config_str += '\nfunction config() {\n'
     config_str += '    var myWindow = window.open("", "MsgWindow", "width=1024, height=800");\n'
     config_str += '    myWindow.document.write("\\\n'
-    config_str += '      <h2>Configuration of server and njmon data collection</h2><br>\\\n'
-    config_str = configdump("identity", config_str)
-    config_str = configdump("timestamp", config_str)
-    config_str = configdump("identity", config_str)
-    config_str = configdump("os_release", config_str)
-    # config_str = configdump("lpar_format2",config_str)
-    config_str = config_str + '");\n}\n\n'
+    config_str += '      <h2>Configuration of server and njmon data collection</h2>\\\n'
+    config_str += configdump("os_release")
+    config_str += configdump("identity")
+    config_str += configdump("cgroup_config")
+    config_str += configdump("njmon")
+    config_str += configdump("timestamp")
+    config_str += '");\n}\n\n'
     return config_str
 
 
@@ -615,7 +615,7 @@ def main_process_file(cmd, infile, outfile):
     
     # ----- add graphs 
     for i in range(num_logical_cpus):
-        graphit(web, "'User','System','Idle'", lcpu_data[i], 'Logical CPU' + details, "cpu" + str(i), stacked)
+        graphit(web, "'User','System','Idle'", lcpu_data[i], 'Logical CPU ' + str(i) + details + " (from baremetal stats)", "cpu" + str(i), stacked)
     
     # if process_data_found:
     #    bubbleit(web, topprocs_title, topprocs,  'Top Processes Summary' + details, "TopSum")
@@ -652,25 +652,26 @@ def main_process_file(cmd, infile, outfile):
     # generate_network_traffic(web,jdata)
     
     # web.write(config_button_str)
+    jdata_first_sample = jdata[0]
     monitoring_summary = [
-    "Monitoring launched as: " + jdata[0]["identity"]["njmon_command"],
-    "njmon-cgroup-aware: " + jdata[0]["identity"]["njmon_version"],
-    "DateTime: " + jdata[0]["timestamp"]["datetime"],
-    "UTC: " + jdata[0]["timestamp"]["UTC"],
+    "Monitoring launched as: " + jdata_first_sample["njmon"]["njmon_command"],
+    "njmon-cgroup-aware: " + jdata_first_sample["njmon"]["njmon_version"],
+    "DateTime (Local): " + jdata_first_sample["timestamp"]["datetime"],
+    "DateTime (UTC): " + jdata_first_sample["timestamp"]["UTC"],
     "Snapshots: " + str(len(jdata)),
-    "Seconds: " + str(jdata[0]["timestamp"]["snapshot_seconds"]),
-    "User: " + jdata[0]["identity"]["username"],
+    "Snapshot Interval (s): " + str(jdata_first_sample["timestamp"]["snapshot_seconds"]),
+    "User: " + jdata_first_sample["njmon"]["username"],
     ]
     monitored_summary = [
-    "Hostname: " + jdata[0]["identity"]["hostname"],
-    "CPU family: " + jdata[0]["lscpu"]["model_name"],
-    "OS: " + jdata[0]["os_release"]["pretty_name"],
+    "Hostname: " + jdata_first_sample["identity"]["hostname"],
+    "CPU family: " + jdata_first_sample["lscpu"]["model_name"],
+    "OS: " + jdata_first_sample["os_release"]["pretty_name"],
     ]
     
-    nchart_end_script(web, generate_config(jdata))
+    nchart_end_script(web, generate_config(jdata_first_sample))
     nchart_start_body(web, hostname, buttonlist)
-    nchart_append_table(web, "Monitoring", monitoring_summary)
-    nchart_append_table(web, "Monitored System", monitored_summary)
+    nchart_append_table(web, "Monitoring Summary", monitoring_summary)
+    nchart_append_table(web, "Monitored System Summary", monitored_summary)
     web.write('<p>NOTE: to zoom use left-click and drag; to reset view use right-click.</p>\n')
     nchart_end_body(web)
     web.close()
