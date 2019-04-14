@@ -1,6 +1,6 @@
 CFLAGS=-g -O0
 CXXFLAGS=-g -O0 -Wall -std=c++11
-OUT=njmon
+OUT=njmon_collector
 
 OBJS =  \
     njmon_linux_v22.o \

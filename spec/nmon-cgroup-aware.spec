@@ -22,4 +22,5 @@ rm -rf %{buildroot}
 %make_install BINDIR=%{_bindir}
 
 %files
-%{_bindir}/njmon
+%{_bindir}/njmon_collector
+%{_bindir}/njmon_chart

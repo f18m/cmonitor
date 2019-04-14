@@ -19,18 +19,30 @@ yum copr enable f18m/nmon-cgroup-aware
 yum install -y nmon-cgroup-aware
 ```
 
-## How to use
+## How to collect stats
 
 The RPM installs a single utility, `njmon` inside your container; launch it like that:
 
 ```
-njmon -C -s3 -f -m /home
+njmon_collector -C -s3 -f -m /home
 ```
 
 to produce in the `/home` folder a JSON with CPU/memory/disk/network stats for the container.
 Whenever you want you can either 
  - inject that JSON inside InfluxDB (mostly useful for **persistent** containers that you want to monitor in real-time);
+   this is not covered by this README;
  - use the `njmonchart` utility to convert that JSON into a self-contained HTML file (mostly useful for **ephemeral** containers);
+   see below for practical examples.
+
+
+## How to plot stats
+
+To plot the JSON containing the collected statistics, simply launch:
+
+```
+njmon_chart /path/to/json-stats.json /path/to/json-stats.html
+```
+
 
 ## Links
 
