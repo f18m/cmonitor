@@ -1,6 +1,6 @@
---- src-orig/njmon_linux_v22.c	2019-03-31 16:41:28.000000000 +0200
-+++ src/njmon_linux_v22.c	2019-04-06 12:27:47.098408050 +0200
-@@ -85,6 +85,28 @@
+--- src-orig/njmon_linux_v22.c	2019-04-14 15:30:15.265407651 +0200
++++ src/njmon_linux_v22.c	2019-04-14 15:33:27.755636252 +0200
+@@ -85,6 +85,31 @@
  char hostname[256] = { 0 };
  char shorthostname[256] = { 0 };
  
@@ -10,7 +10,10 @@
 + * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 +extern int cgroup_found;
 +extern void cgroup_init();
++extern void cgroup_config();
 +extern int cgroup_is_allowed_cpu(int cpu);
++extern void cgroup_proc_memory();
++extern void cgroup_proc_cpuacct(double elapsed_sec);
 +
 +int exit_flag = 0;
 +void exit_interrupt(int signum)  // another addition compared to original source to produce correct JSON on SIGTERM
@@ -29,7 +32,7 @@
  void   interrupt(int signum)
  {
  	switch(signum) {
-@@ -984,6 +1006,7 @@
+@@ -984,6 +1009,7 @@
  
  	if(!strncmp(line,"cpu", 3) ) { 
  	    if(!strncmp(line,"cpu ", 4) ) {
@@ -37,7 +40,7 @@
  		cpu_total=1;
                 	count = sscanf(&line[4],  /* cpu USER */
                     "%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld",
-@@ -1016,6 +1039,7 @@
+@@ -1016,6 +1042,7 @@
  		total_cpu.steal = steal;
  		total_cpu.guest = guest;
  		total_cpu.guestnice = guestnice;
@@ -45,7 +48,7 @@
  	    }  else {
  		cpu_total=0;
              	count = sscanf(&line[3],  /* cpuNNN USER*/
-@@ -1027,6 +1051,8 @@
+@@ -1027,6 +1054,8 @@
  			max_cpuno = cpuno;
  		if(cpuno >= MAX_LOGICAL_CPU) 
  			continue;
@@ -54,7 +57,66 @@
  		if(print) {
  			sprintf(label,"cpu%d", cpuno);
  			psub(label);
-@@ -1665,6 +1691,8 @@
+@@ -1128,6 +1157,7 @@
+     long j;
+     long len;
+     char *ptr;
++    int filtered_out = 0;
+ 
+ 	FUNCTION_START;
+     if (fp == (FILE *)0) {
+@@ -1174,7 +1204,7 @@
+         }
+     } else rewind(fp);
+ 
+-    if(print) psection("disk");
++    if(print) psection("disks");
+     while(fgets(buf, 1024, fp) != NULL) {
+         buf[strlen(buf) - 1] = 0;     /* remove newline */
+ 	/*printf("DISKSTATS: \"%s\"", buf);*/
+@@ -1217,14 +1247,18 @@
+ 
+         current.dk_time /= 10.0; /* in milli-seconds to make it upto 100%, 1000/100 = 10 */
+ 
+-	/* loop**** disks are not real */
+-	/*if(strncmp(current.dk_name,"loop", 4) )  
+-	    break;*/
+ 
+ 	for(i=0;i<disks;i++) {
+ 	   /*printf("DEBUG disks new %s old %s\n", current.dk_name,previous[i].dk_name);*/
+ 	   if(!strcmp(current.dk_name,previous[i].dk_name)) {
+-		if(print) {
++
++		/* loop**** disks are not real */
++		if(strncmp(current.dk_name, "loop", 4) == 0)
++			filtered_out = 1;
++		else
++			filtered_out = 0;
++
++		if(print && !filtered_out) {
+ 		psub(current.dk_name); 
+ /*
+ 		printf("major",      current.dk_major); 
+@@ -1365,7 +1399,7 @@
+     if (fgets(buf, 1024, fp) == NULL)
+         return;               /* throw away the header line */
+ 
+-    if(print) psection("networks");
++    if(print) psection("network_interfaces");
+     while(fgets(buf, 1024, fp) != NULL) {
+         strip_spaces(buf);
+ 	bzero(&current,sizeof(struct netinfo));
+@@ -1604,7 +1638,8 @@
+ 
+ 	psection("filesystems");
+ 	while ((fs = getmntent(fp)) != NULL) {
+-	    if (fs->mnt_fsname[0] == '/') {
++	// NOTE: /dev/loop* filesystems are not real filesystems - e.g. on Ubuntu they are used for SNAPs
++	    if (fs->mnt_fsname[0] == '/' && strncmp(fs->mnt_fsname, "/dev/loop", 9) != 0) {
+ 		    if (statfs(fs->mnt_dir, & vfs) != 0) {
+ 			sprintf(buf, "%s: statfs failed: %s\n", fs->mnt_dir, strerror(errno));
+ 			error(buf);
+@@ -1665,6 +1700,8 @@
      while(fgets(buf, 1024, fp) != NULL) {
              buf[strlen(buf) - 1] = 0;     /* remove newline */
  		/* moronically cpuinfo file format has Tab characters !!! */
@@ -63,7 +125,7 @@
              if (!strncmp("processor", buf, strlen("processor"))) {
  		if(processor != 0)
  		    psubend(0);
-@@ -1675,39 +1703,39 @@
+@@ -1675,39 +1712,39 @@
  	    }
              if (!strncmp("clock", buf, strlen("clock"))) { /* POWER ONLY */
  	        sscanf(&buf[9], "%lf", &value);
@@ -112,7 +174,59 @@
              } 
              if (!strncmp("timebase", buf, strlen("timebase"))) { /* POWER only */
  		ispower = 1;
-@@ -2111,6 +2139,7 @@
+@@ -1924,8 +1961,8 @@
+ 			}
+ 			break;
+ 		default: 
+-			sprintf(label,"%s_Not_Supported_%d", ifaddrs_ptr->ifa_name, ifaddrs_ptr->ifa_addr->sa_family);
+-			pstring(label,"");
++			//sprintf(label,"%s_Not_Supported_%d", ifaddrs_ptr->ifa_name, ifaddrs_ptr->ifa_addr->sa_family);
++			//pstring(label,"");
+ 			break;
+ 		}
+ 	    } else {
+@@ -1952,7 +1989,9 @@
+ 	file_read_one_stat("/sys/devices/virtual/dmi/id/product_name", "model");
+ 	file_read_one_stat("/sys/devices/virtual/dmi/id/sys_vendor", "vendor");
+     }
++    psectionend();
+ 
++    psection("njmon");
+     pstring("njmon_command", command);
+     pstring("njmon_version", version);
+     uid = geteuid();
+@@ -2045,9 +2084,9 @@
+         printf("\n");
+         printf("\t-s seconds : seconds between snapshots of data (default 60 seconds)\n");
+         printf("\t-c count   : number of snapshots (default forever)\n\n");
+-        printf("\t-S         : Single level output format - section names form part of the value names\n");
+-        printf("\t-M         : Multiple level output format - section & subsection names (default)\n");
+-	printf("\t-O         : Old Multiple level output format - like -M but identity before samples\n\n");
++        //printf("\t-S         : Single level output format - section names form part of the value names\n");
++        //printf("\t-M         : Multiple level output format - section & subsection names (default)\n");
++	//printf("\t-O         : Old Multiple level output format - like -M but identity before samples\n\n");
+         printf("\t-m directory : Program will cd to the directory before output\n");
+         printf("\t-f         : Output to file (not stdout) to two files below\n");
+         printf("\t           : Data:   hostname_<year><month><day>_<hour><minutes>.json\n");
+@@ -2056,7 +2095,7 @@
+ /* not implemented yet printf("\t-P         : Also collect process stats (these can be large)\n"); */
+         printf("\t-?         : This output and stop\n");
+         printf("\t-d         : Switch on debugging\n");
+-
++        printf("\t-C         : Switch on cgroup-aware mode\n");
+ #ifndef NOREMOTE
+ 	printf("Push data to collector: add -h hostname -p port\n");
+ 	printf("\t-i ip      : IP address or hostname of the njmon central collector\n");
+@@ -2079,7 +2118,7 @@
+         printf("    6 Crontab - for pumping data to the njmon central collector\n");
+         printf("\t* 0 * * * /usr/local/bin/njmon -s 300 -c 288 -i admin.acme.com -p 8181 -X SECRET42 \n");
+         printf("\n");
+-
++        printf("NOTE: this is the cgroup-aware fork of original njmon software (https://github.com/f18m/nmon-cgroup-aware)\n");
+ }
+ 
+ 
+@@ -2111,6 +2150,7 @@
  	char	datastring[256];
  	pid_t 	childpid;
  	int   *crashptr = NULL;
@@ -120,7 +234,7 @@
  
  	FUNCTION_START;
  	s = getenv("NJMON_SECRET");
-@@ -2123,11 +2152,12 @@
+@@ -2123,11 +2163,12 @@
  	if(s != 0) 
  		strncpy(secret, s, 128);
  
@@ -134,7 +248,24 @@
          switch (ch) {
          case '?': 
          case 'h': 
-@@ -2178,6 +2208,9 @@
+@@ -2141,6 +2182,7 @@
+                   strncpy(directory, optarg, 4096);
+                   directory[4096] = 0;
+                   break;
++/* disable old modes that cgroup-aware njmon will not support:
+         case 'S':
+                   mode = ONE_LEVEL;
+                   break;
+@@ -2151,7 +2193,7 @@
+                   mode = MULTI_LEVEL;
+                   oldmode = 1;
+                   break;
+-
++*/
+         case 's': seconds = atoi(optarg); 
+ 		  if(seconds < 1) 
+ 			seconds = 1;
+@@ -2178,6 +2220,9 @@
  	case 'x':
  		print_child_pid = 1;
  		break;
@@ -144,7 +275,7 @@
  	}
      }
  #ifndef NOREMOTE
-@@ -2310,6 +2343,8 @@
+@@ -2310,6 +2355,8 @@
  #ifndef NOGPFS
      gpfs_init();
  #endif /* NOGPFS */
@@ -153,18 +284,59 @@
  
      gettimeofday(&tv, 0);
      current_time = (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
-@@ -2348,7 +2383,10 @@
+@@ -2320,14 +2367,16 @@
+ 	sleep(60); /* if a long time between snapshot do a quick one now so we have one in the bank */ 
+ 
+     /* pre-amble */
++/*
+     if(mode == ONE_LEVEL) {
+         praw("[\n");
+-    }
++    }*/
+     if(mode == MULTI_LEVEL) {
+         pstart();
+-	if(oldmode) identity_and_njmon(argv[0],VERSION);
++	//if(oldmode) identity_and_njmon(argv[0],VERSION);
+         praw("  \"samples\": [\n");
+     }
++
+     for (loop = 0; maxloops == -1 || loop < maxloops; loop++) {
+         psample();
+ 	if(loop != 0)
+@@ -2343,12 +2392,31 @@
+                 }
+ 
+ 	date_time(seconds, loop, maxloops);
+-        if(!oldmode) identity_and_njmon(argv[0],VERSION);
++
++	if (loop == 0) {
++		identity_and_njmon(argv[0],VERSION);
+ 	etc_os_release();
  	proc_version();
  	lscpu();
++		if (cgroup_mode)
++			cgroup_config();
++	}
++	//else: avoid repeating stats that will never change!
++
  	proc_stat(elapsed,PRINT_TRUE);
++
 +	if (!cgroup_mode)
  	proc_cpuinfo();
-+	//else: do not list all CPU informations when cgroup mode is ON: don't put information
-+	//      for CPUs outside current cgroup!
++	else
++	{
++		// do not list all CPU informations when cgroup mode is ON: don't put information
++		// for CPUs outside current cgroup!
++		cgroup_proc_cpuacct(elapsed);
++
++		// collect memory stats for current cgroup:
++		cgroup_proc_memory();
++	}
++
  	read_data_number("meminfo");
  	read_data_number("vmstat");
  	proc_diskstats(elapsed,PRINT_TRUE);
-@@ -2362,12 +2400,15 @@
+@@ -2362,12 +2430,15 @@
  #endif /* NOGPFS */
  
          DEBUG praw("Sample");

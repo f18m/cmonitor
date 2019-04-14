@@ -1,3 +1,6 @@
 src/*.o
-src/njmon
-
+src/njmon_collector
+.cproject
+.project
+.pydevproject
+.settings
