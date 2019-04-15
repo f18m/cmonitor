@@ -28,10 +28,11 @@ njmon_collector -C -s3 -f -m /home
 ```
 
 to produce in the `/home` folder a JSON with CPU/memory/disk/network stats for the container.
-Whenever you want you can either 
- - inject that JSON inside InfluxDB (mostly useful for **persistent** containers that you want to monitor in real-time);
+Whenever you want you can either:
+
+- inject that JSON inside InfluxDB (mostly useful for **persistent** containers that you want to monitor in real-time);
    this is not covered by this README;
- - use the `njmonchart` utility to convert that JSON into a self-contained HTML file (mostly useful for **ephemeral** containers);
+- use the `njmonchart` utility to convert that JSON into a self-contained HTML file (mostly useful for **ephemeral** containers);
    see below for practical examples.
 
 
@@ -42,6 +43,10 @@ To plot the JSON containing the collected statistics, simply launch:
 ```
 njmon_chart /path/to/json-stats.json /path/to/json-stats.html
 ```
+
+Example of resulting output files:
+
+ - [baremetal1](examples/baremetal1_20190413_1605.html)
 
 
 ## Links
