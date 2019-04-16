@@ -5,10 +5,17 @@
 # constants
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR:=$(THIS_DIR)
+
 # default rpmbuild source folder
 RPM_TMP_DIR:=/tmp/nmon-cgroup-aware/rpm
 RPM_TARBALL_DIR:=/tmp/nmon-cgroup-aware/tarball
+
+# reason for this version is that this is a fork of Nigel's performance Monitor v22
 RPM_VERSION:=22
+
+# RPM_RELEASE is what is actually incremented release after release!
+RPM_RELEASE:=2
+
 
 # targets
 
@@ -43,6 +50,7 @@ srpm_tarball:
 		cd $(RPM_TARBALL_DIR) && \
 		mv nmon-cgroup-aware nmon-cgroup-aware-$(RPM_VERSION) && \
 		sed -i 's@__RPM_VERSION__@$(RPM_VERSION)@g' nmon-cgroup-aware-$(RPM_VERSION)/spec/nmon-cgroup-aware.spec && \
+		sed -i 's@__RPM_RELEASE__@$(RPM_RELEASE)@g' nmon-cgroup-aware-$(RPM_VERSION)/spec/nmon-cgroup-aware.spec && \
 		tar cvzf $(RPM_TMP_DIR)/nmon-cgroup-aware-$(RPM_VERSION).tar.gz nmon-cgroup-aware-$(RPM_VERSION)/*
 #
 # This target is used by Fedora COPR to automatically produce RPMs for lots of distros.
@@ -64,6 +72,7 @@ endif
 	  --define "_builddir $(RPM_TMP_DIR)" \
 	  --define "_rpmdir $(RPM_TMP_DIR)" && \
 		mkdir -p $(outdir)/ && \
+		rm -f $(outdir)/nmon-cgroup-aware-*.src.rpm && \
 		cp -fv $(RPM_TMP_DIR)/SRPMS/nmon-cgroup-aware-*.src.rpm $(outdir)/
 
 #
@@ -75,6 +84,8 @@ ifndef outdir
 	@exit 1
 endif
 	cd $(outdir) && \
-		rpmbuild --rebuild nmon-cgroup-aware-*.src.rpm
+		rpmbuild --define "_rpmdir $(RPM_TMP_DIR)" --rebuild nmon-cgroup-aware-*.src.rpm  && \
+		mkdir -p $(outdir)/ && \
+		cp -fv $(RPM_TMP_DIR)/x86_64/nmon-cgroup-aware-*.rpm $(outdir)/
 
 .PHONY: all clean install generate_patch srpm_tarball srpm rpm
