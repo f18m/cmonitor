@@ -326,11 +326,11 @@ std::set<int> cgroup_cpus;
 // STUFF DEFINED IN ORIGINAL NJMON SOURCE CODE:
 
 extern int debug;
-extern void psection(char* section);
-extern void psub(char* resource);
-extern void plong(char* name, long long value);
-extern void pdouble(char* name, double value);
-extern void pstring(char* name, char* value);
+extern void psection(const char* section);
+extern void psub(const char* resource);
+extern void plong(const char* name, long long value);
+extern void pdouble(const char* name, double value);
+extern void pstring(const char* name, const char* value);
 extern void psubend();
 extern void psectionend();
 
@@ -444,7 +444,7 @@ void cgroup_proc_memory()
                 line[i] = 0;
         }
         value = 0;
-        sscanf(line, "%s %llu", label, &value);
+        sscanf(line, "%s %lu", label, &value);
         /*printf("read_data_numer(%s) |%s| |%s|=%lld\n", statname,label,numstr,atoll(numstr));*/
         plong(label, value);
     }
@@ -479,7 +479,6 @@ void cgroup_proc_cpuacct(double elapsed_sec)
 
     // non-static data:
     char label[512];
-    unsigned int i;
 
     std::string path = cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
     if (file_exists(path.c_str())) {
@@ -525,7 +524,7 @@ void cgroup_proc_cpuacct(double elapsed_sec)
                     / (elapsed_sec * 1E9);
 
                 // output JSON counter
-                sprintf(label, "cpu%d", i);
+                sprintf(label, "cpu%zu", i);
                 psub(label);
                 pdouble("user", cpuUserPercent);
                 pdouble("sys", cpuSysPercent);
@@ -560,7 +559,7 @@ void cgroup_proc_cpuacct(double elapsed_sec)
                     / (elapsed_sec * 1E9);
 
                 // output JSON counter
-                sprintf(label, "cpu%d", i);
+                sprintf(label, "cpu%zu", i);
                 psub(label);
                 pdouble("user", cpuUserPercent);
                 psubend();
