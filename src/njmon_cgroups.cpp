@@ -340,17 +340,35 @@ void cgroup_init()
 {
     cgroup_found = 0;
 
-    if (!get_cgroup_path_for_pid("memory", cgroup_memory_kernel_path))
+    if (!get_cgroup_path_for_pid("memory", cgroup_memory_kernel_path)) {
+        if (debug)
+            printf("Could not find the 'memory' cgroup path. CGroup mode disabled.\n");
         return;
-    if (!get_cgroup_path_for_pid("cpu,cpuacct", cgroup_cpuacct_kernel_path))
+    }
+    if (!get_cgroup_path_for_pid("cpu,cpuacct", cgroup_cpuacct_kernel_path)) {
+        if (!get_cgroup_path_for_pid("cpuacct,cpu", cgroup_cpuacct_kernel_path)) {
+            if (debug)
+                printf("Could not find the 'cpuacct' cgroup path. CGroup mode disabled.\n");
+            return;
+        }
+    }
+    if (!get_cgroup_path_for_pid("cpuset", cgroup_cpuset_kernel_path)) {
+        if (debug)
+            printf("Could not find the 'cpuset' cgroup path. CGroup mode disabled.\n");
         return;
-    if (!get_cgroup_path_for_pid("cpuset", cgroup_cpuset_kernel_path))
-        return;
+    }
 
     cgroup_memory_limit_bytes = read_from_system_memory_limit_in_bytes_for_current_cgroup(cgroup_memory_kernel_path);
-    if (!read_from_system_cpu_for_current_cgroup(cgroup_cpuset_kernel_path, cgroup_cpus)
-        || cgroup_memory_limit_bytes == 0)
+    if (!read_from_system_cpu_for_current_cgroup(cgroup_cpuset_kernel_path, cgroup_cpus)) {
+        if (debug)
+            printf("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
         return;
+    }
+    if (cgroup_memory_limit_bytes == 0) {
+        if (debug)
+            printf("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        return;
+    }
 
     // cpuset and memory cgroups found:
     cgroup_found = 1;
