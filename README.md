@@ -15,6 +15,7 @@ If you use an LXC container
 based on a Centos/RHEL/Fedora distribution you can log into the container and run:
 
 ```
+yum install yum-plugin-copr
 yum copr enable f18m/nmon-cgroup-aware
 yum install -y nmon-cgroup-aware
 ```

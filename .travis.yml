@@ -6,5 +6,6 @@ addons:
   apt:
     packages:
     - valgrind
+    - rpm
 
 script: make && make rpm outdir=/tmp/testrpm
