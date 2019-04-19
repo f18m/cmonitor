@@ -17,7 +17,9 @@ RPM_VERSION:=22
 RPM_RELEASE:=2
 
 
-# targets
+#
+# BUILD TARGETS
+#
 
 all:
 	$(MAKE) -C src
@@ -36,9 +38,25 @@ ifndef BINDIR
 endif
 	$(MAKE) -C src install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
 	$(MAKE) -C njmonchart install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
-	
+
+
+
+#
+# AUXILIARY TARGETS
+#
+
 generate_patch:
 	diff -U3 -w src-orig/njmon_linux_v22.c src/njmon_linux_v22.c > src-orig/cgroup.patch || true
+
+examples:
+	for jsonExample in examples/*.json; do \
+		njmonchart/njmon_chart.py $$jsonExample ; \
+	done
+
+
+#
+# RPM TARGETS
+#
 
 srpm_tarball:
 	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
@@ -88,4 +106,4 @@ endif
 		mkdir -p $(outdir)/ && \
 		cp -fv $(RPM_TMP_DIR)/x86_64/nmon-cgroup-aware-*.rpm $(outdir)/
 
-.PHONY: all clean install generate_patch srpm_tarball srpm rpm
+.PHONY: all clean install examples generate_patch srpm_tarball srpm rpm

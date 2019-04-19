@@ -209,16 +209,32 @@ def generate_config_javascript(jdata_first_sample):
             newstr = newstr + "%20s = %s<br>\\\n" % (label, str(thing[label]))
         return newstr
     
+    def sizeof_fmt(num, suffix='B'):
+        for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+            if abs(num) < 1024.0:
+                return "%3.1f%s%s" % (num, unit, suffix)
+            num /= 1024.0
+        return "%.1f%s%s" % (num, 'Yi', suffix)
+    
+    # provide some human-readable config files:
+    avail_cpus = jdata_first_sample['cgroup_config']['cpus'].split(',')
+    jdata_first_sample['cgroup_config']['cpus_num_allowed'] = len(avail_cpus)
+    jdata_first_sample['cgroup_config']['memory_limit_bytes_human_readable'] = sizeof_fmt(int(jdata_first_sample['cgroup_config']['memory_limit_bytes']))
+          
     config_str = ""
     config_str += '\nfunction config() {\n'
-    config_str += '    var myWindow = window.open("", "MsgWindow", "width=1024, height=800");\n'
+    config_str += '    var myWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");\n'
     config_str += '    myWindow.document.write("\\\n'
+    config_str += '    <html><head>\\\n'
+    config_str += '      <title>Configuration</title>\\\n'
+    config_str += '    </head><body>\\\n'
     config_str += '      <h2>Configuration of server and njmon data collection</h2>\\\n'
     config_str += configdump("os_release")
     config_str += configdump("identity")
     config_str += configdump("cgroup_config")
     config_str += configdump("njmon")
     config_str += configdump("timestamp")
+    config_str += '    </body></html>\\\n'
     config_str += '");\n}\n\n'
     return config_str
 
@@ -441,12 +457,12 @@ def generate_network_traffic(web, jdata):
     return web
 
 
-def generate_baremetal_cpus(web, jdata, num_logical_cpus, hostname):
+def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
 
     # prepare empty array
-    baremetal_cpu_stats = []
-    for c in range(num_logical_cpus):
-        baremetal_cpu_stats.append("")
+    baremetal_cpu_stats = {}
+    for c in logical_cpus_indexes:
+        baremetal_cpu_stats[c] = ""
         
     #
     # MAIN LOOP
@@ -457,7 +473,7 @@ def generate_baremetal_cpus(web, jdata, num_logical_cpus, hostname):
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
-        for c in range(num_logical_cpus):
+        for c in logical_cpus_indexes:
             cpu_stats = s['stat']['cpu' + str(c)]
             baremetal_cpu_stats[c] += "['Date(%s)', %d, %d, %d, %d, %d, %d, %d, %d],\n" % (
                     googledate(s['timestamp']['datetime']),
@@ -473,7 +489,7 @@ def generate_baremetal_cpus(web, jdata, num_logical_cpus, hostname):
     
     # Produce the javascript:
     details = ' for hostname=' + hostname
-    for c in range(num_logical_cpus):
+    for c in logical_cpus_indexes:
         graphit(web, "'User','Nice','System','Idle','I/O wait','Hard IRQ','Soft IRQ','Steal'",
                 baremetal_cpu_stats[c],  # Data
                 'Logical CPU ' + str(c) + details + " (from baremetal stats)",  # Graph Title
@@ -481,16 +497,16 @@ def generate_baremetal_cpus(web, jdata, num_logical_cpus, hostname):
                 stack_state=True)
 
 
-def generate_cgroup_cpus(web, jdata, num_logical_cpus, hostname):
+def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
     if len(jdata) < 1:
         return
     if 'cgroup_cpuacct_stats' not in jdata[1]:
         return  # cgroup mode not enabled at collection time!
         
     # prepare empty array
-    cgroup_cpu_stats = []
-    for c in range(num_logical_cpus):
-        cgroup_cpu_stats.append("")
+    cgroup_cpu_stats = {}
+    for c in logical_cpus_indexes:
+        cgroup_cpu_stats[c] = ""
         
     #
     # MAIN LOOP
@@ -501,7 +517,7 @@ def generate_cgroup_cpus(web, jdata, num_logical_cpus, hostname):
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
-        for c in range(num_logical_cpus):
+        for c in logical_cpus_indexes:
             cpu_stats = s['cgroup_cpuacct_stats']['cpu' + str(c)]
             if 'sys' in cpu_stats:
                 cpu_sys = cpu_stats['sys']
@@ -515,12 +531,13 @@ def generate_cgroup_cpus(web, jdata, num_logical_cpus, hostname):
 
     # Produce the javascript:
     details = ' for hostname=' + hostname
-    for c in range(num_logical_cpus):
+    for c in logical_cpus_indexes:
         graphit(web, "'User','System'",
                 cgroup_cpu_stats[c],  # Data
                 'Logical CPU ' + str(c) + details + " (from cgroup stats)",  # Graph Title
                 "Cgroup CPU" + str(c),  # Button Label
                 stack_state=True)
+
 
 def choose_byte_divider(mem_total):
     divider = 1
@@ -532,6 +549,7 @@ def choose_byte_divider(mem_total):
         divider = 1E6
         unit = 'MB'
     return (divider, unit)
+
 
 def generate_baremetal_memory(web, jdata, hostname):
     #
@@ -557,9 +575,9 @@ def generate_baremetal_memory(web, jdata, hostname):
         
         baremetal_memory_stats += "['Date(%s)', %d, %d, %d],\n" % (
                 googledate(s['timestamp']['datetime']),
-                (mem_total-mf-mc)/divider,
-                mc/divider,
-                mf/divider,
+                (mem_total - mf - mc) / divider,
+                mc / divider,
+                mf / divider,
             )
 
     # Produce the javascript:
@@ -592,8 +610,8 @@ def generate_cgroup_memory(web, jdata, hostname):
         mfail = 0  # FIXME FIXME TODO
         cgroup_memory_stats += "['Date(%s)', %d, %d, %d],\n" % (
                 googledate(s['timestamp']['datetime']),
-                mu/divider,
-                mc/divider,
+                mu / divider,
+                mc / divider,
                 mfail,
             )
 
@@ -640,9 +658,14 @@ def main_process_file(cmd, infile, outfile):
     hostname = jdata[0]['identity']['hostname'] 
     details = ' for hostname=' + hostname
 
-    num_logical_cpus = 0
-    while ('cpu' + str(num_logical_cpus)) in jdata[0]['stat']:
-        num_logical_cpus += 1
+    jdata_first_sample = jdata[0]
+    logical_cpus_indexes = []
+    for key in jdata_first_sample['stat']:
+        if key.startswith('cpu'):
+            cpuIdx = int(key[3:])
+            # print("%s %s" %(key, cpuIdx))
+            logical_cpus_indexes.append(cpuIdx) 
+    print("Found %d CPUs in input file: %s" % (len(logical_cpus_indexes), ', '.join(str(x) for x in logical_cpus_indexes)))
         
 #     # - - - Disks
 #         rkb=0.0
@@ -685,11 +708,10 @@ def main_process_file(cmd, infile, outfile):
     nchart_start_javascript(web, 'Monitoring data' + details)
     
     # ----- add graphs 
-    generate_baremetal_cpus(web, jdata, num_logical_cpus, hostname)
-    generate_cgroup_cpus(web, jdata, num_logical_cpus, hostname)
+    generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname)
+    generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname)
     generate_baremetal_memory(web, jdata, hostname)
     generate_cgroup_memory(web, jdata, hostname)
-    
     
     # if process_data_found:
     #    bubbleit(web, topprocs_title, topprocs,  'Top Processes Summary' + details, "TopSum")
@@ -703,7 +725,6 @@ def main_process_file(cmd, infile, outfile):
     # generate_network_traffic(web,jdata)
     
     # web.write(config_button_str)
-    jdata_first_sample = jdata[0]
     monitoring_summary = [
         "Monitoring launched as: " + jdata_first_sample["njmon"]["njmon_command"],
         '<a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a>: ' + jdata_first_sample["njmon"]["njmon_version"],

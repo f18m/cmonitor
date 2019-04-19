@@ -1401,8 +1401,11 @@ function setupCharts() {
 }
 
 function config() {
-    var myWindow = window.open("", "MsgWindow", "width=1024, height=800");
+    var myWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");
     myWindow.document.write("\
+    <html><head>\
+      <title>Configuration</title>\
+    </head><body>\
       <h2>Configuration of server and njmon data collection</h2>\
 <h3>os_release</h3>\
                 name = Ubuntu<br>\
@@ -1427,6 +1430,8 @@ function config() {
          cpuset_path = /sys/fs/cgroup/cpuset<br>\
                 cpus = 0,1,2,3<br>\
   memory_limit_bytes = 9223372036854771712<br>\
+    cpus_num_allowed = 4<br>\
+memory_limit_bytes_human_readable = 8.0EiB<br>\
 <h3>njmon</h3>\
        njmon_command = src/njmon_collector<br>\
        njmon_version = 22@31/03/2019<br>\
@@ -1438,6 +1443,7 @@ function config() {
     snapshot_seconds = 3<br>\
    snapshot_maxloops = 120<br>\
        snapshot_loop = 0<br>\
+    </body></html>\
 ");
 }
 

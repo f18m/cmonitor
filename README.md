@@ -15,7 +15,7 @@ If you use an LXC container
 based on a Centos/RHEL/Fedora distribution you can log into the container and run:
 
 ```
-yum install yum-plugin-copr
+yum install -y yum-plugin-copr
 yum copr enable f18m/nmon-cgroup-aware
 yum install -y nmon-cgroup-aware
 ```
@@ -47,7 +47,8 @@ njmon_chart /path/to/json-stats.json /path/to/json-stats.html
 
 Example of resulting output files:
 
- - [baremetal1](examples/baremetal1_20190413_1605.html)
+ - [baremetal1](examples/baremetal1_20190413_1605.html): example of graph generated with the performance stats collected from a physical server
+ - [container1](examples/container1_12cpus_20190416_1801.html): example of graph generated with the performance stats collected from a container having 12CPUs
 
 
 ## Links
