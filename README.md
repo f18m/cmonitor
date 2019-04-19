@@ -4,9 +4,12 @@
 
 # nmon-cgroup-aware
 
-Fork of Nigel's performance Monitor for Linux, adding cgroup-awareness. Makes it easy to monitor your LXC/Docker container performances.
+Fork of Nigel's performance Monitor for Linux, adding cgroup-awareness. 
+Makes it easy to monitor your LXC/Docker container performances.
 
-NOTE: this is actually a fork of "njmon", not "nmon". njmon provides no interactive mode (often useless inside containers!) and is a more modern tool that produces a JSON output that can be used together with tools like InfluxDB (https://www.influxdata.com/) and Grafana (https://grafana.com/).
+NOTE: this is actually a fork of "njmon", not "nmon". 
+njmon provides no interactive mode (often useless inside containers!) and is a more modern tool that produces a 
+JSON output that can be used together with tools like [InfluxDB](https://www.influxdata.com/) and [Grafana](https://grafana.com/).
 
 
 ## How to install
@@ -47,11 +50,11 @@ njmon_chart /path/to/json-stats.json /path/to/json-stats.html
 
 Example of resulting output files:
 
- - [baremetal1](examples/baremetal1_20190413_1605.html): example of graph generated with the performance stats collected from a physical server
- - [container1](examples/container1_12cpus_20190416_1801.html): example of graph generated with the performance stats collected from a container having 12CPUs
+ - [baremetal1](https://f18m.github.io/nmon-cgroup-aware/examples/baremetal1_20190413_1605.html): example of graph generated with the performance stats collected from a physical server
+ - [container1](https://f18m.github.io/nmon-cgroup-aware/examples/container1_12cpus_20190416_1801.html): example of graph generated with the performance stats collected from a container having 12CPUs
 
 
 ## Links
 
-- Original project: http://nmon.sourceforge.net
-- Other forks: https://github.com/axibase/nmon
+- Original project: [http://nmon.sourceforge.net](http://nmon.sourceforge.net)
+- Other forks: [https://github.com/axibase/nmon](https://github.com/axibase/nmon)
