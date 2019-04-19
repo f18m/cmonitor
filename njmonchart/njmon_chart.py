@@ -254,6 +254,7 @@ def graphit(web, table_data, title, button_label, graph_type, stack_state):
     g_graphs.append(Graph(button_label, graph_type))
 
 
+
 def bubbleit(web, column_names, data, title, button_label, graph_type):
     global g_graphs
     
@@ -490,41 +491,63 @@ def generate_filesystems(web, jdata):
     return web
 
 
-def generate_network_traffic(web, jdata):
+def generate_network_traffic(web, jdata, hostname):
     global g_graphs
-    netstr = ""
-    for device in jdata[0]["network_interfaces"].keys():
-        netstr = netstr + "'" + device + "+in','" + str(device) + "-out',"
-    netstr = netstr[:-1]
-    nchart_start_js_line_graph(web, netstr)
-    for i, s in enumerate(jdata):
-        if i == 0:
-            continue
-        web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
-        for device in s["network_interfaces"].keys():
-            web.write(",%.1f,%.1f" % (
-                 s["network_interfaces"][device]["ibytes"],
-                -s["network_interfaces"][device]["obytes"]))
-        web.write("]\n")
-    nchart_end_js_line_graph(web, 'Network MB/s')
-    g_graphs.append("Net-MB")
     
-    netstr = ""
+    netcols = ['Timestamp']
     for device in jdata[0]["network_interfaces"].keys():
-        netstr = netstr + "'" + device + "+in','" + str(device) + "-out',"
-    netstr = netstr[:-1]
-    nchart_start_js_line_graph(web, netstr)
+        netcols.append(str(device) + "+in")
+        netcols.append(str(device) + "-out")
+
+    # convert from bytes to MB
+    divider = 1000 * 1000
+
+    #
+    # MAIN LOOP
+    # Process JSON sample and fill the Table() object
+    #
+    
+    
+    # MB/sec
+    
+    net_table = Table(netcols)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
-        web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
+
+        row = [ googledate(s['timestamp']['datetime']) ]
         for device in s["network_interfaces"].keys():
-            web.write(",%.1f,%.1f " % (
-                 s["network_interfaces"][device]["ipackets"],
-                -s["network_interfaces"][device]["opackets"]))
-        web.write("]\n")
-    nchart_end_js_line_graph(web, 'Network packets/s')
-    g_graphs.append("Net-packets")
+            row.append(s["network_interfaces"][device]["ibytes"]/divider)
+            row.append(-s["network_interfaces"][device]["obytes"]/divider)
+        net_table.addRow(row)
+
+    graphit(web,
+            net_table,  # Data
+            'Network Traffic in MB/s for ' + hostname + " (from baremetal stats)",  # Graph Title
+            'Network Traffic (MB/s)',  # Button Label
+            graph_type=GRAPH_TYPE_BAREMETAL,
+            stack_state=False)
+    
+    # PPS
+    
+    net_table = Table(netcols)
+    for i, s in enumerate(jdata):
+        if i == 0:
+            continue
+
+        row = [ googledate(s['timestamp']['datetime']) ]
+        for device in s["network_interfaces"].keys():
+            row.append(s["network_interfaces"][device]["ipackets"])
+            row.append(-s["network_interfaces"][device]["opackets"])
+        net_table.addRow(row)
+
+    graphit(web,
+            net_table,  # Data
+            'Network Traffic in PPS for ' + hostname + " (from baremetal stats)",  # Graph Title
+            'Network Traffic (PPS)',  # Button Label
+            graph_type=GRAPH_TYPE_BAREMETAL,
+            stack_state=False)
+    
     return web
 
 
@@ -533,14 +556,13 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
     # prepare empty tables
     baremetal_cpu_stats = {}
     for c in logical_cpus_indexes:
-        baremetal_cpu_stats[c] = Table(['Timestamp','User','Nice','System','Idle','I/O wait','Hard IRQ','Soft IRQ','Steal'])
+        baremetal_cpu_stats[c] = Table(['Timestamp', 'User', 'Nice', 'System', 'Idle', 'I/O wait', 'Hard IRQ', 'Soft IRQ', 'Steal'])
         
     all_cpus_table = Table(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
     
     #
     # MAIN LOOP
-    # Process JSON sample and build Google Chart-compatible Javascript variable
-    # See https://developers.google.com/chart/interactive/docs/reference
+    # Process JSON sample and fill the Table() object
     #
 
     for i, s in enumerate(jdata):
@@ -596,14 +618,13 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
     # prepare empty tables
     cpu_stats_table = {}
     for c in logical_cpus_indexes:
-        cpu_stats_table[c] = Table(['Timestamp','User','System'])
+        cpu_stats_table[c] = Table(['Timestamp', 'User', 'System'])
         
     all_cpus_table = Table(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
         
     #
     # MAIN LOOP
-    # Process JSON sample and build Google Chart-compatible Javascript variable
-    # See https://developers.google.com/chart/interactive/docs/reference
+    # Process JSON sample and fill the Table() object
     #
 
     for i, s in enumerate(jdata):
@@ -626,7 +647,6 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
             all_cpus_row.append(cpu_total)
         
         all_cpus_table.addRow(all_cpus_row)
-        
 
     # Produce 1 graph for each CPU:
     details = ' for hostname=' + hostname
@@ -671,7 +691,7 @@ def generate_baremetal_memory(web, jdata, hostname):
         return value * 1E3
 
     mem_total = meminfo_stat_to_bytes(jdata[0]['proc_meminfo']['MemTotal'])
-    baremetal_memory_stats = Table(['Timestamp','Used','Cached (DiskRead)','Free'])
+    baremetal_memory_stats = Table(['Timestamp', 'Used', 'Cached (DiskRead)', 'Free'])
     divider, unit = choose_byte_divider(mem_total)
 
     for i, s in enumerate(jdata):
@@ -707,7 +727,7 @@ def generate_cgroup_memory(web, jdata, hostname):
      
     mem_total = jdata[0]['cgroup_memory_stats']['total_cache'] + \
                 jdata[0]['cgroup_memory_stats']['total_rss'] 
-    cgroup_memory_stats = Table(['Timestamp','Used','Cached (DiskRead)','Alloc Failures'])
+    cgroup_memory_stats = Table(['Timestamp', 'Used', 'Cached (DiskRead)', 'Alloc Failures'])
     divider, unit = choose_byte_divider(mem_total)
     
     for i, s in enumerate(jdata):
@@ -785,6 +805,7 @@ def main_process_file(cmd, infile, outfile):
     generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname)
     generate_baremetal_memory(web, jdata, hostname)
     generate_cgroup_memory(web, jdata, hostname)
+    generate_network_traffic(web, jdata, hostname)
     
     # if process_data_found:
     #    bubbleit(web, topprocs_title, topprocs,  'Top Processes Summary' + details, "TopSum")
@@ -794,7 +815,7 @@ def main_process_file(cmd, infile, outfile):
 #     graphit(web, "'1_min_LoadAvg', '5_min_LoadAvg','15_min_LoadAvg'", la_data,  'Load Average' + details, "LoadAvg",unstacked)
     # web.write(generate_disks(jdata))
     # generate_filesystems(web, jdata)
-    # generate_network_traffic(web,jdata)
+    
     monitoring_summary = [
         "Monitoring launched as: " + jdata_first_sample["njmon"]["njmon_command"],
         '<a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a>: ' + jdata_first_sample["njmon"]["njmon_version"],
