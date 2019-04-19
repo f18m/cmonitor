@@ -1,25 +1,72 @@
 #!/usr/bin/python3 
 
 #
-# njmonchart_linux.py
+# njmon_chart.py
 # Written as a modification of "njmonchart_aix_v7.py" from Nigel project: http://nmon.sourceforge.net/
+#
+# Author: Francesco Montorsi
+# Created: April 2019
 #
 
 import sys
 
 # =======================================================================================================
+# CONSTANTS
+# =======================================================================================================
+
+GRAPH_TYPE_BAREMETAL = 1
+GRAPH_TYPE_CGROUP = 2
+
+# =======================================================================================================
+# TYPES
+# =======================================================================================================
+
+
+class Graph:
+
+    def __init__(self, name, type):
+        self.name = name
+        self.type = type  # one of GRAPH_TYPE_BAREMETAL or GRAPH_TYPE_CGROUP
+        
+
+class Table(object):
+
+    def __init__(self, column_names):
+        self.column_names = column_names  # must be a LIST of strings
+        self.rows = []  # list of lists with values
+
+    def addRow(self, row_data_list):
+        assert(len(row_data_list) == len(self.column_names))
+        self.rows.append(row_data_list)
+
+    def getRow(self, index):
+        return self.rows[index]
+    
+    def getListColumnNames(self):
+        return self.column_names
+    
+    def writeTo(self, file):
+        for r in self.rows:
+            # assume first column is always the timestamp:
+            row_text = "['Date(%s)'," % r[0]
+            row_text += ','.join(str(x) for x in r[1:])
+            row_text += '],\n'
+            file.write(row_text)
+
+# =======================================================================================================
 # GLOBALs
 # =======================================================================================================
 
-buttonlist = []
-chartnum = 1
+
+g_graphs = []  # global list of Graph class instances
+g_num_generated_charts = 1
 
 # =======================================================================================================
 # nchart_* routines to actually produce HTML+JavaScript
 # =======================================================================================================
 
 
-def nchart_start_javascript(file, title):
+def nchart_start_js(file, title):
     ''' Head of the HTML webpage'''
     file.write('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
     file.write('<html xmlns="http://www.w3.org/1999/xhtml">' + '\n')
@@ -31,8 +78,9 @@ def nchart_start_javascript(file, title):
     file.write('     ul {margin: 0 0 0 0;padding-left: 20px;}\n')
     file.write('     button { margin-bottom: 3px; }\n')
     file.write('     #chart_master {width:100%; height:85%;}\n')
+    file.write('     #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 3px; padding: 6px; margin: 6px;}\n')
+    file.write('     #button_table { border-collapse: collapse; }\n')
     file.write('     #button_table_col {border: darkgrey; border-style: solid; border-width: 3px; padding: 6px; margin: 6px;}\n')
-    file.write('     #bottom_table {float:left; border: darkgrey; border-style: solid; border-width: 3px; padding: 6px; margin: 6px;}\n')
     file.write('  </style>\n')
     file.write('  <script type="text/javascript" src="https://www.google.com/jsapi"></script>\n')
     file.write('  <script type="text/javascript">\n')
@@ -43,25 +91,35 @@ def nchart_start_javascript(file, title):
     file.write('  var chart = null;\n')
 
     
-def nchart_bubble_top(file, columnnames):
+def nchart_start_js_bubble_graph(file, columnnames):
     ''' Before the graph data with datetime + multiple columns of data '''
-    global chartnum 
-    file.write('  var data_' + str(chartnum) + ' = google.visualization.arrayToDataTable([\n')
+    global g_num_generated_charts 
+    file.write('  var data_' + str(g_num_generated_charts) + ' = google.visualization.arrayToDataTable([\n')
     file.write("[" + columnnames + "]\n")
 
     
-def nchart_line_top(file, columnnames):
+def nchart_start_js_line_graph(file, columnnames):
     ''' Before the graph data with datetime + multiple columns of data '''
-    global chartnum 
-    file.write('  var data_' + str(chartnum) + ' = google.visualization.arrayToDataTable([\n')
-    file.write("[{type: 'datetime', label: 'Datetime'}," + columnnames + "],\n")
+    global g_num_generated_charts 
+    file.write('  var data_' + str(g_num_generated_charts) + ' = google.visualization.arrayToDataTable([\n')
+    
+    assert(columnnames[0] == 'Timestamp')
+    columns_text = "{type: 'datetime', label: 'Datetime'}"
+    for col in columnnames[1:]:
+        columns_text += ",'%s'" % col
+    
+    file.write("[" + columns_text + "],\n")
+
+
+def nchart_write_js_graph_data(web, table_data):
+    table_data.writeTo(web)  # write all data points of the graph
 
     
-def nchart_bubble_bot(file, graphtitle):
+def nchart_end_js_bubble_graph(file, graphtitle):
     ''' After the JavaScript bubble graph data is output, the data is terminated and the bubble graph options set'''
-    global chartnum
+    global g_num_generated_charts
     file.write('  ]);\n')
-    file.write('  var options_' + str(chartnum) + ' = {\n')
+    file.write('  var options_' + str(g_num_generated_charts) + ' = {\n')
     file.write('    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n')
     file.write('    title: "' + graphtitle + '",\n')
     file.write('    hAxis: { title:"CPU seconds in Total"},\n')
@@ -69,21 +127,21 @@ def nchart_bubble_bot(file, graphtitle):
     file.write('    sizeAxis: {maxSize: 200},\n')
     file.write('    bubble: {textStyle: {fontSize: 15}}\n')
     file.write('  };\n')
-    file.write('  document.getElementById("draw_' + str(chartnum) + '").addEventListener("click", function() {\n')
+    file.write('  document.getElementById("draw_' + str(g_num_generated_charts) + '").addEventListener("click", function() {\n')
     file.write('  if (chart && chart.clearChart)\n')
     file.write('    chart.clearChart();\n')
     file.write('  chart = new google.visualization.BubbleChart(document.getElementById("chart_master"));\n')
-    file.write('  chart.draw(data_' + str(chartnum) + ', options_' + str(chartnum) + ');\n')
+    file.write('  chart.draw(data_' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
     file.write('  });\n')
-    chartnum += 1
+    g_num_generated_charts += 1
 
     
-def nchart_line_bot(file, graphtitle):
+def nchart_end_js_line_graph(file, graphtitle):
     ''' After the JavaSctipt line graph data is output, the data is terminated and the graph options set'''
     global next_graph_need_stacking
-    global chartnum 
+    global g_num_generated_charts 
     file.write('  ]);\n')
-    file.write('  var options_' + str(chartnum) + ' = {\n')
+    file.write('  var options_' + str(g_num_generated_charts) + ' = {\n')
     file.write('    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n')
     file.write('    title: "' + graphtitle + '",\n')
     file.write('    focusTarget: "category",\n')
@@ -97,16 +155,16 @@ def nchart_line_bot(file, graphtitle):
     else:
         file.write('    isStacked:  0\n')
     file.write('  };\n')
-    file.write('  document.getElementById("draw_' + str(chartnum) + '").addEventListener("click", function() {\n')
+    file.write('  document.getElementById("draw_' + str(g_num_generated_charts) + '").addEventListener("click", function() {\n')
     file.write('    if (chart && chart.clearChart)\n')
     file.write('      chart.clearChart();\n')
     file.write('    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));\n')
-    file.write('    chart.draw( data_' + str(chartnum) + ', options_' + str(chartnum) + ');\n')
+    file.write('    chart.draw( data_' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
     file.write('  });\n')
-    chartnum += 1
+    g_num_generated_charts += 1
 
     
-def nchart_end_javascript(file, config):
+def nchart_end_js(file, config):
     ''' Generic version using named arguments for 1 to 10 buttons for Server graphs - Finish off the web page '''
     file.write('}\n')
     file.write(config)
@@ -114,35 +172,38 @@ def nchart_end_javascript(file, config):
     file.write('</head>\n')
 
     
-def nchart_start_body(file, name, button_labels):
+def nchart_start_html_body(file, hostname):
+    global g_graphs
     file.write('<body bgcolor="#EEEEFF">\n')
-    file.write('  <h1>Monitoring data for hostname: ' + name + '</h1>\n')
-    file.write('  <div id="button_table">\n')
-    file.write('  <table>\n')
-    file.write('  <tr><td id="button_table_col">\n')
-    file.write('    <button onclick="config()"><b>Configuration</b></button><br/>\n')
+    file.write('  <h1>Monitoring data for hostname: ' + hostname + '</h1>\n')
+    file.write('  <div id="button_div">\n')
+    file.write('  <table id="button_table">\n')
     
-    # - - - loop through the buttons and change colours
-    prevcol = 'black'
-    for num, name in enumerate(button_labels, start=1):
-        if name.startswith('Baremetal'):
-            colour = 'red'
-        elif name.startswith('Cgroup'):
-            colour = 'orange'
-        elif name == 'RAM Use':
-            colour = 'blue'
-        elif name == 'TotalDisk-MB':
-            colour = 'brown'
-        elif name == 'TotalNet-Bytes':
-            colour = 'purple'
-        elif name == 'IPC':
-            colour = 'green'
-        else:
-            colour = 'black'
-        if colour != prevcol:
-            file.write('      </td><td id="button_table_col">\n')
-        file.write('    <button id="draw_' + str(num) + '" style="color:' + colour + '"><b>' + name + '</b></button>\n')
-        prevcol = colour
+    # Table header row
+    file.write('  <tr><td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td><td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td></tr>\n')
+    
+    # Datarow
+    file.write('  <tr>\n')
+    file.write('  <td id="button_table_col">\n')
+    file.write('    <button onclick="config()"><b>Configuration</b></button><br/>\n')
+    file.write('  </td><td id="button_table_col">\n')
+
+    def write_buttons_for_graph_type(type):
+        # find in all graphs registered so far all those related to the CGROUP
+        for num, graph in enumerate(g_graphs, start=1):
+            if graph.type == type:
+                if graph.name.startswith('CPU') or graph.name.endswith('CPUs'):
+                    colour = 'red'
+                elif graph.name.startswith('Memory'):
+                    colour = 'orange'
+                else:
+                    colour = 'black'
+                file.write('    <button id="draw_' + str(num) + '" style="color:' + colour + '"><b>' + graph.name + '</b></button>\n')
+
+    write_buttons_for_graph_type(GRAPH_TYPE_CGROUP)
+    file.write('      </td><td id="button_table_col">\n')
+    write_buttons_for_graph_type(GRAPH_TYPE_BAREMETAL)
+        
     file.write('  </td></tr>\n')
     file.write('  </table>\n')
     file.write('  </div>\n')
@@ -150,7 +211,7 @@ def nchart_start_body(file, name, button_labels):
     file.write('  <div id="chart_master"></div>\n')
 
     
-def nchart_append_table(file, name, summary):
+def nchart_append_html_table(file, name, summary):
     file.write('  <div id="bottom_table">\n')
     file.write('    <h3>' + name + '</h3>\n')
     file.write('    <table>\n')
@@ -164,7 +225,7 @@ def nchart_append_table(file, name, summary):
     file.write('  </div>\n')
 
 
-def nchart_end_body(file):
+def nchart_end_html_body(file):
     file.write('</body>\n')
     file.write('</html>\n')
 
@@ -179,27 +240,37 @@ def googledate(date):
     return d
 
 
-def graphit(web, column_names, data, title, button_label, stack_state):
+def graphit(web, table_data, title, button_label, graph_type, stack_state):
     global next_graph_need_stacking
-    nchart_line_top(web, column_names)
-    web.write(data)  # write all data points of the graph
+    global g_graphs
+    
+    # declare JS variables:
+    nchart_start_js_line_graph(web, table_data.getListColumnNames())
+    nchart_write_js_graph_data(web, table_data)
     next_graph_need_stacking = stack_state
-    nchart_line_bot(web, title + (', STACKED GRAPH' if stack_state else ''))
-    buttonlist.append(button_label)
+    nchart_end_js_line_graph(web, title + (', STACKED graph' if stack_state else ''))
+    
+    # register this graph into globals
+    g_graphs.append(Graph(button_label, graph_type))
 
 
-def bubbleit(web, column_names, data, title, button_label):
-    nchart_bubble_top(web, column_names)
-    web.write(data)    
-    nchart_bubble_bot(web, title)
-    buttonlist.append(button_label)
+def bubbleit(web, column_names, data, title, button_label, graph_type):
+    global g_graphs
+    
+    # declare JS variables:
+    nchart_start_js_bubble_graph(web, column_names)
+    nchart_write_js_graph_data(web, data)
+    nchart_end_js_bubble_graph(web, title)
+    
+    # register this graph into globals
+    g_graphs.append(Graph(button_label, graph_type))
 
 # =======================================================================================================
 # generate_* routines
 # =======================================================================================================
 
 
-def generate_config_javascript(jdata_first_sample):
+def generate_config_js(jdata_first_sample):
 
     # ----- add config box 
     def configdump(section):
@@ -349,13 +420,13 @@ def generate_top20_disks(jdata):
 
 
 def generate_disks(web, jdata):
-    global buttonlist
+    global g_graphs
     # - - - Disks
     dstr = ""
     for device in jdata[0]["disks"].keys():
         dstr = dstr + "'" + device + "',"
     dstr = dstr[:-1]
-    nchart_line_top(web, dstr)
+    nchart_start_js_line_graph(web, dstr)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
@@ -363,14 +434,14 @@ def generate_disks(web, jdata):
         for device in s["disks"].keys():
             web.write(",%.1f" % (s["disks"][device]["time"]))
         web.write("]\n")
-    nchart_line_bot(web, 'Disk Time')
-    buttonlist.append("Disk-Time")
+    nchart_end_js_line_graph(web, 'Disk Time')
+    g_graphs.append("Disk-Time")
     
     dstr = ""
     for device in jdata[0]["disks"].keys():
         dstr = dstr + "'" + device + "+read','" + device + "-write',"
     dstr = dstr[:-1]
-    nchart_line_top(web, dstr)
+    nchart_start_js_line_graph(web, dstr)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
@@ -380,14 +451,14 @@ def generate_disks(web, jdata):
                      s["disks"][device]["rkb"],
                     -s["disks"][device]["wkb"]))
         web.write("]\n")
-    nchart_line_bot(web, 'Disks MB/s')
-    buttonlist.append("Disk-MB")
+    nchart_end_js_line_graph(web, 'Disks MB/s')
+    g_graphs.append("Disk-MB")
     
     dstr = ""
     for device in jdata[0]["disks"].keys():
         dstr = dstr + "'" + device + "+read','" + device + "-write',"
     dstr = dstr[:-1]
-    nchart_line_top(web, dstr)
+    nchart_start_js_line_graph(web, dstr)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
@@ -397,35 +468,35 @@ def generate_disks(web, jdata):
                      s["disks"][device]["reads"],
                     -s["disks"][device]["writes"]))
         web.write("]\n")
-    nchart_line_bot(web, 'Disk blocks/s')
-    buttonlist.append("Disk-blocks")
+    nchart_end_js_line_graph(web, 'Disk blocks/s')
+    g_graphs.append("Disk-blocks")
     return web
 
 
 def generate_filesystems(web, jdata):
-    global buttonlist
+    global g_graphs
     fsstr = ""
     for fs in jdata[0]["filesystems"].keys():
         fsstr = fsstr + "'" + fs + "',"
     fsstr = fsstr[:-1]
-    nchart_line_top(web, fsstr)
+    nchart_start_js_line_graph(web, fsstr)
     for i, s in enumerate(jdata):
         web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
         for fs in s["filesystems"].keys():
             web.write(", %.1f" % (s["filesystems"][fs]["fs_full_percent"]))
         web.write("]\n")
-    nchart_line_bot(web, 'File Systems Used percent')
-    buttonlist.append("File Systems")
+    nchart_end_js_line_graph(web, 'File Systems Used percent')
+    g_graphs.append("File Systems")
     return web
 
 
 def generate_network_traffic(web, jdata):
-    global buttonlist
+    global g_graphs
     netstr = ""
     for device in jdata[0]["network_interfaces"].keys():
         netstr = netstr + "'" + device + "+in','" + str(device) + "-out',"
     netstr = netstr[:-1]
-    nchart_line_top(web, netstr)
+    nchart_start_js_line_graph(web, netstr)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
@@ -435,14 +506,14 @@ def generate_network_traffic(web, jdata):
                  s["network_interfaces"][device]["ibytes"],
                 -s["network_interfaces"][device]["obytes"]))
         web.write("]\n")
-    nchart_line_bot(web, 'Network MB/s')
-    buttonlist.append("Net-MB")
+    nchart_end_js_line_graph(web, 'Network MB/s')
+    g_graphs.append("Net-MB")
     
     netstr = ""
     for device in jdata[0]["network_interfaces"].keys():
         netstr = netstr + "'" + device + "+in','" + str(device) + "-out',"
     netstr = netstr[:-1]
-    nchart_line_top(web, netstr)
+    nchart_start_js_line_graph(web, netstr)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
@@ -452,18 +523,20 @@ def generate_network_traffic(web, jdata):
                  s["network_interfaces"][device]["ipackets"],
                 -s["network_interfaces"][device]["opackets"]))
         web.write("]\n")
-    nchart_line_bot(web, 'Network packets/s')
-    buttonlist.append("Net-packets")
+    nchart_end_js_line_graph(web, 'Network packets/s')
+    g_graphs.append("Net-packets")
     return web
 
 
 def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
 
-    # prepare empty array
+    # prepare empty tables
     baremetal_cpu_stats = {}
     for c in logical_cpus_indexes:
-        baremetal_cpu_stats[c] = ""
+        baremetal_cpu_stats[c] = Table(['Timestamp','User','Nice','System','Idle','I/O wait','Hard IRQ','Soft IRQ','Steal'])
         
+    all_cpus_table = Table(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
+    
     #
     # MAIN LOOP
     # Process JSON sample and build Google Chart-compatible Javascript variable
@@ -473,10 +546,15 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
+
+        ts = googledate(s['timestamp']['datetime'])
+        all_cpus_row = [ ts ]
         for c in logical_cpus_indexes:
             cpu_stats = s['stat']['cpu' + str(c)]
-            baremetal_cpu_stats[c] += "['Date(%s)', %d, %d, %d, %d, %d, %d, %d, %d],\n" % (
-                    googledate(s['timestamp']['datetime']),
+            cpu_total = cpu_stats['user'] + cpu_stats['nice'] + cpu_stats['sys'] + \
+                        cpu_stats['iowait'] + cpu_stats['hardirq'] + cpu_stats['softirq'] + cpu_stats['steal']
+            baremetal_cpu_stats[c].addRow([ \
+                    ts,
                     cpu_stats['user'],
                     cpu_stats['nice'],
                     cpu_stats['sys'],
@@ -485,17 +563,29 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
                     cpu_stats['hardirq'],
                     cpu_stats['softirq'],
                     cpu_stats['steal']
-                )
+                ])
+            all_cpus_row.append(cpu_total)
+        
+        all_cpus_table.addRow(all_cpus_row)
     
     # Produce the javascript:
     details = ' for hostname=' + hostname
     for c in logical_cpus_indexes:
-        graphit(web, "'User','Nice','System','Idle','I/O wait','Hard IRQ','Soft IRQ','Steal'",
+        graphit(web,
                 baremetal_cpu_stats[c],  # Data
                 'Logical CPU ' + str(c) + details + " (from baremetal stats)",  # Graph Title
-                "Baremetal CPU" + str(c),  # Button Label
+                "CPU" + str(c),  # Button Label
+                graph_type=GRAPH_TYPE_BAREMETAL,
                 stack_state=True)
 
+    # Also produce the "all CPUs" graph
+    graphit(web,
+            all_cpus_table,  # Data
+            'Logical CPU ' + details + " (from cgroup stats)",  # Graph Title
+            "All CPUs",  # Button Label
+            graph_type=GRAPH_TYPE_BAREMETAL,
+            stack_state=False)
+    
 
 def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
     if len(jdata) < 1:
@@ -503,10 +593,12 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
     if 'cgroup_cpuacct_stats' not in jdata[1]:
         return  # cgroup mode not enabled at collection time!
         
-    # prepare empty array
-    cgroup_cpu_stats = {}
+    # prepare empty tables
+    cpu_stats_table = {}
     for c in logical_cpus_indexes:
-        cgroup_cpu_stats[c] = ""
+        cpu_stats_table[c] = Table(['Timestamp','User','System'])
+        
+    all_cpus_table = Table(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
         
     #
     # MAIN LOOP
@@ -517,26 +609,42 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
+        
+        ts = googledate(s['timestamp']['datetime'])
+        all_cpus_row = [ ts ]
         for c in logical_cpus_indexes:
+            # get data:
             cpu_stats = s['cgroup_cpuacct_stats']['cpu' + str(c)]
             if 'sys' in cpu_stats:
                 cpu_sys = cpu_stats['sys']
             else:
                 cpu_sys = 0
-            cgroup_cpu_stats[c] += "['Date(%s)', %d, %d],\n" % (
-                    googledate(s['timestamp']['datetime']),
-                    cpu_stats['user'],
-                    cpu_sys
-                )
+            cpu_total = cpu_stats['user'] + cpu_sys
 
-    # Produce the javascript:
+            # append data:
+            cpu_stats_table[c].addRow([ts, cpu_stats['user'], cpu_sys])
+            all_cpus_row.append(cpu_total)
+        
+        all_cpus_table.addRow(all_cpus_row)
+        
+
+    # Produce 1 graph for each CPU:
     details = ' for hostname=' + hostname
     for c in logical_cpus_indexes:
-        graphit(web, "'User','System'",
-                cgroup_cpu_stats[c],  # Data
+        graphit(web,
+                cpu_stats_table[c],  # Data
                 'Logical CPU ' + str(c) + details + " (from cgroup stats)",  # Graph Title
-                "Cgroup CPU" + str(c),  # Button Label
+                "CPU" + str(c),  # Button Label
+                graph_type=GRAPH_TYPE_CGROUP,
                 stack_state=True)
+
+    # Also produce the "all CPUs" graph
+    graphit(web,
+            all_cpus_table,  # Data
+            'Logical CPU ' + details + " (from cgroup stats)",  # Graph Title
+            "All CPUs",  # Button Label
+            graph_type=GRAPH_TYPE_CGROUP,
+            stack_state=False)
 
 
 def choose_byte_divider(mem_total):
@@ -563,7 +671,7 @@ def generate_baremetal_memory(web, jdata, hostname):
         return value * 1E3
 
     mem_total = meminfo_stat_to_bytes(jdata[0]['proc_meminfo']['MemTotal'])
-    baremetal_memory_stats = ''
+    baremetal_memory_stats = Table(['Timestamp','Used','Cached (DiskRead)','Free'])
     divider, unit = choose_byte_divider(mem_total)
 
     for i, s in enumerate(jdata):
@@ -573,19 +681,20 @@ def generate_baremetal_memory(web, jdata, hostname):
         mf = meminfo_stat_to_bytes(s['proc_meminfo']['MemFree'])
         mc = meminfo_stat_to_bytes(s['proc_meminfo']['Cached'])
         
-        baremetal_memory_stats += "['Date(%s)', %d, %d, %d],\n" % (
+        baremetal_memory_stats.addRow([
                 googledate(s['timestamp']['datetime']),
                 (mem_total - mf - mc) / divider,
                 mc / divider,
                 mf / divider,
-            )
+            ])
 
     # Produce the javascript:
     details = ' for hostname=' + hostname
-    graphit(web, "'Used','Cached (DiskRead)','Free'",
+    graphit(web,
             baremetal_memory_stats,  # Data
             'Memory in ' + unit + details + " (from baremetal stats)",  # Graph Title
-            "Baremetal Memory",  # Button Label
+            "Memory Usage",  # Button Label
+            graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=True)
 
 
@@ -598,7 +707,7 @@ def generate_cgroup_memory(web, jdata, hostname):
      
     mem_total = jdata[0]['cgroup_memory_stats']['total_cache'] + \
                 jdata[0]['cgroup_memory_stats']['total_rss'] 
-    cgroup_memory_stats = ''
+    cgroup_memory_stats = Table(['Timestamp','Used','Cached (DiskRead)','Alloc Failures'])
     divider, unit = choose_byte_divider(mem_total)
     
     for i, s in enumerate(jdata):
@@ -608,19 +717,20 @@ def generate_cgroup_memory(web, jdata, hostname):
         mu = s['cgroup_memory_stats']['total_rss']
         mc = s['cgroup_memory_stats']['total_cache']
         mfail = 0  # FIXME FIXME TODO
-        cgroup_memory_stats += "['Date(%s)', %d, %d, %d],\n" % (
+        cgroup_memory_stats.addRow([
                 googledate(s['timestamp']['datetime']),
                 mu / divider,
                 mc / divider,
                 mfail,
-            )
+            ])
 
     # Produce the javascript:
     details = ' for hostname=' + hostname
-    graphit(web, "'Used','Cached (DiskRead)','Alloc Failures'",
+    graphit(web,
             cgroup_memory_stats,  # Data
             'Memory in ' + unit + details + " (from cgroup stats)",  # Graph Title
-            "CGroup Memory",  # Button Label
+            "Memory Usage",  # Button Label
+            graph_type=GRAPH_TYPE_CGROUP,
             stack_state=False)
 
 # =======================================================================================================
@@ -646,8 +756,6 @@ def main_process_file(cmd, infile, outfile):
     jdata = entry["samples"]  # removes outer parts so we have a list of snapshot dictionaries
     
     # - - - - - Start nchart functions
-    global chartnum
-    global buttonlist
     next_graph_need_stacking = 0
     
     # These are flags used as function arguments
@@ -666,48 +774,13 @@ def main_process_file(cmd, infile, outfile):
             # print("%s %s" %(key, cpuIdx))
             logical_cpus_indexes.append(cpuIdx) 
     print("Found %d CPUs in input file: %s" % (len(logical_cpus_indexes), ', '.join(str(x) for x in logical_cpus_indexes)))
-        
-#     # - - - Disks
-#         rkb=0.0
-#         wkb=0.0
-#         for disk in s["disks"].keys():
-#                 rkb  = rkb  + s["disks"][disk]["rkb"]
-#                 wkb = wkb + s["disks"][disk]["wkb"]
-#         dtrw_data += ",['Date(%s)', %.1f, %.1f]\n" %(googledate(s['timestamp']['datetime']), rkb, -wkb)
-#     
-#         xfers=0
-#         for disk in s["disks"].keys():
-#             xfers += s["disks"][disk]["xfers"]
-#         dtt_data += ",['Date(%s)', %.1f]\n" %(googledate(s['timestamp']['datetime']), xfers)
-#     
-#     # - - - Networks
-#         ibytes=0
-#         obytes=0
-#         for net in s["network_interfaces"].keys():
-#             ibytes   = ibytes   + s["network_interfaces"][net]["ibytes"]
-#             obytes   = obytes   + s["network_interfaces"][net]["obytes"]
-#         nio_data += ",['Date(%s)', %.1f, %.1f]\n" %(googledate(s['timestamp']['datetime']), ibytes, -obytes)
-#     
-#         ipackets=0.0
-#         opackets=0.0
-#         for net in s["network_interfaces"].keys():
-#             ipackets = ipackets + s["network_interfaces"][net]["ipackets"]
-#             opackets = opackets + s["network_interfaces"][net]["opackets"]
-#         np_data += ",['Date(%s)', %.1f, %.1f]\n" %(googledate(s['timestamp']['datetime']), ipackets,-opackets)
-    
-    # - - - Top 20 Processes
-    # Check if there are process stats in this njmon .json file as they are optional
-    # start_processes, end_processes, process_data_found = generate_top20_procs(jdata)
-    
-    # - - - Top 20 Disks
-    # tdisk, td_header, td_data = generate_top20_disks(jdata)
     
     # ----- MAIN SCRIPT CREAT WEB FILE -
     print("Opening output file %s" % outfile)
     web = open(outfile, "w")  # Open the output file
-    nchart_start_javascript(web, 'Monitoring data' + details)
+    nchart_start_js(web, 'Monitoring data' + details)
     
-    # ----- add graphs 
+    # JAVASCRIPT GRAPHS
     generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname)
     generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname)
     generate_baremetal_memory(web, jdata, hostname)
@@ -719,12 +792,9 @@ def main_process_file(cmd, infile, outfile):
   
     # graphit(web, td_header, td_data,  'Top Disks (mbps)' + details, "TopDisks",unstacked)
 #     graphit(web, "'1_min_LoadAvg', '5_min_LoadAvg','15_min_LoadAvg'", la_data,  'Load Average' + details, "LoadAvg",unstacked)
-    
     # web.write(generate_disks(jdata))
     # generate_filesystems(web, jdata)
     # generate_network_traffic(web,jdata)
-    
-    # web.write(config_button_str)
     monitoring_summary = [
         "Monitoring launched as: " + jdata_first_sample["njmon"]["njmon_command"],
         '<a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a>: ' + jdata_first_sample["njmon"]["njmon_version"],
@@ -740,12 +810,14 @@ def main_process_file(cmd, infile, outfile):
         "OS: " + jdata_first_sample["os_release"]["pretty_name"],
     ]
     
-    nchart_end_javascript(web, generate_config_javascript(jdata_first_sample))
-    nchart_start_body(web, hostname, buttonlist)
-    nchart_append_table(web, "Monitoring Summary", monitoring_summary)
-    nchart_append_table(web, "Monitored System Summary", monitored_summary)
+    nchart_end_js(web, generate_config_js(jdata_first_sample))
+    
+    # HTML
+    nchart_start_html_body(web, hostname)
+    nchart_append_html_table(web, "Monitoring Summary", monitoring_summary)
+    nchart_append_html_table(web, "Monitored System Summary", monitored_summary)
     web.write('<p>NOTE: to zoom use left-click and drag; to reset view use right-click.</p>\n')
-    nchart_end_body(web)
+    nchart_end_html_body(web)
 
     print("Completed processing")
     web.close()
