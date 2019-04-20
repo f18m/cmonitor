@@ -709,10 +709,9 @@ def generate_baremetal_memory(web, jdata, hostname):
             ])
 
     # Produce the javascript:
-    details = ' for hostname=' + hostname
     graphit(web,
             baremetal_memory_stats,  # Data
-            'Memory in ' + unit + details + " (from baremetal stats)",  # Graph Title
+            'Memory in ' + unit + ' for hostname=' + hostname + " (from baremetal stats)",  # Graph Title
             "Memory Usage",  # Button Label
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=True)
@@ -736,7 +735,7 @@ def generate_cgroup_memory(web, jdata, hostname):
         
         mu = s['cgroup_memory_stats']['total_rss']
         mc = s['cgroup_memory_stats']['total_cache']
-        mfail = 0  # FIXME FIXME TODO
+        mfail = s['cgroup_memory_stats']['failcnt']
         cgroup_memory_stats.addRow([
                 googledate(s['timestamp']['datetime']),
                 mu / divider,
@@ -745,13 +744,41 @@ def generate_cgroup_memory(web, jdata, hostname):
             ])
 
     # Produce the javascript:
-    details = ' for hostname=' + hostname
     graphit(web,
             cgroup_memory_stats,  # Data
-            'Memory in ' + unit + details + " (from cgroup stats)",  # Graph Title
+            'Memory in ' + unit + ' for hostname=' + hostname + " (from cgroup stats)",  # Graph Title
             "Memory Usage",  # Button Label
             graph_type=GRAPH_TYPE_CGROUP,
             stack_state=False)
+
+def generate_load_avg(web, jdata, hostname):
+    #
+    # MAIN LOOP
+    # Process JSON sample and build Google Chart-compatible Javascript variable
+    # See https://developers.google.com/chart/interactive/docs/reference
+    #
+     
+    load_avg_stats = Table(['Timestamp', 'LoadAvg (1min)', 'LoadAvg (5min)', 'LoadAvg (15min)'])
+    for i, s in enumerate(jdata):
+        if i == 0:
+            continue  # skip first sample
+        
+        load_avg_stats.addRow([
+                googledate(s['timestamp']['datetime']),
+                s['proc_loadavg']['load_avg_1min'],
+                s['proc_loadavg']['load_avg_5min'],
+                s['proc_loadavg']['load_avg_15min']
+            ])
+
+    # Produce the javascript:
+    graphit(web,
+            load_avg_stats,  # Data
+            'Average Load ' + ' for hostname=' + hostname + " (from baremetal stats)",  # Graph Title
+            "Average Load",  # Button Label
+            graph_type=GRAPH_TYPE_BAREMETAL,
+            stack_state=False)
+
+
 
 # =======================================================================================================
 # MAIN SCRIPT PREPARE DATA
@@ -806,13 +833,13 @@ def main_process_file(cmd, infile, outfile):
     generate_baremetal_memory(web, jdata, hostname)
     generate_cgroup_memory(web, jdata, hostname)
     generate_network_traffic(web, jdata, hostname)
+    generate_load_avg(web, jdata, hostname)
     
     # if process_data_found:
     #    bubbleit(web, topprocs_title, topprocs,  'Top Processes Summary' + details, "TopSum")
     #    graphit(web, top_header, top_data,  'Top Procs by CPU time' + details, "TopProcs",unstacked)
   
     # graphit(web, td_header, td_data,  'Top Disks (mbps)' + details, "TopDisks",unstacked)
-#     graphit(web, "'1_min_LoadAvg', '5_min_LoadAvg','15_min_LoadAvg'", la_data,  'Load Average' + details, "LoadAvg",unstacked)
     # web.write(generate_disks(jdata))
     # generate_filesystems(web, jdata)
     

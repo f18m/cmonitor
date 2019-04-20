@@ -1625,6 +1625,49 @@ void proc_uptime()
 	}
 }
 
+void proc_loadavg()
+{
+    static FILE *fp =0;
+    char buf[1024+1];
+    int count;
+    float load_avg_1min;
+    float load_avg_5min;
+    float load_avg_15min;
+
+	FUNCTION_START;
+    if (fp == 0) {
+        if ((fp = fopen("/proc/loadavg", "r")) == NULL) {
+            return;
+        }
+    } else rewind(fp);
+
+    	if( fgets(buf, 1024, fp) != NULL) {
+	/*
+		/proc/loadavg
+		The first three fields in this file are load average figures giving
+		the  number  of jobs in the run queue (state R) or waiting for disk
+		I/O (state D) averaged over 1, 5, and 15  minutes.
+		They are the same as the load average numbers given by
+		uptime(1) and other programs.  The fourth field consists of
+		two numbers separated by a slash (/).  The first of these is
+		the number of currently runnable kernel scheduling entities
+		(processes, threads).  The value after the slash is the number
+		of kernel scheduling entities that currently exist on the sys‐
+		tem.  The fifth field is the PID of the process that was most
+		recently created on the system.
+	 */
+
+	    count = sscanf(buf, "%f %f %f", &load_avg_1min, &load_avg_5min, &load_avg_15min);
+	    if(count == 3) {
+		psection("proc_loadavg");
+		pdouble("load_avg_1min",load_avg_1min);
+		pdouble("load_avg_5min",load_avg_5min);
+		pdouble("load_avg_15min",load_avg_15min);
+		psectionend();
+	    }
+	}
+}
+
 void filesystems()
 {
     FILE *fp;
@@ -1907,7 +1950,7 @@ void file_read_one_stat( char * file, char *name)
     }
 }
 
-void identity_and_njmon(char *command, char * version)
+void identity_and_njmon(int argc, char **argv, char * version)
 {
     char buf[1024+1];
     int i;
@@ -1992,7 +2035,16 @@ void identity_and_njmon(char *command, char * version)
     psectionend();
 
     psection("njmon");
-    pstring("njmon_command", command);
+    {
+	char command[1024] = { 0 };
+	for(i=0;i<argc;i++) {
+		strcat(command,argv[i]);
+		if (i != argc-1)
+			strcat(command," ");
+	}
+
+	pstring("njmon_command", command);
+    }
     pstring("njmon_version", version);
     uid = geteuid();
     if (pw= getpwuid (uid)) {
@@ -2388,13 +2440,13 @@ int main(int argc, char **argv)
         elapsed = current_time - previous_time;
 
                 if(mode == ONE_LEVEL) {
-                        identity_and_njmon(argv[0],VERSION);
+                        identity_and_njmon(argc, argv, VERSION);
                 }
 
 	date_time(seconds, loop, maxloops);
 
 	if (loop == 0) {
-		identity_and_njmon(argv[0],VERSION);
+		identity_and_njmon(argc, argv, VERSION);
 		etc_os_release();
 		proc_version();
 		lscpu();
@@ -2421,7 +2473,8 @@ int main(int argc, char **argv)
 	read_data_number("vmstat");
 	proc_diskstats(elapsed,PRINT_TRUE);
 	proc_net_dev(elapsed,PRINT_TRUE);
-	proc_uptime();
+	//proc_uptime(); // not really useful!!
+	proc_loadavg();
 	filesystems();
 	read_lparcfg(elapsed);
 	sys_device_system_cpu(elapsed,PRINT_TRUE);

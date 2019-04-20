@@ -175,6 +175,19 @@ bool parse_string_with_multiple_ranges(const std::string& data, std::set<int>& r
     return true;
 }
 
+bool read_integer(std::string filePath, uint64_t& value)
+{
+    FILE* stream = fopen(filePath.c_str(), "r");
+    if (!stream)
+        return false; // file does not exist or not readable
+
+    value = 0;
+    fscanf(stream, "%lu", &value);
+    fclose(stream);
+
+    return true;
+}
+
 bool read_integers_with_range_validation(
     const std::string& filename, int lower_limit, int upper_limit, std::set<int>& cpus)
 {
@@ -262,19 +275,6 @@ bool read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<in
     return read_integers_with_range_validation(kernelPath + "/cpuset.cpus", 0, INT32_MAX, cpus);
 }
 
-uint64_t read_from_system_memory_limit_in_bytes_for_current_cgroup(std::string kernelPath)
-{
-    FILE* stream = fopen((kernelPath + "/memory.limit_in_bytes").c_str(), "r");
-    if (!stream)
-        return 0; // file does not exist or not readable
-
-    uint64_t ret = 0;
-    fscanf(stream, "%lu", &ret);
-    fclose(stream);
-
-    return ret;
-}
-
 template std::string stl_container2string(const std::set<int>& par, const std::string& delim);
 
 bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */)
@@ -358,7 +358,11 @@ void cgroup_init()
         return;
     }
 
-    cgroup_memory_limit_bytes = read_from_system_memory_limit_in_bytes_for_current_cgroup(cgroup_memory_kernel_path);
+    if (!read_integer(cgroup_memory_kernel_path + "/memory.limit_in_bytes", cgroup_memory_limit_bytes)) {
+	if (debug)
+	    printf("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+	return;
+    }
     if (!read_from_system_cpu_for_current_cgroup(cgroup_cpuset_kernel_path, cgroup_cpus)) {
         if (debug)
             printf("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
@@ -448,6 +452,10 @@ void cgroup_proc_memory()
         /*printf("read_data_numer(%s) |%s| |%s|=%lld\n", statname,label,numstr,atoll(numstr));*/
         plong(label, value);
     }
+    
+    if (read_integer(cgroup_memory_kernel_path + "/memory.failcnt", value))
+	    plong("failcnt", value);
+
     psectionend();
 }
 
