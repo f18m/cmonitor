@@ -2076,9 +2076,9 @@ void make_pid_file()
 		perror("open");
 		return; /* no file */
 	}
-	printf("write file descriptor=%d\n",fd);
+	//printf("write file descriptor=%d\n",fd);
 	sprintf(buffer, "%d \n", getpid() );
-	printf("write \"%s\"\n", buffer);
+	//printf("write \"%s\"\n", buffer);
 	if((ret = write(fd, buffer, strlen(buffer))) <=0)
 		printf("write failed ret=%d\n",ret);
 	close(fd);
@@ -2097,17 +2097,17 @@ void check_pid_file()
 		make_pid_file();
 		return; /* no file */
 	    }
-	    printf("file descriptor=%d\n",fd);
-		    printf("file exists and readable and opened\n");
+	    //printf("file descriptor=%d\n",fd);
+		    //printf("file exists and readable and opened\n");
 		        if(read(fd, buffer, 31) > 0) { /* has some data */
-				printf("file has some content\n");
+				//printf("file has some content\n");
 				buffer[31]=0;
 				if( sscanf(buffer, "%d", &pid) == 1) {
-					printf("read a pid from the file OK = %d\n",pid);
+					//printf("read a pid from the file OK = %d\n",pid);
 					ret = kill(pid, 0);
-					printf("kill %d, 0) = returned =%d\n",pid, ret);
+					//printf("kill %d, 0) = returned =%d\n",pid, ret);
 					if(ret == 0) {
-						printf("we have a njmon running - exit\n");
+						printf("There is already another njmon_collector running - exiting.\n");
 						exit(13);
 					}
 				}
@@ -2123,52 +2123,53 @@ void check_pid_file()
 void hint(char *program, char *version)
 {
 	FUNCTION_START;
-	printf("%s: help information. Version:%s\n\n", program,version);
-        printf("- Performance stats collector outputing JSON format. Default is stdout\n");
-        printf("- Core syntax:     %s -s seconds -c count\n", program);
-        printf("- JSON style:      -M  (default) or older style -S or -O\n");
-        printf("- File output:     -m directory -f\n");
+	printf("%s: help information. Version:%s\n", program,version);
+        printf("Performance stats collector outputting JSON format. Default is stdout.\n\n");
+        //printf("- Core syntax:     %s -s seconds -c count\n", program);
+//        printf("- JSON style:      -M  (default) or older style -S or -O\n");
+        //printf("- File output:     -m directory -f\n");
 #ifndef NOREMOTE
-        printf("- njmon collector output: -i host -p port -X secret\n");
+        //printf("- njmon collector output: -i host -p port -X secret\n");
 #endif /* NOREMOTE */
 /* not implemented yet printf("additional options: -P\n"); */
-        printf("- Other options: -?\n");
-        printf("\n");
+        printf("Data sampling options:\n");
         printf("\t-s seconds : seconds between snapshots of data (default 60 seconds)\n");
-        printf("\t-c count   : number of snapshots (default forever)\n\n");
+        printf("\t-c count   : number of snapshots (default forever)\n");
         //printf("\t-S         : Single level output format - section names form part of the value names\n");
         //printf("\t-M         : Multiple level output format - section & subsection names (default)\n");
 	//printf("\t-O         : Old Multiple level output format - like -M but identity before samples\n\n");
         printf("\t-m directory : Program will cd to the directory before output\n");
-        printf("\t-f         : Output to file (not stdout) to two files below\n");
+        printf("\t-f         : Output to file (default is stdout) named as follows\n");
         printf("\t           : Data:   hostname_<year><month><day>_<hour><minutes>.json\n");
         printf("\t           : Errors: hostname_<year><month><day>_<hour><minutes>.err\n");
-        printf("\t-k         : Read /tmp/njmon.pid for a running njmon PID & if found running then this copy exits\n");
+        printf("\t-k         : Allow a single instance to run on this system\n");
 /* not implemented yet printf("\t-P         : Also collect process stats (these can be large)\n"); */
-        printf("\t-?         : This output and stop\n");
-        printf("\t-d         : Switch on debugging\n");
-        printf("\t-C         : Switch on cgroup-aware mode\n");
+        printf("\t-C         : Collect cgroup-aware performance data (default: only baremetal)\n");
+        printf("\t-D         : Collect disk performance data (default: no)\n");
 #ifndef NOREMOTE
-	printf("Push data to collector: add -h hostname -p port\n");
+	printf("Remote data collection options:\n");
 	printf("\t-i ip      : IP address or hostname of the njmon central collector\n");
 	printf("\t-p port    : port number on collector host\n");
-	printf("\t-X         : Set the remote collector secret or use shell NJMON_SECRET\n");
+	printf("\t-X         : Set the remote collector secret (by default use environment variable NJMON_SECRET)\n");
 #endif /* NOREMOTE */
+	printf("Other options:\n");
+        printf("\t-d         : Switch on debugging mode (only for hacking this utility)\n");
+        printf("\t-h         : Provide this help message\n");
 
         printf("\n");
         printf("Examples:\n");
         printf("    1 Every 5 mins all day\n");
-        printf("\t/home/nag/njmon -s 300 -c 288 -f -m /home/perf\n");
-        printf("    2 Piping to data handler using half a day\n");
-        printf("\t/home/nag/njmon -s 30 -c 1440 | myprog\n");
+        printf("\tnjmon_collector -s 300 -c 288 -f -m /home/perf\n");
+        printf("    2 Piping to data handler using half a day of data\n");
+        printf("\tnjmon_collector -s 30 -c 1440 | myprog\n");
         printf("    3 Use the defaults (-s 60 forever) and save to a file \n");
-        printf("\t./njmon > my_server_today.json\n");
+        printf("\tnjmon_collector >my_server_today.json\n");
         printf("    4 Crontab entry\n");
-        printf("\t0 4 * * * /home/nag/njmon -s 300 -c 288 -f -m /home/perf\n");
-        printf("    5 Crontab - hourly check/restart remote njmon, pipe stats back & insert into local DB\n");
-        printf("\t* 0 * * * /usr/bin/ssh nigel@server /usr/lbin/njmon -s 300 -c 288 | /lbin/injector\n");
+        printf("\t0 4 * * * njmon_collector -s 300 -c 288 -f -m /home/perf\n");
+        //printf("    5 Crontab - hourly check/restart remote njmon, pipe stats back & insert into local DB\n");
+        //printf("\t* 0 * * * /usr/bin/ssh nigel@server /usr/bin/njmon_collector -s 300 -c 288 | /bin/injector\n");
         printf("    6 Crontab - for pumping data to the njmon central collector\n");
-        printf("\t* 0 * * * /usr/local/bin/njmon -s 300 -c 288 -i admin.acme.com -p 8181 -X SECRET42 \n");
+        printf("\t* 0 * * * /usr/bin/njmon_collector -s 300 -c 288 -i admin.acme.com -p 8181 -X SECRET42 \n");
         printf("\n");
         printf("NOTE: this is the cgroup-aware fork of original njmon software (https://github.com/f18m/nmon-cgroup-aware)\n");
 }
@@ -2203,6 +2204,7 @@ int main(int argc, char **argv)
 	pid_t 	childpid;
 	int   *crashptr = NULL;
 	int cgroup_mode = 0;
+	int disk_collect = 0;
 
 	FUNCTION_START;
 	s = getenv("NJMON_SECRET");
@@ -2274,6 +2276,9 @@ int main(int argc, char **argv)
 		break;
 	case 'C':
 		cgroup_mode = 1;
+		break;
+	case 'D':
+		disk_collect = 1;
 		break;
 	}
     }
@@ -2430,18 +2435,18 @@ int main(int argc, char **argv)
     }
 
     for (loop = 0; maxloops == -1 || loop < maxloops; loop++) {
-        psample();
+	psample();
 	if(loop != 0)
 		sleep(seconds);
 	/* calculate elapsed time to include sleep and data collection time */
 	previous_time = current_time;
 	gettimeofday(&tv, 0);
 	current_time = (double)tv.tv_sec + ((double)tv.tv_usec * 1.0e-6);
-        elapsed = current_time - previous_time;
+	elapsed = current_time - previous_time;
 
-                if(mode == ONE_LEVEL) {
-                        identity_and_njmon(argc, argv, VERSION);
-                }
+	if(mode == ONE_LEVEL) {
+		identity_and_njmon(argc, argv, VERSION);
+	}
 
 	date_time(seconds, loop, maxloops);
 
@@ -2471,15 +2476,18 @@ int main(int argc, char **argv)
 
 	read_data_number("meminfo");
 	read_data_number("vmstat");
-	proc_diskstats(elapsed,PRINT_TRUE);
 	proc_net_dev(elapsed,PRINT_TRUE);
 	//proc_uptime(); // not really useful!!
 	proc_loadavg();
-	filesystems();
-	read_lparcfg(elapsed);
-	sys_device_system_cpu(elapsed,PRINT_TRUE);
+	if (disk_collect)
+	{
+		proc_diskstats(elapsed,PRINT_TRUE);
+		filesystems();
+	}
+	//read_lparcfg(elapsed); // PowerPC thing apparently
+	//sys_device_system_cpu(elapsed,PRINT_TRUE); // another PowerPC thing apparently
 #ifndef NOGPFS
-	gpfs_data(elapsed);
+	//gpfs_data(elapsed); // IBM General Parallel File System
 #endif /* NOGPFS */
 
         DEBUG praw("Sample");

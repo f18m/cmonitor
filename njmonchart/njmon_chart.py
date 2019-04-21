@@ -276,9 +276,13 @@ def generate_config_js(jdata_first_sample):
     # ----- add config box 
     def configdump(section):
         newstr = '<h3>' + section + '</h3>\\\n'
-        thing = jdata_first_sample[section]
-        for label in thing:
-            newstr = newstr + "%20s = %s<br>\\\n" % (label, str(thing[label]))
+        newstr += '    <table>\\\n'
+        config_dict = jdata_first_sample[section]
+        for label in config_dict:
+            newstr += '    <tr>\\\n'
+            newstr += "    <td><b>%s</b></td><td>%s</td>\\\n" % (label.capitalize().replace("_", " "), str(config_dict[label]))
+            newstr += '    </tr>\\\n'
+        newstr += '    </table>\\\n'
         return newstr
     
     def sizeof_fmt(num, suffix='B'):
@@ -839,17 +843,16 @@ def main_process_file(cmd, infile, outfile):
     #    bubbleit(web, topprocs_title, topprocs,  'Top Processes Summary' + details, "TopSum")
     #    graphit(web, top_header, top_data,  'Top Procs by CPU time' + details, "TopProcs",unstacked)
   
-    # graphit(web, td_header, td_data,  'Top Disks (mbps)' + details, "TopDisks",unstacked)
-    # web.write(generate_disks(jdata))
     # generate_filesystems(web, jdata)
     
     monitoring_summary = [
         "Monitoring launched as: " + jdata_first_sample["njmon"]["njmon_command"],
         '<a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a>: ' + jdata_first_sample["njmon"]["njmon_version"],
-        "DateTime (Local): " + jdata_first_sample["timestamp"]["datetime"],
-        "DateTime (UTC): " + jdata_first_sample["timestamp"]["UTC"],
+        "Started sampling at: " + jdata_first_sample["timestamp"]["datetime"] + " (Local)",
+        "Started sampling at: " + jdata_first_sample["timestamp"]["UTC"] + " (UTC)",
         "Snapshots: " + str(len(jdata)),
         "Snapshot Interval (s): " + str(jdata_first_sample["timestamp"]["snapshot_seconds"]),
+        "Total time sampled (s): " + str(jdata_first_sample["timestamp"]["snapshot_seconds"] * len(jdata)),
         "User: " + jdata_first_sample["njmon"]["username"],
     ]
     monitored_summary = [

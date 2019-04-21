@@ -4,12 +4,15 @@
 
 # nmon-cgroup-aware
 
-Fork of Nigel's performance Monitor for Linux, adding cgroup-awareness. 
-Makes it easy to monitor your LXC/Docker container performances.
+Fork of Nigel's performance Monitor for Linux, adding cgroup-awareness.
+Cgroups (i.e. Linux Control Groups) are the basic technology used to create containers.
+This fork thus is aimed to monitoring your LXC/Docker container performances.
 
 NOTE: this is actually a fork of "njmon", not "nmon". 
 njmon provides no interactive mode (often useless inside containers!) and is a more modern tool that produces a 
 JSON output that can be used together with tools like [InfluxDB](https://www.influxdata.com/) and [Grafana](https://grafana.com/).
+
+This fork also aims at supporting mostly x86_64 architectures; support for AIX/PowerPC has been dropped.
 
 
 ## How to install
