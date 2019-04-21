@@ -315,189 +315,187 @@ def generate_config_js(jdata_first_sample):
     return config_str
 
 
-def generate_top20_procs(jdata):
-    # - - - Top 20 Processes
-    # Check if there are process stats in this njmon .json file as they are optional
-    start_processes = "unknown"
-    end_processes = "unknown"
-    try:
-        start_processes = len(jdata[0]["processes"])
-        end_processes = len(jdata[-1]["processes"])
-        process_data_found = True
-    except:
-        process_data_found = False
-    
-    if process_data_found:
-        top = {}  # start with empty dictionary
-        for sam in jdata:
-            for process in sam["processes"]:
-                entry = sam['processes'][process]
-                if entry['ucpu_time'] != 0.0 and entry['scpu_time'] != 0.0:
-                    # print("%20s pid=%d ucpu=%0.3f scpu=%0.3f mem=%0.3f io=%0.3f"%(entry['name'],entry['pid'],
-                    #        entry['ucpu_time'],entry['scpu_time'],
-                    #        entry['real_mem_data']+entry['real_mem_text'],
-                    #        entry['inBytes']+entry['outBytes']))
-                    try:  # update the current entry
-                        top[entry['name']]["cpu"] += entry['ucpu_time'] + entry['scpu_time']
-                        top[entry['name']]["io"] += entry['inBytes'] + entry['inBytes']
-                        top[entry['name']]["mem"] += entry['real_mem_data'] + entry['real_mem_text']
-                    except:  # no current entry so add one
-                        top.update({entry['name']: { "cpu": entry['ucpu_time'] + entry['scpu_time'],
-                                  "io": entry['inBytes'] + entry['outBytes'],
-                                  "mem": entry['real_mem_data'] + entry['real_mem_text']} })
-
-        def sort_key(d):
-            return top[d]['cpu']
-    
-        topprocs = ""
-        tops = []
-        for i, proc in enumerate(sorted(top, key=sort_key, reverse=True)):
-            p = top[proc]
-            # print("%20s cpu=%0.3f io=%0.3f mem=%0.3f"%(proc, p['cpu'],p['io'],p['mem']))
-            topprocs += ",['%s',%.1f,%.1f,'%s',%.1f]\n" % (proc, p['cpu'], p['io'], proc, p['mem'])
-            tops.append(proc)
-            if i >= 20:  # Only graph the top 20
-                break
-    
-        topprocs_title = "'Command', 'CPU seconds', 'CharIO', 'Type', 'Memory KB'"
-    
-        top_header = ""
-        for proc in tops:
-            top_header += "'" + proc + "',"
-        top_header = top_header[:-1]
-    
-        top_data = ""
-        for sam in jdata:
-            top_data += ",['Date(%s)'" % (googledate(sam['timestamp']['datetime']))
-            for item in tops:
-                bytes = 0
-                for proc in sam['processes']:
-                    p = sam['processes'][proc]
-                    if p['name'] == item:
-                        bytes += p['ucpu_time'] + p['scpu_time']
-                top_data += ", %.1f" % (bytes)
-            top_data += "]\n"
-        # print(top_header)
-        # print(top_data)
-    return (start_processes, end_processes, process_data_found)
-
-
-def generate_top20_disks(jdata):
-    tdisk = {}  # start with empty dictionary
-    for sam in jdata:
-            for disk in sam["disks"]:
-                entry = sam['disks'][disk]
-                bytes = entry['rkb'] + entry['wkb']
-                if bytes != 0:
-                    # print("disk=%s total bytes=%.1f"%(disk,bytes))
-                    try:  # update the current entry
-                        tdisk[entry[disk]] += bytes
-                    except:  # no current entry so add one
-                        tdisk.update({disk: bytes})
-
-    def sort_dkey(d):
-            return tdisk[d]
-    
-    topdisks = []
-    for i, disk in enumerate(sorted(tdisk, key=sort_dkey, reverse=True)):
-        d = tdisk[disk]
-        # print("disk=%s total bytes=%.1f"%(disk,bytes))
-        topdisks.append(disk)
-        if i >= 20:  # Only graph the top 20
-            break
-    # print(topdisks)
-    
-    td_header = ""
-    for disk in topdisks:
-        td_header += "'" + disk + "',"
-    td_header = td_header[:-1]
-    
-    td_data = ""
-    for sam in jdata:
-        td_data += ",['Date(%s)'" % (googledate(sam['timestamp']['datetime']))
-        for item in topdisks:
-            bytes = sam['disks'][item]['rkb'] + sam['disks'][item]['wkb']
-            td_data += ", %.1f" % (bytes)
-        td_data += "]\n"
-    # print(td_header)
-    # print(td_data)
-    return (tdisk, td_header, td_data)
+# def generate_top20_procs(jdata):
+#     # - - - Top 20 Processes
+#     # Check if there are process stats in this njmon .json file as they are optional
+#     start_processes = "unknown"
+#     end_processes = "unknown"
+#     try:
+#         start_processes = len(jdata[0]["processes"])
+#         end_processes = len(jdata[-1]["processes"])
+#         process_data_found = True
+#     except:
+#         process_data_found = False
+#     
+#     if process_data_found:
+#         top = {}  # start with empty dictionary
+#         for sam in jdata:
+#             for process in sam["processes"]:
+#                 entry = sam['processes'][process]
+#                 if entry['ucpu_time'] != 0.0 and entry['scpu_time'] != 0.0:
+#                     # print("%20s pid=%d ucpu=%0.3f scpu=%0.3f mem=%0.3f io=%0.3f"%(entry['name'],entry['pid'],
+#                     #        entry['ucpu_time'],entry['scpu_time'],
+#                     #        entry['real_mem_data']+entry['real_mem_text'],
+#                     #        entry['inBytes']+entry['outBytes']))
+#                     try:  # update the current entry
+#                         top[entry['name']]["cpu"] += entry['ucpu_time'] + entry['scpu_time']
+#                         top[entry['name']]["io"] += entry['inBytes'] + entry['inBytes']
+#                         top[entry['name']]["mem"] += entry['real_mem_data'] + entry['real_mem_text']
+#                     except:  # no current entry so add one
+#                         top.update({entry['name']: { "cpu": entry['ucpu_time'] + entry['scpu_time'],
+#                                   "io": entry['inBytes'] + entry['outBytes'],
+#                                   "mem": entry['real_mem_data'] + entry['real_mem_text']} })
+# 
+#         def sort_key(d):
+#             return top[d]['cpu']
+#     
+#         topprocs = ""
+#         tops = []
+#         for i, proc in enumerate(sorted(top, key=sort_key, reverse=True)):
+#             p = top[proc]
+#             # print("%20s cpu=%0.3f io=%0.3f mem=%0.3f"%(proc, p['cpu'],p['io'],p['mem']))
+#             topprocs += ",['%s',%.1f,%.1f,'%s',%.1f]\n" % (proc, p['cpu'], p['io'], proc, p['mem'])
+#             tops.append(proc)
+#             if i >= 20:  # Only graph the top 20
+#                 break
+#     
+#         topprocs_title = "'Command', 'CPU seconds', 'CharIO', 'Type', 'Memory KB'"
+#     
+#         top_header = ""
+#         for proc in tops:
+#             top_header += "'" + proc + "',"
+#         top_header = top_header[:-1]
+#     
+#         top_data = ""
+#         for sam in jdata:
+#             top_data += ",['Date(%s)'" % (googledate(sam['timestamp']['datetime']))
+#             for item in tops:
+#                 bytes = 0
+#                 for proc in sam['processes']:
+#                     p = sam['processes'][proc]
+#                     if p['name'] == item:
+#                         bytes += p['ucpu_time'] + p['scpu_time']
+#                 top_data += ", %.1f" % (bytes)
+#             top_data += "]\n"
+#         # print(top_header)
+#         # print(top_data)
+#     return (start_processes, end_processes, process_data_found)
 
 
-def generate_disks(web, jdata):
-    global g_graphs
-    # - - - Disks
-    dstr = ""
-    for device in jdata[0]["disks"].keys():
-        dstr = dstr + "'" + device + "',"
-    dstr = dstr[:-1]
-    nchart_start_js_line_graph(web, dstr)
-    for i, s in enumerate(jdata):
-        if i == 0:
-            continue
-        web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
-        for device in s["disks"].keys():
-            web.write(",%.1f" % (s["disks"][device]["time"]))
-        web.write("]\n")
-    nchart_end_js_line_graph(web, 'Disk Time')
-    g_graphs.append("Disk-Time")
-    
-    dstr = ""
-    for device in jdata[0]["disks"].keys():
-        dstr = dstr + "'" + device + "+read','" + device + "-write',"
-    dstr = dstr[:-1]
-    nchart_start_js_line_graph(web, dstr)
-    for i, s in enumerate(jdata):
-        if i == 0:
-            continue
-        web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
-        for device in s["disks"].keys():
-            web.write(",%.1f,%.1f" % (
-                     s["disks"][device]["rkb"],
-                    -s["disks"][device]["wkb"]))
-        web.write("]\n")
-    nchart_end_js_line_graph(web, 'Disks MB/s')
-    g_graphs.append("Disk-MB")
-    
-    dstr = ""
-    for device in jdata[0]["disks"].keys():
-        dstr = dstr + "'" + device + "+read','" + device + "-write',"
-    dstr = dstr[:-1]
-    nchart_start_js_line_graph(web, dstr)
-    for i, s in enumerate(jdata):
-        if i == 0:
-            continue
-        web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
-        for device in s["disks"].keys():
-            web.write(",%.1f,%.1f " % (
-                     s["disks"][device]["reads"],
-                    -s["disks"][device]["writes"]))
-        web.write("]\n")
-    nchart_end_js_line_graph(web, 'Disk blocks/s')
-    g_graphs.append("Disk-blocks")
-    return web
+# def generate_top20_disks(jdata):
+#     tdisk = {}  # start with empty dictionary
+#     for sam in jdata:
+#             for disk in sam["disks"]:
+#                 entry = sam['disks'][disk]
+#                 bytes = entry['rkb'] + entry['wkb']
+#                 if bytes != 0:
+#                     # print("disk=%s total bytes=%.1f"%(disk,bytes))
+#                     try:  # update the current entry
+#                         tdisk[entry[disk]] += bytes
+#                     except:  # no current entry so add one
+#                         tdisk.update({disk: bytes})
+# 
+#     def sort_dkey(d):
+#             return tdisk[d]
+#     
+#     topdisks = []
+#     for i, disk in enumerate(sorted(tdisk, key=sort_dkey, reverse=True)):
+#         d = tdisk[disk]
+#         # print("disk=%s total bytes=%.1f"%(disk,bytes))
+#         topdisks.append(disk)
+#         if i >= 20:  # Only graph the top 20
+#             break
+#     # print(topdisks)
+#     
+#     td_header = ""
+#     for disk in topdisks:
+#         td_header += "'" + disk + "',"
+#     td_header = td_header[:-1]
+#     
+#     td_data = ""
+#     for sam in jdata:
+#         td_data += ",['Date(%s)'" % (googledate(sam['timestamp']['datetime']))
+#         for item in topdisks:
+#             bytes = sam['disks'][item]['rkb'] + sam['disks'][item]['wkb']
+#             td_data += ", %.1f" % (bytes)
+#         td_data += "]\n"
+#     # print(td_header)
+#     # print(td_data)
+#     return (tdisk, td_header, td_data)
 
 
-def generate_filesystems(web, jdata):
-    global g_graphs
-    fsstr = ""
-    for fs in jdata[0]["filesystems"].keys():
-        fsstr = fsstr + "'" + fs + "',"
-    fsstr = fsstr[:-1]
-    nchart_start_js_line_graph(web, fsstr)
-    for i, s in enumerate(jdata):
-        web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
-        for fs in s["filesystems"].keys():
-            web.write(", %.1f" % (s["filesystems"][fs]["fs_full_percent"]))
-        web.write("]\n")
-    nchart_end_js_line_graph(web, 'File Systems Used percent')
-    g_graphs.append("File Systems")
-    return web
+# def generate_disks(web, jdata):
+#     global g_graphs
+#     # - - - Disks
+#     dstr = ""
+#     for device in jdata[0]["disks"].keys():
+#         dstr = dstr + "'" + device + "',"
+#     dstr = dstr[:-1]
+#     nchart_start_js_line_graph(web, dstr)
+#     for i, s in enumerate(jdata):
+#         if i == 0:
+#             continue
+#         web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
+#         for device in s["disks"].keys():
+#             web.write(",%.1f" % (s["disks"][device]["time"]))
+#         web.write("]\n")
+#     nchart_end_js_line_graph(web, 'Disk Time')
+#     g_graphs.append("Disk-Time")
+#     
+#     dstr = ""
+#     for device in jdata[0]["disks"].keys():
+#         dstr = dstr + "'" + device + "+read','" + device + "-write',"
+#     dstr = dstr[:-1]
+#     nchart_start_js_line_graph(web, dstr)
+#     for i, s in enumerate(jdata):
+#         if i == 0:
+#             continue
+#         web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
+#         for device in s["disks"].keys():
+#             web.write(",%.1f,%.1f" % (
+#                      s["disks"][device]["rkb"],
+#                     -s["disks"][device]["wkb"]))
+#         web.write("]\n")
+#     nchart_end_js_line_graph(web, 'Disks MB/s')
+#     g_graphs.append("Disk-MB")
+#     
+#     dstr = ""
+#     for device in jdata[0]["disks"].keys():
+#         dstr = dstr + "'" + device + "+read','" + device + "-write',"
+#     dstr = dstr[:-1]
+#     nchart_start_js_line_graph(web, dstr)
+#     for i, s in enumerate(jdata):
+#         if i == 0:
+#             continue
+#         web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
+#         for device in s["disks"].keys():
+#             web.write(",%.1f,%.1f " % (
+#                      s["disks"][device]["reads"],
+#                     -s["disks"][device]["writes"]))
+#         web.write("]\n")
+#     nchart_end_js_line_graph(web, 'Disk blocks/s')
+#     g_graphs.append("Disk-blocks")
+#     return web
+
+
+# def generate_filesystems(web, jdata):
+#     global g_graphs
+#     fsstr = ""
+#     for fs in jdata[0]["filesystems"].keys():
+#         fsstr = fsstr + "'" + fs + "',"
+#     fsstr = fsstr[:-1]
+#     nchart_start_js_line_graph(web, fsstr)
+#     for i, s in enumerate(jdata):
+#         web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
+#         for fs in s["filesystems"].keys():
+#             web.write(", %.1f" % (s["filesystems"][fs]["fs_full_percent"]))
+#         web.write("]\n")
+#     nchart_end_js_line_graph(web, 'File Systems Used percent')
+#     g_graphs.append("File Systems")
+#     return web
 
 
 def generate_network_traffic(web, jdata, hostname):
-    global g_graphs
-    
     netcols = ['Timestamp']
     for device in jdata[0]["network_interfaces"].keys():
         netcols.append(str(device) + "+in")
