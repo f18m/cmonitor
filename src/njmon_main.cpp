@@ -171,7 +171,8 @@ void LogError(const char* line, ...)
 
 void NjmonCollectorApp::print_help()
 {
-    static_assert(sizeof(opts_extended) / sizeof(opts_extended[0]) == sizeof(opts) / sizeof(opts[0]));
+    static_assert(sizeof(opts_extended) / sizeof(opts_extended[0]) == sizeof(opts) / sizeof(opts[0]),
+        "Mismatching number of options");
 
     std::cerr << "njmon_collector: Performance stats collector outputting JSON format." << std::endl;
     std::cerr << "List of arguments that can be provided follows:" << std::endl;
