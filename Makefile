@@ -49,9 +49,8 @@ generate_patch:
 	diff -U3 -w src-orig/njmon_linux_v22.c src/njmon_linux_v22.c > src-orig/cgroup.patch || true
 
 examples:
-	for jsonExample in examples/*.json; do \
-		njmonchart/njmon_chart.py $$jsonExample ; \
-	done
+	$(MAKE) -C examples all
+
 
 
 #

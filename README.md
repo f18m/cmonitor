@@ -22,7 +22,7 @@ based on a Centos/RHEL/Fedora distribution you can log into the container and ru
 
 ```
 yum install -y yum-plugin-copr
-yum copr enable f18m/nmon-cgroup-aware
+yum copr enable -y f18m/nmon-cgroup-aware
 yum install -y nmon-cgroup-aware
 ```
 

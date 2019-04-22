@@ -19,6 +19,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "njmon.h"
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
@@ -309,36 +310,23 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
 }
 
 // ----------------------------------------------------------------------------------
-// C functions used by the njmon engine
+// NjmonCollectorApp - Functions used by the njmon engine
 // ----------------------------------------------------------------------------------
-
-extern "C" {
 
 // GLOBALS
 
-int cgroup_found = 0;
 uint64_t cgroup_memory_limit_bytes = 0;
 std::string cgroup_memory_kernel_path;
 std::string cgroup_cpuacct_kernel_path;
 std::string cgroup_cpuset_kernel_path;
 std::set<int> cgroup_cpus;
-
-// STUFF DEFINED IN ORIGINAL NJMON SOURCE CODE:
-
-extern int debug;
-extern void psection(const char* section);
-extern void psub(const char* resource);
-extern void plong(const char* name, long long value);
-extern void pdouble(const char* name, double value);
-extern void pstring(const char* name, const char* value);
-extern void psubend();
-extern void psectionend();
+int debug = 0;
 
 // FUNCTIONS
 
-void cgroup_init()
+void NjmonCollectorApp::cgroup_init()
 {
-    cgroup_found = 0;
+    m_bCGroupsFound = 0;
 
     if (!get_cgroup_path_for_pid("memory", cgroup_memory_kernel_path)) {
         if (debug)
@@ -359,9 +347,9 @@ void cgroup_init()
     }
 
     if (!read_integer(cgroup_memory_kernel_path + "/memory.limit_in_bytes", cgroup_memory_limit_bytes)) {
-	if (debug)
-	    printf("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
-	return;
+        if (debug)
+            printf("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        return;
     }
     if (!read_from_system_cpu_for_current_cgroup(cgroup_cpuset_kernel_path, cgroup_cpus)) {
         if (debug)
@@ -375,16 +363,16 @@ void cgroup_init()
     }
 
     // cpuset and memory cgroups found:
-    cgroup_found = 1;
+    m_bCGroupsFound = 1;
     if (debug) {
         printf("Found cpuset cgroup limiting to CPUs: %s\n", stl_container2string(cgroup_cpus, ",").c_str());
         printf("Found memory cgroup limiting to Bytes: %lu\n", cgroup_memory_limit_bytes);
     }
 }
 
-void cgroup_config()
+void NjmonCollectorApp::cgroup_config()
 {
-    if (cgroup_found == 0)
+    if (m_bCGroupsFound == 0)
         return;
 
     psection("cgroup_config");
@@ -398,16 +386,16 @@ void cgroup_config()
     psectionend();
 }
 
-int cgroup_is_allowed_cpu(int cpu)
+int NjmonCollectorApp::cgroup_is_allowed_cpu(int cpu)
 {
-    if (cgroup_found == 0)
+    if (m_bCGroupsFound == 0)
         return 1; // allowed
     return cgroup_cpus.find(cpu) != cgroup_cpus.end();
 }
 
-void cgroup_proc_memory()
+void NjmonCollectorApp::cgroup_proc_memory()
 {
-    if (cgroup_found == 0)
+    if (m_bCGroupsFound == 0)
         return;
 
     // See
@@ -452,16 +440,16 @@ void cgroup_proc_memory()
         /*printf("read_data_numer(%s) |%s| |%s|=%lld\n", statname,label,numstr,atoll(numstr));*/
         plong(label, value);
     }
-    
+
     if (read_integer(cgroup_memory_kernel_path + "/memory.failcnt", value))
-	    plong("failcnt", value);
+        plong("failcnt", value);
 
     psectionend();
 }
 
-void cgroup_proc_cpuacct(double elapsed_sec)
+void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec)
 {
-    if (cgroup_found == 0 || elapsed_sec < 0.1)
+    if (m_bCGroupsFound == 0 || elapsed_sec < 0.1)
         return;
 
     /* NOTE: newer distros have stats like
@@ -579,5 +567,3 @@ void cgroup_proc_cpuacct(double elapsed_sec)
         psectionend();
     }
 }
-
-} // extern C section

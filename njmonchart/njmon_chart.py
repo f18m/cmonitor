@@ -9,6 +9,7 @@
 #
 
 import sys
+import json
 
 # =======================================================================================================
 # CONSTANTS
@@ -212,7 +213,7 @@ def nchart_start_html_body(file, hostname):
 
     
 def nchart_append_html_table(file, name, summary):
-    file.write('  <div id="bottom_table">\n')
+    file.write('  <div id="bottom_div">\n')
     file.write('    <h3>' + name + '</h3>\n')
     file.write('    <table>\n')
     file.write('    <tr><td><ul>\n')
@@ -799,7 +800,6 @@ def main_process_file(cmd, infile, outfile):
         text = text[:-2] + "\n ]\n}\n"
     
     # Convert the text to json and extract the stats
-    import json
     entry = []
     entry = json.loads(text)  # convert text to JSON
     jdata = entry["samples"]  # removes outer parts so we have a list of snapshot dictionaries

@@ -6,5 +6,6 @@ addons:
   apt:
     packages:
     - valgrind
+    - python3
 
-script: make
+script: make && make examples
