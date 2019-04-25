@@ -212,10 +212,10 @@ bool read_integer(std::string filePath, uint64_t& value)
         return false; // file does not exist or not readable
 
     value = 0;
-    fscanf(stream, "%lu", &value);
+    bool bRet = fscanf(stream, "%lu", &value) == 1;
     fclose(stream);
 
-    return true;
+    return bRet;
 }
 
 bool read_integers_with_range_validation(
@@ -226,8 +226,11 @@ bool read_integers_with_range_validation(
         return false; // file does not exist, try next path
 
     char buffer[256] = "";
-    fscanf(stream, "%255s", buffer);
+    bool bRet = fscanf(stream, "%255s", buffer) == 1;
     fclose(stream);
+
+    if (!bRet)
+        return false;
 
     if (!parse_string_with_multiple_ranges(buffer, cpus))
         return false; // invalid content format??
