@@ -48,7 +48,7 @@
 
 #define PID_FILE "/var/run/njmon.pid"
 
-#define ADDITIONAL_HELP_COLUMN_START (30)
+#define ADDITIONAL_HELP_COLUMN_START (40)
 
 #define DEBUGLOG_FUNCTION_START()                                                                                      \
     if (g_cfg.m_bDebug)                                                                                                \
@@ -62,7 +62,7 @@ NjmonCollectorApp g_app;
 // Command Line Globals
 //------------------------------------------------------------------------------
 
-struct option opts[] = {
+struct option g_long_opts[] = {
     // Data sampling options
     { "sampling-interval", required_argument, 0, 's' }, // force newline
     { "num-samples", required_argument, 0, 'c' }, // force newline
@@ -78,6 +78,7 @@ struct option opts[] = {
     { "remote-secret", required_argument, 0, 'X' }, // force newline
 
     // help
+    { "debug", no_argument, 0, 'd' }, // force newline
     { "help", no_argument, 0, 'h' }, // force newline
     { 0, 0, 0, 0 }
 };
@@ -86,27 +87,30 @@ struct option_extended {
     const char* section_name;
     struct option* opt_descriptor;
     const char* additional_help;
-} const opts_extended[] = {
+} const g_opts_extended[] = {
     // Data sampling options
-    { "Data sampling options", &opts[0], "Seconds between snapshots of data (default 60 seconds)." },
-    { "Data sampling options", &opts[1], "Number of snapshots (default forever)." },
-    { "Data sampling options", &opts[2], "Program will write output files to provided directory (default cwd)." },
-    { "Data sampling options", &opts[3],
-        "Name the output file as provided instead of defaulting to the filenames:\n"
-        "\t\tData:   hostname_<year><month><day>_<hour><minutes>.json\n"
-        "\t\tErrors: hostname_<year><month><day>_<hour><minutes>.err\n" },
-    { "Data sampling options", &opts[4], "Allow multiple instances of njmon_collector to run on this system." },
-    { "Data sampling options", &opts[5], "Collect specified list of performance KPIs (TODO WIP)." },
-    { "Data sampling options", &opts[6], "Stay in foreground." },
+    { "Data sampling options", &g_long_opts[0], "Seconds between snapshots of data (default 60 seconds)." },
+    { "Data sampling options", &g_long_opts[1], "Number of snapshots; special value 0 means forever (default is 0)." },
+    { "Data sampling options", &g_long_opts[2],
+        "Program will write output files to provided directory (default cwd)." },
+    { "Data sampling options", &g_long_opts[3],
+        "Name the output files using provided prefix instead of defaulting to the filenames:\n"
+        "\thostname_<year><month><day>_<hour><minutes>.json  (for JSON data)\n"
+        "\thostname_<year><month><day>_<hour><minutes>.err   (for error log)\n"
+        "Use special prefix 'stdout' to indicate that you want the utility to write on stdout." },
+    { "Data sampling options", &g_long_opts[4], "Allow multiple instances of njmon_collector to run on this system." },
+    { "Data sampling options", &g_long_opts[5], "Collect specified list of performance KPIs (TODO WIP)." },
+    { "Data sampling options", &g_long_opts[6], "Stay in foreground." },
 
     // Remote data collection options
-    { "Remote data collection options", &opts[7], "IP address or hostname of the njmon central collector." },
-    { "Remote data collection options", &opts[8], "Port number on collector host." },
-    { "Remote data collection options", &opts[9],
+    { "Remote data collection options", &g_long_opts[7], "IP address or hostname of the njmon central collector." },
+    { "Remote data collection options", &g_long_opts[8], "Port number on collector host." },
+    { "Remote data collection options", &g_long_opts[9],
         "Set the remote collector secret (by default use environment variable NJMON_SECRET)." },
 
     // help
-    { "Other options", &opts[10], "Show this help" },
+    { "Other options", &g_long_opts[10], "Enable debug mode" }, // force newline
+    { "Other options", &g_long_opts[11], "Show this help" },
 
     { NULL, NULL, NULL }
 };
@@ -172,7 +176,7 @@ void LogError(const char* line, ...)
 
 void NjmonCollectorApp::print_help()
 {
-    static_assert(sizeof(opts_extended) / sizeof(opts_extended[0]) == sizeof(opts) / sizeof(opts[0]),
+    static_assert(sizeof(g_opts_extended) / sizeof(g_opts_extended[0]) == sizeof(g_long_opts) / sizeof(g_long_opts[0]),
         "Mismatching number of options");
 
     std::cerr << "njmon_collector: Performance stats collector outputting JSON format." << std::endl;
@@ -181,17 +185,20 @@ void NjmonCollectorApp::print_help()
 
     std::string last_sec_name;
     for (int i = 0;; i++) {
-        const struct option* opt = opts_extended[i].opt_descriptor;
+        const struct option* opt = g_opts_extended[i].opt_descriptor;
         if (!opt)
             break;
 
-        if (opts_extended[i].section_name != last_sec_name) {
-            std::cerr << opts_extended[i].section_name << std::endl;
-            last_sec_name = opts_extended[i].section_name;
+        if (g_opts_extended[i].section_name != last_sec_name) {
+            std::cerr << g_opts_extended[i].section_name << std::endl;
+            last_sec_name = g_opts_extended[i].section_name;
         }
 
         std::stringstream help;
-        help << "  --" << opt->name;
+
+        // to keep things we have that the
+        //     short option char == value of struct option::val field
+        help << "  -" << (char)opt->val << ", --" << opt->name;
 
         switch (opt->has_arg) {
         case no_argument:
@@ -209,24 +216,25 @@ void NjmonCollectorApp::print_help()
         if (currlen < ADDITIONAL_HELP_COLUMN_START)
             help << std::string(ADDITIONAL_HELP_COLUMN_START - currlen, ' ');
 
-        std::string additional_help(opts_extended[i].additional_help);
+        std::string additional_help(g_opts_extended[i].additional_help);
+        ReplaceString(
+            additional_help, "\n", "\n" + std::string(ADDITIONAL_HELP_COLUMN_START, ' '), true /*all occurrences*/);
         std::cerr << help.str() << additional_help << std::endl;
     }
 
     std::cerr << "" << std::endl;
     std::cerr << "Examples:" << std::endl;
-    std::cerr << "    1 Every 5 mins all day" << std::endl;
-    std::cerr << "\tnjmon_collector -s 300 -c 288 -f -m /home/perf" << std::endl;
-    std::cerr << "    2 Piping to data handler using half a day of data" << std::endl;
-    std::cerr << "\tnjmon_collector -s 30 -c 1440 | myprog" << std::endl;
-    std::cerr << "    3 Use the defaults (-s 60 forever) and save to a file " << std::endl;
-    std::cerr << "\tnjmon_collector >my_server_today.json" << std::endl;
-    std::cerr << "    4 Crontab entry" << std::endl;
-    std::cerr << "\t0 4 * * * njmon_collector -s 300 -c 288 -f -m /home/perf" << std::endl;
-    // std::cerr << "    5 Crontab - hourly check/restart remote njmon, pipe stats back & insert into local DB" <<
-    // std::endl; std::cerr << "\t* 0 * * * /usr/bin/ssh nigel@server /usr/bin/njmon_collector -s 300 -c 288 |
-    // /bin/injector" << std::endl;
-    std::cerr << "    6 Crontab - for pumping data to the njmon central collector" << std::endl;
+    std::cerr << "    1) Collect data every 5 mins all day:" << std::endl;
+    std::cerr << "\tnjmon_collector -s 300 -c 288 -m /home/perf" << std::endl;
+    std::cerr << "    2) Pipe to data handler using half a day of data:" << std::endl;
+    std::cerr
+        << "\tnjmon_collector --sampling-interval=30 --num-samples=1440 --output-filename=stdout --foreground | myprog"
+        << std::endl;
+    std::cerr << "    3) Use the defaults (-s 60, collect forever), saving to custom file in background:" << std::endl;
+    std::cerr << "\tnjmon_collector --output-filename=my_server_today" << std::endl;
+    std::cerr << "    4) Crontab entry:" << std::endl;
+    std::cerr << "\t0 4 * * * /usr/bin/njmon_collector -s 300 -c 288 -m /home/perf" << std::endl;
+    std::cerr << "    5) Crontab entry for pumping data to the njmon central collector:" << std::endl;
     std::cerr << "\t* 0 * * * /usr/bin/njmon_collector -s 300 -c 288 -i admin.acme.com -p 8181 -X SECRET42 "
               << std::endl;
     std::cerr << "" << std::endl;
@@ -249,13 +257,28 @@ void NjmonCollectorApp::init_defaults()
     char filename[1024];
     sprintf(filename, "%s_%02d%02d%02d_%02d%02d", m_strShortHostname.c_str(), tim->tm_year, tim->tm_mon, tim->tm_mday,
         tim->tm_hour, tim->tm_min);
-    g_cfg.m_strOutputFilename = filename;
+    g_cfg.m_strOutputFilenamePrefix = filename;
 }
 
 void NjmonCollectorApp::parse_args(int argc, char** argv)
 {
+    // assemble the string of short options by the long options:
+    // to keep things we have that the
+    //     short option char == value of struct option::val field
+    std::string short_opts;
+    for (size_t i = 0; i < sizeof(g_long_opts) / sizeof(g_long_opts[0]); i++) {
+        if (!g_long_opts[i].val)
+            continue;
+
+        short_opts += (char)g_long_opts[i].val;
+        if (g_long_opts[i].has_arg == required_argument)
+            short_opts += ':';
+        else if (g_long_opts[i].has_arg == optional_argument)
+            short_opts += "::";
+    }
+
     while (true) {
-        int c = getopt_long(argc, argv, "", opts, 0);
+        int c = getopt_long(argc, argv, short_opts.c_str(), g_long_opts, 0);
         if (c < 0)
             break;
         else {
@@ -271,7 +294,7 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
                 g_cfg.m_strOutputDir = optarg;
                 break;
             case 'f':
-                g_cfg.m_strOutputFilename = optarg;
+                g_cfg.m_strOutputFilenamePrefix = optarg;
                 break;
             case 'k':
                 g_cfg.m_bAllowMultipleInstances = true;
@@ -295,6 +318,9 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
                 break;
 
             // help
+            case 'd':
+                g_cfg.m_bDebug = true;
+                break;
             case 'h':
                 print_help();
                 break;
@@ -358,7 +384,7 @@ void NjmonCollectorApp::get_utc()
     tim->tm_mon += 1; /* because it is 0 to 11 */
 }
 
-void NjmonCollectorApp::date_time(long seconds, long loop, long maxloops)
+void NjmonCollectorApp::date_time(long loop)
 {
     char buffer[256];
 
@@ -374,8 +400,6 @@ void NjmonCollectorApp::date_time(long seconds, long loop, long maxloops)
     sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
         tim->tm_sec);
     pstring("UTC", buffer);
-    plong("snapshot_seconds", seconds);
-    plong("snapshot_maxloops", maxloops);
     plong("snapshot_loop", loop);
     psectionend();
 }
@@ -395,7 +419,10 @@ void NjmonCollectorApp::check_pid_file()
     int pid_file = open(PID_FILE, O_CREAT | O_RDWR, 0666);
     int rc = flock(pid_file, LOCK_EX | LOCK_NB);
     if (rc && EWOULDBLOCK == errno) {
-        fprintf(stderr, "%s: another instance is already running...aborting.\n", PID_FILE);
+        fprintf(stderr,
+            "%s: another instance is already running... aborting. Use --allow-multiple-instances in case you actually "
+            "want to run multiple instances.\n",
+            PID_FILE);
         exit(-1);
     }
     // else: this is the first instance of this software... continue
@@ -416,7 +443,7 @@ void NjmonCollectorApp::file_read_one_stat(const char* file, const char* name)
     }
 }
 
-void NjmonCollectorApp::identity_and_njmon(int argc, char** argv)
+void NjmonCollectorApp::identity()
 {
     int i;
 
@@ -425,10 +452,6 @@ void NjmonCollectorApp::identity_and_njmon(int argc, char** argv)
     struct addrinfo hints;
     struct addrinfo* info;
     struct addrinfo* p;
-
-    /* user name and id */
-    struct passwd* pw;
-    uid_t uid;
 
     /* network IP addresses */
     struct ifaddrs* interfaces = NULL;
@@ -508,19 +531,28 @@ void NjmonCollectorApp::identity_and_njmon(int argc, char** argv)
         file_read_one_stat("/sys/devices/virtual/dmi/id/sys_vendor", "vendor");
     }
     psectionend();
+}
+
+void NjmonCollectorApp::njmon_info(int argc, char** argv, long sampling_interval_sec, long num_samples)
+{
+    /* user name and id */
+    struct passwd* pw;
+    uid_t uid;
 
     psection("njmon");
-    {
-        char command[1024] = { 0 };
-        for (i = 0; i < argc; i++) {
-            strcat(command, argv[i]);
-            if (i != argc - 1)
-                strcat(command, " ");
-        }
 
-        pstring("njmon_command", command);
+    char command[1024] = { 0 };
+    for (int i = 0; i < argc; i++) {
+        strcat(command, argv[i]);
+        if (i != argc - 1)
+            strcat(command, " ");
     }
+
+    pstring("njmon_command", command);
+    plong("sample_interval_seconds", sampling_interval_sec);
+    plong("sample_num", num_samples);
     pstring("njmon_version", VERSION_STRING);
+
     uid = geteuid();
     if ((pw = getpwuid(uid)) != NULL) {
         pstring("username", pw->pw_name);
@@ -582,25 +614,37 @@ int NjmonCollectorApp::run(int argc, char** argv)
         }
     }
 
-    // open output files
-    char filename[1024];
-    sprintf(filename, "%s.json", g_cfg.m_strOutputFilename.c_str());
-    if ((m_outputJson = fopen(filename, "w")) == 0) {
-        perror("opening file for stdout");
-        fprintf(stderr, "ERROR nmon filename=%s\n", filename);
-        exit(13);
+    if (g_cfg.m_strOutputFilenamePrefix == "stdout") {
+        // open stdout/stderr as FILE*
+        if ((m_outputJson = fdopen(STDOUT_FILENO, "w")) == 0) {
+            perror("opening stdout for write");
+            exit(13);
+        }
+        if ((m_outputErr = fdopen(STDERR_FILENO, "w")) == 0) {
+            perror("opening stderr for write");
+            exit(13);
+        }
+    } else {
+        // open output files
+        char filename[1024];
+        sprintf(filename, "%s.json", g_cfg.m_strOutputFilenamePrefix.c_str());
+        if ((m_outputJson = fopen(filename, "w")) == 0) {
+            perror("opening file for stdout");
+            fprintf(stderr, "ERROR nmon filename=%s\n", filename);
+            exit(13);
+        }
+
+        printf("Opened output JSON file '%s'\n", filename);
+
+        sprintf(filename, "%s.err", g_cfg.m_strOutputFilenamePrefix.c_str());
+        if ((m_outputErr = fopen(filename, "w")) == 0) {
+            perror("opening file for stderr");
+            fprintf(stderr, "ERROR nmon filename=%s\n", filename);
+            exit(14);
+        }
+
+        printf("Opened output error file '%s'\n", filename);
     }
-
-    printf("Opened output JSON file '%s'\n", filename);
-
-    sprintf(filename, "%s.err", g_cfg.m_strOutputFilename.c_str());
-    if ((m_outputErr = fopen(filename, "w")) == 0) {
-        perror("opening file for stderr");
-        fprintf(stderr, "ERROR nmon filename=%s\n", filename);
-        exit(14);
-    }
-
-    printf("Opened output error file '%s'\n", filename);
 
     fflush(NULL);
 
@@ -639,7 +683,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
     }
 #endif
 
-    /* seed incrementing counters */
+    // init incremental stats (don't write yet anything!)
     proc_stat(0, PRINT_FALSE);
     proc_diskstats(0, PRINT_FALSE);
     proc_net_dev(0, PRINT_FALSE);
@@ -648,7 +692,6 @@ int NjmonCollectorApp::run(int argc, char** argv)
 
     struct timeval tv;
     gettimeofday(&tv, 0);
-
     double current_time = (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
 
     /* first time just sleep(1) so the first snapshot has some real-ish data */
@@ -659,9 +702,21 @@ int NjmonCollectorApp::run(int argc, char** argv)
 
     /* pre-amble */
     pstart();
-    praw("  \"samples\": [\n");
 
-    unsigned int seconds = 0;
+    // write stuff that is present only in the very first sample (never changes):
+    praw("  \"header\": {\n");
+    identity();
+    njmon_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples);
+    etc_os_release();
+    proc_version();
+    lscpu();
+    if (g_cfg.m_nCollectFlags & PK_CGROUPS)
+        cgroup_config();
+    remove_ending_comma_if_any();
+    praw("  },\n");
+
+    // start actual data samples:
+    praw("  \"samples\": [\n");
     for (unsigned int loop = 0; g_cfg.m_nSamples == 0 || loop < g_cfg.m_nSamples; loop++) {
         psample();
         if (loop != 0)
@@ -673,18 +728,8 @@ int NjmonCollectorApp::run(int argc, char** argv)
         current_time = (double)tv.tv_sec + ((double)tv.tv_usec * 1.0e-6);
         double elapsed = current_time - previous_time;
 
-        date_time(seconds, loop, g_cfg.m_nSamples);
-
-        if (loop == 0) {
-            identity_and_njmon(argc, argv);
-            etc_os_release();
-            proc_version();
-            lscpu();
-            if (g_cfg.m_nCollectFlags & PK_CGROUPS)
-                cgroup_config();
-        }
-        // else: avoid repeating stats that will never change!
-
+        // some stats are always collected, regardless of g_cfg.m_nCollectFlags
+        date_time(loop);
         proc_stat(elapsed, PRINT_TRUE);
         // proc_uptime(); // not really useful!!
         proc_loadavg();

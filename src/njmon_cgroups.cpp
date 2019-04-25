@@ -42,6 +42,32 @@
 // C++ Helper functions
 // ----------------------------------------------------------------------------------
 
+unsigned int ReplaceString(std::string& str, const std::string& from, const std::string& to, bool allOccurrences)
+{
+    unsigned int noccurrences = 0;
+    size_t start_pos = str.find(from);
+
+    if (allOccurrences) {
+        while (start_pos != std::string::npos) {
+            noccurrences++;
+            str.replace(start_pos, from.length(), to);
+            start_pos += to.length();
+
+            size_t newpos = str.substr(start_pos).find(from);
+            if (newpos != std::string::npos)
+                start_pos += newpos;
+            else
+                start_pos = newpos;
+        }
+    } else {
+        if (start_pos == std::string::npos)
+            return 0;
+        str.replace(start_pos, from.length(), to);
+    }
+
+    return noccurrences;
+}
+
 // General tool to strip spaces from both ends:
 std::string trim_string(const std::string& s)
 {

@@ -81,6 +81,8 @@ Example of resulting output files:
 
 ## TODO
 
+- Add disk stats plotting
+- Add 'blkio' cgroup data collection & plotting
 - Add LXC and Docker examples
 - Test integration with InfluxDB (JSON streaming over socket)
 - Test deployment on supported Linux distributions

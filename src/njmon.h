@@ -33,21 +33,20 @@ public:
     NjmonCollectorAppConfig() {}
 
     // configuration from command-line:
-    bool m_bEnableCgroup = true;
-    bool m_bAllowMultipleInstances = false;
-    bool m_bDebug = false;
-    bool m_bForeground = false;
+    bool m_bAllowMultipleInstances = false; // --allow-multiple-instances
+    bool m_bDebug = false; // --debug
+    bool m_bForeground = false; // --foreground
 
-    std::string m_strOutputDir;
-    std::string m_strOutputFilename;
-    std::string m_strRemoteAddress;
-    std::string m_strRemoteSecret;
+    std::string m_strOutputDir; // --output-directory
+    std::string m_strOutputFilenamePrefix; // --output-filename
+    std::string m_strRemoteAddress; // --remote-ip
+    std::string m_strRemoteSecret; // --remote-secret
 
-    unsigned int m_nSamples = 0;
-    unsigned int m_nSamplingInterval = 60;
-    unsigned int m_nRemotePort = 0;
+    unsigned int m_nSamples = 0; // --num-samples
+    unsigned int m_nSamplingInterval = 60; // --sampling-interval
+    unsigned int m_nRemotePort = 0; // --remote-port
 
-    unsigned int m_nCollectFlags = PK_ALL; // a combination of PerformanceKpiFamily valuse
+    unsigned int m_nCollectFlags = PK_ALL; // --collect: a combination of PerformanceKpiFamily values
 };
 
 // app-wide config settings:
@@ -73,8 +72,9 @@ private:
     void get_time();
     void get_localtime();
     void get_utc();
-    void date_time(long seconds, long loop, long maxloops);
-    void identity_and_njmon(int argc, char** argv);
+    void date_time(long loop);
+    void identity();
+    void njmon_info(int argc, char** argv, long sampling_interval_sec, long num_samples);
     void file_read_one_stat(const char* file, const char* name);
 
     //------------------------------------------------------------------------------
@@ -148,3 +148,6 @@ private:
 // Global logging function for this app
 void LogDebug(const char* line, ...);
 void LogError(const char* line, ...);
+
+// Utilities
+unsigned int ReplaceString(std::string& str, const std::string& from, const std::string& to, bool allOccurrences);

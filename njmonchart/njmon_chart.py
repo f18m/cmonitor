@@ -272,13 +272,13 @@ def bubbleit(web, column_names, data, title, button_label, graph_type):
 # =======================================================================================================
 
 
-def generate_config_js(jdata_first_sample):
+def generate_config_js(jheader):
 
     # ----- add config box 
     def configdump(section):
         newstr = '<h3>' + section + '</h3>\\\n'
         newstr += '    <table>\\\n'
-        config_dict = jdata_first_sample[section]
+        config_dict = jheader[section]
         for label in config_dict:
             newstr += '    <tr>\\\n'
             newstr += "    <td><b>%s</b></td><td>%s</td>\\\n" % (label.capitalize().replace("_", " "), str(config_dict[label]))
@@ -294,9 +294,9 @@ def generate_config_js(jdata_first_sample):
         return "%.1f%s%s" % (num, 'Yi', suffix)
     
     # provide some human-readable config files:
-    avail_cpus = jdata_first_sample['cgroup_config']['cpus'].split(',')
-    jdata_first_sample['cgroup_config']['cpus_num_allowed'] = len(avail_cpus)
-    jdata_first_sample['cgroup_config']['memory_limit_bytes_human_readable'] = sizeof_fmt(int(jdata_first_sample['cgroup_config']['memory_limit_bytes']))
+    avail_cpus = jheader['cgroup_config']['cpus'].split(',')
+    jheader['cgroup_config']['cpus_num_allowed'] = len(avail_cpus)
+    jheader['cgroup_config']['memory_limit_bytes_human_readable'] = sizeof_fmt(int(jheader['cgroup_config']['memory_limit_bytes']))
           
     config_str = ""
     config_str += '\nfunction config() {\n'
@@ -310,7 +310,6 @@ def generate_config_js(jdata_first_sample):
     config_str += configdump("identity")
     config_str += configdump("cgroup_config")
     config_str += configdump("njmon")
-    config_str += configdump("timestamp")
     config_str += '    </body></html>\\\n'
     config_str += '");\n}\n\n'
     return config_str
@@ -802,6 +801,7 @@ def main_process_file(cmd, infile, outfile):
     # Convert the text to json and extract the stats
     entry = []
     entry = json.loads(text)  # convert text to JSON
+    jheader = entry["header"]
     jdata = entry["samples"]  # removes outer parts so we have a list of snapshot dictionaries
     
     # - - - - - Start nchart functions
@@ -812,8 +812,7 @@ def main_process_file(cmd, infile, outfile):
     unstacked = 0
     
     # initialise some useful content
-    hostname = jdata[0]['identity']['hostname'] 
-    details = ' for hostname=' + hostname
+    hostname = jheader['identity']['hostname'] 
 
     jdata_first_sample = jdata[0]
     logical_cpus_indexes = []
@@ -827,7 +826,7 @@ def main_process_file(cmd, infile, outfile):
     # ----- MAIN SCRIPT CREAT WEB FILE -
     print("Opening output file %s" % outfile)
     web = open(outfile, "w")  # Open the output file
-    nchart_start_js(web, 'Monitoring data' + details)
+    nchart_start_js(web, 'Monitoring data for hostname ' + hostname)
     
     # JAVASCRIPT GRAPHS
     generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname)
@@ -844,22 +843,22 @@ def main_process_file(cmd, infile, outfile):
     # generate_filesystems(web, jdata)
     
     monitoring_summary = [
-        "Monitoring launched as: " + jdata_first_sample["njmon"]["njmon_command"],
-        '<a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a>: ' + jdata_first_sample["njmon"]["njmon_version"],
+        "Monitoring launched as: " + jheader["njmon"]["njmon_command"],
+        '<a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a>: ' + jheader["njmon"]["njmon_version"],
         "Started sampling at: " + jdata_first_sample["timestamp"]["datetime"] + " (Local)",
         "Started sampling at: " + jdata_first_sample["timestamp"]["UTC"] + " (UTC)",
         "Snapshots: " + str(len(jdata)),
-        "Snapshot Interval (s): " + str(jdata_first_sample["timestamp"]["snapshot_seconds"]),
-        "Total time sampled (s): " + str(jdata_first_sample["timestamp"]["snapshot_seconds"] * len(jdata)),
-        "User: " + jdata_first_sample["njmon"]["username"],
+        "Snapshot Interval (s): " + str(jheader["njmon"]["sample_interval_seconds"]),
+        "Total time sampled (s): " + str(jheader["njmon"]["sample_interval_seconds"] * len(jdata)),
+        "User: " + jheader["njmon"]["username"],
     ]
     monitored_summary = [
-        "Hostname: " + jdata_first_sample["identity"]["hostname"],
-        "CPU family: " + jdata_first_sample["lscpu"]["model_name"],
-        "OS: " + jdata_first_sample["os_release"]["pretty_name"],
+        "Hostname: " + jheader["identity"]["hostname"],
+        "CPU family: " + jheader["lscpu"]["model_name"],
+        "OS: " + jheader["os_release"]["pretty_name"],
     ]
     
-    nchart_end_js(web, generate_config_js(jdata_first_sample))
+    nchart_end_js(web, generate_config_js(jheader))
     
     # HTML
     nchart_start_html_body(web, hostname)

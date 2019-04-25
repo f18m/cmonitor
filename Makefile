@@ -14,7 +14,7 @@ RPM_TARBALL_DIR:=/tmp/nmon-cgroup-aware/tarball
 RPM_VERSION:=22
 
 # RPM_RELEASE is what is actually incremented release after release!
-RPM_RELEASE:=2
+RPM_RELEASE:=3
 
 
 #
@@ -45,8 +45,9 @@ endif
 # AUXILIARY TARGETS
 #
 
-generate_patch:
-	diff -U3 -w src-orig/njmon_linux_v22.c src/njmon_linux_v22.c > src-orig/cgroup.patch || true
+# this made sense only till the source code was quite aligned to original project:
+#generate_patch:
+#	diff -U3 -w src-orig/njmon_linux_v22.c src/njmon_main.c > src-orig/cgroup.patch || true
 
 examples:
 	$(MAKE) -C examples all
