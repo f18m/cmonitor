@@ -79,9 +79,9 @@ def nchart_start_js(file, title):
     file.write('     ul {margin: 0 0 0 0;padding-left: 20px;}\n')
     file.write('     button { margin-bottom: 3px; }\n')
     file.write('     #chart_master {width:100%; height:85%;}\n')
-    file.write('     #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 3px; padding: 6px; margin: 6px;}\n')
+    file.write('     #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
     file.write('     #button_table { border-collapse: collapse; }\n')
-    file.write('     #button_table_col {border: darkgrey; border-style: solid; border-width: 3px; padding: 6px; margin: 6px;}\n')
+    file.write('     #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
     file.write('  </style>\n')
     file.write('  <script type="text/javascript" src="https://www.google.com/jsapi"></script>\n')
     file.write('  <script type="text/javascript">\n')
@@ -160,7 +160,7 @@ def nchart_end_js_line_graph(file, graphtitle):
     file.write('    if (chart && chart.clearChart)\n')
     file.write('      chart.clearChart();\n')
     file.write('    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));\n')
-    file.write('    chart.draw( data_' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
+    file.write('    chart.draw(data_' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
     file.write('  });\n')
     g_num_generated_charts += 1
 
@@ -293,9 +293,10 @@ def generate_config_js(jheader):
         return "%.1f%s%s" % (num, 'Yi', suffix)
     
     # provide some human-readable config files:
-    avail_cpus = jheader['cgroup_config']['cpus'].split(',')
-    jheader['cgroup_config']['cpus_num_allowed'] = len(avail_cpus)
-    jheader['cgroup_config']['memory_limit_bytes_human_readable'] = sizeof_fmt(int(jheader['cgroup_config']['memory_limit_bytes']))
+    if 'cgroup_config' in jheader:
+        avail_cpus = jheader['cgroup_config']['cpus'].split(',')
+        jheader['cgroup_config']['cpus_num_allowed'] = len(avail_cpus)
+        jheader['cgroup_config']['memory_limit_bytes_human_readable'] = sizeof_fmt(int(jheader['cgroup_config']['memory_limit_bytes']))
           
     config_str = ""
     config_str += '\nvar configWindow;'
@@ -317,7 +318,8 @@ def generate_config_js(jheader):
     config_str += configdump("identity", "Server Identity")
     config_str += configdump("os_release", "Operating System Release")
     config_str += configdump("proc_version", "Linux Kernel Version")
-    config_str += configdump("cgroup_config", "Linux Control Group (CGroup) Configuration")
+    if 'cgroup_config' in jheader:
+        config_str += configdump("cgroup_config", "Linux Control Group (CGroup) Configuration")
     config_str += configdump("lscpu", "CPU Overview")
     #config_str += configdump("cpuinfo", "CPU Core Details")
     config_str += '      </table>\\\n'
@@ -511,6 +513,10 @@ def generate_config_js(jheader):
 
 
 def generate_network_traffic(web, jdata, hostname):
+    # if network traffic data was not collected, just return:
+    if 'network_interfaces' not in jdata[0]:
+        return
+    
     netcols = ['Timestamp']
     for device in jdata[0]["network_interfaces"].keys():
         netcols.append(str(device) + "+in")
@@ -569,6 +575,9 @@ def generate_network_traffic(web, jdata, hostname):
 
 
 def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
+    # if baremetal CPU data was not collected, just return:
+    if 'stat' not in jdata[0]:
+        return
 
     # prepare empty tables
     baremetal_cpu_stats = {}
@@ -627,9 +636,7 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
     
 
 def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
-    if len(jdata) < 1:
-        return
-    if 'cgroup_cpuacct_stats' not in jdata[1]:
+    if 'cgroup_cpuacct_stats' not in jdata[0]:
         return  # cgroup mode not enabled at collection time!
         
     # prepare empty tables
@@ -697,6 +704,10 @@ def choose_byte_divider(mem_total):
 
 
 def generate_baremetal_memory(web, jdata, hostname):
+    # if baremetal memory data was not collected, just return:
+    if 'proc_meminfo' not in jdata[0]:
+        return
+    
     #
     # MAIN LOOP
     # Process JSON sample and build Google Chart-compatible Javascript variable
@@ -735,6 +746,10 @@ def generate_baremetal_memory(web, jdata, hostname):
 
 
 def generate_cgroup_memory(web, jdata, hostname):
+    # if cgroup data was not collected, just return:
+    if 'cgroup_memory_stats' not in jdata[0]:
+        return
+    
     #
     # MAIN LOOP
     # Process JSON sample and build Google Chart-compatible Javascript variable
@@ -832,7 +847,7 @@ def main_process_file(cmd, infile, outfile):
     jdata_first_sample = jdata[0]
     logical_cpus_indexes = []
     for key in jdata_first_sample['stat']:
-        if key.startswith('cpu'):
+        if key.startswith('cpu') and key != 'cpu_total':
             cpuIdx = int(key[3:])
             # print("%s %s" %(key, cpuIdx))
             logical_cpus_indexes.append(cpuIdx) 
@@ -858,8 +873,7 @@ def main_process_file(cmd, infile, outfile):
     # generate_filesystems(web, jdata)
     
     monitoring_summary = [
-        "Monitoring launched as: " + jheader["njmon"]["njmon_command"],
-        '<a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a>: ' + jheader["njmon"]["njmon_version"],
+        'Version: <a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a> ' + jheader["njmon"]["njmon_version"],
         "Started sampling at: " + jdata_first_sample["timestamp"]["datetime"] + " (Local)",
         "Started sampling at: " + jdata_first_sample["timestamp"]["UTC"] + " (UTC)",
         "Snapshots: " + str(len(jdata)),
