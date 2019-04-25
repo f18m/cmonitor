@@ -541,6 +541,9 @@ void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
     } else
         rewind(fp);
 
+    if (interfaces == 0)
+        return; // this happens in e.g. Docker containers having no network
+
     if (fgets(buf, 1024, fp) == NULL)
         return; /* throw away the header line */
     if (fgets(buf, 1024, fp) == NULL)

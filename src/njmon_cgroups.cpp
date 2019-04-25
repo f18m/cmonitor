@@ -322,6 +322,8 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 
         if (counter_nsec_sys_mode.size() != counter_nsec_user_mode.size())
             return;
+        if (counter_nsec_sys_mode.empty())
+            return;
 
         if (debug)
             printf("Found cpuacct.usage_percpu_sys/user cgroups\n");
@@ -372,6 +374,8 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 
         std::vector<uint64_t> counter_nsec_user_mode;
         if (!read_cpuacct_line(cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu", counter_nsec_user_mode))
+            return;
+        if (counter_nsec_user_mode.empty())
             return;
 
         if (debug)
