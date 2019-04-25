@@ -48,8 +48,7 @@ void NjmonCollectorApp::read_data_number(const char* statname)
     DEBUGLOG_FUNCTION_START();
     sprintf(filename, "/proc/%s", statname);
     if ((fp = fopen(filename, "r")) == NULL) {
-        sprintf(line, "read_data_number: failed to open file %s", filename);
-        LogError(line);
+        LogError("read_data_number: failed to open file %s", filename);
         return;
     }
     sprintf(label, "proc_%s", statname);
@@ -789,7 +788,6 @@ void NjmonCollectorApp::proc_filesystems()
     FILE* fp;
     struct mntent* fs;
     struct statfs vfs;
-    char buf[1024];
 
     DEBUGLOG_FUNCTION_START();
     if ((fp = setmntent("/etc/mtab", "r")) == NULL)
@@ -800,8 +798,7 @@ void NjmonCollectorApp::proc_filesystems()
         // NOTE: /dev/loop* filesystems are not real filesystems - e.g. on Ubuntu they are used for SNAPs
         if (fs->mnt_fsname[0] == '/' && strncmp(fs->mnt_fsname, "/dev/loop", 9) != 0) {
             if (statfs(fs->mnt_dir, &vfs) != 0) {
-                sprintf(buf, "%s: statfs failed: %d\n", fs->mnt_dir, errno);
-                LogError(buf);
+                LogError("%s: statfs failed: %d\n", fs->mnt_dir, errno);
             }
             /*printf("%s, mounted on %s:\n", fs->mnt_dir, fs->mnt_fsname); */
 
