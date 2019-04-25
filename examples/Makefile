@@ -3,7 +3,9 @@
 # 
 
 EXAMPLE_JSON_FILES=\
-	baremetal1_20190413_1605.json
+	baremetal1_20190413_1605.json \
+	docker_collecting_baremetal_stats.json \
+	docker_userapp_with_embedded_collector.json
 
 all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
