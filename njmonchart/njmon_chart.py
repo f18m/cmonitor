@@ -196,7 +196,9 @@ def nchart_start_html_body(file, hostname):
                 if graph.name.startswith('CPU') or graph.name.endswith('CPUs'):
                     colour = 'red'
                 elif graph.name.startswith('Memory'):
-                    colour = 'orange'
+                    colour = 'darkorange'
+                elif graph.name.startswith('Network'):
+                    colour = 'darkblue'
                 else:
                     colour = 'black'
                 file.write('    <button id="draw_' + str(num) + '" style="color:' + colour + '"><b>' + graph.name + '</b></button>\n')
