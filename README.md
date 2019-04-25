@@ -6,13 +6,29 @@
 
 Fork of Nigel's performance Monitor for Linux, adding cgroup-awareness.
 Cgroups (i.e. Linux Control Groups) are the basic technology used to create containers.
-This fork thus is aimed to monitoring your LXC/Docker container performances.
+This fork is thus aimed at monitoring your LXC/Docker container performances.
 
-NOTE: this is actually a fork of "njmon", not "nmon". 
-njmon provides no interactive mode (often useless inside containers!) and is a more modern tool that produces a 
+NOTE: this is actually a fork of `njmon`, not `nmon`. 
+`njmon` provides no interactive mode (often useless inside containers!) and is a modern tool that produces a 
 JSON output that can be used together with tools like [InfluxDB](https://www.influxdata.com/) and [Grafana](https://grafana.com/).
 
-This fork also aims at supporting mostly x86_64 architectures; support for AIX/PowerPC has been dropped.
+This fork supports only **Linux x86_64 architectures**; support for AIX/PowerPC (present in original `nmon`) has been dropped.
+
+## Features
+
+This project collects performance data about:
+
+- per-CPU-core usage;
+- memory usage;
+- network traffic (PPS and MB/s or Mbps);
+- disk load;
+- average Linux load;
+- CPU usage as reported by the 'cpuacct' (CPU accounting) cgroup;
+- memory usage as reported by the 'memory' cgroup;
+- disk usage as reported by the 'blkio' cgroup;
+
+Moreover the project allows you to easily post-process collected data and produce a **self-contained** HTML page which allows
+to visualize all the performance data easily using [Google Charts](https://developers.google.com/chart/).
 
 
 ## How to install
@@ -38,9 +54,9 @@ to produce in the `/home` folder a JSON with CPU/memory/disk/network stats for t
 Whenever you want you can either:
 
 - inject that JSON inside InfluxDB (mostly useful for **persistent** containers that you want to monitor in real-time);
-   this is not covered by this README;
+  this is not covered by this README;
 - use the `njmonchart` utility to convert that JSON into a self-contained HTML file (mostly useful for **ephemeral** containers);
-   see below for practical examples.
+  see below for practical examples.
 
 
 ## How to plot stats
@@ -48,7 +64,7 @@ Whenever you want you can either:
 To plot the JSON containing the collected statistics, simply launch:
 
 ```
-njmon_chart /path/to/json-stats.json /path/to/json-stats.html
+njmon_chart /path/to/json-stats.json /path/to/reulting-file.html
 ```
 
 Example of resulting output files:
@@ -61,3 +77,11 @@ Example of resulting output files:
 
 - Original project: [http://nmon.sourceforge.net](http://nmon.sourceforge.net)
 - Other forks: [https://github.com/axibase/nmon](https://github.com/axibase/nmon)
+
+
+## TODO
+
+- Add LXC and Docker examples
+- Test integration with InfluxDB (JSON streaming over socket)
+- Test deployment on supported Linux distributions
+
