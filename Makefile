@@ -22,7 +22,7 @@ RPM_RELEASE:=4
 #
 
 all:
-	$(MAKE) -C src
+	$(MAKE) -C src RPM_VERSION=$(RPM_VERSION) RPM_RELEASE=$(RPM_RELEASE)
 	
 clean:
 	$(MAKE) -C src clean

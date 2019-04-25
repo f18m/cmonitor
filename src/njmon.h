@@ -9,8 +9,6 @@
 // Macros
 //------------------------------------------------------------------------------
 
-#define VERSION_STRING "22-3"
-
 #define DEBUGLOG_FUNCTION_START()                                                                                      \
     if (g_cfg.m_bDebug)                                                                                                \
         fprintf(stderr, "%s called line %d\n", __func__, __LINE__);

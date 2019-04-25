@@ -92,7 +92,8 @@ struct option g_long_opts[] = {
     { "remote-port", required_argument, 0, 'p' }, // force newline
     { "remote-secret", required_argument, 0, 'X' }, // force newline
 
-    // help
+    // Other options
+    { "version", no_argument, 0, 'v' }, // force newline
     { "debug", no_argument, 0, 'd' }, // force newline
     { "help", no_argument, 0, 'h' }, // force newline
     { 0, 0, 0, 0 }
@@ -132,8 +133,9 @@ struct option_extended {
         "Set the remote collector secret (by default use environment variable NJMON_SECRET)." },
 
     // help
-    { "Other options", &g_long_opts[10], "Enable debug mode" }, // force newline
-    { "Other options", &g_long_opts[11], "Show this help" },
+    { "Other options", &g_long_opts[10], "Show version and exit" }, // force newline
+    { "Other options", &g_long_opts[11], "Enable debug mode" }, // force newline
+    { "Other options", &g_long_opts[12], "Show this help" },
 
     { NULL, NULL, NULL }
 };
@@ -360,6 +362,10 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
                 break;
 
             // help
+            case 'v':
+                printf("njmon_collector version: %s\n", VERSION_STRING);
+                exit(0);
+                break;
             case 'd':
                 g_cfg.m_bDebug = true;
                 break;

@@ -1,5 +1,10 @@
-#CXXFLAGS=-g -O0 -Wall -Werror -std=c++11    #useful for debugging
-CXXFLAGS=-g -O2 -Wall -Werror -std=c++11    # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
+#
+# Main makefile to build njmon_collector
+#
+
+CXXFLAGS=-Wall -Werror -std=c++11 -DVERSION_STRING=\"$(RPM_VERSION)-$(RPM_RELEASE)\"
+#CXXFLAGS+=-g -O0    #useful for debugging
+CXXFLAGS+=-g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
 OUT=njmon_collector
 
 OBJS =  \
