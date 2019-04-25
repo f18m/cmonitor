@@ -275,15 +275,14 @@ def bubbleit(web, column_names, data, title, button_label, graph_type):
 def generate_config_js(jheader):
 
     # ----- add config box 
-    def configdump(section):
-        newstr = '<h3>' + section + '</h3>\\\n'
-        newstr += '    <table>\\\n'
+    def configdump(section, displayName):
+        #newstr = '<h3>' + displayName + '</h3>\\\n'
+        newstr = "<tr><td colspan='2' id='sectioncol'>" + displayName + "</td></tr>\\\n"
         config_dict = jheader[section]
         for label in config_dict:
-            newstr += '    <tr>\\\n'
-            newstr += "    <td><b>%s</b></td><td>%s</td>\\\n" % (label.capitalize().replace("_", " "), str(config_dict[label]))
-            newstr += '    </tr>\\\n'
-        newstr += '    </table>\\\n'
+            newstr += "    <tr>\\\n"
+            newstr += "    <td id='configkey'>%s</td><td id='configval'>%s</td>\\\n" % (label.capitalize().replace("_", " "), str(config_dict[label]))
+            newstr += "    </tr>\\\n"
         return newstr
     
     def sizeof_fmt(num, suffix='B'):
@@ -299,17 +298,33 @@ def generate_config_js(jheader):
     jheader['cgroup_config']['memory_limit_bytes_human_readable'] = sizeof_fmt(int(jheader['cgroup_config']['memory_limit_bytes']))
           
     config_str = ""
+    config_str += '\nvar configWindow;'
     config_str += '\nfunction config() {\n'
-    config_str += '    var myWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");\n'
-    config_str += '    myWindow.document.write("\\\n'
+    config_str += '    if (configWindow) configWindow.close();\n'
+    config_str += '    configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");\n'
+    config_str += '    configWindow.document.write("\\\n'
     config_str += '    <html><head>\\\n'
     config_str += '      <title>Configuration</title>\\\n'
+    config_str += '      <style>\\\n'
+    config_str += '        table { padding-left: 2ex; }\\\n'
+    config_str += '        #sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}\\\n'
+    config_str += '        #configkey {font-weight: bold;}\\\n'
+    config_str += '        #configval {font-family: monospace;}\\\n'
+    config_str += '      </style>\\\n'
     config_str += '    </head><body>\\\n'
-    config_str += '      <h2>Configuration of server and njmon data collection</h2>\\\n'
-    config_str += configdump("os_release")
-    config_str += configdump("identity")
-    config_str += configdump("cgroup_config")
-    config_str += configdump("njmon")
+    config_str += '      <h2>Monitored System Summary</h2>\\\n'
+    config_str += '      <table>\\\n'
+    config_str += configdump("identity", "Server Identity")
+    config_str += configdump("os_release", "Operating System Release")
+    config_str += configdump("proc_version", "Linux Kernel Version")
+    config_str += configdump("cgroup_config", "Linux Control Group (CGroup) Configuration")
+    config_str += configdump("lscpu", "CPU Overview")
+    #config_str += configdump("cpuinfo", "CPU Core Details")
+    config_str += '      </table>\\\n'
+    config_str += '      <h2>Monitoring Summary</h2>\\\n'
+    config_str += '      <table>\\\n'
+    config_str += configdump("njmon", "Performance Stats Collector Configuration")
+    config_str += '      </table>\\\n'
     config_str += '    </body></html>\\\n'
     config_str += '");\n}\n\n'
     return config_str
