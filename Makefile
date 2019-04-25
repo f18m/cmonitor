@@ -106,4 +106,15 @@ endif
 		mkdir -p $(outdir)/ && \
 		cp -fv $(RPM_TMP_DIR)/x86_64/nmon-cgroup-aware-*.rpm $(outdir)/
 
-.PHONY: all clean install examples generate_patch srpm_tarball srpm rpm
+
+#
+# DOCKER IMAGE:
+# 
+
+docker_image:
+	@docker build \
+		--tag f18m/nmon-cgroup-aware:v$(RPM_VERSION)-$(RPM_RELEASE) \
+		--build-arg rpm_version=$(RPM_VERSION)-$(RPM_RELEASE) \
+		.
+
+.PHONY: all clean install examples generate_patch srpm_tarball srpm rpm docker_image
