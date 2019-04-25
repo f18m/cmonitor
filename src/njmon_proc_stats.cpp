@@ -1,3 +1,22 @@
+/*
+ * njmon_proc_stats.cpp -- collects Linux performance data and generates JSON format data.
+ * Developer: Nigel Griffiths.
+ * (C) Copyright 2018 Nigel Griffiths
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "njmon.h"
 #include <arpa/inet.h>
 #include <ctype.h>
@@ -76,7 +95,7 @@ void NjmonCollectorApp::read_data_number(const char* statname)
 /*
 read /proc/stat and unpick
 */
-void NjmonCollectorApp::proc_stat(double elapsed, int print)
+void NjmonCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bool print)
 {
     long long user;
     long long nice;
@@ -136,7 +155,7 @@ void NjmonCollectorApp::proc_stat(double elapsed, int print)
 
         if (!strncmp(line, "cpu", 3)) {
             if (!strncmp(line, "cpu ", 4)) {
-                if (!m_bCGroupsFound) {
+                if (!onlyCgroupAllowedCpus) {
                     // cpu_total = 1;
                     count = sscanf(&line[4], /* cpu USER */
                         "%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", &user, &nice, &sys, &idle, &iowait,
@@ -178,7 +197,7 @@ void NjmonCollectorApp::proc_stat(double elapsed, int print)
                     max_cpuno = cpuno;
                 if (cpuno >= MAX_LOGICAL_CPU)
                     continue;
-                if (!cgroup_is_allowed_cpu(cpuno))
+                if (onlyCgroupAllowedCpus && !cgroup_is_allowed_cpu(cpuno))
                     continue;
                 if (print) {
                     sprintf(label, "cpu%d", cpuno);

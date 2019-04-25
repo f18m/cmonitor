@@ -1,7 +1,9 @@
 #pragma once
 
+#include <set>
 #include <string.h>
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Macros
@@ -18,15 +20,19 @@
 //------------------------------------------------------------------------------
 
 enum PerformanceKpiFamily {
-    PK_CGROUPS = 1,
+    PK_INVALID = 0,
 
-    PK_DISK = 2,
-    PK_CPU = 4,
+    PK_CGROUPS = 1, // this activates the collection of cgroup-specific KPIs for other families:
+
+    PK_CPU = 2,
+    PK_DISK = 4,
     PK_MEMORY = 8,
     PK_NETWORK = 16,
 
     PK_ALL = PK_CGROUPS | PK_DISK | PK_CPU | PK_MEMORY | PK_NETWORK
 };
+
+PerformanceKpiFamily string2PerformanceKpiFamily(const std::string&);
 
 class NjmonCollectorAppConfig {
 public:
@@ -108,13 +114,13 @@ private:
     void cgroup_config();
     int cgroup_is_allowed_cpu(int cpu);
     void cgroup_proc_memory();
-    void cgroup_proc_cpuacct(double elapsed_sec);
+    void cgroup_proc_cpuacct(double elapsed_sec, bool print);
 
     //------------------------------------------------------------------------------
     // Collect functions
     //------------------------------------------------------------------------------
 
-    void proc_stat(double elapsed, int print);
+    void proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bool print);
     void proc_diskstats(double elapsed, int print);
     void proc_net_dev(double elapsed, int print);
     void proc_cpuinfo();
@@ -151,3 +157,15 @@ void LogError(const char* line, ...);
 
 // Utilities
 unsigned int ReplaceString(std::string& str, const std::string& from, const std::string& to, bool allOccurrences);
+std::string ToLower(const std::string& orig_str);
+std::string trim_string(const std::string& s);
+bool string2int(const std::string& str, int& result);
+bool string2int(const std::string& str, uint64_t& result);
+bool file_exists(const char* filename);
+template <typename T> std::string stl_container2string(const T& par, const std::string& delim);
+std::vector<std::string> split_string_in_array(const std::string& str, char splitter);
+bool parse_string_with_multiple_ranges(const std::string& data, std::vector<int>& result);
+bool parse_string_with_multiple_ranges(const std::string& data, std::set<int>& result);
+bool read_integer(std::string filePath, uint64_t& value);
+bool read_integers_with_range_validation(
+    const std::string& filename, int lower_limit, int upper_limit, std::set<int>& cpus);

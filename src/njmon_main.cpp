@@ -1,11 +1,21 @@
-//---------------------------------------------------------------------------
-// MsTableUtil.cpp:
-// (C) Copyright 2018 Empirix Inc.
-//
-//  Created on: Oct 2018
-//      Author: fmontorsi
-//     Purpose: Command-line utility to interact with the IS2.0 Redis MsTable
-//---------------------------------------------------------------------------
+/*
+ * njmon_main.cpp: core routines for "njmon_collector"
+ * Developer: Nigel Griffiths, Francesco Montorsi.
+ * (C) Copyright 2018 Nigel Griffiths, Francesco Montorsi
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <arpa/inet.h>
 #include <ctype.h>
@@ -40,7 +50,7 @@
 #include "njmon.h"
 
 //------------------------------------------------------------------------------
-// Globals
+// Constants
 //------------------------------------------------------------------------------
 
 #define PRINT_FALSE 0
@@ -54,9 +64,14 @@
     if (g_cfg.m_bDebug)                                                                                                \
         fprintf(stderr, "%s called line %d\n", __func__, __LINE__);
 
+//------------------------------------------------------------------------------
+// Globals
+//------------------------------------------------------------------------------
+
 // app-wide config settings:
 NjmonCollectorAppConfig g_cfg;
 NjmonCollectorApp g_app;
+bool g_bExiting = false;
 
 //------------------------------------------------------------------------------
 // Command Line Globals
@@ -69,8 +84,8 @@ struct option g_long_opts[] = {
     { "output-directory", required_argument, 0, 'm' }, // force newline
     { "output-filename", required_argument, 0, 'f' }, // force newline
     { "allow-multiple-instances", no_argument, 0, 'k' }, // force newline
-    { "collect", required_argument, 0, 'C' }, // force newline
     { "foreground", no_argument, 0, 'F' }, // force newline
+    { "collect", required_argument, 0, 'C' }, // force newline
 
     // Remote data collection options
     { "remote-ip", required_argument, 0, 'i' }, // force newline
@@ -99,8 +114,16 @@ struct option_extended {
         "\thostname_<year><month><day>_<hour><minutes>.err   (for error log)\n"
         "Use special prefix 'stdout' to indicate that you want the utility to write on stdout." },
     { "Data sampling options", &g_long_opts[4], "Allow multiple instances of njmon_collector to run on this system." },
-    { "Data sampling options", &g_long_opts[5], "Collect specified list of performance KPIs (TODO WIP)." },
-    { "Data sampling options", &g_long_opts[6], "Stay in foreground." },
+    { "Data sampling options", &g_long_opts[5], "Stay in foreground." },
+    { "Data sampling options", &g_long_opts[6],
+        "Collect specified list of performance stats. Available performance stats are:\n"
+        "  cpu: collect per-core CPU stats from /proc/stat                [cgroup-mode: also 'cpuacct']\n"
+        "  memory: collect memory stats from /proc/meminfo, /proc/vmstat  [cgroup-mode: also 'memory']\n"
+        "  disk: collect disk stats from /proc/diskstats                  [cgroup'mode: also 'blkio']\n"
+        "  network: collect network stats from /proc/net/dev\n"
+        "  cgroups: activates cgroup-mode\n" // force newline
+        "  all: the combination of all previous stats (this is the default)\n"
+        "Note that a comma-separated list of above stats can be provided." },
 
     // Remote data collection options
     { "Remote data collection options", &g_long_opts[7], "IP address or hostname of the njmon central collector." },
@@ -119,20 +142,12 @@ struct option_extended {
 // Signals
 //------------------------------------------------------------------------------
 
-int exit_flag = 0;
-
-void exit_interrupt(int signum) // another addition compared to original source to produce correct JSON on SIGTERM
-{
-    switch (signum) {
-    case SIGTERM:
-        exit_flag = 1;
-        break;
-    }
-}
-
 void interrupt(int signum)
 {
     switch (signum) {
+    case SIGTERM:
+        g_bExiting = true;
+        break;
     case SIGUSR1:
     case SIGUSR2:
         fflush(NULL);
@@ -168,6 +183,24 @@ void LogError(const char* line, ...)
     va_end(args);
 
     printf("ERROR: %s\n", currLogLine);
+}
+
+PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
+{
+    if (ToLower(str) == "cgroups")
+        return PK_CGROUPS;
+    if (ToLower(str) == "disk")
+        return PK_DISK;
+    if (ToLower(str) == "cpu")
+        return PK_CPU;
+    if (ToLower(str) == "memory")
+        return PK_MEMORY;
+    if (ToLower(str) == "network")
+        return PK_NETWORK;
+    if (ToLower(str) == "all")
+        return PK_ALL;
+
+    return PK_INVALID;
 }
 
 //------------------------------------------------------------------------------
@@ -299,9 +332,18 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
             case 'k':
                 g_cfg.m_bAllowMultipleInstances = true;
                 break;
-            case 'C':
-                // g_cfg.m_nCollectFlags = ;
-                break;
+            case 'C': {
+                std::vector<std::string> tokens = split_string_in_array(optarg, ',');
+                g_cfg.m_nCollectFlags = 0;
+                for (auto token : tokens) {
+                    PerformanceKpiFamily k = string2PerformanceKpiFamily(token);
+                    if (k == PK_INVALID) {
+                        printf("Unrecognized performance statistics family provided: %s\n", token.c_str());
+                        exit(51);
+                    }
+                    g_cfg.m_nCollectFlags |= k;
+                }
+            } break;
             case 'F':
                 g_cfg.m_bForeground = true;
                 break;
@@ -344,8 +386,23 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
         exit(1);
     }
 
+    // check arguments we just parsed:
+
+    if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort <= 0) {
+        printf("Option -i %s provided but not the -p port option\n", g_cfg.m_strRemoteAddress.c_str());
+        exit(52);
+    }
+    if (g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort > 0) {
+        printf("Option -p %ud provided but not the -i ip-address option\n", g_cfg.m_nRemotePort);
+        exit(53);
+    }
+
     optind = 0; /* reset getopt lib */
 }
+
+//------------------------------------------------------------------------------
+// Application core functions
+//------------------------------------------------------------------------------
 
 std::string NjmonCollectorApp::get_hostname()
 {
@@ -684,11 +741,14 @@ int NjmonCollectorApp::run(int argc, char** argv)
 #endif
 
     // init incremental stats (don't write yet anything!)
-    proc_stat(0, PRINT_FALSE);
+    bool bCollectCGroupInfo = g_cfg.m_nCollectFlags & PK_CGROUPS;
+    proc_stat(0, bCollectCGroupInfo, false /* do not emit JSON data */);
     proc_diskstats(0, PRINT_FALSE);
     proc_net_dev(0, PRINT_FALSE);
-    if (g_cfg.m_nCollectFlags & PK_CGROUPS)
+    if (bCollectCGroupInfo) {
         cgroup_init();
+        cgroup_proc_cpuacct(0, false /* do not emit JSON */);
+    }
 
     struct timeval tv;
     gettimeofday(&tv, 0);
@@ -710,10 +770,11 @@ int NjmonCollectorApp::run(int argc, char** argv)
     etc_os_release();
     proc_version();
     lscpu();
+    proc_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
     if (g_cfg.m_nCollectFlags & PK_CGROUPS)
         cgroup_config();
     remove_ending_comma_if_any();
-    praw("  },\n");
+    praw("  },\n"); // end of "header"
 
     // start actual data samples:
     praw("  \"samples\": [\n");
@@ -730,21 +791,18 @@ int NjmonCollectorApp::run(int argc, char** argv)
 
         // some stats are always collected, regardless of g_cfg.m_nCollectFlags
         date_time(loop);
-        proc_stat(elapsed, PRINT_TRUE);
         // proc_uptime(); // not really useful!!
         proc_loadavg();
 
         if (g_cfg.m_nCollectFlags & PK_CPU) {
-            if (g_cfg.m_nCollectFlags & PK_CGROUPS) {
+            if (bCollectCGroupInfo) {
                 // do not list all CPU informations when cgroup mode is ON: don't put information
                 // for CPUs outside current cgroup!
-                cgroup_proc_cpuacct(elapsed);
-
-                // collect memory stats for current cgroup:
-                cgroup_proc_memory();
+                proc_stat(elapsed, true /* cgroup */, true /* emit JSON */);
+                cgroup_proc_cpuacct(elapsed, true /* emit JSON */);
             } else {
                 // list all CPUs
-                proc_cpuinfo();
+                proc_stat(elapsed, false /* cgroup */, true /* emit JSON */);
             }
         }
 
@@ -766,10 +824,10 @@ int NjmonCollectorApp::run(int argc, char** argv)
             proc_filesystems();
         }
 
-        psampleend(loop == (g_cfg.m_nSamples - 1) || exit_flag);
+        psampleend(loop == (g_cfg.m_nSamples - 1) || g_bExiting);
         push();
 
-        if (exit_flag)
+        if (g_bExiting)
             break; // graceful exit allows to produce a valid JSON on SIGTERM signals!
     }
 
@@ -795,18 +853,7 @@ int main(int argc, char** argv)
 
     g_app.parse_args(argc, argv);
 
-    // check arguments we just parsed:
-
-    if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort <= 0) {
-        printf("Option -i %s provided but not the -p port option\n", g_cfg.m_strRemoteAddress.c_str());
-        exit(52);
-    }
-    if (g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort > 0) {
-        printf("Option -p %ud provided but not the -i ip-address option\n", g_cfg.m_nRemotePort);
-        exit(53);
-    }
-
-    signal(SIGTERM, exit_interrupt);
+    signal(SIGTERM, interrupt);
     signal(SIGUSR1, interrupt);
     signal(SIGUSR2, interrupt);
 

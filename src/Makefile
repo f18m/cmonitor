@@ -9,7 +9,8 @@ OBJS =  \
     njmon_main.o \
     njmon_cgroups.o \
     njmon_json.o \
-    njmon_proc_stats.o
+    njmon_proc_stats.o \
+    njmon_utils.o
     
 $(OUT): $(OBJS)
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS)
