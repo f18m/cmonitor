@@ -1,5 +1,5 @@
 #CXXFLAGS=-g -O0 -Wall -Werror -std=c++11    #useful for debugging
-CXXFLAGS=-O2 -Wall -Werror -std=c++11    # release mode
+CXXFLAGS=-g -O2 -Wall -Werror -std=c++11    # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
 OUT=njmon_collector
 
 OBJS =  \
