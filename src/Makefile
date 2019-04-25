@@ -1,9 +1,6 @@
-CXXFLAGS=-g -O0 -Wall -Werror -std=c++11
+#CXXFLAGS=-g -O0 -Wall -Werror -std=c++11    #useful for debugging
+CXXFLAGS=-O2 -Wall -Werror -std=c++11    # release mode
 OUT=njmon_collector
-
-#OBJS =  \
-    njmon_linux_v22.o \
-    njmon_cgroups.o
 
 OBJS =  \
     njmon_main.o \

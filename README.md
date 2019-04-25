@@ -47,10 +47,11 @@ yum install -y nmon-cgroup-aware
 The RPM installs a single utility, `njmon` inside your container; launch it like that:
 
 ```
-njmon_collector -C -s3 -f -m /home
+njmon_collector -s 3 -m /home
 ```
 
-to produce in the `/home` folder a JSON with CPU/memory/disk/network stats for the container.
+to produce in the `/home` folder a JSON with CPU/memory/disk/network stats for the container
+sampling all supported performance statistics every 3 seconds.
 Whenever you want you can either:
 
 - inject that JSON inside InfluxDB (mostly useful for **persistent** containers that you want to monitor in real-time);
@@ -64,7 +65,7 @@ Whenever you want you can either:
 To plot the JSON containing the collected statistics, simply launch:
 
 ```
-njmon_chart /path/to/json-stats.json /path/to/reulting-file.html
+njmon_chart /path/to/json-stats.json /path/to/output-file.html
 ```
 
 Example of resulting output files:
@@ -86,4 +87,4 @@ Example of resulting output files:
 - Add LXC and Docker examples
 - Test integration with InfluxDB (JSON streaming over socket)
 - Test deployment on supported Linux distributions
-
+- Add info about RAM, disk model, NIC model

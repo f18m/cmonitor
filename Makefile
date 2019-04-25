@@ -14,7 +14,7 @@ RPM_TARBALL_DIR:=/tmp/nmon-cgroup-aware/tarball
 RPM_VERSION:=22
 
 # RPM_RELEASE is what is actually incremented release after release!
-RPM_RELEASE:=3
+RPM_RELEASE:=4
 
 
 #
