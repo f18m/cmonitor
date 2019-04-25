@@ -299,7 +299,7 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
 
     /* popen variables */
     FILE* pop;
-    static long disks;
+    static long disks = 0;
     char tmpstr[1024 + 1];
     long i;
     long j;
@@ -313,12 +313,14 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
         if (pop != NULL) {
             /* throw away the headerline */
             tmpstr[0] = 0;
-            fgets(tmpstr, 127, pop);
-            for (disks = 0;; disks++) {
-                tmpstr[0] = 0;
-                if (fgets(tmpstr, 127, pop) == NULL)
-                    break;
-                /*printf("DEBUG %ld disks - %s\n",disks,tmpstr);*/
+            disks = 0;
+            if (fgets(tmpstr, 127, pop)) {
+                for (;; disks++) {
+                    tmpstr[0] = 0;
+                    if (fgets(tmpstr, 127, pop) == NULL)
+                        break;
+                    /*printf("DEBUG %ld disks - %s\n",disks,tmpstr);*/
+                }
             }
             pclose(pop);
         } else
@@ -329,18 +331,19 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
         pop = popen("lsblk --nodeps --output NAME,TYPE --raw 2>/dev/null", "r");
         if (pop != NULL) {
             /* throw away the headerline */
-            fgets(tmpstr, 70, pop);
-            for (i = 0; i < disks; i++) {
-                tmpstr[0] = 0;
-                if (fgets(tmpstr, 70, pop) == NULL)
-                    break;
-                tmpstr[strlen(tmpstr)] = 0; /* remove NL char */
-                len = strlen(tmpstr);
-                for (j = 0; j < len; j++)
-                    if (tmpstr[j] == ' ')
-                        tmpstr[j] = 0;
-                strcpy(previous[i].dk_name, tmpstr);
-                /*printf("DEBUG saved %ld %s disk name\n",i,previous[i].dk_name);*/
+            if (fgets(tmpstr, 70, pop)) {
+                for (i = 0; i < disks; i++) {
+                    tmpstr[0] = 0;
+                    if (fgets(tmpstr, 70, pop) == NULL)
+                        break;
+                    tmpstr[strlen(tmpstr)] = 0; /* remove NL char */
+                    len = strlen(tmpstr);
+                    for (j = 0; j < len; j++)
+                        if (tmpstr[j] == ' ')
+                            tmpstr[j] = 0;
+                    strcpy(previous[i].dk_name, tmpstr);
+                    /*printf("DEBUG saved %ld %s disk name\n",i,previous[i].dk_name);*/
+                }
             }
             pclose(pop);
         } else
@@ -495,12 +498,14 @@ void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
         if (pop != NULL) {
             /* throw away the headerline */
             tmpstr[0] = 0;
-            fgets(tmpstr, 1024, pop);
-            for (interfaces = 0;; interfaces++) {
-                tmpstr[0] = 0;
-                if (fgets(tmpstr, 1024, pop) == NULL)
-                    break;
-                /*printf("DEBUG %ld intergaces - %s\n",interfaces,tmpstr);*/
+            interfaces = 0;
+            if (fgets(tmpstr, 1024, pop)) {
+                for (;; interfaces++) {
+                    tmpstr[0] = 0;
+                    if (fgets(tmpstr, 1024, pop) == NULL)
+                        break;
+                    /*printf("DEBUG %ld intergaces - %s\n",interfaces,tmpstr);*/
+                }
             }
             pclose(pop);
         } else
@@ -511,18 +516,19 @@ void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
         pop = popen("/sbin/ifconfig -s 2>/dev/null", "r");
         if (pop != NULL) {
             /* throw away the headerline */
-            fgets(tmpstr, 1024, pop);
-            for (i = 0; i < interfaces; i++) {
-                tmpstr[0] = 0;
-                if (fgets(tmpstr, 1024, pop) == NULL)
-                    break;
-                tmpstr[strlen(tmpstr)] = 0; /* remove NL char */
-                len = strlen(tmpstr);
-                for (j = 0; j < len; j++)
-                    if (tmpstr[j] == ' ')
-                        tmpstr[j] = 0;
-                strcpy(previous[i].if_name, tmpstr);
-                /*printf("DEBUG saved %ld %s interfaces name\n",i,previous[i].if_name);*/
+            if (fgets(tmpstr, 1024, pop)) {
+                for (i = 0; i < interfaces; i++) {
+                    tmpstr[0] = 0;
+                    if (fgets(tmpstr, 1024, pop) == NULL)
+                        break;
+                    tmpstr[strlen(tmpstr)] = 0; /* remove NL char */
+                    len = strlen(tmpstr);
+                    for (j = 0; j < len; j++)
+                        if (tmpstr[j] == ' ')
+                            tmpstr[j] = 0;
+                    strcpy(previous[i].if_name, tmpstr);
+                    /*printf("DEBUG saved %ld %s interfaces name\n",i,previous[i].if_name);*/
+                }
             }
             pclose(pop);
         } else

@@ -114,7 +114,11 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
     if ((fp1 = fopen(path.c_str(), "r")) == NULL)
         return false;
 
-    fgets(line, 1000, fp1);
+    if (fgets(line, 1000, fp1) == NULL) {
+        fclose(fp1);
+        return false;
+    }
+
     fclose(fp1);
 
     std::vector<std::string> values = split_string_in_array(line, ' ');
@@ -322,7 +326,8 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         if (debug)
             printf("Found cpuacct.usage_percpu_sys/user cgroups\n");
 
-        psection("cgroup_cpuacct_stats");
+        if (print)
+            psection("cgroup_cpuacct_stats");
         for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
 
             /*
@@ -359,7 +364,8 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
             prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
             prev_values[i].counter_nsec_sys_mode = counter_nsec_sys_mode[i];
         }
-        psectionend();
+        if (print)
+            psectionend();
     } else {
 
         // just get the per-cpu total:
@@ -371,7 +377,8 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         if (debug)
             printf("Reading data from cgroup cpuacct.usage_percpu");
 
-        psection("cgroup_cpuacct_stats");
+        if (print)
+            psection("cgroup_cpuacct_stats");
         for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
 
             /*
@@ -392,6 +399,7 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
             // save for next cycle
             prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
         }
-        psectionend();
+        if (print)
+            psectionend();
     }
 }

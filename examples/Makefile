@@ -11,4 +11,6 @@ all:
 	done
 
 regen_baremetal1:
-	../src/njmon_collector --sampling-interval=3 --num-samples=120 --output-filename baremetal1_20190413_1605
+	@echo "Regenerating example JSON... this will take about 3*60secs."
+	@../src/njmon_collector --sampling-interval=3 --num-samples=60 --foreground --output-filename baremetal1_20190413_1605
+	@jq . baremetal1_20190413_1605.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED !!!" ; exit 10 )
