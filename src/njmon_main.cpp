@@ -7,21 +7,27 @@
 //     Purpose: Command-line utility to interact with the IS2.0 Redis MsTable
 //---------------------------------------------------------------------------
 
-#include <getopt.h>
-#include <iostream>
-#include <sstream>
-#include <stdarg.h> /* va_list, va_start, va_arg, va_end */
-#include <string>
-
+#include <arpa/inet.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <getopt.h>
+#include <ifaddrs.h>
+#include <iostream>
+#include <memory.h>
 #include <mntent.h>
+#include <net/if.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <pwd.h>
 #include <signal.h>
+#include <sstream>
+#include <stdarg.h> /* va_list, va_start, va_arg, va_end */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <sys/errno.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -31,14 +37,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <memory.h>
-
 #include "njmon.h"
-#include <arpa/inet.h>
-#include <ifaddrs.h>
-#include <net/if.h>
-#include <netdb.h>
-#include <netinet/in.h>
 
 //------------------------------------------------------------------------------
 // Globals
@@ -46,6 +45,8 @@
 
 #define PRINT_FALSE 0
 #define PRINT_TRUE 1
+
+#define PID_FILE "/var/run/njmon.pid"
 
 #define ADDITIONAL_HELP_COLUMN_START (30)
 
@@ -379,66 +380,25 @@ void NjmonCollectorApp::date_time(long seconds, long loop, long maxloops)
     psectionend();
 }
 
-/* check_pid_file() and make_pid_file()
- *    If you start njmon and it finds there is a copy running already then it will quitely stop.
- *       You can hourly start njmon via crontab and not end up with dozens of copies runnings.
- *          It also means if the server reboots then njmon start in the next hour.
- *              Side-effect: it creates a file called /tmp/njmon.pid
- *              */
-char pid_filename[] = "/tmp/njmon.pid";
-
-void NjmonCollectorApp::make_pid_file()
-{
-    int fd;
-    int ret;
-    char buffer[32];
-
-    DEBUGLOG_FUNCTION_START();
-    if ((fd = creat(pid_filename, O_CREAT | O_WRONLY)) < 0) {
-        printf("can't open new file for writing fd=%d\n", fd);
-        perror("open");
-        return; /* no file */
-    }
-    // printf("write file descriptor=%d\n",fd);
-    sprintf(buffer, "%d \n", getpid());
-    // printf("write \"%s\"\n", buffer);
-    if ((ret = write(fd, buffer, strlen(buffer))) <= 0)
-        printf("write failed ret=%d\n", ret);
-    close(fd);
-}
+/*    check_pid_file() and make_pid_file()
+ *    If you start njmon and it finds there is a copy running already then it will quietly stop.
+ *    You can hourly start njmon via crontab and not end up with dozens of copies running.
+ *    It also means if the server reboots then njmon start in the next hour.
+ *    Side-effect: it creates a file called /tmp/njmon.pid
+ */
 
 void NjmonCollectorApp::check_pid_file()
 {
-    char buffer[32];
-    int fd;
-    pid_t pid;
-    int ret;
-
-    DEBUGLOG_FUNCTION_START();
-    if ((fd = open(pid_filename, O_RDONLY)) < 0) {
-        printf("no file or can't open it\n");
-        make_pid_file();
-        return; /* no file */
+    // immediately stop running if another instance of this software is already running.
+    // Note that hmmonitor creates its own /var/run/ProcName.pid to track current PID,
+    // don't mess with it! Instead here an empty LOCKED file is created with .lock extension
+    int pid_file = open(PID_FILE, O_CREAT | O_RDWR, 0666);
+    int rc = flock(pid_file, LOCK_EX | LOCK_NB);
+    if (rc && EWOULDBLOCK == errno) {
+        fprintf(stderr, "%s: another instance is already running...aborting.\n", PID_FILE);
+        exit(-1);
     }
-    // printf("file descriptor=%d\n",fd);
-    // printf("file exists and readable and opened\n");
-    if (read(fd, buffer, 31) > 0) { /* has some data */
-        // printf("file has some content\n");
-        buffer[31] = 0;
-        if (sscanf(buffer, "%d", &pid) == 1) {
-            // printf("read a pid from the file OK = %d\n",pid);
-            ret = kill(pid, 0);
-            // printf("kill %d, 0) = returned =%d\n",pid, ret);
-            if (ret == 0) {
-                printf("There is already another njmon_collector running - exiting.\n");
-                exit(13);
-            }
-        }
-    }
-    /* if we got here there is a file but the content is duff or the process is not running */
-    close(fd);
-    remove(pid_filename);
-    make_pid_file();
+    // else: this is the first instance of this software... continue
 }
 
 void NjmonCollectorApp::file_read_one_stat(const char* file, const char* name)

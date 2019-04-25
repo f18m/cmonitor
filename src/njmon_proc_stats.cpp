@@ -48,7 +48,7 @@ void NjmonCollectorApp::read_data_number(const char* statname)
     DEBUGLOG_FUNCTION_START();
     sprintf(filename, "/proc/%s", statname);
     if ((fp = fopen(filename, "r")) == NULL) {
-        LogError("read_data_number: failed to open file %s", filename);
+        LogError("Failed to open performance file %s", filename);
         return;
     }
     sprintf(label, "proc_%s", statname);
