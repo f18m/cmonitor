@@ -1,12 +1,16 @@
 [![Build Status](https://travis-ci.com/f18m/nmon-cgroup-aware.svg?branch=master)](https://travis-ci.com/f18m/nmon-cgroup-aware)
 [![COPR RPM Build](https://copr.fedorainfracloud.org/coprs/f18m/nmon-cgroup-aware/package/nmon-cgroup-aware/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/f18m/nmon-cgroup-aware/)
+[![Docker Version](https://images.microbadger.com/badges/version/f18m/nmon-cgroup-aware.svg)](https://microbadger.com/images/f18m/nmon-cgroup-aware "Get your own version badge on microbadger.com")
 
 
 # nmon-cgroup-aware
 
-Fork of Nigel's performance Monitor for Linux, adding cgroup-awareness.
-Cgroups (i.e. Linux Control Groups) are the basic technology used to create containers.
-This fork is thus aimed at monitoring your LXC/Docker container performances.
+A Docker/LXC, database-free, lightweight container performance monitoring solution, perfect for ephemeral containers
+(e.g. containers used for DevOps automatic testing).
+
+This project is a fork of [Nigel's performance Monitor for Linux](http://nmon.sourceforge.net), adding cgroup-awareness;
+cgroups (i.e. Linux Control Groups) are the basic technology used to create containers; this fork is thus aimed at 
+monitoring your LXC/Docker container performances (opposed to the original project coinceived only for physical servers).
 
 NOTE: this is actually a fork of `njmon`, not `nmon`. 
 `njmon` provides no interactive mode (often useless inside containers!) and is a modern tool that produces a 
@@ -29,6 +33,29 @@ This project collects performance data about:
 
 Moreover the project allows you to easily post-process collected data and produce a **self-contained** HTML page which allows
 to visualize all the performance data easily using [Google Charts](https://developers.google.com/chart/).
+
+
+## Yet-Another-Monitoring-Project?
+
+You may be thinking "yet another monitoring project" for containers. Indeed there are already quite a few open source solutions, e.g.:
+
+- [kapacitor](https://www.influxdata.com/time-series-platform/kapacitor/)
+- [Prometheus](https://prometheus.io/)
+- [cAdvisor](https://github.com/google/cadvisor)
+- [netdata](https://github.com/netdata/netdata)
+
+All these are very complete solutions that allow you to monitor swarms of containers, in real time.
+The downside is that all these projects require you to setup an infrastructure (usually a time-series database) that collects
+in real-time all the statistics and then have some powerful web platform (e.g. Graphana) to render those time-series.
+All this is fantastic for **persistent** containers.
+
+This project instead is focused on providing a database-free, lightweight container performance monitoring solution, 
+perfect for ephemeral containers (e.g. containers used for DevOps automatic testing). The idea is much simpler:
+- you collect data for your container (or, well, your physical server) using a small collector software (written in C++ to
+  avoid Java virtual machines, Python interpreters or the like!) that saves data on disk in JSON format;
+- you save the JSON file, convert it to a **self-contained** HTML page;
+- you can archive that HTML file, send it by email, put in a tarball or whatever you like the most: no dependencies at all
+  are required to visualize it later!
 
 
 ## How to install
