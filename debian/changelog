@@ -1,0 +1,5 @@
+nmon-cgroup-aware (22.5-1ubuntu1) unstable; urgency=medium
+
+  * Initial debian release
+
+ -- Francesco Montorsi <francesco.montorsi@gmail.com>  Sat, 27 Apr 2019 00:54:25 +0200

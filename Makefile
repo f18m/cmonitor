@@ -29,11 +29,11 @@ clean:
 
 install:
 ifndef DESTDIR
-	@echo "*** ERROR: please call this makefile supplying explicitly the DESTDIR variable"
+	@echo "*** ERROR: please call this makefile supplying explicitly the DESTDIR variable. E.g. DESTDIR=/tmp/myinstall"
 	@exit 1
 endif
 ifndef BINDIR
-	@echo "*** ERROR: please call this makefile supplying explicitly the BINDIR variable"
+	@echo "*** ERROR: please call this makefile supplying explicitly the BINDIR variable. E.g. BINDIR=usr/bin"
 	@exit 1
 endif
 	$(MAKE) -C src install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
@@ -107,14 +107,37 @@ endif
 		cp -fv $(RPM_TMP_DIR)/x86_64/nmon-cgroup-aware-*.rpm $(outdir)/
 
 
+
+# DEBIAN PACKAGE:
+#
+# Reference guide:
+#   https://www.debian.org/doc/manuals/maint-guide/dreq.en.html
+#
+# Quick summary:
+#  - update debian/changelog using interactive utility "dch -i"
+
+deb:
+	dpkg-buildpackage --build=binary -uc
+	debsign  # you must have the GPG key setup properly for this to work (see e.g. https://help.github.com/en/articles/generating-a-new-gpg-key)
+
 #
 # DOCKER IMAGE:
 # 
 
 docker_image:
+	@cp -fv src/njmon_collector docker
 	@docker build \
 		--tag f18m/nmon-cgroup-aware:v$(RPM_VERSION)-$(RPM_RELEASE) \
 		--build-arg rpm_version=$(RPM_VERSION)-$(RPM_RELEASE) \
-		.
+		docker
+
+docker_run:
+	@docker rm nmon-baremetal-collector || true
+	@docker run -it \
+		--rm \
+		--name=nmon-baremetal-collector \
+		-v /root:/perf \
+		f18m/nmon-cgroup-aware:v$(RPM_VERSION)-$(RPM_RELEASE)
+	
 
 .PHONY: all clean install examples generate_patch srpm_tarball srpm rpm docker_image

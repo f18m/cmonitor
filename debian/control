@@ -1,0 +1,18 @@
+Source: nmon-cgroup-aware
+Section: base
+Priority: optional
+Maintainer: Francesco Montorsi <francesco.montorsi@gmail.com>
+Build-Depends: debhelper (>=10)
+Standards-Version: 4.0.0
+Homepage: https://github.com/f18m/nmon-cgroup-aware
+
+Package: nmon-cgroup-aware
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: a container performance monitoring solution
+ A Docker/LXC, database-free, lightweight container performance monitoring solution, perfect for ephemeral containers
+ (e.g. containers used for DevOps automatic testing).
+ .
+ This project is a fork of [Nigel's performance Monitor for Linux](http://nmon.sourceforge.net), adding cgroup-awareness;
+ cgroups (i.e. Linux Control Groups) are the basic technology used to create containers; this fork is thus aimed at 
+ monitoring your LXC/Docker container performances (opposed to the original project coinceived only for physical servers).
