@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.com/f18m/nmon-cgroup-aware.svg?branch=master)](https://travis-ci.com/f18m/nmon-cgroup-aware)
 [![COPR RPM Build](https://copr.fedorainfracloud.org/coprs/f18m/nmon-cgroup-aware/package/nmon-cgroup-aware/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/f18m/nmon-cgroup-aware/)
-[![Docker Version](https://images.microbadger.com/badges/version/f18m/nmon-cgroup-aware.svg)](https://microbadger.com/images/f18m/nmon-cgroup-aware "Get your own version badge on microbadger.com")
+[![Docker Version](https://images.microbadger.com/badges/version/f18m/nmon-cgroup-aware.svg)](https://hub.docker.com/r/f18m/nmon-cgroup-aware "Docker Image on DockerHub")
 
 
 # nmon-cgroup-aware
@@ -60,14 +60,24 @@ perfect for ephemeral containers (e.g. containers used for DevOps automatic test
 
 ## How to install
 
-If you use an LXC container
-based on a Centos/RHEL/Fedora distribution you can log into the container and run:
+If you use an LXC container based on a Centos/RHEL/Fedora distribution you can log into the container and just install
+the RPM for your distribution right away from the [COPR](https://copr.fedorainfracloud.org/coprs/f18m/nmon-cgroup-aware/) repository:
 
 ```
 yum install -y yum-plugin-copr
 yum copr enable -y f18m/nmon-cgroup-aware
 yum install -y nmon-cgroup-aware
 ```
+
+If you want to simply use a out-of-the-box Docker container to monitor your baremetal performances you can run:
+
+```
+docker run -d --name=nmon-baremetal-collector -v /root:/perf f18m/nmon-cgroup-aware
+```
+
+which downloads the Docker image for this project from [Docker Hub](https://hub.docker.com/r/f18m/nmon-cgroup-aware)
+and runs the stats collector saving data in JSON format inside your /root folder.
+
 
 ## How to collect stats
 
@@ -120,7 +130,7 @@ Example of resulting output files:
 
 - Add disk stats plotting
 - Add 'blkio' cgroup data collection & plotting
-- Add LXC and Docker examples
+- Add LXC examples
 - Test integration with InfluxDB (JSON streaming over socket)
 - Test deployment on supported Linux distributions
 - Add info about RAM, disk model, NIC model
