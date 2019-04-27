@@ -1,5 +1,6 @@
 src/*.o
 src/njmon_collector
+docker/njmon_collector
 .cproject
 .project
 .pydevproject

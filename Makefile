@@ -95,6 +95,7 @@ endif
 
 #
 # This is useful to produce a binary RPM:
+# (This is not used by COPR but still may be useful for local tests)
 #
 rpm: srpm
 ifndef outdir
@@ -115,10 +116,14 @@ endif
 #
 # Quick summary:
 #  - update debian/changelog using interactive utility "dch -i"
-
+#    (you must have formatted the debian/changelog file according to Debian/Ubuntu strict rules!!)
+#  - make deb
+#  - run dput to upload to your PPA
 deb:
-	dpkg-buildpackage --build=binary -uc
-	debsign  # you must have the GPG key setup properly for this to work (see e.g. https://help.github.com/en/articles/generating-a-new-gpg-key)
+	dpkg-buildpackage -S  # build source only otherwise Ubuntu PPA rejects with "Source/binary (i.e. mixed) uploads are not allowed"
+	## PROBABLY NOT NECESSARY: debsign -S            # you must have the GPG key setup properly for this to work (see e.g. https://help.github.com/en/articles/generating-a-new-gpg-key)
+	@echo "When ready to upload to your PPA run dput as e.g.:"
+	@echo "    dput ppa:francesco-montorsi/ppa ../nmon-cgroup-aware_$(RPM_VERSION).$(RPM_RELEASE)-1ubuntu1_source.changes"
 
 #
 # DOCKER IMAGE:
