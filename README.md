@@ -122,14 +122,11 @@ njmon_chart /path/to/json-stats.json /path/to/output-file.html
 
 Example of resulting output files:
 
- - [baremetal1](https://f18m.github.io/nmon-cgroup-aware/examples/baremetal1_20190413_1605.html): 
+ - [baremetal1](https://f18m.github.io/nmon-cgroup-aware/examples/baremetal1.html): 
    example of graph generated with the performance stats collected from a physical server running Ubuntu 18.04; 
    in this case the `njmon_collector` was running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
    graphs are present;
- - [docker_collecting_baremetal_stats](https://f18m.github.io/nmon-cgroup-aware/examples/docker_collecting_baremetal_stats.html): 
-   example of graph generated with the performance stats collected from a physical server from inside a Docker container;
-   in this case cgroup stat collection was explicitely disabled so that only baremetal performance graphs are present;
- - [docker_userapp_with_embedded_collector](https://f18m.github.io/nmon-cgroup-aware/examples/docker_userapp_with_embedded_collector.html): 
+ - [docker_userapp_with_embedded_collector](https://f18m.github.io/nmon-cgroup-aware/examples/docker-ubuntu1804-userapp-with-embedded-collector.html): 
    example of graph generated with the performance stats collected from inside a Docker container; this is a practical example
    where the Docker container is actually deploying something that simulates your target application, together with an embedded
    `njmon_collector` instance that monitors the performance of the Docker container itself;
