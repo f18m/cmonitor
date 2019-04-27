@@ -144,66 +144,63 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
 // NjmonCollectorApp - Functions used by the njmon engine
 // ----------------------------------------------------------------------------------
 
-// GLOBALS
+// GLOBALS: paths of cgroups for this process:
 
-uint64_t cgroup_memory_limit_bytes = 0;
 std::string cgroup_memory_kernel_path;
 std::string cgroup_cpuacct_kernel_path;
 std::string cgroup_cpuset_kernel_path;
+
+// GLOBALS: limits read from the cgroups that apply to this process:
+
+uint64_t cgroup_memory_limit_bytes = 0;
 std::set<int> cgroup_cpus;
-int debug = 0;
 
 // FUNCTIONS
 
 void NjmonCollectorApp::cgroup_init()
 {
-    m_bCGroupsFound = 0;
+    m_bCGroupsFound = false;
 
     if (!get_cgroup_path_for_pid("memory", cgroup_memory_kernel_path)) {
-        if (debug)
-            printf("Could not find the 'memory' cgroup path. CGroup mode disabled.\n");
+        LogDebug("Could not find the 'memory' cgroup path. CGroup mode disabled.\n");
         return;
     }
     if (!get_cgroup_path_for_pid("cpu,cpuacct", cgroup_cpuacct_kernel_path)) {
         if (!get_cgroup_path_for_pid("cpuacct,cpu", cgroup_cpuacct_kernel_path)) {
-            if (debug)
-                printf("Could not find the 'cpuacct' cgroup path. CGroup mode disabled.\n");
+            LogDebug("Could not find the 'cpuacct' cgroup path. CGroup mode disabled.\n");
             return;
         }
     }
     if (!get_cgroup_path_for_pid("cpuset", cgroup_cpuset_kernel_path)) {
-        if (debug)
-            printf("Could not find the 'cpuset' cgroup path. CGroup mode disabled.\n");
+        LogDebug("Could not find the 'cpuset' cgroup path. CGroup mode disabled.\n");
         return;
     }
 
     if (!read_integer(cgroup_memory_kernel_path + "/memory.limit_in_bytes", cgroup_memory_limit_bytes)) {
-        if (debug)
-            printf("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
     if (!read_from_system_cpu_for_current_cgroup(cgroup_cpuset_kernel_path, cgroup_cpus)) {
-        if (debug)
-            printf("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
+        LogDebug("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
         return;
     }
     if (cgroup_memory_limit_bytes == 0) {
-        if (debug)
-            printf("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
 
     // cpuset and memory cgroups found:
-    m_bCGroupsFound = 1;
-    if (debug) {
-        printf("Found cpuset cgroup limiting to CPUs: %s\n", stl_container2string(cgroup_cpus, ",").c_str());
-        printf("Found memory cgroup limiting to Bytes: %lu\n", cgroup_memory_limit_bytes);
-    }
+    m_bCGroupsFound = true;
+    LogDebug("Found cpuset cgroup limiting to CPUs: %s, mounted at %s\n",
+        stl_container2string(cgroup_cpus, ",").c_str(), cgroup_cpuset_kernel_path.c_str());
+    LogDebug("Found cpuacct cgroup mounted at %s\n", cgroup_cpuacct_kernel_path.c_str());
+    LogDebug("Found memory cgroup limiting to Bytes: %lu, mounted at %s\n", cgroup_memory_limit_bytes,
+        cgroup_memory_kernel_path.c_str());
 }
 
 void NjmonCollectorApp::cgroup_config()
 {
-    if (m_bCGroupsFound == 0)
+    if (!m_bCGroupsFound)
         return;
 
     psection("cgroup_config");
@@ -219,14 +216,14 @@ void NjmonCollectorApp::cgroup_config()
 
 int NjmonCollectorApp::cgroup_is_allowed_cpu(int cpu)
 {
-    if (m_bCGroupsFound == 0)
+    if (!m_bCGroupsFound)
         return 1; // allowed
     return cgroup_cpus.find(cpu) != cgroup_cpus.end();
 }
 
 void NjmonCollectorApp::cgroup_proc_memory()
 {
-    if (m_bCGroupsFound == 0)
+    if (!m_bCGroupsFound)
         return;
 
     // See
@@ -280,7 +277,7 @@ void NjmonCollectorApp::cgroup_proc_memory()
 
 void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 {
-    if (m_bCGroupsFound == 0)
+    if (!m_bCGroupsFound)
         return;
 
     /* NOTE: newer distros have stats like
@@ -325,8 +322,9 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         if (counter_nsec_sys_mode.empty())
             return;
 
-        if (debug)
-            printf("Found cpuacct.usage_percpu_sys/user cgroups\n");
+        LogDebug("Found cpuacct.usage_percpu_sys/user cgroups; computing CPU usage for %.2fsec delta time and %zu CPUs "
+                 "(print=%d)\n",
+            elapsed_sec, counter_nsec_user_mode.size(), print);
 
         if (print)
             psection("cgroup_cpuacct_stats");
@@ -345,8 +343,9 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
              *     watch -n1 'grep cpu3 -A6 -B1 test.json | tail -20'
              * produces cpu3 at 100%
              */
-            if (prev_values[i].counter_nsec_user_mode && prev_values[i].counter_nsec_sys_mode && print
-                && elapsed_sec > MIN_ELAPSED_SECS) {
+            LogDebug("CPU %d, prev user=%lu, prev sys=%lu", i, prev_values[i].counter_nsec_user_mode,
+                prev_values[i].counter_nsec_sys_mode);
+            if (print && elapsed_sec > MIN_ELAPSED_SECS) {
                 double cpuUserPercent = // force newline
                     100 * ((double)(counter_nsec_user_mode[i] - prev_values[i].counter_nsec_user_mode))
                     / (elapsed_sec * 1E9);
@@ -378,8 +377,7 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         if (counter_nsec_user_mode.empty())
             return;
 
-        if (debug)
-            printf("Reading data from cgroup cpuacct.usage_percpu");
+        LogDebug("Reading data from cgroup cpuacct.usage_percpu");
 
         if (print)
             psection("cgroup_cpuacct_stats");
@@ -388,7 +386,7 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
             /*
              * Same comments for USER/SYS computations done above apply here!
              */
-            if (prev_values[i].counter_nsec_user_mode && print && elapsed_sec > MIN_ELAPSED_SECS) {
+            if (print && elapsed_sec > MIN_ELAPSED_SECS) {
                 double cpuUserPercent = // force newline
                     100 * ((double)(counter_nsec_user_mode[i] - prev_values[i].counter_nsec_user_mode))
                     / (elapsed_sec * 1E9);

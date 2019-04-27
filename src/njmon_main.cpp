@@ -171,8 +171,12 @@ void LogDebug(const char* line, ...)
     vsnprintf(currLogLine, 255, line, args);
     va_end(args);
 
-    if (g_cfg.m_bDebug)
-        printf("%s\n", currLogLine);
+    if (g_cfg.m_bDebug) {
+        printf("%s", currLogLine);
+        size_t lastCh = strlen(currLogLine) - 1;
+        if (currLogLine[lastCh] != '\n')
+            printf("\n");
+    }
 }
 
 void LogError(const char* line, ...)

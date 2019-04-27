@@ -152,7 +152,7 @@ void NjmonCollectorApp::phex(const char* name, long long value)
     indent();
     njmon_hex++;
     output_char += sprintf(&output[output_char], "\"%s\": \"0x%08llx\",\n", name, value);
-    LogDebug("plong(%s,%lld) count=%ld\n", name, value, output_char);
+    // LogDebug("plong(%s,%lld) count=%ld\n", name, value, output_char);
 }
 
 void NjmonCollectorApp::plong(const char* name, long long value)
@@ -160,7 +160,7 @@ void NjmonCollectorApp::plong(const char* name, long long value)
     indent();
     njmon_long++;
     output_char += sprintf(&output[output_char], "\"%s\": %lld,\n", name, value);
-    LogDebug("plong(%s,%lld) count=%ld\n", name, value, output_char);
+    // LogDebug("plong(%s,%lld) count=%ld\n", name, value, output_char);
 }
 
 void NjmonCollectorApp::pdouble(const char* name, double value)
@@ -168,7 +168,7 @@ void NjmonCollectorApp::pdouble(const char* name, double value)
     indent();
     njmon_double++;
     output_char += sprintf(&output[output_char], "\"%s\": %.3f,\n", name, value);
-    LogDebug("pdouble(%s,%.1f) count=%ld\n", name, value, output_char);
+    // LogDebug("pdouble(%s,%.1f) count=%ld\n", name, value, output_char);
 }
 
 void NjmonCollectorApp::pstats()
@@ -189,14 +189,14 @@ void NjmonCollectorApp::pstring(const char* name, const char* value)
     njmon_string++;
     indent();
     output_char += sprintf(&output[output_char], "\"%s\": \"%s\",\n", name, value);
-    LogDebug("pstring(%s,%s) count=%ld\n", name, value, output_char);
+    // LogDebug("pstring(%s,%s) count=%ld\n", name, value, output_char);
 }
 
 void NjmonCollectorApp::push()
 {
     DEBUGLOG_FUNCTION_START();
     buffer_check();
-    LogDebug("XXX size=%ld\n", output_char);
+    // LogDebug("XXX size=%ld\n", output_char);
 
     if (m_outputSocketFd) {
         if (write(m_outputSocketFd, output, output_char) < 0) {
@@ -216,7 +216,7 @@ void NjmonCollectorApp::push()
 
     fflush(NULL); /* force I/O output now */
 
-    LogDebug("YYY size=%ld\n", output_char);
+    LogDebug("pushed %ld chars", output_char);
     output[0] = 0;
     output_char = 0;
 }
