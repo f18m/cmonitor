@@ -73,7 +73,8 @@ yum install -y nmon-cgroup-aware
 
 ### Ubuntu
 
-If you use an LXC/Docker container based on a Ubuntu distribution you can similarly run the following commands:
+If you use an LXC/Docker container based on a Ubuntu distribution you can similarly install from [my Ubuntu PPA](https://launchpad.net/~francesco-montorsi/+archive/ubuntu/ppa)
+using the following commands:
 
 ```
 add-apt-repository ppa:francesco-montorsi/ppa
@@ -148,3 +149,4 @@ Example of resulting output files:
 - Test integration with InfluxDB (JSON streaming over socket)
 - Test deployment on supported Linux distributions
 - Add info about RAM, disk model, NIC model
+- Put the "memory.failcnt" curve on a secondary Y axis

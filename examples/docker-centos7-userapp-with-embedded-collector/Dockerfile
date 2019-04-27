@@ -7,7 +7,7 @@ RUN yum install -y python36 stress
 # then install nmon-cgroup-aware from COPR repo:
 RUN yum install -y yum-plugin-copr
 RUN yum copr enable -y f18m/nmon-cgroup-aware
-RUN yum install -y nmon-cgroup-aware-22-4
+RUN yum install -y nmon-cgroup-aware-22-5
 
 COPY example-load.sh .
 
