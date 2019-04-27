@@ -50,24 +50,37 @@ in real-time all the statistics and then have some powerful web platform (e.g. G
 All this is fantastic for **persistent** containers.
 
 This project instead is focused on providing a database-free, lightweight container performance monitoring solution, 
-perfect for ephemeral containers (e.g. containers used for DevOps automatic testing). The idea is much simpler:
-- you collect data for your container (or, well, your physical server) using a small collector software (written in C++ to
+perfect for **ephemeral** containers (e.g. containers used for DevOps automatic testing). The idea is much simpler:
+1) you collect data for your container (or, well, your physical server) using a small collector software (written in C++ to
   avoid Java virtual machines, Python interpreters or the like!) that saves data on disk in JSON format;
-- you save the JSON file, convert it to a **self-contained** HTML page;
-- you can archive that HTML file, send it by email, put in a tarball or whatever you like the most: no dependencies at all
+2) you save the JSON file, convert it to a **self-contained** HTML page;
+3) you can archive that HTML file, send it by email, put in a tarball or whatever you like the most: no dependencies at all
   are required to visualize it later!
 
 
 ## How to install
 
-If you use an LXC container based on a Centos/RHEL/Fedora distribution you can log into the container and just install
-the RPM for your distribution right away from the [COPR](https://copr.fedorainfracloud.org/coprs/f18m/nmon-cgroup-aware/) repository:
+### RPM
+
+If you use an LXC/Docker container based on a Centos/RHEL/Fedora distribution you can log into the container (or change its Dockerfile)
+and just install the RPM right away from the [COPR](https://copr.fedorainfracloud.org/coprs/f18m/nmon-cgroup-aware/) repository:
 
 ```
 yum install -y yum-plugin-copr
 yum copr enable -y f18m/nmon-cgroup-aware
 yum install -y nmon-cgroup-aware
 ```
+
+### Ubuntu
+
+If you use an LXC/Docker container based on a Ubuntu distribution you can similarly run the following commands:
+
+```
+add-apt-repository ppa:francesco-montorsi/ppa
+apt-get install nmon-cgroup-aware
+```
+
+### Docker
 
 If you want to simply use a out-of-the-box Docker container to monitor your baremetal performances you can run:
 
@@ -81,7 +94,7 @@ and runs the stats collector saving data in JSON format inside your /root folder
 
 ## How to collect stats
 
-The RPM installs a single utility, `njmon` inside your container; launch it like that:
+The RPM installs a single utility, `njmon_collector` inside your container; launch it like that:
 
 ```
 njmon_collector -s 3 -m /home
@@ -99,7 +112,8 @@ Whenever you want you can either:
 
 ## How to plot stats
 
-To plot the JSON containing the collected statistics, simply launch:
+To plot the JSON containing the collected statistics, simply launch the `njmon_chart` utility installed together
+with the RPM/Debian package:
 
 ```
 njmon_chart /path/to/json-stats.json /path/to/output-file.html
