@@ -345,7 +345,7 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
              */
             LogDebug("CPU %d, prev user=%lu, prev sys=%lu", i, prev_values[i].counter_nsec_user_mode,
                 prev_values[i].counter_nsec_sys_mode);
-            if (print && elapsed_sec > MIN_ELAPSED_SECS) {
+            if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
                 double cpuUserPercent = // force newline
                     100 * ((double)(counter_nsec_user_mode[i] - prev_values[i].counter_nsec_user_mode))
                     / (elapsed_sec * 1E9);
@@ -386,7 +386,7 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
             /*
              * Same comments for USER/SYS computations done above apply here!
              */
-            if (print && elapsed_sec > MIN_ELAPSED_SECS) {
+            if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
                 double cpuUserPercent = // force newline
                     100 * ((double)(counter_nsec_user_mode[i] - prev_values[i].counter_nsec_user_mode))
                     / (elapsed_sec * 1E9);
