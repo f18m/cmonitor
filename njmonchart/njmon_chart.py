@@ -80,6 +80,7 @@ def nchart_start_js(file, title):
     file.write('     button { margin-bottom: 3px; }\n')
     file.write('     #chart_master {width:100%; height:85%;}\n')
     file.write('     #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
+    file.write('     #bottom_table_val {font-family: monospace;}\n')
     file.write('     #button_table { border-collapse: collapse; }\n')
     file.write('     #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
     file.write('  </style>\n')
@@ -222,7 +223,7 @@ def nchart_append_html_table(file, name, table_entries):
     file.write('    <table>\n')
     file.write('    <tr><td><ul>\n')
     for i, entry in enumerate(table_entries, start=1):
-        file.write("      <li>" + entry[0] + "<span id='bottom_table_val'>" + entry[1]+ "</span></li>\n")
+        file.write("      <li>" + entry[0] + " <span id='bottom_table_val'>" + entry[1]+ "</span></li>\n")
         if (i % 4) == 0:
             file.write("      </ul></td><td><ul>\n")
     file.write('    </ul></td></tr>\n')
@@ -874,19 +875,20 @@ def main_process_file(cmd, infile, outfile):
     # generate_filesystems(web, jdata)
     
     monitoring_summary = [
-        ( 'Version:', '<a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a> ' + jheader["njmon"]["njmon_version"] ),
-        ( "User: ", jheader["njmon"]["username"] ),
-        ( "Collected: ", jheader["njmon"]["collecting"] ),
-        ( "Started sampling at: ", jdata_first_sample["timestamp"]["datetime"] + " (Local)" ),
-        ( "Started sampling at: ", jdata_first_sample["timestamp"]["UTC"] + " (UTC)" ),
-        ( "Snapshots: ", str(len(jdata)) ),
-        ( "Snapshot Interval (s): ", str(jheader["njmon"]["sample_interval_seconds"]) ),
-        ( "Total time sampled (s): ", str(jheader["njmon"]["sample_interval_seconds"] * len(jdata)) )
+        ( "Version:", '<a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a> ' + jheader["njmon"]["njmon_version"] ),
+        ( "User:", jheader["njmon"]["username"] ),
+        ( "Collected:", jheader["njmon"]["collecting"] ),
+        ( "Started sampling at:", jdata_first_sample["timestamp"]["datetime"] + " (Local)" ),
+        ( "Started sampling at:", jdata_first_sample["timestamp"]["UTC"] + " (UTC)" ),
+        ( "Snapshots:", str(len(jdata)) ),
+        ( "Snapshot Interval (s):", str(jheader["njmon"]["sample_interval_seconds"]) ),
+        ( "Total time sampled (s):", str(jheader["njmon"]["sample_interval_seconds"] * len(jdata)) )
     ]
     monitored_summary = [
-        "Hostname: " + jheader["identity"]["hostname"],
-        "CPU family: " + jheader["lscpu"]["model_name"],
-        "OS: " + jheader["os_release"]["pretty_name"],
+        ( "Hostname:", jheader["identity"]["hostname"] ),
+        ( "CPU family:", jheader["lscpu"]["model_name"] ),
+        ( "CPU family:", jheader["lscpu"]["model_name"] ),
+        ( "OS:", jheader["os_release"]["pretty_name"] )
     ]
     
     nchart_end_js(web, generate_config_js(jheader))
