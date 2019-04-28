@@ -15,6 +15,6 @@ all:
 			--hostname=docker-ubuntu1804-userapp-with-embedded-collector \
 			--name ubuntu1804-nmon-example \
 			ubuntu1804-nmon-image && \
-		echo "Njmon-cgroup-aware docker successfully started: baremetal+container performance stats are collected in $(HOME)." && \
+		echo "Njmon-cgroup-aware docker successfully started: baremetal+container performance stats are collected in $(DOCKER_EXAMPLE_FOLDER)." && \
 		echo "The docker will stop automatically after a while." && \
 		docker logs -f ubuntu1804-nmon-example

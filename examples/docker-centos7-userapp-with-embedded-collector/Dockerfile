@@ -17,4 +17,9 @@ COPY example-load.sh .
 #  - collect "cgroups": in this way we just collect baremetal+container performance stats
 #  - for this example collect 3minutes of data (60 samples) and then stop
 #  - put resulting files in /perf folder which is actually a volume shared with the host (see docker run command)
-CMD /usr/bin/njmon_collector --sampling-interval=3 --num-samples=60 --output-directory /perf ; bash example-load.sh
+CMD /usr/bin/njmon_collector \
+      --sampling-interval=3 \
+      --num-samples=60 \
+      --output-filename=docker-centos7-userapp-with-embedded-collector \
+      --output-directory /perf ; \
+    bash example-load.sh

@@ -1,15 +1,19 @@
 # as part of this example limit the CPUs where this docker can run to just 2 (the first 2 available)
 DOCKER_EXAMPLE_CPUS:=0,1
 DOCKER_EXAMPLE_MEMORY_LIMIT:=100m
+DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f ..)
 
 all:
-	@docker build -t centos7-nmon-example . && \
+	@docker build -t centos7-nmon-image . && \
 		echo "Njmon-cgroup-aware docker example built successfully; now running it" && \
 		docker run -dit \
+			--rm \
 			--cpuset-cpus=$(DOCKER_EXAMPLE_CPUS) \
 			--memory=$(DOCKER_EXAMPLE_MEMORY_LIMIT) \
-			--volume=$(HOME):/perf \
-			--hostname=docker_with_monitoring_agent \
-			centos7-nmon-example && \
-		echo "Njmon-cgroup-aware docker successfully started: baremetal+container performance stats are collected in $(HOME)." && \
-		echo "The docker will stop automatically after a while."
+			--volume=$(DOCKER_EXAMPLE_FOLDER):/perf \
+			--hostname=docker-centos7-userapp-with-embedded-collector \
+			--name centos7-nmon-example \
+			centos7-nmon-image && \
+		echo "Njmon-cgroup-aware docker successfully started: baremetal+container performance stats are collected in $(DOCKER_EXAMPLE_FOLDER)." && \
+		echo "The docker will stop automatically after a while." && \
+		docker logs -f centos7-nmon-example

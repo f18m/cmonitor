@@ -4,12 +4,13 @@
 
 EXAMPLE_JSON_FILES=\
 	baremetal1.json \
+	docker-centos7-collecting-baremetal-stats.json \
+	docker-centos7-userapp-with-embedded-collector.json \
 	docker-ubuntu1804-userapp-with-embedded-collector.json
-
-#	docker-collecting-baremetal-stats.json \
 
 all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
+		echo "--------------------------------------------------------" ; \
 		../njmonchart/njmon_chart.py $$jsonExample ; \
 	done
 
