@@ -17,13 +17,19 @@ fi
 cycle=1
 while (( cycle<num_cycles )); do
     echo "Running cycle #$cycle..."
-    stress --cpu 2 --vm 1 --timeout 10 &
+    stress --cpu 2 --vm 1 --timeout $(( $RANDOM % 10 + 1 )) &
     sleep 2
-    stress --cpu 1 --timeout 3 &
+    stress --cpu 1 --timeout $(( $RANDOM % 3 + 1 )) &
     sleep 6
-    stress --hdd 2 --timeout 3 &
+    stress --hdd 2 --timeout $(( $RANDOM % 3 + 1 )) &
     sleep 3
 
-    wait
+    wait  # each cycle will last about 10secs
     (( cycle++ ))
 done
+
+echo "Stopping njmon_collector"
+pkill njmon_collector
+sleep 1
+
+echo "Exiting the example-load.sh script..."

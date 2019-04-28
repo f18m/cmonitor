@@ -1,6 +1,6 @@
 FROM ubuntu:bionic
 
-RUN apt-get update &&  apt-get -y install gnupg2 stress
+RUN apt-get update &&  apt-get -y install gnupg2 stress lshw
 
 # this is the way to install a released version from Ubuntu PPA:
 #RUN apt-get install software-properties-common
