@@ -141,12 +141,21 @@ Example of resulting output files:
 - Other forks: [https://github.com/axibase/nmon](https://github.com/axibase/nmon)
 
 
-## TODO
+## TODO collector-side
 
-- Add disk stats plotting
-- Add 'blkio' cgroup data collection & plotting
-- Add LXC examples
-- Test integration with InfluxDB (JSON streaming over socket)
-- Test deployment on supported Linux distributions
+- Add 'blkio' cgroup data collection
 - Add info about RAM, disk model, NIC model
+- Test integration with InfluxDB (JSON streaming over socket)
+
+## TODO chart-side
+
+- Add javascript buttons to toggle graphs for e.g. disks/networks/
+- Add 'blkio' cgroup data plotting
 - Put the "memory.failcnt" curve on a secondary Y axis
+
+## TODO other
+
+- Test deployment on supported Linux distributions
+- Add container type autodetection
+- Add LXC examples
+

@@ -1,3 +1,11 @@
+nmon-cgroup-aware (22.6-1ubuntu1) UNRELEASED; urgency=medium
+
+  * Add lshw information to JSON
+  * Add collected info to JSON
+  * Add disk stats to njmon_chart HTMLs
+
+ -- root <root@francesco-All-Series>  Sun, 28 Apr 2019 19:32:31 +0200
+
 nmon-cgroup-aware (22.5-1ubuntu1) bionic; urgency=medium
 
   * Initial Ubuntu release
