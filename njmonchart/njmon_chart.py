@@ -199,6 +199,8 @@ def nchart_start_html_body(file, hostname):
                     colour = 'darkorange'
                 elif graph.name.startswith('Network'):
                     colour = 'darkblue'
+                elif graph.name.startswith('Disk'):
+                    colour = 'darkgreen'
                 else:
                     colour = 'black'
                 file.write('    <button id="draw_' + str(num) + '" style="color:' + colour + '"><b>' + graph.name + '</b></button>\n')
@@ -214,13 +216,13 @@ def nchart_start_html_body(file, hostname):
     file.write('  <div id="chart_master"></div>\n')
 
     
-def nchart_append_html_table(file, name, summary):
+def nchart_append_html_table(file, name, table_entries):
     file.write('  <div id="bottom_div">\n')
     file.write('    <h3>' + name + '</h3>\n')
     file.write('    <table>\n')
     file.write('    <tr><td><ul>\n')
-    for i, entry in enumerate(summary, start=1):
-        file.write("      <li>" + entry + "</li>\n")
+    for i, entry in enumerate(table_entries, start=1):
+        file.write("      <li>" + entry[0] + "<span id='bottom_table_val'>" + entry[1]+ "</span></li>\n")
         if (i % 4) == 0:
             file.write("      </ul></td><td><ul>\n")
     file.write('    </ul></td></tr>\n')
@@ -443,59 +445,51 @@ def generate_config_js(jheader):
 #     return (tdisk, td_header, td_data)
 
 
-# def generate_disks(web, jdata):
-#     global g_graphs
-#     # - - - Disks
-#     dstr = ""
-#     for device in jdata[0]["disks"].keys():
-#         dstr = dstr + "'" + device + "',"
-#     dstr = dstr[:-1]
-#     nchart_start_js_line_graph(web, dstr)
-#     for i, s in enumerate(jdata):
-#         if i == 0:
-#             continue
-#         web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
-#         for device in s["disks"].keys():
-#             web.write(",%.1f" % (s["disks"][device]["time"]))
-#         web.write("]\n")
-#     nchart_end_js_line_graph(web, 'Disk Time')
-#     g_graphs.append("Disk-Time")
-#     
-#     dstr = ""
-#     for device in jdata[0]["disks"].keys():
-#         dstr = dstr + "'" + device + "+read','" + device + "-write',"
-#     dstr = dstr[:-1]
-#     nchart_start_js_line_graph(web, dstr)
-#     for i, s in enumerate(jdata):
-#         if i == 0:
-#             continue
-#         web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
-#         for device in s["disks"].keys():
-#             web.write(",%.1f,%.1f" % (
-#                      s["disks"][device]["rkb"],
-#                     -s["disks"][device]["wkb"]))
-#         web.write("]\n")
-#     nchart_end_js_line_graph(web, 'Disks MB/s')
-#     g_graphs.append("Disk-MB")
-#     
-#     dstr = ""
-#     for device in jdata[0]["disks"].keys():
-#         dstr = dstr + "'" + device + "+read','" + device + "-write',"
-#     dstr = dstr[:-1]
-#     nchart_start_js_line_graph(web, dstr)
-#     for i, s in enumerate(jdata):
-#         if i == 0:
-#             continue
-#         web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
-#         for device in s["disks"].keys():
-#             web.write(",%.1f,%.1f " % (
-#                      s["disks"][device]["reads"],
-#                     -s["disks"][device]["writes"]))
-#         web.write("]\n")
-#     nchart_end_js_line_graph(web, 'Disk blocks/s')
-#     g_graphs.append("Disk-blocks")
-#     return web
+def generate_disks_io(web, jdata, hostname):
+    # if network traffic data was not collected, just return:
+    if 'disks' not in jdata[0]:
+        return
+    
+    all_disks = jdata[0]["disks"].keys()
+    if len(all_disks) == 0:
+        return
+    
+    diskcols = ['Timestamp']
+    for device in all_disks:
+        diskcols.append(str(device) + " Disk Time")
+        diskcols.append(str(device) + " Reads")
+        diskcols.append(str(device) + " Writes")
+        diskcols.append(str(device) + " Read MB")
+        diskcols.append(str(device) + " Write MB")
 
+    # convert from kB to MB
+    divider = 1000
+    
+    #
+    # MAIN LOOP
+    # Process JSON sample and fill the Table() object
+    #
+    
+    disk_table = Table(diskcols)
+    for i, s in enumerate(jdata):
+        if i == 0:
+            continue
+
+        row = [ googledate(s['timestamp']['datetime']) ]
+        for device in all_disks:
+            row.append(s["disks"][device]["time"])
+            row.append(s["disks"][device]["reads"])
+            row.append(s["disks"][device]["writes"])
+            row.append(s["disks"][device]["rkb"]/divider)
+            row.append(-s["disks"][device]["wkb"]/divider)
+        disk_table.addRow(row)
+
+    graphit(web,
+            disk_table,  # Data
+            'Disk I/O for ' + hostname + " (from baremetal stats)",  # Graph Title
+            'Disk I/O',  # Button Label
+            graph_type=GRAPH_TYPE_BAREMETAL,
+            stack_state=False)
 
 # def generate_filesystems(web, jdata):
 #     global g_graphs
@@ -519,8 +513,12 @@ def generate_network_traffic(web, jdata, hostname):
     if 'network_interfaces' not in jdata[0]:
         return
     
+    all_netdevices = jdata[0]["network_interfaces"].keys()
+    if len(all_netdevices) == 0:
+        return
+    
     netcols = ['Timestamp']
-    for device in jdata[0]["network_interfaces"].keys():
+    for device in all_netdevices:
         netcols.append(str(device) + "+in")
         netcols.append(str(device) + "-out")
 
@@ -541,7 +539,7 @@ def generate_network_traffic(web, jdata, hostname):
             continue
 
         row = [ googledate(s['timestamp']['datetime']) ]
-        for device in s["network_interfaces"].keys():
+        for device in all_netdevices:
             row.append(s["network_interfaces"][device]["ibytes"]/divider)
             row.append(-s["network_interfaces"][device]["obytes"]/divider)
         net_table.addRow(row)
@@ -561,7 +559,7 @@ def generate_network_traffic(web, jdata, hostname):
             continue
 
         row = [ googledate(s['timestamp']['datetime']) ]
-        for device in s["network_interfaces"].keys():
+        for device in all_netdevices:
             row.append(s["network_interfaces"][device]["ipackets"])
             row.append(-s["network_interfaces"][device]["opackets"])
         net_table.addRow(row)
@@ -866,6 +864,7 @@ def main_process_file(cmd, infile, outfile):
     generate_baremetal_memory(web, jdata, hostname)
     generate_cgroup_memory(web, jdata, hostname)
     generate_network_traffic(web, jdata, hostname)
+    generate_disks_io(web, jdata, hostname)
     generate_load_avg(web, jdata, hostname)
     
     # if process_data_found:
@@ -875,13 +874,14 @@ def main_process_file(cmd, infile, outfile):
     # generate_filesystems(web, jdata)
     
     monitoring_summary = [
-        'Version: <a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a> ' + jheader["njmon"]["njmon_version"],
-        "Started sampling at: " + jdata_first_sample["timestamp"]["datetime"] + " (Local)",
-        "Started sampling at: " + jdata_first_sample["timestamp"]["UTC"] + " (UTC)",
-        "Snapshots: " + str(len(jdata)),
-        "Snapshot Interval (s): " + str(jheader["njmon"]["sample_interval_seconds"]),
-        "Total time sampled (s): " + str(jheader["njmon"]["sample_interval_seconds"] * len(jdata)),
-        "User: " + jheader["njmon"]["username"],
+        ( 'Version:', '<a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a> ' + jheader["njmon"]["njmon_version"] ),
+        ( "User: ", jheader["njmon"]["username"] ),
+        ( "Collected: ", jheader["njmon"]["collecting"] ),
+        ( "Started sampling at: ", jdata_first_sample["timestamp"]["datetime"] + " (Local)" ),
+        ( "Started sampling at: ", jdata_first_sample["timestamp"]["UTC"] + " (UTC)" ),
+        ( "Snapshots: ", str(len(jdata)) ),
+        ( "Snapshot Interval (s): ", str(jheader["njmon"]["sample_interval_seconds"]) ),
+        ( "Total time sampled (s): ", str(jheader["njmon"]["sample_interval_seconds"] * len(jdata)) )
     ]
     monitored_summary = [
         "Hostname: " + jheader["identity"]["hostname"],

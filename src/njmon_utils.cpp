@@ -35,7 +35,7 @@
 // C++ Helper functions
 // ----------------------------------------------------------------------------------
 
-std::string ToLower(const std::string& orig_str)
+std::string to_lower(const std::string& orig_str)
 {
     std::string str(orig_str);
     for (auto& c : str)
@@ -43,7 +43,7 @@ std::string ToLower(const std::string& orig_str)
     return str;
 }
 
-unsigned int ReplaceString(std::string& str, const std::string& from, const std::string& to, bool allOccurrences)
+unsigned int replace_string(std::string& str, const std::string& from, const std::string& to, bool allOccurrences)
 {
     unsigned int noccurrences = 0;
     size_t start_pos = str.find(from);

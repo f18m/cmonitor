@@ -193,17 +193,17 @@ void LogError(const char* line, ...)
 
 PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
 {
-    if (ToLower(str) == "cgroups")
+    if (to_lower(str) == "cgroups")
         return PK_CGROUPS;
-    if (ToLower(str) == "disk")
+    if (to_lower(str) == "disk")
         return PK_DISK;
-    if (ToLower(str) == "cpu")
+    if (to_lower(str) == "cpu")
         return PK_CPU;
-    if (ToLower(str) == "memory")
+    if (to_lower(str) == "memory")
         return PK_MEMORY;
-    if (ToLower(str) == "network")
+    if (to_lower(str) == "network")
         return PK_NETWORK;
-    if (ToLower(str) == "all")
+    if (to_lower(str) == "all")
         return PK_ALL;
 
     return PK_INVALID;
@@ -275,7 +275,7 @@ void NjmonCollectorApp::print_help()
             help << std::string(ADDITIONAL_HELP_COLUMN_START - currlen, ' ');
 
         std::string additional_help(g_opts_extended[i].additional_help);
-        ReplaceString(
+        replace_string(
             additional_help, "\n", "\n" + std::string(ADDITIONAL_HELP_COLUMN_START, ' '), true /*all occurrences*/);
         std::cerr << help.str() << additional_help << std::endl;
     }
@@ -812,10 +812,11 @@ int NjmonCollectorApp::run(int argc, char** argv)
     njmon_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
     etc_os_release();
     proc_version();
+    if (g_cfg.m_nCollectFlags & PK_CGROUPS)
+        cgroup_config(); // needs to run _BEFORE_ lscpu() and proc_cpuinfo()
     lscpu();
     proc_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
-    if (g_cfg.m_nCollectFlags & PK_CGROUPS)
-        cgroup_config();
+    lshw();
     remove_ending_comma_if_any();
     praw("  },\n"); // end of "header"
 
@@ -864,7 +865,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
 
         if (g_cfg.m_nCollectFlags & PK_DISK) {
             proc_diskstats(elapsed, PRINT_TRUE);
-            proc_filesystems();
+            // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
 
         psampleend(loop == (g_cfg.m_nSamples - 1) || g_bExiting);

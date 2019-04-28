@@ -734,6 +734,29 @@ void NjmonCollectorApp::lscpu()
     pclose(pop);
 }
 
+void NjmonCollectorApp::lshw()
+{
+    FILE* pop = 0;
+    char buf[1024 + 1];
+
+    DEBUGLOG_FUNCTION_START();
+
+    if (!file_exists("/usr/bin/lshw"))
+        return;
+
+    if ((pop = popen("/usr/bin/lshw -json", "r")) == NULL)
+        return;
+
+    buf[0] = 0;
+    praw("    \"lshw\": ");
+    while (fgets(buf, 1024, pop) != NULL) {
+        praw("    "); // indentation
+        praw(buf);
+        buffer_check();
+    }
+    pclose(pop);
+}
+
 void NjmonCollectorApp::proc_uptime()
 {
     static FILE* fp = 0;
@@ -741,9 +764,7 @@ void NjmonCollectorApp::proc_uptime()
     int count;
     long long value;
     long long days;
-    ;
     long long hours;
-    ;
 
     DEBUGLOG_FUNCTION_START();
     if (fp == 0) {
@@ -861,7 +882,6 @@ void NjmonCollectorApp::proc_filesystems()
 long power_timebase = 0;
 long power_nominal_mhz = 0;
 int ispower = 0;
-;
 
 void NjmonCollectorApp::proc_cpuinfo()
 {
@@ -881,71 +901,69 @@ void NjmonCollectorApp::proc_cpuinfo()
         rewind(fp);
 
     psection("cpuinfo");
-    processor = 0;
+    processor = -1;
     while (fgets(buf, 1024, fp) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
         /* moronically cpuinfo file format has Tab characters !!! */
 
-        int processor_allowed = cgroup_is_allowed_cpu(processor);
         if (!strncmp("processor", buf, strlen("processor"))) {
-            if (processor != 0)
+            // end previous section
+            if (processor != -1)
                 psubend();
+
+            // start new section
             sscanf(&buf[12], "%d", &int_val);
+            processor = int_val;
             sprintf(string, "proc%d", processor);
             psub(string);
-            processor++;
+            // processor++;
         }
-        if (!strncmp("clock", buf, strlen("clock"))) { /* POWER ONLY */
-            sscanf(&buf[9], "%lf", &value);
-            if (processor_allowed)
+
+        if (cgroup_is_allowed_cpu(processor)) {
+
+            if (!strncmp("clock", buf, strlen("clock"))) { /* POWER ONLY */
+                sscanf(&buf[9], "%lf", &value);
                 pdouble("mhz_clock", value);
-            power_nominal_mhz = value; /* save for sys_device_system_cpu() */
-            ispower = 1;
-        }
-        if (!strncmp("vendor_id", buf, strlen("vendor_id"))) {
-            if (processor_allowed)
+                power_nominal_mhz = value; /* save for sys_device_system_cpu() */
+                ispower = 1;
+            }
+            if (!strncmp("vendor_id", buf, strlen("vendor_id"))) {
                 pstring("vendor_id", &buf[12]);
-        }
-        if (!strncmp("cpu MHz", buf, strlen("cpu MHz"))) {
-            sscanf(&buf[11], "%lf", &value);
-            if (processor_allowed)
+            }
+            if (!strncmp("cpu MHz", buf, strlen("cpu MHz"))) {
+                sscanf(&buf[11], "%lf", &value);
                 pdouble("cpu_mhz", value);
-        }
-        if (!strncmp("cache size", buf, strlen("cache size"))) {
-            sscanf(&buf[13], "%lf", &value);
-            if (processor_allowed)
+            }
+            if (!strncmp("cache size", buf, strlen("cache size"))) {
+                sscanf(&buf[13], "%lf", &value);
                 pdouble("cache_size", value);
-        }
-        if (!strncmp("physical id", buf, strlen("physical id"))) {
-            sscanf(&buf[14], "%d", &int_val);
-            if (processor_allowed)
+            }
+            if (!strncmp("physical id", buf, strlen("physical id"))) {
+                sscanf(&buf[14], "%d", &int_val);
                 plong("physical_id", int_val);
-        }
-        if (!strncmp("siblings", buf, strlen("siblings"))) {
-            sscanf(&buf[11], "%d", &int_val);
-            if (processor_allowed)
+            }
+            if (!strncmp("siblings", buf, strlen("siblings"))) {
+                sscanf(&buf[11], "%d", &int_val);
                 plong("siblings", int_val);
-        }
-        if (!strncmp("core id", buf, strlen("core id"))) {
-            sscanf(&buf[10], "%d", &int_val);
-            if (processor_allowed)
+            }
+            if (!strncmp("core id", buf, strlen("core id"))) {
+                sscanf(&buf[10], "%d", &int_val);
                 plong("core_id", int_val);
-        }
-        if (!strncmp("cpu cores", buf, strlen("cpu cores"))) {
-            sscanf(&buf[12], "%d", &int_val);
-            if (processor_allowed)
+            }
+            if (!strncmp("cpu cores", buf, strlen("cpu cores"))) {
+                sscanf(&buf[12], "%d", &int_val);
                 plong("cpu_cores", int_val);
-        }
-        if (!strncmp("model name", buf, strlen("model name"))) {
-            if (processor_allowed)
+            }
+            if (!strncmp("model name", buf, strlen("model name"))) {
                 pstring("model_name", &buf[13]);
-        }
-        if (!strncmp("timebase", buf, strlen("timebase"))) { /* POWER only */
-            ispower = 1;
-            break;
+            }
+            if (!strncmp("timebase", buf, strlen("timebase"))) { /* POWER only */
+                ispower = 1;
+                break;
+            }
         }
     }
-    if (processor != 0)
+    if (processor != -1)
         psubend();
     psectionend();
     if (ispower) {

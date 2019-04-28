@@ -112,7 +112,7 @@ private:
 
     void cgroup_init();
     void cgroup_config();
-    int cgroup_is_allowed_cpu(int cpu);
+    bool cgroup_is_allowed_cpu(int cpu);
     void cgroup_proc_memory();
     void cgroup_proc_cpuacct(double elapsed_sec, bool print);
 
@@ -130,6 +130,7 @@ private:
     void proc_filesystems();
     void proc_version();
     void lscpu();
+    void lshw();
     void strip_spaces(char* s);
     void proc_uptime();
 
@@ -156,8 +157,8 @@ void LogDebug(const char* line, ...);
 void LogError(const char* line, ...);
 
 // Utilities
-unsigned int ReplaceString(std::string& str, const std::string& from, const std::string& to, bool allOccurrences);
-std::string ToLower(const std::string& orig_str);
+unsigned int replace_string(std::string& str, const std::string& from, const std::string& to, bool allOccurrences);
+std::string to_lower(const std::string& orig_str);
 std::string trim_string(const std::string& s);
 bool string2int(const std::string& str, int& result);
 bool string2int(const std::string& str, uint64_t& result);

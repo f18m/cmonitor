@@ -214,10 +214,10 @@ void NjmonCollectorApp::cgroup_config()
     psectionend();
 }
 
-int NjmonCollectorApp::cgroup_is_allowed_cpu(int cpu)
+bool NjmonCollectorApp::cgroup_is_allowed_cpu(int cpu)
 {
     if (!m_bCGroupsFound)
-        return 1; // allowed
+        return true; // allowed
     return cgroup_cpus.find(cpu) != cgroup_cpus.end();
 }
 
