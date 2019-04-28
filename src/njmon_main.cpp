@@ -209,6 +209,25 @@ PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
     return PK_INVALID;
 }
 
+std::string string2PerformanceKpiFamily(PerformanceKpiFamily k)
+{
+    switch (k) {
+    case PK_CGROUPS:
+        return "cgroups";
+    case PK_CPU:
+        return "cpu";
+    case PK_DISK:
+        return "disk";
+    case PK_MEMORY:
+        return "memory";
+    case PK_NETWORK:
+        return "network";
+
+    default:
+        return "";
+    }
+}
+
 //------------------------------------------------------------------------------
 // Command line functions
 //------------------------------------------------------------------------------
@@ -600,7 +619,8 @@ void NjmonCollectorApp::identity()
     psectionend();
 }
 
-void NjmonCollectorApp::njmon_info(int argc, char** argv, long sampling_interval_sec, long num_samples)
+void NjmonCollectorApp::njmon_info(
+    int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags)
 {
     /* user name and id */
     struct passwd* pw;
@@ -619,6 +639,19 @@ void NjmonCollectorApp::njmon_info(int argc, char** argv, long sampling_interval
     plong("sample_interval_seconds", sampling_interval_sec);
     plong("sample_num", num_samples);
     pstring("njmon_version", VERSION_STRING);
+
+    std::string str;
+    for (size_t j = 1; j < PK_MAX; j *= 2) {
+        PerformanceKpiFamily k = (PerformanceKpiFamily)j;
+        if (collect_flags & k) {
+            std::string str2 = string2PerformanceKpiFamily(k);
+            if (!str2.empty())
+                str += str2 + ",";
+        }
+    }
+    if (!str.empty())
+        str.pop_back();
+    pstring("collecting", str.c_str());
 
     uid = geteuid();
     if ((pw = getpwuid(uid)) != NULL) {
@@ -776,7 +809,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
     // write stuff that is present only in the very first sample (never changes):
     praw("  \"header\": {\n");
     identity();
-    njmon_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples);
+    njmon_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
     etc_os_release();
     proc_version();
     lscpu();

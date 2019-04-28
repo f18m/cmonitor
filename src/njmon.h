@@ -27,10 +27,12 @@ enum PerformanceKpiFamily {
     PK_MEMORY = 8,
     PK_NETWORK = 16,
 
+    PK_MAX,
     PK_ALL = PK_CGROUPS | PK_DISK | PK_CPU | PK_MEMORY | PK_NETWORK
 };
 
 PerformanceKpiFamily string2PerformanceKpiFamily(const std::string&);
+std::string string2PerformanceKpiFamily(PerformanceKpiFamily k);
 
 class NjmonCollectorAppConfig {
 public:
@@ -78,7 +80,7 @@ private:
     void get_utc();
     void date_time(long loop);
     void identity();
-    void njmon_info(int argc, char** argv, long sampling_interval_sec, long num_samples);
+    void njmon_info(int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags);
     void file_read_one_stat(const char* file, const char* name);
 
     //------------------------------------------------------------------------------
