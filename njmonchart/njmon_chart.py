@@ -884,11 +884,27 @@ def main_process_file(cmd, infile, outfile):
         ( "Snapshot Interval (s):", str(jheader["njmon"]["sample_interval_seconds"]) ),
         ( "Total time sampled (s):", str(jheader["njmon"]["sample_interval_seconds"] * len(jdata)) )
     ]
+    
+    # NOTE: unfortunately some useful information like:
+    #        - RAM memory model/speed
+    #        - Disk model/speed
+    #        - NIC model/speed
+    #       will not be available from inside a container, which is where njmon_collector usually runs...
+    #       so we mostly show CPU stats:
+    all_disks = []
+    if "disks" in jdata_first_sample:
+        all_disks = jdata_first_sample["disks"].keys()
+    all_netdevices = []
+    if "network_interfaces" in jdata_first_sample :
+        all_netdevices = jdata_first_sample["network_interfaces"].keys()
     monitored_summary = [
         ( "Hostname:", jheader["identity"]["hostname"] ),
-        ( "CPU family:", jheader["lscpu"]["model_name"] ),
-        ( "CPU family:", jheader["lscpu"]["model_name"] ),
-        ( "OS:", jheader["os_release"]["pretty_name"] )
+        ( "CPU:", jheader["lscpu"]["model_name"] ),
+        ( "BogoMIPS:", jheader["lscpu"]["bogomips"] ),
+        ( "OS:", jheader["os_release"]["pretty_name"] ),
+        ( "Monitored CPUs:", str(len(logical_cpus_indexes)) ),
+        ( "Monitored Network Devices:", str(len(all_netdevices)) ),
+        ( "Monitored Disks:", str(len(all_disks)) ),
     ]
     
     nchart_end_js(web, generate_config_js(jheader))
