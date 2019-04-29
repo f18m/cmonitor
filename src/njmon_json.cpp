@@ -75,6 +75,8 @@ void NjmonCollectorApp::buffer_check()
     }
 }
 
+void NjmonCollectorApp::prawc(const char c) { output[output_char++] = c; }
+
 void NjmonCollectorApp::praw(const char* string) { output_char += sprintf(&output[output_char], "%s", string); }
 
 void NjmonCollectorApp::pstart() { praw("{\n"); }

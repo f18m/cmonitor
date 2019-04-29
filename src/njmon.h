@@ -87,6 +87,7 @@ private:
     // JSON functions
     //------------------------------------------------------------------------------
 
+    void prawc(const char c);
     void praw(const char* string);
     void pstart();
     void pfinish();

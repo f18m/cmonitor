@@ -737,22 +737,29 @@ void NjmonCollectorApp::lscpu()
 void NjmonCollectorApp::lshw()
 {
     FILE* pop = 0;
-    char buf[1024 + 1];
+    char buf[4096 + 1];
 
     DEBUGLOG_FUNCTION_START();
 
     if (!file_exists("/usr/bin/lshw"))
         return;
 
+    // lshw supports JSON output natively so we just copy/paste its output
+    // into our output file.
+    // IMPORTANT: unfortunately when running from inside a container lshw will
+    //            not be able to provide all the information it provides if launched
+    //            on the baremetal...
+
     if ((pop = popen("/usr/bin/lshw -json", "r")) == NULL)
         return;
 
     buf[0] = 0;
     praw("    \"lshw\": ");
-    while (fgets(buf, 1024, pop) != NULL) {
+    while (fgets(buf, 4096, pop) != NULL) {
+        buffer_check();
         praw("    "); // indentation
         praw(buf);
-        buffer_check();
+        buf[0] = 0;
     }
     pclose(pop);
 }
