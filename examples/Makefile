@@ -20,5 +20,8 @@ regen_baremetal1:
 	@jq . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED !!!" ; exit 10 )
 
 clean:
-	rm -f *.err *.html
+	rm -f *.err docker-*/example-load.sh
+	
+distclean: clean
+	rm -f *.html
 	

@@ -1,0 +1,762 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Monitoring data for hostname docker-ubuntu1804-userapp-with-embedded-collector</title>
+  <style>
+     html,body {height:85%;}
+     h3 {margin: 0px;}
+     ul {margin: 0 0 0 0;padding-left: 20px;}
+     button { margin-bottom: 3px; }
+     #chart_master {width:100%; height:85%;}
+     #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
+     #bottom_table_val {font-family: monospace;}
+     #button_table { border-collapse: collapse; }
+     #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
+  </style>
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript">
+google.load("visualization", "1.1", {packages:["corechart"]});
+google.setOnLoadCallback(setupCharts);
+
+function setupCharts() {
+  var chart = null;
+  var data_1 = google.visualization.arrayToDataTable([
+[{type: 'datetime', label: 'Datetime'},'User','Nice','System','Idle','I/O wait','Hard IRQ','Soft IRQ','Steal'],
+['Date(2019,3,28,23,05,42)',99.982,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,05,45)',62.987,0.0,5.332,1.0,29.994,0.0,0.333,0.0],
+['Date(2019,3,28,23,05,48)',42.687,0.0,3.21,5.777,48.464,0.0,0.0,0.0],
+['Date(2019,3,28,23,05,51)',99.982,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,05,54)',25.662,0.0,1.0,73.319,0.0,0.0,0.333,0.0],
+['Date(2019,3,28,23,05,57)',15.324,0.0,3.664,56.299,23.319,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,00)',77.958,0.0,0.332,21.231,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,03)',91.649,0.0,0.0,8.665,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,06)',7.331,0.0,5.332,83.311,3.666,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,09)',6.896,0.0,6.896,13.792,72.095,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,12)',35.245,0.0,1.33,60.847,2.327,0.0,0.665,0.0],
+['Date(2019,3,28,23,06,15)',2.666,0.0,0.667,96.648,0.667,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,18)',1.999,0.0,4.665,70.976,21.993,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,22)',34.318,0.0,3.528,49.071,14.112,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,25)',99.982,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,28)',98.982,0.0,0.0,0.667,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,31)',3.333,0.333,6.998,65.984,22.328,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,34)',67.292,0.0,0.999,31.647,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,37)',2.666,0.0,1.333,96.981,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,40)',1.0,0.0,0.333,97.631,0.0,0.0,0.333,0.0],
+['Date(2019,3,28,23,06,43)',2.333,0.0,11.33,18.994,69.313,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,46)',94.219,0.0,0.664,1.327,3.649,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,49)',99.983,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,52)',96.984,0.0,2.666,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,55)',33.38,0.0,2.269,43.75,19.769,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,58)',100.056,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,01)',37.993,0.0,1.0,57.322,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,04)',3.665,0.0,9.994,40.977,43.309,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,07)',42.472,0.317,4.12,2.536,50.713,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,10)',59.955,0.0,0.331,38.755,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,13)',3.998,0.0,1.333,94.608,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,16)',5.663,0.0,4.664,28.649,57.964,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,17)',1.276,0.0,0.0,72.721,25.516,0.0,0.0,0.0],
+  ]);
+  var options_1 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 0 for hostname=docker-ubuntu1804-userapp-with-embedded-collector (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"],
+    axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+  document.getElementById("draw_1").addEventListener("click", function() {
+    if (chart && chart.clearChart)
+      chart.clearChart();
+    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+    chart.draw(data_1, options_1);
+  });
+  var data_2 = google.visualization.arrayToDataTable([
+[{type: 'datetime', label: 'Datetime'},'User','Nice','System','Idle','I/O wait','Hard IRQ','Soft IRQ','Steal'],
+['Date(2019,3,28,23,05,42)',99.982,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,05,45)',64.654,0.0,6.665,11.331,17.663,0.0,0.0,0.0],
+['Date(2019,3,28,23,05,48)',43.971,0.0,3.53,2.889,50.069,0.0,0.321,0.0],
+['Date(2019,3,28,23,05,51)',99.982,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,05,54)',31.661,0.0,0.333,67.32,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,05,57)',7.329,0.0,6.329,53.967,31.647,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,00)',76.299,0.0,2.322,20.236,0.332,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,03)',89.316,0.0,1.333,9.665,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,06)',7.998,0.0,5.332,81.978,3.666,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,09)',5.642,0.0,9.717,8.777,75.543,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,12)',65.17,0.0,0.997,33.915,0.332,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,15)',4.999,0.0,0.667,92.316,2.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,18)',2.333,0.0,4.998,70.31,21.659,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,22)',34.638,0.0,2.245,51.958,11.867,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,25)',99.982,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,28)',98.316,0.0,0.667,0.667,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,31)',3.333,0.0,7.665,79.314,8.331,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,34)',66.625,0.0,1.666,30.981,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,37)',34.327,0.0,1.333,63.321,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,40)',1.0,0.0,0.666,98.297,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,43)',1.999,0.0,9.664,21.66,66.314,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,46)',94.882,0.0,0.664,4.645,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,49)',99.65,0.0,0.333,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,52)',94.984,0.0,4.999,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,55)',33.704,0.0,0.972,61.25,3.565,0.0,0.0,0.0],
+['Date(2019,3,28,23,06,58)',99.725,0.0,0.331,0.0,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,01)',39.659,0.0,1.0,54.656,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,04)',3.331,0.0,11.993,41.643,40.643,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,07)',40.253,0.0,4.754,4.754,48.494,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,10)',59.955,0.0,0.662,37.762,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,13)',3.998,0.0,3.664,93.608,0.0,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,16)',4.331,0.0,5.996,32.647,53.967,0.0,0.0,0.0],
+['Date(2019,3,28,23,07,17)',0.0,0.0,1.276,38.274,58.687,0.0,1.276,0.0],
+  ]);
+  var options_2 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 1 for hostname=docker-ubuntu1804-userapp-with-embedded-collector (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"],
+    axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+  document.getElementById("draw_2").addEventListener("click", function() {
+    if (chart && chart.clearChart)
+      chart.clearChart();
+    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+    chart.draw(data_2, options_2);
+  });
+  var data_3 = google.visualization.arrayToDataTable([
+[{type: 'datetime', label: 'Datetime'},'CPU0','CPU1'],
+['Date(2019,3,28,23,05,42)',99.982,99.982],
+['Date(2019,3,28,23,05,45)',98.646,88.982],
+['Date(2019,3,28,23,05,48)',94.36099999999999,97.89099999999999],
+['Date(2019,3,28,23,05,51)',99.982,99.982],
+['Date(2019,3,28,23,05,54)',26.994999999999997,31.994],
+['Date(2019,3,28,23,05,57)',42.307,45.305],
+['Date(2019,3,28,23,06,00)',78.28999999999999,78.953],
+['Date(2019,3,28,23,06,03)',91.649,90.649],
+['Date(2019,3,28,23,06,06)',16.329,16.996],
+['Date(2019,3,28,23,06,09)',85.887,90.90200000000002],
+['Date(2019,3,28,23,06,12)',39.56699999999999,66.499],
+['Date(2019,3,28,23,06,15)',4.0,7.6659999999999995],
+['Date(2019,3,28,23,06,18)',28.656999999999996,28.99],
+['Date(2019,3,28,23,06,22)',51.958,48.75],
+['Date(2019,3,28,23,06,25)',99.982,99.982],
+['Date(2019,3,28,23,06,28)',98.982,98.983],
+['Date(2019,3,28,23,06,31)',32.992000000000004,19.329],
+['Date(2019,3,28,23,06,34)',68.291,68.291],
+['Date(2019,3,28,23,06,37)',3.9989999999999997,35.66],
+['Date(2019,3,28,23,06,40)',1.666,1.666],
+['Date(2019,3,28,23,06,43)',82.976,77.97699999999999],
+['Date(2019,3,28,23,06,46)',98.532,95.546],
+['Date(2019,3,28,23,06,49)',99.983,99.983],
+['Date(2019,3,28,23,06,52)',99.64999999999999,99.98299999999999],
+['Date(2019,3,28,23,06,55)',55.418,38.241],
+['Date(2019,3,28,23,06,58)',100.056,100.056],
+['Date(2019,3,28,23,07,01)',38.993,40.659],
+['Date(2019,3,28,23,07,04)',56.967999999999996,55.967],
+['Date(2019,3,28,23,07,07)',97.622,93.501],
+['Date(2019,3,28,23,07,10)',60.286,60.617],
+['Date(2019,3,28,23,07,13)',5.331,7.662000000000001],
+['Date(2019,3,28,23,07,16)',68.291,64.294],
+['Date(2019,3,28,23,07,17)',26.791999999999998,61.239000000000004],
+  ]);
+  var options_3 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPUs allowed in njmon_collector CGroup,  for hostname=docker-ubuntu1804-userapp-with-embedded-collector (from baremetal stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"],
+    axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+  document.getElementById("draw_3").addEventListener("click", function() {
+    if (chart && chart.clearChart)
+      chart.clearChart();
+    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+    chart.draw(data_3, options_3);
+  });
+  var data_4 = google.visualization.arrayToDataTable([
+[{type: 'datetime', label: 'Datetime'},'User','System'],
+['Date(2019,3,28,23,05,42)',99.794,0.0],
+['Date(2019,3,28,23,05,45)',65.742,0.0],
+['Date(2019,3,28,23,05,48)',43.197,0.0],
+['Date(2019,3,28,23,05,51)',99.914,0.0],
+['Date(2019,3,28,23,05,54)',23.862,0.0],
+['Date(2019,3,28,23,05,57)',3.451,0.0],
+['Date(2019,3,28,23,06,00)',75.292,0.0],
+['Date(2019,3,28,23,06,03)',91.362,0.0],
+['Date(2019,3,28,23,06,06)',3.286,0.0],
+['Date(2019,3,28,23,06,09)',5.609,0.0],
+['Date(2019,3,28,23,06,12)',33.385,0.0],
+['Date(2019,3,28,23,06,15)',0.005,0.0],
+['Date(2019,3,28,23,06,18)',4.446,0.0],
+['Date(2019,3,28,23,06,22)',34.002,0.0],
+['Date(2019,3,28,23,06,25)',100.037,0.0],
+['Date(2019,3,28,23,06,28)',99.11,0.0],
+['Date(2019,3,28,23,06,31)',6.411,0.0],
+['Date(2019,3,28,23,06,34)',66.285,0.0],
+['Date(2019,3,28,23,06,37)',0.02,0.0],
+['Date(2019,3,28,23,06,40)',0.098,0.0],
+['Date(2019,3,28,23,06,43)',9.56,0.0],
+['Date(2019,3,28,23,06,46)',94.947,0.0],
+['Date(2019,3,28,23,06,49)',99.939,0.0],
+['Date(2019,3,28,23,06,52)',99.787,0.0],
+['Date(2019,3,28,23,06,55)',34.91,0.0],
+['Date(2019,3,28,23,06,58)',100.082,0.0],
+['Date(2019,3,28,23,07,01)',35.004,0.0],
+['Date(2019,3,28,23,07,04)',9.314,0.0],
+['Date(2019,3,28,23,07,07)',39.895,0.0],
+['Date(2019,3,28,23,07,10)',59.394,0.0],
+['Date(2019,3,28,23,07,13)',0.0,0.0],
+['Date(2019,3,28,23,07,16)',4.01,0.0],
+['Date(2019,3,28,23,07,17)',0.149,0.0],
+  ]);
+  var options_4 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 0 for hostname=docker-ubuntu1804-userapp-with-embedded-collector (from CGroup stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"],
+    axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+  document.getElementById("draw_4").addEventListener("click", function() {
+    if (chart && chart.clearChart)
+      chart.clearChart();
+    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+    chart.draw(data_4, options_4);
+  });
+  var data_5 = google.visualization.arrayToDataTable([
+[{type: 'datetime', label: 'Datetime'},'User','System'],
+['Date(2019,3,28,23,05,42)',99.892,0.0],
+['Date(2019,3,28,23,05,45)',66.982,0.0],
+['Date(2019,3,28,23,05,48)',43.231,0.0],
+['Date(2019,3,28,23,05,51)',99.91,0.0],
+['Date(2019,3,28,23,05,54)',23.842,0.0],
+['Date(2019,3,28,23,05,57)',3.639,0.0],
+['Date(2019,3,28,23,06,00)',75.385,0.0],
+['Date(2019,3,28,23,06,03)',90.383,0.0],
+['Date(2019,3,28,23,06,06)',3.997,0.0],
+['Date(2019,3,28,23,06,09)',6.161,0.0],
+['Date(2019,3,28,23,06,12)',62.903,0.0],
+['Date(2019,3,28,23,06,15)',3.032,0.0],
+['Date(2019,3,28,23,06,18)',4.721,0.0],
+['Date(2019,3,28,23,06,22)',32.908,0.0],
+['Date(2019,3,28,23,06,25)',99.723,0.0],
+['Date(2019,3,28,23,06,28)',98.922,0.0],
+['Date(2019,3,28,23,06,31)',6.721,0.0],
+['Date(2019,3,28,23,06,34)',66.807,0.0],
+['Date(2019,3,28,23,06,37)',32.999,0.0],
+['Date(2019,3,28,23,06,40)',0.19,0.0],
+['Date(2019,3,28,23,06,43)',10.281,0.0],
+['Date(2019,3,28,23,06,46)',95.184,0.0],
+['Date(2019,3,28,23,06,49)',99.865,0.0],
+['Date(2019,3,28,23,06,52)',99.644,0.0],
+['Date(2019,3,28,23,06,55)',34.204,0.0],
+['Date(2019,3,28,23,06,58)',99.579,0.0],
+['Date(2019,3,28,23,07,01)',35.814,0.0],
+['Date(2019,3,28,23,07,04)',9.596,0.0],
+['Date(2019,3,28,23,07,07)',40.441,0.0],
+['Date(2019,3,28,23,07,10)',59.829,0.0],
+['Date(2019,3,28,23,07,13)',0.062,0.0],
+['Date(2019,3,28,23,07,16)',4.089,0.0],
+['Date(2019,3,28,23,07,17)',1.57,0.0],
+  ]);
+  var options_5 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 1 for hostname=docker-ubuntu1804-userapp-with-embedded-collector (from CGroup stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"],
+    axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+  document.getElementById("draw_5").addEventListener("click", function() {
+    if (chart && chart.clearChart)
+      chart.clearChart();
+    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+    chart.draw(data_5, options_5);
+  });
+  var data_6 = google.visualization.arrayToDataTable([
+[{type: 'datetime', label: 'Datetime'},'CPU0','CPU1'],
+['Date(2019,3,28,23,05,42)',99.794,99.892],
+['Date(2019,3,28,23,05,45)',65.742,66.982],
+['Date(2019,3,28,23,05,48)',43.197,43.231],
+['Date(2019,3,28,23,05,51)',99.914,99.91],
+['Date(2019,3,28,23,05,54)',23.862,23.842],
+['Date(2019,3,28,23,05,57)',3.451,3.639],
+['Date(2019,3,28,23,06,00)',75.292,75.385],
+['Date(2019,3,28,23,06,03)',91.362,90.383],
+['Date(2019,3,28,23,06,06)',3.286,3.997],
+['Date(2019,3,28,23,06,09)',5.609,6.161],
+['Date(2019,3,28,23,06,12)',33.385,62.903],
+['Date(2019,3,28,23,06,15)',0.005,3.032],
+['Date(2019,3,28,23,06,18)',4.446,4.721],
+['Date(2019,3,28,23,06,22)',34.002,32.908],
+['Date(2019,3,28,23,06,25)',100.037,99.723],
+['Date(2019,3,28,23,06,28)',99.11,98.922],
+['Date(2019,3,28,23,06,31)',6.411,6.721],
+['Date(2019,3,28,23,06,34)',66.285,66.807],
+['Date(2019,3,28,23,06,37)',0.02,32.999],
+['Date(2019,3,28,23,06,40)',0.098,0.19],
+['Date(2019,3,28,23,06,43)',9.56,10.281],
+['Date(2019,3,28,23,06,46)',94.947,95.184],
+['Date(2019,3,28,23,06,49)',99.939,99.865],
+['Date(2019,3,28,23,06,52)',99.787,99.644],
+['Date(2019,3,28,23,06,55)',34.91,34.204],
+['Date(2019,3,28,23,06,58)',100.082,99.579],
+['Date(2019,3,28,23,07,01)',35.004,35.814],
+['Date(2019,3,28,23,07,04)',9.314,9.596],
+['Date(2019,3,28,23,07,07)',39.895,40.441],
+['Date(2019,3,28,23,07,10)',59.394,59.829],
+['Date(2019,3,28,23,07,13)',0.0,0.062],
+['Date(2019,3,28,23,07,16)',4.01,4.089],
+['Date(2019,3,28,23,07,17)',0.149,1.57],
+  ]);
+  var options_6 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPUs assigned to njmon_collector CGroup,  for hostname=docker-ubuntu1804-userapp-with-embedded-collector (from CGroup stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"],
+    axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+  document.getElementById("draw_6").addEventListener("click", function() {
+    if (chart && chart.clearChart)
+      chart.clearChart();
+    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+    chart.draw(data_6, options_6);
+  });
+  var data_7 = google.visualization.arrayToDataTable([
+[{type: 'datetime', label: 'Datetime'},'Used','Cached (DiskRead)','Free'],
+['Date(2019,3,28,23,05,42)',5473.4,4003.684,6889.74],
+['Date(2019,3,28,23,05,45)',5477.708,4100.544,6788.572],
+['Date(2019,3,28,23,05,48)',5474.088,4003.748,6888.988],
+['Date(2019,3,28,23,05,51)',5475.204,4003.756,6887.864],
+['Date(2019,3,28,23,05,54)',5474.888,4003.792,6888.144],
+['Date(2019,3,28,23,05,57)',5500.376,4013.56,6852.888],
+['Date(2019,3,28,23,06,00)',5553.016,4011.912,6801.896],
+['Date(2019,3,28,23,06,03)',5553.256,4006.696,6806.872],
+['Date(2019,3,28,23,06,06)',5536.14,4108.508,6722.176],
+['Date(2019,3,28,23,06,09)',5544.672,4024.392,6797.76],
+['Date(2019,3,28,23,06,12)',5543.62,4010.132,6813.072],
+['Date(2019,3,28,23,06,15)',5528.196,4007.76,6830.868],
+['Date(2019,3,28,23,06,18)',5532.772,4105.364,6728.688],
+['Date(2019,3,28,23,06,22)',5528.66,4007.756,6830.408],
+['Date(2019,3,28,23,06,25)',5529.172,4007.88,6829.772],
+['Date(2019,3,28,23,06,28)',5529.276,4008.184,6829.364],
+['Date(2019,3,28,23,06,31)',5529.132,4009.244,6828.448],
+['Date(2019,3,28,23,06,34)',5529.48,4008.172,6829.172],
+['Date(2019,3,28,23,06,37)',5529.504,4008.992,6828.328],
+['Date(2019,3,28,23,06,40)',5530.428,4007.96,6828.436],
+['Date(2019,3,28,23,06,43)',5559.788,4028.24,6778.796],
+['Date(2019,3,28,23,06,46)',5530.888,4008.096,6827.84],
+['Date(2019,3,28,23,06,49)',5530.868,4008.1,6827.856],
+['Date(2019,3,28,23,06,52)',5535.048,4105.72,6726.056],
+['Date(2019,3,28,23,06,55)',5531.664,4008.24,6826.92],
+['Date(2019,3,28,23,06,58)',5511.168,4006.704,6848.952],
+['Date(2019,3,28,23,07,01)',5509.268,4007.32,6850.236],
+['Date(2019,3,28,23,07,04)',5520.488,4104.432,6741.904],
+['Date(2019,3,28,23,07,07)',5520.248,4008.18,6838.396],
+['Date(2019,3,28,23,07,10)',5520.112,4006.812,6839.9],
+['Date(2019,3,28,23,07,13)',5514.196,4006.18,6846.448],
+['Date(2019,3,28,23,07,16)',5517.984,4065.696,6783.144],
+['Date(2019,3,28,23,07,17)',5516.952,4006.752,6843.12],
+  ]);
+  var options_7 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Memory in MB for hostname=docker-ubuntu1804-userapp-with-embedded-collector (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"],
+    axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+  document.getElementById("draw_7").addEventListener("click", function() {
+    if (chart && chart.clearChart)
+      chart.clearChart();
+    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+    chart.draw(data_7, options_7);
+  });
+  var data_8 = google.visualization.arrayToDataTable([
+[{type: 'datetime', label: 'Datetime'},'Used','Cached (DiskRead)','Alloc Failures'],
+['Date(2019,3,28,23,05,42)',950272.0,114688.0,55],
+['Date(2019,3,28,23,05,45)',3039232.0,99315712.0,10756],
+['Date(2019,3,28,23,05,48)',974848.0,16384.0,17407],
+['Date(2019,3,28,23,05,51)',974848.0,24576.0,17407],
+['Date(2019,3,28,23,05,54)',819200.0,36864.0,17407],
+['Date(2019,3,28,23,05,57)',819200.0,0.0,27151],
+['Date(2019,3,28,23,06,00)',1101824.0,12288.0,27193],
+['Date(2019,3,28,23,06,03)',819200.0,20480.0,27193],
+['Date(2019,3,28,23,06,06)',3055616.0,99250176.0,27387],
+['Date(2019,3,28,23,06,09)',831488.0,15605760.0,52723],
+['Date(2019,3,28,23,06,12)',933888.0,12288.0,52777],
+['Date(2019,3,28,23,06,15)',815104.0,24576.0,52777],
+['Date(2019,3,28,23,06,18)',3055616.0,99180544.0,61446],
+['Date(2019,3,28,23,06,22)',983040.0,12288.0,61739],
+['Date(2019,3,28,23,06,25)',1101824.0,20480.0,61739],
+['Date(2019,3,28,23,06,28)',819200.0,32768.0,61739],
+['Date(2019,3,28,23,06,31)',815104.0,32768.0,61789],
+['Date(2019,3,28,23,06,34)',937984.0,4096.0,61838],
+['Date(2019,3,28,23,06,37)',819200.0,16384.0,61838],
+['Date(2019,3,28,23,06,40)',1277952.0,24576.0,61838],
+['Date(2019,3,28,23,06,43)',835584.0,20418560.0,90665],
+['Date(2019,3,28,23,06,46)',1093632.0,8192.0,90731],
+['Date(2019,3,28,23,06,49)',970752.0,20480.0,90731],
+['Date(2019,3,28,23,06,52)',3223552.0,98787328.0,98409],
+['Date(2019,3,28,23,06,55)',978944.0,0.0,99902],
+['Date(2019,3,28,23,06,58)',1097728.0,12288.0,99902],
+['Date(2019,3,28,23,07,01)',819200.0,20480.0,99902],
+['Date(2019,3,28,23,07,04)',3063808.0,98787328.0,123324],
+['Date(2019,3,28,23,07,07)',983040.0,0.0,129023],
+['Date(2019,3,28,23,07,10)',819200.0,16384.0,129023],
+['Date(2019,3,28,23,07,13)',819200.0,24576.0,129023],
+['Date(2019,3,28,23,07,16)',917504.0,59502592.0,143520],
+['Date(2019,3,28,23,07,17)',823296.0,45056.0,143520],
+  ]);
+  var options_8 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Memory in Bytes for hostname=docker-ubuntu1804-userapp-with-embedded-collector (from CGroup stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"],
+    axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+  document.getElementById("draw_8").addEventListener("click", function() {
+    if (chart && chart.clearChart)
+      chart.clearChart();
+    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+    chart.draw(data_8, options_8);
+  });
+  var data_9 = google.visualization.arrayToDataTable([
+[{type: 'datetime', label: 'Datetime'},'sr0 Disk Time','sr0 Reads','sr0 Writes','sr0 Read MB','sr0 Write MB','sda Disk Time','sda Reads','sda Writes','sda Read MB','sda Write MB','sdb Disk Time','sdb Reads','sdb Writes','sdb Read MB','sdb Write MB','sdc Disk Time','sdc Reads','sdc Writes','sdc Read MB','sdc Write MB'],
+['Date(2019,3,28,23,05,42)',0.0,0.0,0.0,0.0,-0.0,1.0,0.0,1.0,0.0,-0.059989,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,05,45)',0.0,0.0,0.0,0.0,-0.0,39.659,0.333,150.97,0.005332,-38.476303,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,05,48)',0.0,0.0,0.0,0.0,-0.0,59.697,0.963,86.978,0.003851,-60.090163999999994,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,05,51)',0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,05,54)',0.0,0.0,0.0,0.0,-0.0,2.0,0.333,0.667,0.007998,-0.021329,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,05,57)',0.0,0.0,0.0,0.0,-0.0,48.304,0.0,137.582,0.0,-59.292833,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,00)',0.0,0.0,0.0,0.0,-0.0,13.601,0.332,48.101,0.001327,-0.6594880000000001,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,03)',0.0,0.0,0.0,0.0,-0.0,5.666,0.0,15.33,0.0,-0.16663499999999998,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,06)',0.0,0.0,0.0,0.0,-0.0,8.331,0.0,80.978,0.0,-1.860824,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,09)',0.0,0.0,0.0,0.0,-0.0,100.306,7.836,205.313,0.037615,-123.88135199999999,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,12)',0.0,0.0,0.0,0.0,-0.0,16.625,0.332,25.602,0.00133,-4.601766,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,15)',0.0,0.0,0.0,0.0,-0.0,4.999,0.0,5.999,0.0,-0.16930099999999998,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,18)',0.0,0.0,0.0,0.0,-0.0,29.657,0.0,110.63,0.0,-31.781384,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,22)',0.0,0.0,0.0,0.0,-0.0,24.375,0.321,48.75,0.0012829999999999999,-24.992255,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,25)',0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,28)',0.0,0.0,0.0,0.0,-0.0,8.332,0.0,4.999,0.0,-0.08665099999999999,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,31)',0.0,0.0,0.0,0.0,-0.0,29.326,0.0,87.645,0.0,-32.59738,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,34)',0.0,0.0,0.0,0.0,-0.0,5.663,0.0,24.318,0.0,-0.487697,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,37)',0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,40)',0.0,0.0,0.0,0.0,-0.0,1.333,0.0,0.666,0.0,-0.00933,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,43)',0.0,0.0,0.0,0.0,-0.0,98.637,0.333,211.271,0.042654000000000004,-128.24340899999999,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,46)',0.0,0.0,0.0,0.0,-0.0,15.924,0.332,12.607,0.001327,-5.971595000000001,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,49)',0.0,0.0,0.0,0.0,-0.0,2.0,0.0,0.667,0.0,-0.051991,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,52)',0.0,0.0,0.0,0.0,-0.0,26.329,0.0,98.317,0.0,-28.649892,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,55)',0.0,0.0,0.0,0.0,-0.0,29.167,0.324,64.491,0.001296,-35.750676,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,06,58)',0.0,0.0,0.0,0.0,-0.0,0.663,0.331,0.0,0.001325,-0.0,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,07,01)',0.0,0.0,0.0,0.0,-0.0,1.0,0.0,0.667,0.0,-0.019996,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,07,04)',0.0,0.0,0.0,0.0,-0.0,63.297,0.0,167.904,0.0,-77.86348299999999,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,07,07)',0.0,0.0,0.0,0.0,-0.0,65.927,0.317,126.465,0.001268,-61.604583,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,07,10)',0.0,0.0,0.0,0.0,-0.0,1.656,0.331,0.994,0.001325,-0.049024,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,07,13)',0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,07,16)',0.0,0.0,0.0,0.0,-0.0,73.288,0.0,173.226,0.0,-68.90410700000001,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+['Date(2019,3,28,23,07,17)',0.0,0.0,0.0,0.0,-0.0,93.133,1.276,116.098,0.005103,-74.154586,0.0,0.0,0.0,0.0,-0.0,0.0,0.0,0.0,0.0,-0.0],
+  ]);
+  var options_9 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Disk I/O for docker-ubuntu1804-userapp-with-embedded-collector (from baremetal stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"],
+    axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+  document.getElementById("draw_9").addEventListener("click", function() {
+    if (chart && chart.clearChart)
+      chart.clearChart();
+    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+    chart.draw(data_9, options_9);
+  });
+  var data_10 = google.visualization.arrayToDataTable([
+[{type: 'datetime', label: 'Datetime'},'LoadAvg (1min)','LoadAvg (5min)','LoadAvg (15min)'],
+['Date(2019,3,28,23,05,42)',1.72,1.26,1.02],
+['Date(2019,3,28,23,05,45)',1.72,1.26,1.02],
+['Date(2019,3,28,23,05,48)',1.72,1.26,1.02],
+['Date(2019,3,28,23,05,51)',1.72,1.26,1.02],
+['Date(2019,3,28,23,05,54)',1.72,1.26,1.02],
+['Date(2019,3,28,23,05,57)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,00)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,03)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,06)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,09)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,12)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,15)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,18)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,22)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,25)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,28)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,31)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,34)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,37)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,40)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,43)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,46)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,49)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,52)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,55)',1.72,1.26,1.02],
+['Date(2019,3,28,23,06,58)',1.72,1.26,1.02],
+['Date(2019,3,28,23,07,01)',1.72,1.26,1.02],
+['Date(2019,3,28,23,07,04)',1.72,1.26,1.02],
+['Date(2019,3,28,23,07,07)',1.72,1.26,1.02],
+['Date(2019,3,28,23,07,10)',1.72,1.26,1.02],
+['Date(2019,3,28,23,07,13)',1.72,1.26,1.02],
+['Date(2019,3,28,23,07,16)',1.72,1.26,1.02],
+['Date(2019,3,28,23,07,17)',1.72,1.26,1.02],
+  ]);
+  var options_10 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Average Load  for hostname=docker-ubuntu1804-userapp-with-embedded-collector (from baremetal stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"],
+    axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+  document.getElementById("draw_10").addEventListener("click", function() {
+    if (chart && chart.clearChart)
+      chart.clearChart();
+    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+    chart.draw(data_10, options_10);
+  });
+}
+
+var configWindow;
+function config() {
+    if (configWindow) configWindow.close();
+    configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");
+    configWindow.document.write("\
+    <html><head>\
+      <title>Configuration</title>\
+      <style>\
+        table { padding-left: 2ex; }\
+        #sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}\
+        #configkey {font-weight: bold;}\
+        #configval {font-family: monospace;}\
+      </style>\
+    </head><body>\
+      <h2>Monitored System Summary</h2>\
+      <table>\
+<tr><td colspan='2' id='sectioncol'>Server Identity</td></tr>\
+    <tr>\
+    <td id='configkey'>Hostname</td><td id='configval'>docker-ubuntu1804-userapp-with-embedded-collector</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Shorthostname</td><td id='configval'>docker-ubuntu1804-userapp-with-embedded-collector</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Lo ip4</td><td id='configval'>127.0.0.1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Eth0 ip4</td><td id='configval'>172.17.0.2</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Serial-number</td><td id='configval'>System Serial Number</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Model</td><td id='configval'>All Series</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Vendor</td><td id='configval'>ASUS</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>Operating System Release</td></tr>\
+    <tr>\
+    <td id='configkey'>Name</td><td id='configval'>Ubuntu</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Version</td><td id='configval'>18.04.2 LTS (Bionic Beaver)</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Pretty name</td><td id='configval'>Ubuntu 18.04.2 LTS</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Version id</td><td id='configval'>18.04</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>Linux Kernel Version</td></tr>\
+    <tr>\
+    <td id='configkey'>Version</td><td id='configval'>Linux version 4.15.0-47-generic (buildd@lgw01-amd64-001) (gcc version 7.3.0 (Ubuntu 7.3.0-16ubuntu3)) #50-Ubuntu SMP Wed Mar 13 10:44:52 UTC 2019</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>Linux Control Group (CGroup) Configuration</td></tr>\
+    <tr>\
+    <td id='configkey'>Memory path</td><td id='configval'>/sys/fs/cgroup/memory</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpuacct path</td><td id='configval'>/sys/fs/cgroup/cpu,cpuacct</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpuset path</td><td id='configval'>/sys/fs/cgroup/cpuset</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpus</td><td id='configval'>0,1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Memory limit bytes</td><td id='configval'>104857600</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpus num allowed</td><td id='configval'>2</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Memory limit bytes human readable</td><td id='configval'>100.0MiB</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>CPU Overview</td></tr>\
+    <tr>\
+    <td id='configkey'>Architecture</td><td id='configval'>x86_64</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Byte order</td><td id='configval'>Little Endian</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpus</td><td id='configval'>4</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Online cpu list</td><td id='configval'>0-3</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Threads per core</td><td id='configval'>1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cores per socket</td><td id='configval'>4</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Sockets</td><td id='configval'>1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Numa nodes</td><td id='configval'>1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Vendor id</td><td id='configval'>GenuineIntel</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpu family</td><td id='configval'>6</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Model</td><td id='configval'>60</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Model name</td><td id='configval'>Intel(R) Core(TM) i5-4570 CPU @ 3.20GHz</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Stepping</td><td id='configval'>3</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpu mhz</td><td id='configval'>3595.326</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpu max mhz</td><td id='configval'>3600.0000</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpu min mhz</td><td id='configval'>800.0000</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Bogomips</td><td id='configval'>6396.48</td>\
+    </tr>\
+      </table>\
+      <h2>Monitoring Summary</h2>\
+      <table>\
+<tr><td colspan='2' id='sectioncol'>Performance Stats Collector Configuration</td></tr>\
+    <tr>\
+    <td id='configkey'>Njmon command</td><td id='configval'>/usr/bin/njmon_collector --sampling-interval=3 --num-samples=60 --output-filename=docker-ubuntu1804-userapp-with-embedded-collector --output-directory /perf</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Sample interval seconds</td><td id='configval'>3</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Sample num</td><td id='configval'>60</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Njmon version</td><td id='configval'>22-6</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Collecting</td><td id='configval'>cgroups,cpu,disk,memory,network</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Username</td><td id='configval'>root</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Userid</td><td id='configval'>0</td>\
+    </tr>\
+      </table>\
+    </body></html>\
+");
+}
+
+  </script>
+</head>
+<body bgcolor="#EEEEFF">
+  <h1>Monitoring data for hostname: docker-ubuntu1804-userapp-with-embedded-collector</h1>
+  <div id="button_div">
+  <table id="button_table">
+  <tr><td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td><td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td></tr>
+  <tr>
+  <td id="button_table_col">
+    <button onclick="config()"><b>Configuration</b></button><br/>
+  </td><td id="button_table_col">
+    <button id="draw_4" style="color:red"><b>CPU0</b></button>
+    <button id="draw_5" style="color:red"><b>CPU1</b></button>
+    <button id="draw_6" style="color:red"><b>All CPUs</b></button>
+    <button id="draw_8" style="color:darkorange"><b>Memory Usage</b></button>
+      </td><td id="button_table_col">
+    <button id="draw_1" style="color:red"><b>CPU0</b></button>
+    <button id="draw_2" style="color:red"><b>CPU1</b></button>
+    <button id="draw_3" style="color:red"><b>All CPUs</b></button>
+    <button id="draw_7" style="color:darkorange"><b>Memory Usage</b></button>
+    <button id="draw_9" style="color:darkgreen"><b>Disk I/O</b></button>
+    <button id="draw_10" style="color:black"><b>Average Load</b></button>
+  </td></tr>
+  </table>
+  </div>
+  <p></p>
+  <div id="chart_master"></div>
+  <div id="bottom_div">
+    <h3>Monitoring Summary</h3>
+    <table>
+    <tr><td><ul>
+      <li>Version: <span id='bottom_table_val'><a href="https://github.com/f18m/nmon-cgroup-aware">njmon-cgroup-aware</a> 22-6</span></li>
+      <li>User: <span id='bottom_table_val'>root</span></li>
+      <li>Collected: <span id='bottom_table_val'>cgroups,cpu,disk,memory,network</span></li>
+      <li>Started sampling at: <span id='bottom_table_val'>2019-04-28T23:05:39 (Local)</span></li>
+      </ul></td><td><ul>
+      <li>Started sampling at: <span id='bottom_table_val'>2019-04-28T23:05:39 (UTC)</span></li>
+      <li>Snapshots: <span id='bottom_table_val'>34</span></li>
+      <li>Snapshot Interval (s): <span id='bottom_table_val'>3</span></li>
+      <li>Total time sampled (s): <span id='bottom_table_val'>102</span></li>
+      </ul></td><td><ul>
+    </ul></td></tr>
+    </table>
+  </div>
+  <div id="bottom_div">
+    <h3>Monitored System Summary</h3>
+    <table>
+    <tr><td><ul>
+      <li>Hostname: <span id='bottom_table_val'>docker-ubuntu1804-userapp-with-embedded-collector</span></li>
+      <li>CPU family: <span id='bottom_table_val'>Intel(R) Core(TM) i5-4570 CPU @ 3.20GHz</span></li>
+      <li>CPU family: <span id='bottom_table_val'>Intel(R) Core(TM) i5-4570 CPU @ 3.20GHz</span></li>
+      <li>OS: <span id='bottom_table_val'>Ubuntu 18.04.2 LTS</span></li>
+      </ul></td><td><ul>
+    </ul></td></tr>
+    </table>
+  </div>
+<p>NOTE: to zoom use left-click and drag; to reset view use right-click.</p>
+</body>
+</html>
