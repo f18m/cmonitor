@@ -6,7 +6,9 @@ DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f ..)
 all:
 	@docker build -t centos7-nmon-for-baremetal-image . && \
 		echo "Njmon-cgroup-aware docker example built successfully; now running it" && \
-		docker run -dit \
+		docker run \
+			--detach \
+			--tty \
 			--rm \
 			--cpuset-cpus=$(DOCKER_EXAMPLE_CPUS) \
 			--memory=$(DOCKER_EXAMPLE_MEMORY_LIMIT) \

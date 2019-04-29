@@ -630,7 +630,7 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
     # Also produce the "all CPUs" graph
     graphit(web,
             all_cpus_table,  # Data
-            'Logical CPU ' + details + " (from cgroup stats)",  # Graph Title
+            'Logical CPUs allowed in njmon_collector CGroup, ' + details + " (from baremetal stats)",  # Graph Title
             "All CPUs",  # Button Label
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=False)
@@ -678,7 +678,7 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
     for c in logical_cpus_indexes:
         graphit(web,
                 cpu_stats_table[c],  # Data
-                'Logical CPU ' + str(c) + details + " (from cgroup stats)",  # Graph Title
+                'Logical CPU ' + str(c) + details + " (from CGroup stats)",  # Graph Title
                 "CPU" + str(c),  # Button Label
                 graph_type=GRAPH_TYPE_CGROUP,
                 stack_state=True)
@@ -686,7 +686,7 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
     # Also produce the "all CPUs" graph
     graphit(web,
             all_cpus_table,  # Data
-            'Logical CPU ' + details + " (from cgroup stats)",  # Graph Title
+            'Logical CPUs assigned to njmon_collector CGroup, ' + details + " (from CGroup stats)",  # Graph Title
             "All CPUs",  # Button Label
             graph_type=GRAPH_TYPE_CGROUP,
             stack_state=False)
@@ -779,7 +779,7 @@ def generate_cgroup_memory(web, jdata, hostname):
     # Produce the javascript:
     graphit(web,
             cgroup_memory_stats,  # Data
-            'Memory in ' + unit + ' for hostname=' + hostname + " (from cgroup stats)",  # Graph Title
+            'Memory in ' + unit + ' for hostname=' + hostname + " (from CGroup stats)",  # Graph Title
             "Memory Usage",  # Button Label
             graph_type=GRAPH_TYPE_CGROUP,
             stack_state=False)

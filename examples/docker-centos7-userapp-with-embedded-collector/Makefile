@@ -7,7 +7,9 @@ all:
 	@cp -fv ../example-load.sh .
 	@docker build -t centos7-nmon-image . && \
 		echo "Njmon-cgroup-aware docker example built successfully; now running it" && \
-		docker run -dit \
+		docker run \
+			--detach \
+			--tty \
 			--rm \
 			--cpuset-cpus=$(DOCKER_EXAMPLE_CPUS) \
 			--memory=$(DOCKER_EXAMPLE_MEMORY_LIMIT) \

@@ -26,6 +26,7 @@ all:
 	
 clean:
 	$(MAKE) -C src clean
+	$(MAKE) -C examples clean
 
 install:
 ifndef DESTDIR
