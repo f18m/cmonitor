@@ -527,7 +527,7 @@ def generate_disks_io(web, jdata, hostname):
 
     graphit(web,
             disk_table,  # Data
-            graph_title='Disk I/O for ' + hostname + " (from baremetal stats)",
+            graph_title="Disk I/O (from baremetal stats)",
             button_label='Disk I/O',
             y_axis_title="MB",
             graph_type=GRAPH_TYPE_BAREMETAL,
@@ -661,11 +661,10 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
         all_cpus_table.addRow(all_cpus_row)
     
     # Produce the javascript:
-    details = ' for hostname=' + hostname
     for c in logical_cpus_indexes:
         graphit(web,
                 baremetal_cpu_stats[c],  # Data
-                graph_title='Logical CPU ' + str(c) + details + " (from baremetal stats)",
+                graph_title='Logical CPU ' + str(c) + " (from baremetal stats)",
                 button_label="CPU" + str(c),
                 y_axis_title="Time (%)",
                 graph_type=GRAPH_TYPE_BAREMETAL,
@@ -674,7 +673,7 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
     # Also produce the "all CPUs" graph
     graphit(web,
             all_cpus_table,  # Data
-            graph_title='Logical CPUs allowed in njmon_collector CGroup, ' + details + " (from baremetal stats)",
+            graph_title="All logical CPUs allowed in njmon_collector CGroup (from baremetal stats)",
             button_label="All CPUs",
             y_axis_title="Time (%)",
             graph_type=GRAPH_TYPE_BAREMETAL,
@@ -719,11 +718,10 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
         all_cpus_table.addRow(all_cpus_row)
 
     # Produce 1 graph for each CPU:
-    details = ' for hostname=' + hostname
     for c in logical_cpus_indexes:
         graphit(web,
                 cpu_stats_table[c],  # Data
-                graph_title='Logical CPU ' + str(c) + details + " (from CGroup stats)",
+                graph_title='Logical CPU ' + str(c) + " (from CGroup stats)",
                 button_label="CPU" + str(c),
                 y_axis_title="Time (%)",
                 graph_type=GRAPH_TYPE_CGROUP,
@@ -732,7 +730,7 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
     # Also produce the "all CPUs" graph
     graphit(web,
             all_cpus_table,  # Data
-            graph_title='Logical CPUs assigned to njmon_collector CGroup, ' + details + " (from CGroup stats)",
+            graph_title="All logical CPUs assigned to njmon_collector CGroup (from CGroup stats)",
             button_label="All CPUs",
             y_axis_title="Time (%)",
             graph_type=GRAPH_TYPE_CGROUP,
@@ -804,7 +802,7 @@ def generate_baremetal_memory(web, jdata, hostname):
     # Produce the javascript:
     graphit(web,
             baremetal_memory_stats,  # Data
-            graph_title='Memory in ' + unit + ' for hostname=' + hostname + " (from baremetal stats)",
+            graph_title='Memory usage in ' + unit + " (from baremetal stats)",
             button_label="Memory Usage",
             y_axis_title=unit,
             graph_type=GRAPH_TYPE_BAREMETAL,
@@ -846,7 +844,7 @@ def generate_cgroup_memory(web, jheader, jdata, hostname):
     # Produce the javascript:
     graphit(web,
             cgroup_memory_stats,  # Data
-            graph_title='Memory in ' + unit + ' for hostname=' + hostname + " (from CGroup stats)",
+            graph_title='Memory used by njmon_collector CGroup ' + unit +  " (from CGroup stats)",
             button_label="Memory Usage",
             y_axis_title=[unit, "Alloc Failures"],
             graph_type=GRAPH_TYPE_CGROUP,
@@ -894,7 +892,7 @@ def generate_load_avg(web, jheader, jdata, hostname):
     # Produce the javascript:
     graphit(web,
             load_avg_stats,  # Data
-            graph_title='Average Load ' + ' for hostname=' + hostname + " (from baremetal stats)",
+            graph_title='Average Load ' +  " (from baremetal stats)",
             button_label="Average Load",
             y_axis_title="Load (%)",
             graph_type=GRAPH_TYPE_BAREMETAL,
