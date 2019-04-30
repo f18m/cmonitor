@@ -46,6 +46,11 @@ class Table(object):
     def getListColumnNames(self):
         return self.column_names
     
+    def getNumDataSeries(self):
+        # assuming first column is the timestamp, the number of "data series"
+        # present in this table is all remaining columns
+        return len(self.column_names)-1
+    
     def writeTo(self, file):
         for r in self.rows:
             # assume first column is always the timestamp:
@@ -80,6 +85,8 @@ def nchart_start_js(file, title):
     file.write('     button { margin-bottom: 3px; }\n')
     file.write('     #chart_master {width:100%; height:85%;}\n')
     file.write('     #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
+    file.write('     #bottom_div h3 {font-size: medium;}\n')
+    file.write('     #bottom_div li {font-size: smaller;}\n')
     file.write('     #bottom_table_val {font-family: monospace;}\n')
     file.write('     #button_table { border-collapse: collapse; }\n')
     file.write('     #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
@@ -138,19 +145,50 @@ def nchart_end_js_bubble_graph(file, graphtitle):
     g_num_generated_charts += 1
 
     
-def nchart_end_js_line_graph(file, graphtitle):
+def nchart_end_js_line_graph(file, num_series, graphtitle, y_axis_title, series_for_2nd_yaxis):
     ''' After the JavaSctipt line graph data is output, the data is terminated and the graph options set'''
     global next_graph_need_stacking
     global g_num_generated_charts 
+    
+    def write_series_json(file, series_indexes, target_axis_index):
+        for i, idx in enumerate(series_indexes, start=0):
+            file.write('     %d: {targetAxisIndex:%d}' % (idx,target_axis_index))
+            #print("i=%d, idx=%d, target_axis_index=%d" % (i,idx,target_axis_index))
+            if i < len(series_indexes):
+                file.write(',\n')
+            else:
+                file.write('\n')
+    
     file.write('  ]);\n')
     file.write('  var options_' + str(g_num_generated_charts) + ' = {\n')
     file.write('    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n')
     file.write('    title: "' + graphtitle + '",\n')
     file.write('    focusTarget: "category",\n')
     file.write('    hAxis: { gridlines: { color: "lightgrey", count: 30 } },\n')
-    file.write('    vAxis: { gridlines: { color: "lightgrey", count: 11 } },\n')
-    file.write('    explorer: { actions: ["dragToZoom", "rightClickToReset"],\n')
-    file.write('    axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },\n')
+    if len(series_for_2nd_yaxis)>0:
+        # compute series that use 1st Y axis:
+        series_for_1st_yaxis = range(0,num_series)
+        series_for_1st_yaxis = [item for item in series_for_1st_yaxis if item not in series_for_2nd_yaxis]
+        #print("series_for_1st_yaxis: %s" % ','.join(str(x) for x in series_for_1st_yaxis))
+        #print("series_for_2nd_yaxis: %s" % ','.join(str(x) for x in series_for_2nd_yaxis))
+
+        # assign data series to the 2 Y axes:
+        file.write('    series: {\n')
+        write_series_json(file, series_for_1st_yaxis, 0)
+        write_series_json(file, series_for_2nd_yaxis, 1)
+        file.write('    },\n')
+        
+        # allocate 2 Y axes:
+        assert(len(y_axis_title) == 2)
+        file.write('    vAxes: {\n')
+        #file.write('      0: { title: "%s", gridlines: { color: "lightgrey", count: 11 } },\n' % str(y_axis_title[0]))
+        #file.write('      1: { title: "%s", gridlines: { color: "lightgrey", count: 11 } }\n' % str(y_axis_title[1]))
+        file.write('      0: { title: "%s" },\n' % str(y_axis_title[0]))
+        file.write('      1: { title: "%s" }\n' % str(y_axis_title[1]))
+        file.write('    },\n')
+    else:
+        file.write('    vAxis: { title: "%s", gridlines: { color: "lightgrey", count: 11 } },\n' % str(y_axis_title))
+    file.write('    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },\n')
     if next_graph_need_stacking:
         file.write('    isStacked:  1\n')
         next_graph_need_stacking = 0
@@ -246,15 +284,17 @@ def googledate(date):
     return d
 
 
-def graphit(web, table_data, title, button_label, graph_type, stack_state):
+def graphit(web, table_data, graph_title, button_label, graph_type, stack_state, y_axis_title="", series_for_2nd_yaxis=[]):
     global next_graph_need_stacking
     global g_graphs
+    
+    graph_title += (', STACKED graph' if stack_state else '')
     
     # declare JS variables:
     nchart_start_js_line_graph(web, table_data.getListColumnNames())
     nchart_write_js_graph_data(web, table_data)
     next_graph_need_stacking = stack_state
-    nchart_end_js_line_graph(web, title + (', STACKED graph' if stack_state else ''))
+    nchart_end_js_line_graph(web, table_data.getNumDataSeries(), graph_title, y_axis_title, series_for_2nd_yaxis)
     
     # register this graph into globals
     g_graphs.append(Graph(button_label, graph_type))
@@ -457,9 +497,9 @@ def generate_disks_io(web, jdata, hostname):
     
     diskcols = ['Timestamp']
     for device in all_disks:
-        diskcols.append(str(device) + " Disk Time")
-        diskcols.append(str(device) + " Reads")
-        diskcols.append(str(device) + " Writes")
+        #diskcols.append(str(device) + " Disk Time")
+        #diskcols.append(str(device) + " Reads")
+        #diskcols.append(str(device) + " Writes")
         diskcols.append(str(device) + " Read MB")
         diskcols.append(str(device) + " Write MB")
 
@@ -478,17 +518,18 @@ def generate_disks_io(web, jdata, hostname):
 
         row = [ googledate(s['timestamp']['datetime']) ]
         for device in all_disks:
-            row.append(s["disks"][device]["time"])
-            row.append(s["disks"][device]["reads"])
-            row.append(s["disks"][device]["writes"])
+            #row.append(s["disks"][device]["time"])
+            #row.append(s["disks"][device]["reads"])
+            #row.append(s["disks"][device]["writes"])
             row.append(s["disks"][device]["rkb"]/divider)
             row.append(-s["disks"][device]["wkb"]/divider)
         disk_table.addRow(row)
 
     graphit(web,
             disk_table,  # Data
-            'Disk I/O for ' + hostname + " (from baremetal stats)",  # Graph Title
-            'Disk I/O',  # Button Label
+            graph_title='Disk I/O for ' + hostname + " (from baremetal stats)",
+            button_label='Disk I/O',
+            y_axis_title="MB",
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=False)
 
@@ -547,11 +588,12 @@ def generate_network_traffic(web, jdata, hostname):
 
     graphit(web,
             net_table,  # Data
-            'Network Traffic in MB/s for ' + hostname + " (from baremetal stats)",  # Graph Title
-            'Network Traffic (MB/s)',  # Button Label
+            graph_title='Network Traffic in MB/s for ' + hostname + " (from baremetal stats)",
+            button_label='Network Traffic (MB/s)',
+            y_axis_title="MB/s",
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=False)
-    
+            
     # PPS
     
     net_table = Table(netcols)
@@ -567,8 +609,9 @@ def generate_network_traffic(web, jdata, hostname):
 
     graphit(web,
             net_table,  # Data
-            'Network Traffic in PPS for ' + hostname + " (from baremetal stats)",  # Graph Title
-            'Network Traffic (PPS)',  # Button Label
+            graph_title='Network Traffic in PPS for ' + hostname + " (from baremetal stats)",
+            button_label='Network Traffic (PPS)',
+            y_axis_title="PPS",
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=False)
     
@@ -622,16 +665,18 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
     for c in logical_cpus_indexes:
         graphit(web,
                 baremetal_cpu_stats[c],  # Data
-                'Logical CPU ' + str(c) + details + " (from baremetal stats)",  # Graph Title
-                "CPU" + str(c),  # Button Label
+                graph_title='Logical CPU ' + str(c) + details + " (from baremetal stats)",
+                button_label="CPU" + str(c),
+                y_axis_title="Time (%)",
                 graph_type=GRAPH_TYPE_BAREMETAL,
                 stack_state=True)
 
     # Also produce the "all CPUs" graph
     graphit(web,
             all_cpus_table,  # Data
-            'Logical CPUs allowed in njmon_collector CGroup, ' + details + " (from baremetal stats)",  # Graph Title
-            "All CPUs",  # Button Label
+            graph_title='Logical CPUs allowed in njmon_collector CGroup, ' + details + " (from baremetal stats)",
+            button_label="All CPUs",
+            y_axis_title="Time (%)",
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=False)
     
@@ -678,29 +723,32 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
     for c in logical_cpus_indexes:
         graphit(web,
                 cpu_stats_table[c],  # Data
-                'Logical CPU ' + str(c) + details + " (from CGroup stats)",  # Graph Title
-                "CPU" + str(c),  # Button Label
+                graph_title='Logical CPU ' + str(c) + details + " (from CGroup stats)",
+                button_label="CPU" + str(c),
+                y_axis_title="Time (%)",
                 graph_type=GRAPH_TYPE_CGROUP,
                 stack_state=True)
 
     # Also produce the "all CPUs" graph
     graphit(web,
             all_cpus_table,  # Data
-            'Logical CPUs assigned to njmon_collector CGroup, ' + details + " (from CGroup stats)",  # Graph Title
-            "All CPUs",  # Button Label
+            graph_title='Logical CPUs assigned to njmon_collector CGroup, ' + details + " (from CGroup stats)",
+            button_label="All CPUs",
+            y_axis_title="Time (%)",
             graph_type=GRAPH_TYPE_CGROUP,
             stack_state=False)
 
 
-def choose_byte_divider(mem_total):
+def choose_byte_divider(mem_total_bytes):
     divider = 1
     unit = 'Bytes'
-    if mem_total > 99E9:
+    if mem_total_bytes > 9E9:
         divider = 1E9
         unit = 'GB'
-    elif mem_total > 99E6:
+    elif mem_total_bytes > 9E6:
         divider = 1E6
         unit = 'MB'
+    #print("%d -> %s, %d" % (mem_total_bytes,unit, divider))
     return (divider, unit)
 
 
@@ -717,36 +765,53 @@ def generate_baremetal_memory(web, jdata, hostname):
     
     def meminfo_stat_to_bytes(value):
         # NOTE: all values collected are in kB
-        return value * 1E3
+        #print("meminfo_stat_to_bytes: " + str(value))
+        return value * 1000
 
-    mem_total = meminfo_stat_to_bytes(jdata[0]['proc_meminfo']['MemTotal'])
+    mem_total_bytes = meminfo_stat_to_bytes(jdata[0]['proc_meminfo']['MemTotal'])
     baremetal_memory_stats = Table(['Timestamp', 'Used', 'Cached (DiskRead)', 'Free'])
-    divider, unit = choose_byte_divider(mem_total)
+    divider, unit = choose_byte_divider(mem_total_bytes)
 
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
+        
+        if meminfo_stat_to_bytes(s['proc_meminfo']['MemTotal']) != mem_total_bytes:
+            continue  # this is impossible AFAIK (hot swap of memory is not handled!!)
+        
+        #
+        # NOTE: most tools like e.g. free -k just map:
+        #
+        #   free output |   corresponding /proc/meminfo fields
+        # --------------+---------------------------------------
+        #   Mem: total  |   MemTotal
+        #   Mem: used   |   MemTotal - MemFree - Buffers - Cached - Slab
+        #   Mem: free   |   MemFree             ^^^^^^^^^           ^^^^
+        #                                        Buffers and Slab are close to zero 99% of the time
+        #
+        # see https://access.redhat.com/solutions/406773
         
         mf = meminfo_stat_to_bytes(s['proc_meminfo']['MemFree'])
         mc = meminfo_stat_to_bytes(s['proc_meminfo']['Cached'])
         
         baremetal_memory_stats.addRow([
                 googledate(s['timestamp']['datetime']),
-                (mem_total - mf - mc) / divider,
-                mc / divider,
-                mf / divider,
+                int((mem_total_bytes - mf - mc) / divider),   # compute used memory
+                int(mc / divider), # cached
+                int(mf / divider), # free
             ])
 
     # Produce the javascript:
     graphit(web,
             baremetal_memory_stats,  # Data
-            'Memory in ' + unit + ' for hostname=' + hostname + " (from baremetal stats)",  # Graph Title
-            "Memory Usage",  # Button Label
+            graph_title='Memory in ' + unit + ' for hostname=' + hostname + " (from baremetal stats)",
+            button_label="Memory Usage",
+            y_axis_title=unit,
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=True)
 
 
-def generate_cgroup_memory(web, jdata, hostname):
+def generate_cgroup_memory(web, jheader, jdata, hostname):
     # if cgroup data was not collected, just return:
     if 'cgroup_memory_stats' not in jdata[0]:
         return
@@ -756,11 +821,13 @@ def generate_cgroup_memory(web, jdata, hostname):
     # Process JSON sample and build Google Chart-compatible Javascript variable
     # See https://developers.google.com/chart/interactive/docs/reference
     #
-     
-    mem_total = jdata[0]['cgroup_memory_stats']['total_cache'] + \
-                jdata[0]['cgroup_memory_stats']['total_rss'] 
+    if "memory_limit_bytes" in jheader["cgroup_config"]:
+        mem_total_bytes = jheader["cgroup_config"]["memory_limit_bytes"]
+    else:
+        mem_total_bytes = jdata[0]['cgroup_memory_stats']['total_cache'] + \
+                          jdata[0]['cgroup_memory_stats']['total_rss'] 
     cgroup_memory_stats = Table(['Timestamp', 'Used', 'Cached (DiskRead)', 'Alloc Failures'])
-    divider, unit = choose_byte_divider(mem_total)
+    divider, unit = choose_byte_divider(mem_total_bytes)
     
     for i, s in enumerate(jdata):
         if i == 0:
@@ -779,35 +846,57 @@ def generate_cgroup_memory(web, jdata, hostname):
     # Produce the javascript:
     graphit(web,
             cgroup_memory_stats,  # Data
-            'Memory in ' + unit + ' for hostname=' + hostname + " (from CGroup stats)",  # Graph Title
-            "Memory Usage",  # Button Label
+            graph_title='Memory in ' + unit + ' for hostname=' + hostname + " (from CGroup stats)",
+            button_label="Memory Usage",
+            y_axis_title=[unit, "Alloc Failures"],
             graph_type=GRAPH_TYPE_CGROUP,
-            stack_state=False)
+            stack_state=False,
+            series_for_2nd_yaxis=[2]) # put "failcnt" on 2nd y axis
 
-def generate_load_avg(web, jdata, hostname):
+def generate_load_avg(web, jheader, jdata, hostname):
     #
     # MAIN LOOP
     # Process JSON sample and build Google Chart-compatible Javascript variable
     # See https://developers.google.com/chart/interactive/docs/reference
     #
      
+    num_baremetal_cpus = int(jheader["lscpu"]["cpus"])
+     
     load_avg_stats = Table(['Timestamp', 'LoadAvg (1min)', 'LoadAvg (5min)', 'LoadAvg (15min)'])
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
         
+        #
+        # See https://linux.die.net/man/5/proc
+        # and https://blog.appsignal.com/2018/03/28/understanding-system-load-and-load-averages.html
+        #
+        # "The load of a system is essentially the number of processes active at any given time. 
+        #  When idle, the load is 0. When a process starts, the load is incremented by 1. 
+        #  A terminating process decrements the load by 1. Besides running processes, 
+        #  any process that's queued up is also counted. So, when one process is actively using the CPU, 
+        #  and two are waiting their turn, the load is 3."
+        #  ...
+        # "Generally, single-core CPU can handle one process at a time. An average load of 1.0 would mean 
+        #  that one core is busy 100% of the time. If the load average drops to 0.5, the CPU has been idle 
+        #  for 50% of the time."
+
+        # since kernel reports a percentage in range [0-n], where n= number of cores,
+        # we remap that in range [0-100%]
+        
         load_avg_stats.addRow([
                 googledate(s['timestamp']['datetime']),
-                s['proc_loadavg']['load_avg_1min'],
-                s['proc_loadavg']['load_avg_5min'],
-                s['proc_loadavg']['load_avg_15min']
+                100 * float(s['proc_loadavg']['load_avg_1min']) / num_baremetal_cpus,
+                100 * float(s['proc_loadavg']['load_avg_5min']) / num_baremetal_cpus,
+                100 * float(s['proc_loadavg']['load_avg_15min']) / num_baremetal_cpus
             ])
 
     # Produce the javascript:
     graphit(web,
             load_avg_stats,  # Data
-            'Average Load ' + ' for hostname=' + hostname + " (from baremetal stats)",  # Graph Title
-            "Average Load",  # Button Label
+            graph_title='Average Load ' + ' for hostname=' + hostname + " (from baremetal stats)",
+            button_label="Average Load",
+            y_axis_title="Load (%)",
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=False)
 
@@ -863,10 +952,10 @@ def main_process_file(cmd, infile, outfile):
     generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname)
     generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname)
     generate_baremetal_memory(web, jdata, hostname)
-    generate_cgroup_memory(web, jdata, hostname)
+    generate_cgroup_memory(web, jheader, jdata, hostname)
     generate_network_traffic(web, jdata, hostname)
     generate_disks_io(web, jdata, hostname)
-    generate_load_avg(web, jdata, hostname)
+    generate_load_avg(web, jheader, jdata, hostname)
     
     # if process_data_found:
     #    bubbleit(web, topprocs_title, topprocs,  'Top Processes Summary' + details, "TopSum")

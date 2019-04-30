@@ -52,7 +52,7 @@
 read files in format
 name number
 name: number
-name: numer kB
+name: number kB
 */
 void NjmonCollectorApp::read_data_number(const char* statname)
 {
