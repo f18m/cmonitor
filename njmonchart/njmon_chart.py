@@ -340,8 +340,13 @@ def generate_config_js(jheader):
     # provide some human-readable config files:
     if 'cgroup_config' in jheader:
         avail_cpus = jheader['cgroup_config']['cpus'].split(',')
-        jheader['cgroup_config']['cpus_num_allowed'] = len(avail_cpus)
-        jheader['cgroup_config']['memory_limit_bytes_human_readable'] = sizeof_fmt(int(jheader['cgroup_config']['memory_limit_bytes']))
+        jheader['cgroup_config']['num_allowed_cpus'] = len(avail_cpus)
+        jheader['cgroup_config']['memory_limit_bytes'] = sizeof_fmt(int(jheader['cgroup_config']['memory_limit_bytes']))
+        jheader['cgroup_config']['cpus'] = jheader['cgroup_config']['cpus'].replace(',', ', ')
+        
+    if 'njmon' in jheader:
+        if jheader['njmon']['sample_num'] == 0:
+            jheader['njmon']['sample_num'] = "Infinite"
           
     config_str = ""
     config_str += '\nvar configWindow;'
