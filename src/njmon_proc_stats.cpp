@@ -797,20 +797,18 @@ void NjmonCollectorApp::proc_uptime()
 
 void NjmonCollectorApp::proc_loadavg()
 {
-    static FILE* fp = 0;
     char buf[1024 + 1];
     int count;
     float load_avg_1min;
     float load_avg_5min;
     float load_avg_15min;
+    FILE* fp;
 
     DEBUGLOG_FUNCTION_START();
-    if (fp == 0) {
-        if ((fp = fopen("/proc/loadavg", "r")) == NULL) {
-            return;
-        }
-    } else
-        rewind(fp);
+
+    if ((fp = fopen("/proc/loadavg", "r")) == NULL) {
+        return;
+    }
 
     if (fgets(buf, 1024, fp) != NULL) {
         /*
@@ -837,6 +835,8 @@ void NjmonCollectorApp::proc_loadavg()
             psectionend();
         }
     }
+
+    fclose(fp);
 }
 
 void NjmonCollectorApp::proc_filesystems()
