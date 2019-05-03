@@ -41,7 +41,7 @@ valgrind:
 	valgrind $(MEMCHECK_COMMON_OPTS) \
 			 $(VALGRIND_COMMON_OPTS) \
 			--log-file=valgrind-$(VALGRIND_LOGFILE_POSTFIX).log \
-			$(THIS_DIR)/$(OUT) --num-samples=10 --sampling-interval=1 --foreground
+			$(THIS_DIR)/$(OUT) --num-samples=10 --sampling-interval=1 --foreground --debug
 	@echo "Valgrind exited"
 
 

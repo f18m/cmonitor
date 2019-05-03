@@ -85,7 +85,7 @@ void NjmonCollectorApp::read_data_number(const char* statname)
                 line[i] = 0;
         }
         sscanf(line, "%s %s", label, number);
-        /*printf("read_data_numer(%s) |%s| |%s|=%lld\n", statname,label,numstr,atoll(numstr));*/
+        // LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr, atoll(numstr));
         plong(label, atoll(number));
     }
     psectionend();
@@ -293,13 +293,13 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
     };
     static struct diskinfo current;
     static struct diskinfo* previous;
+    static long disks_found = 0, disks_sampled = 0;
     static FILE* fp = 0;
     char buf[1024];
     int dk_stats;
 
     /* popen variables */
     FILE* pop;
-    static long disks = 0;
     char tmpstr[1024 + 1];
     long i;
     long j;
@@ -313,26 +313,26 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
         if (pop != NULL) {
             /* throw away the headerline */
             tmpstr[0] = 0;
-            disks = 0;
+            disks_found = 0;
             if (fgets(tmpstr, 127, pop)) {
-                for (;; disks++) {
+                for (;; disks_found++) {
                     tmpstr[0] = 0;
                     if (fgets(tmpstr, 127, pop) == NULL)
                         break;
-                    /*printf("DEBUG %ld disks - %s\n",disks,tmpstr);*/
+                    // LogDebug("DEBUG %ld disks - %s\n", disks, tmpstr);
                 }
             }
             pclose(pop);
         } else
-            disks = 0;
-        /*printf("DEBUG %ld disks\n",disks); */
-        previous = (diskinfo*)malloc(sizeof(struct diskinfo) * disks);
+            disks_found = 0;
+        // LogDebug("DEBUG %ld disks\n", disks);
+        previous = (diskinfo*)calloc(sizeof(struct diskinfo), disks_found);
 
         pop = popen("lsblk --nodeps --output NAME,TYPE --raw 2>/dev/null", "r");
         if (pop != NULL) {
             /* throw away the headerline */
             if (fgets(tmpstr, 70, pop)) {
-                for (i = 0; i < disks; i++) {
+                for (i = 0; i < disks_found; i++) {
                     tmpstr[0] = 0;
                     if (fgets(tmpstr, 70, pop) == NULL)
                         break;
@@ -341,13 +341,20 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
                     for (j = 0; j < len; j++)
                         if (tmpstr[j] == ' ')
                             tmpstr[j] = 0;
-                    strcpy(previous[i].dk_name, tmpstr);
-                    /*printf("DEBUG saved %ld %s disk name\n",i,previous[i].dk_name);*/
+
+                    if (strncmp(tmpstr, "loop", 4) != 0) {
+                        // LogDebug("DEBUG saved %ld %s disk name\n", i, previous[i].dk_name);
+                        strcpy(previous[disks_sampled].dk_name, tmpstr);
+                        disks_sampled++;
+                    } else {
+                        LogDebug("Discarding disk %s\n", tmpstr);
+                        /* loop**** disks are not real */
+                    }
                 }
             }
             pclose(pop);
         } else
-            disks = 0;
+            disks_sampled = 0;
 
         if ((fp = fopen("/proc/diskstats", "r")) == NULL) {
             LogError("failed to open - /proc/diskstats");
@@ -360,7 +367,9 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
         psection("disks");
     while (fgets(buf, 1024, fp) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
-        /*printf("DISKSTATS: \"%s\"", buf);*/
+
+        // LogDebug("DISKSTATS: \"%s\"", buf);
+
         /* zero the data ready for reading */
         bzero(&current, sizeof(struct diskinfo));
         dk_stats = sscanf(&buf[0], "%ld %ld %s %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld",
@@ -368,16 +377,15 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
             &current.dk_rkb, &current.dk_rmsec, &current.dk_writes, &current.dk_wmerge, &current.dk_wkb,
             &current.dk_wmsec, &current.dk_inflight, &current.dk_time, &current.dk_backlog);
 
-        if (dk_stats == 7) { /* shuffle the data around due to missing columns for partitions */
-
+        if (dk_stats == 7) {
+            /* shuffle the data around due to missing columns for partitions */
             current.dk_wkb = current.dk_rmsec;
             current.dk_writes = current.dk_rkb;
             current.dk_rkb = current.dk_rmerge;
             current.dk_rmsec = 0;
             current.dk_rmerge = 0;
-
         } else if (dk_stats != 14)
-            fprintf(stderr, "disk sscanf wanted 14 but returned=%d line=%s\n", dk_stats, buf);
+            LogError("disk sscanf wanted 14 but returned=%d line=%s\n", dk_stats, buf);
 
         current.dk_rkb /= 2; /* sectors = 512 bytes */
         current.dk_wkb /= 2;
@@ -389,15 +397,9 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
 
         current.dk_time /= 10.0; /* in milli-seconds to make it upto 100%, 1000/100 = 10 */
 
-        for (i = 0; i < disks; i++) {
-            /*printf("DEBUG disks new %s old %s\n", current.dk_name,previous[i].dk_name);*/
+        for (i = 0; i < disks_found; i++) {
+            // LogDebug("DEBUG disks new %s old %s\n", current.dk_name, previous[i].dk_name);
             if (!strcmp(current.dk_name, previous[i].dk_name)) {
-
-                /* loop**** disks are not real */
-                if (strncmp(current.dk_name, "loop", 4) == 0)
-                    filtered_out = 1;
-                else
-                    filtered_out = 0;
 
                 if (print && !filtered_out) {
                     psub(current.dk_name);
@@ -406,7 +408,7 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
                                     printf("minor",      current.dk_minor);
                     */
                     pdouble("reads", (current.dk_reads - previous[i].dk_reads) / elapsed);
-                    /*printf("DEBUG  reads: %lld %lld %.2f,\n",    current.dk_reads, previous[i].dk_reads,  elapsed); */
+                    // LogDebug("DEBUG  reads: %lld %lld %.2f,\n", current.dk_reads, previous[i].dk_reads, elapsed);
                     pdouble("rmerge", (current.dk_rmerge - previous[i].dk_rmerge) / elapsed);
                     pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed);
                     pdouble("rmsec", (current.dk_rmsec - previous[i].dk_rmsec) / elapsed);
@@ -425,6 +427,152 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
                 }
                 memcpy(&previous[i], &current, sizeof(struct diskinfo));
                 break; /* once found stop searching */
+            }
+        }
+    }
+    if (print)
+        psectionend();
+}
+
+void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
+{
+    struct netinfo {
+        char if_name[128];
+        long long if_ibytes;
+        long long if_ipackets;
+        long long if_ierrs;
+        long long if_idrop;
+        long long if_ififo;
+        long long if_iframe;
+        long long if_obytes;
+        long long if_opackets;
+        long long if_oerrs;
+        long long if_odrop;
+        long long if_ofifo;
+        long long if_ocolls;
+        long long if_ocarrier;
+    };
+
+    static struct netinfo current;
+    static struct netinfo* previous;
+    static long interfaces_found = 0, interfaces_sampled = 0;
+    long long junk;
+
+    static FILE* fp = 0;
+    char buf[1024];
+    int ret;
+
+    /* popen variables */
+    FILE* pop;
+    char tmpstr[1024 + 1];
+    long i;
+    long j;
+    long len;
+
+    DEBUGLOG_FUNCTION_START();
+    if (fp == (FILE*)0) {
+        /* Just count the number of UP network interfaces */
+        pop = popen("/sbin/ifconfig -s 2>/dev/null", "r");
+        if (pop != NULL) {
+            /* throw away the headerline */
+            tmpstr[0] = 0;
+            interfaces_found = 0;
+            if (fgets(tmpstr, 1024, pop)) {
+                for (;; interfaces_found++) {
+                    tmpstr[0] = 0;
+                    if (fgets(tmpstr, 1024, pop) == NULL)
+                        break;
+                    // LogDebug("DEBUG %ld interfaces - %s\n", interfaces, tmpstr);
+                }
+            }
+            pclose(pop);
+        } else
+            interfaces_found = 0;
+        // LogDebug("DEBUG %ld intergaces\n", interfaces);
+        previous = (netinfo*)calloc(sizeof(struct netinfo), interfaces_found);
+
+        pop = popen("/sbin/ifconfig -s 2>/dev/null", "r");
+        if (pop != NULL) {
+            /* throw away the headerline */
+            if (fgets(tmpstr, 1024, pop)) {
+                for (i = 0; i < interfaces_found; i++) {
+                    tmpstr[0] = 0;
+                    if (fgets(tmpstr, 1024, pop) == NULL)
+                        break;
+                    tmpstr[strlen(tmpstr)] = 0; /* remove NL char */
+                    len = strlen(tmpstr);
+                    for (j = 0; j < len; j++)
+                        if (tmpstr[j] == ' ')
+                            tmpstr[j] = 0;
+
+                    if (strncmp(tmpstr, "veth", 4) != 0) {
+                        strcpy(previous[interfaces_sampled].if_name, tmpstr);
+                        interfaces_sampled++;
+                    } else {
+                        /* veth**** interfaces are not real */
+                        LogDebug("Discarding net interface %s\n", tmpstr);
+                    }
+                }
+            }
+            pclose(pop);
+        } else
+            interfaces_found = 0;
+
+        if ((fp = fopen("/proc/net/dev", "r")) == NULL) {
+            LogError("failed to open - /proc/net/dev");
+            return;
+        }
+    } else
+        rewind(fp);
+
+    if (interfaces_found == 0 || interfaces_sampled == 0)
+        return; // this happens in e.g. Docker containers having no network
+
+    if (fgets(buf, 1024, fp) == NULL)
+        return; /* throw away the header line */
+    if (fgets(buf, 1024, fp) == NULL)
+        return; /* throw away the header line */
+
+    if (print)
+        psection("network_interfaces");
+    while (fgets(buf, 1024, fp) != NULL) {
+        strip_spaces(buf);
+
+        bzero(&current, sizeof(struct netinfo));
+        ret = sscanf(&buf[0], "%s %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
+            (char*)current.if_name, &current.if_ibytes, &current.if_ipackets, &current.if_ierrs, &current.if_idrop,
+            &current.if_ififo, &current.if_iframe, &junk, &junk, &current.if_obytes, &current.if_opackets,
+            &current.if_oerrs, &current.if_odrop, &current.if_ofifo, &current.if_ocolls, &current.if_ocarrier);
+
+        if (ret != 16) {
+            LogError("net sscanf wanted 16 returned = %d line=%s\n", ret, (char*)buf);
+        } else {
+            for (i = 0; i < interfaces_found; i++) {
+                // LogDebug("DEBUG: i=%ld current.if_name=%s, previous=%s interfaces=%ld\n", i, *current.if_name,
+                // previous[i].if_name, interfaces);
+                if (!strcmp(current.if_name, previous[i].if_name)) {
+                    if (print) {
+                        psub(current.if_name);
+                        pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed);
+                        pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed);
+                        pdouble("ierrs", (current.if_ierrs - previous[i].if_ierrs) / elapsed);
+                        pdouble("idrop", (current.if_idrop - previous[i].if_idrop) / elapsed);
+                        pdouble("ififo", (current.if_ififo - previous[i].if_ififo) / elapsed);
+                        pdouble("iframe", (current.if_iframe - previous[i].if_iframe) / elapsed);
+
+                        pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed);
+                        pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed);
+                        pdouble("oerrs", (current.if_oerrs - previous[i].if_oerrs) / elapsed);
+                        pdouble("odrop", (current.if_odrop - previous[i].if_odrop) / elapsed);
+                        pdouble("ofifo", (current.if_ofifo - previous[i].if_ofifo) / elapsed);
+
+                        pdouble("ocolls", (current.if_ocolls - previous[i].if_ocolls) / elapsed);
+                        pdouble("ocarrier", (current.if_ocarrier - previous[i].if_ocarrier) / elapsed);
+                        psubend();
+                    }
+                    memcpy(&previous[i], &current, sizeof(struct netinfo));
+                    break; /* once found stop searching */
+                }
             }
         }
     }
@@ -454,144 +602,6 @@ void NjmonCollectorApp::strip_spaces(char* s)
         }
     }
     *s = 0;
-}
-
-void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
-{
-    struct netinfo {
-        char if_name[128];
-        long long if_ibytes;
-        long long if_ipackets;
-        long long if_ierrs;
-        long long if_idrop;
-        long long if_ififo;
-        long long if_iframe;
-        long long if_obytes;
-        long long if_opackets;
-        long long if_oerrs;
-        long long if_odrop;
-        long long if_ofifo;
-        long long if_ocolls;
-        long long if_ocarrier;
-    };
-
-    static struct netinfo current;
-    static struct netinfo* previous;
-    long long junk;
-
-    static FILE* fp = 0;
-    char buf[1024];
-    static long interfaces;
-    int ret;
-
-    /* popen variables */
-    FILE* pop;
-    char tmpstr[1024 + 1];
-    long i;
-    long j;
-    long len;
-
-    DEBUGLOG_FUNCTION_START();
-    if (fp == (FILE*)0) {
-        /* Just count the number of UP network interfaces */
-        pop = popen("/sbin/ifconfig -s 2>/dev/null", "r");
-        if (pop != NULL) {
-            /* throw away the headerline */
-            tmpstr[0] = 0;
-            interfaces = 0;
-            if (fgets(tmpstr, 1024, pop)) {
-                for (;; interfaces++) {
-                    tmpstr[0] = 0;
-                    if (fgets(tmpstr, 1024, pop) == NULL)
-                        break;
-                    /*printf("DEBUG %ld intergaces - %s\n",interfaces,tmpstr);*/
-                }
-            }
-            pclose(pop);
-        } else
-            interfaces = 0;
-        /*printf("DEBUG %ld intergaces\n",interfaces); */
-        previous = (netinfo*)malloc(sizeof(struct netinfo) * interfaces);
-
-        pop = popen("/sbin/ifconfig -s 2>/dev/null", "r");
-        if (pop != NULL) {
-            /* throw away the headerline */
-            if (fgets(tmpstr, 1024, pop)) {
-                for (i = 0; i < interfaces; i++) {
-                    tmpstr[0] = 0;
-                    if (fgets(tmpstr, 1024, pop) == NULL)
-                        break;
-                    tmpstr[strlen(tmpstr)] = 0; /* remove NL char */
-                    len = strlen(tmpstr);
-                    for (j = 0; j < len; j++)
-                        if (tmpstr[j] == ' ')
-                            tmpstr[j] = 0;
-                    strcpy(previous[i].if_name, tmpstr);
-                    /*printf("DEBUG saved %ld %s interfaces name\n",i,previous[i].if_name);*/
-                }
-            }
-            pclose(pop);
-        } else
-            interfaces = 0;
-
-        if ((fp = fopen("/proc/net/dev", "r")) == NULL) {
-            LogError("failed to open - /proc/net/dev");
-            return;
-        }
-    } else
-        rewind(fp);
-
-    if (interfaces == 0)
-        return; // this happens in e.g. Docker containers having no network
-
-    if (fgets(buf, 1024, fp) == NULL)
-        return; /* throw away the header line */
-    if (fgets(buf, 1024, fp) == NULL)
-        return; /* throw away the header line */
-
-    if (print)
-        psection("network_interfaces");
-    while (fgets(buf, 1024, fp) != NULL) {
-        strip_spaces(buf);
-        bzero(&current, sizeof(struct netinfo));
-        ret = sscanf(&buf[0], "%s %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
-            (char*)current.if_name, &current.if_ibytes, &current.if_ipackets, &current.if_ierrs, &current.if_idrop,
-            &current.if_ififo, &current.if_iframe, &junk, &junk, &current.if_obytes, &current.if_opackets,
-            &current.if_oerrs, &current.if_odrop, &current.if_ofifo, &current.if_ocolls, &current.if_ocarrier);
-        if (ret != 16) {
-            fprintf(stderr, "net sscanf wanted 16 returned = %d line=%s\n", ret, (char*)buf);
-        } else {
-            for (i = 0; i < interfaces; i++) {
-                /*printf("DEBUG: i=%ld current.if_name=%s, previous=%s interfaces=%ld\n",i,
-                 * current.if_name,previous[i].if_name, interfaces);*/
-                if (!strcmp(current.if_name, previous[i].if_name)) {
-                    if (print) {
-                        psub(current.if_name);
-                        pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed);
-                        pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed);
-                        pdouble("ierrs", (current.if_ierrs - previous[i].if_ierrs) / elapsed);
-                        pdouble("idrop", (current.if_idrop - previous[i].if_idrop) / elapsed);
-                        pdouble("ififo", (current.if_ififo - previous[i].if_ififo) / elapsed);
-                        pdouble("iframe", (current.if_iframe - previous[i].if_iframe) / elapsed);
-
-                        pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed);
-                        pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed);
-                        pdouble("oerrs", (current.if_oerrs - previous[i].if_oerrs) / elapsed);
-                        pdouble("odrop", (current.if_odrop - previous[i].if_odrop) / elapsed);
-                        pdouble("ofifo", (current.if_ofifo - previous[i].if_ofifo) / elapsed);
-
-                        pdouble("ocolls", (current.if_ocolls - previous[i].if_ocolls) / elapsed);
-                        pdouble("ocarrier", (current.if_ocarrier - previous[i].if_ocarrier) / elapsed);
-                        psubend();
-                    }
-                    memcpy(&previous[i], &current, sizeof(struct netinfo));
-                    break; /* once found stop searching */
-                }
-            }
-        }
-    }
-    if (print)
-        psectionend();
 }
 
 void NjmonCollectorApp::etc_os_release()
@@ -668,7 +678,7 @@ void NjmonCollectorApp::lscpu()
     psection("lscpu");
     while (fgets(buf, 1024, pop) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
-        /*printf("DEBUG: lscpu line is |%s|\n",buf); */
+        // LogDebug("DEBUG: lscpu line is |%s|\n", buf);
         if (!strncmp("Architecture:", buf, strlen("Architecture:"))) {
             len = strlen(buf);
             for (data_col = 14; data_col < len; data_col++) {
@@ -856,7 +866,7 @@ void NjmonCollectorApp::proc_filesystems()
             if (statfs(fs->mnt_dir, &vfs) != 0) {
                 LogError("%s: statfs failed: %d\n", fs->mnt_dir, errno);
             }
-            /*printf("%s, mounted on %s:\n", fs->mnt_dir, fs->mnt_fsname); */
+            // LogDebug("%s, mounted on %s:\n", fs->mnt_dir, fs->mnt_fsname);
 
             psub(fs->mnt_fsname);
             pstring("fs_dir", fs->mnt_dir);
