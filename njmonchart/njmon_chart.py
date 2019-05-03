@@ -582,8 +582,13 @@ def generate_network_traffic(web, jdata, hostname):
 
         row = [ googledate(s['timestamp']['datetime']) ]
         for device in all_netdevices:
-            row.append(s["network_interfaces"][device]["ibytes"]/divider)
-            row.append(-s["network_interfaces"][device]["obytes"]/divider)
+            try:
+                row.append(+s["network_interfaces"][device]["ibytes"]/divider)
+                row.append(-s["network_interfaces"][device]["obytes"]/divider)
+            except KeyError:
+                print("Missing key '%s' while parsing sample %d" % (device, i))
+                row.append(0)
+                row.append(0)
         net_table.addRow(row)
 
     graphit(web,
@@ -603,8 +608,13 @@ def generate_network_traffic(web, jdata, hostname):
 
         row = [ googledate(s['timestamp']['datetime']) ]
         for device in all_netdevices:
-            row.append(s["network_interfaces"][device]["ipackets"])
-            row.append(-s["network_interfaces"][device]["opackets"])
+            try:
+                row.append(+s["network_interfaces"][device]["ipackets"])
+                row.append(-s["network_interfaces"][device]["opackets"])
+            except KeyError:
+                print("Missing key '%s' while parsing sample %d" % (device, i))
+                row.append(0)
+                row.append(0)
         net_table.addRow(row)
 
     graphit(web,
@@ -940,6 +950,7 @@ def main_process_file(cmd, infile, outfile):
             # print("%s %s" %(key, cpuIdx))
             logical_cpus_indexes.append(cpuIdx) 
     print("Found %d CPUs in input file: %s" % (len(logical_cpus_indexes), ', '.join(str(x) for x in logical_cpus_indexes)))
+    print("Found %d data samples" % len(jdata))
     
     # ----- MAIN SCRIPT CREAT WEB FILE -
     print("Opening output file %s" % outfile)
@@ -954,7 +965,8 @@ def main_process_file(cmd, infile, outfile):
     generate_network_traffic(web, jdata, hostname)
     generate_disks_io(web, jdata, hostname)
     generate_load_avg(web, jheader, jdata, hostname)
-    
+    print("All data samples parsed correctly")
+
     # if process_data_found:
     #    bubbleit(web, topprocs_title, topprocs,  'Top Processes Summary' + details, "TopSum")
     #    graphit(web, top_header, top_data,  'Top Procs by CPU time' + details, "TopProcs",unstacked)
