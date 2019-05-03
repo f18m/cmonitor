@@ -41,6 +41,8 @@ endif
 	$(MAKE) -C src install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
 	$(MAKE) -C njmonchart install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
 
+valgrind:
+	$(MAKE) -C src valgrind
 
 
 #

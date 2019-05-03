@@ -536,8 +536,8 @@ void NjmonCollectorApp::identity()
     /* hostname */
     char label[512];
     struct addrinfo hints;
-    struct addrinfo* info;
-    struct addrinfo* p;
+    struct addrinfo* info = NULL;
+    struct addrinfo* p = NULL;
 
     /* network IP addresses */
     struct ifaddrs* interfaces = NULL;
@@ -557,7 +557,7 @@ void NjmonCollectorApp::identity()
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_CANONNAME;
 
-    char hostname[1024];
+    char hostname[1024] = { 0 };
     if (getaddrinfo(hostname, "http", &hints, &info) == 0) {
         for (p = info, i = 1; p != NULL; p = p->ai_next, i++) {
             sprintf(label, "fullhostname%d", i);

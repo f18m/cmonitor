@@ -92,7 +92,7 @@ private:
     void pstart();
     void pfinish();
     void psample();
-    void psampleend(int comma_needed);
+    void psampleend(bool comma_needed);
     void indent();
     void psection(const char* section);
     void psub(const char* resource);

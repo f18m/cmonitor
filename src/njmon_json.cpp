@@ -25,7 +25,11 @@ long output_size = 0;
 long output_char = 0;
 long level = 0;
 
-/* collect stats on the metrix */
+const char* saved_section;
+const char* saved_resource;
+long saved_level = 1;
+
+/* collect stats on the metrics */
 int njmon_stats = 0;
 int njmon_sections = 0;
 int njmon_subsections = 0;
@@ -59,7 +63,7 @@ int njmon_hex = 0;
 
 void NjmonCollectorApp::remove_ending_comma_if_any()
 {
-    if (output[output_char - 2] == ',') {
+    if (output_char >= 2 && output[output_char - 2] == ',') {
         output[output_char - 2] = '\n';
         output_char--;
     }
@@ -75,11 +79,26 @@ void NjmonCollectorApp::buffer_check()
     }
 }
 
-void NjmonCollectorApp::prawc(const char c) { output[output_char++] = c; }
+void NjmonCollectorApp::prawc(const char c)
+{
+    // output a single character:
+    output[output_char++] = c;
+}
 
-void NjmonCollectorApp::praw(const char* string) { output_char += sprintf(&output[output_char], "%s", string); }
+void NjmonCollectorApp::praw(const char* string)
+{
+    // FIXME: sprintf() is much slower
+    output_char += sprintf(&output[output_char], "%s", string);
+    /*size_t len = strlen(string);
+    strcat(&output[output_char], string);
+    output_char += len;*/
+}
 
-void NjmonCollectorApp::pstart() { praw("{\n"); }
+void NjmonCollectorApp::pstart()
+{
+    // start new JSON object
+    praw("{\n");
+}
 
 void NjmonCollectorApp::pfinish()
 {
@@ -87,9 +106,13 @@ void NjmonCollectorApp::pfinish()
     praw("}\n");
 }
 
-void NjmonCollectorApp::psample() { praw("  {\n"); /* start of sample */ }
+void NjmonCollectorApp::psample()
+{
+    // start JSON data sample
+    praw("  {\n");
+}
 
-void NjmonCollectorApp::psampleend(int comma_needed)
+void NjmonCollectorApp::psampleend(bool comma_needed)
 {
     remove_ending_comma_if_any();
     if (comma_needed)
@@ -97,10 +120,6 @@ void NjmonCollectorApp::psampleend(int comma_needed)
     else
         praw("  },\n"); /* end of sample more to come */
 }
-
-const char* saved_section;
-const char* saved_resource;
-long saved_level = 1;
 
 void NjmonCollectorApp::indent()
 {

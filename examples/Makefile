@@ -17,7 +17,7 @@ all:
 regen_baremetal1:
 	@echo "Regenerating example JSON... this will take about 3*60secs."
 	@../src/njmon_collector --sampling-interval=3 --num-samples=60 --foreground --output-filename baremetal1
-	@jq . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED !!!" ; exit 10 )
+	@jq -e . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED !!!" ; exit 10 )
 
 clean:
 	rm -f *.err docker-*/example-load.sh
