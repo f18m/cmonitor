@@ -138,7 +138,7 @@ void NjmonCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bo
     char label[512];
 
     DEBUGLOG_FUNCTION_START();
-    /* printf("DEBUG\t--> proc_stat(%.4f, %d) max_cpuno=%d\n",elapsed, print,max_cpuno); */
+    LogDebug("proc_stat(%.4f, %d) max_cpuno=%d\n", elapsed, print, max_cpuno);
     if (fp == 0) {
         if ((fp = fopen("/proc/stat", "r")) == NULL) {
             LogError("failed to open file /proc/stat");
@@ -403,10 +403,7 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
 
                 if (print && !filtered_out) {
                     psub(current.dk_name);
-                    /*
-                                    printf("major",      current.dk_major);
-                                    printf("minor",      current.dk_minor);
-                    */
+
                     pdouble("reads", (current.dk_reads - previous[i].dk_reads) / elapsed);
                     // LogDebug("DEBUG  reads: %lld %lld %.2f,\n", current.dk_reads, previous[i].dk_reads, elapsed);
                     pdouble("rmerge", (current.dk_rmerge - previous[i].dk_rmerge) / elapsed);

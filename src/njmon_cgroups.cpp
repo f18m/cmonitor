@@ -265,7 +265,6 @@ void NjmonCollectorApp::cgroup_proc_memory()
         }
         value = 0;
         sscanf(line, "%s %lu", label, &value);
-        /*printf("read_data_numer(%s) |%s| |%s|=%lld\n", statname,label,numstr,atoll(numstr));*/
         plong(label, value);
     }
 

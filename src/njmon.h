@@ -9,9 +9,7 @@
 // Macros
 //------------------------------------------------------------------------------
 
-#define DEBUGLOG_FUNCTION_START()                                                                                      \
-    if (g_cfg.m_bDebug)                                                                                                \
-        fprintf(stderr, "%s called line %d\n", __func__, __LINE__);
+#define DEBUGLOG_FUNCTION_START() LogDebug("%s() called at line %d of file %s\n", __func__, __LINE__, __FILE__);
 
 //------------------------------------------------------------------------------
 // Command-Line Globals
@@ -83,6 +81,10 @@ private:
     void njmon_info(int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags);
     void file_read_one_stat(const char* file, const char* name);
 
+    // Global logging function for this app
+    void LogDebug(const char* line, ...);
+    void LogError(const char* line, ...);
+
     //------------------------------------------------------------------------------
     // JSON functions
     //------------------------------------------------------------------------------
@@ -141,6 +143,8 @@ private:
     std::string m_strHostname;
     std::string m_strShortHostname;
 
+    std::string m_strErrorFileName;
+
     bool m_bCGroupsFound = false;
 
     time_t timer; /* used to work out the time details*/
@@ -152,10 +156,6 @@ private:
     FILE* m_outputErr = nullptr;
     int m_outputSocketFd = 0; /*default is stdout, only changed if we are using a remote socket */
 };
-
-// Global logging function for this app
-void LogDebug(const char* line, ...);
-void LogError(const char* line, ...);
 
 // Utilities
 unsigned int replace_string(std::string& str, const std::string& from, const std::string& to, bool allOccurrences);

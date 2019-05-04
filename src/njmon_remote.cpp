@@ -69,7 +69,7 @@ void create_socket(char* ip_address, long port, char* hostname, char* utc, char*
     static struct sockaddr_in serv_addr;
 
     DEBUGLOG_FUNCTION_START();
-    DEBUG printf("socket: trying to connect to %s:%ld\n", ip_address, port);
+    LogDebug("socket: trying to connect to %s:%ld\n", ip_address, port);
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         pexit("njmon:socket() call failed");
 
@@ -83,7 +83,7 @@ void create_socket(char* ip_address, long port, char* hostname, char* utc, char*
 
     /* Now the sockfd can be used to communicate to the server the GET request */
     sprintf(buffer, "preamble-here njmon %s %s %s %s postamble-here", hostname, utc, secretstr, COLLECTOR_VERSION);
-    DEBUG printf("hello string=\"%s\"\n", buffer);
+    LogDebug("hello string=\"%s\"\n", buffer);
     mixup(buffer);
     if (write(sockfd, buffer, strlen(buffer)) < 0)
         pexit("njmon: write() to socket failed");

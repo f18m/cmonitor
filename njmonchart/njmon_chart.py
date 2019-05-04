@@ -984,8 +984,8 @@ def main_process_file(cmd, infile, outfile):
         ( "Collected:", jheader["njmon"]["collecting"] ),
         ( "Started sampling at:", jdata_first_sample["timestamp"]["datetime"] + " (Local)" ),
         ( "Started sampling at:", jdata_first_sample["timestamp"]["UTC"] + " (UTC)" ),
-        ( "Snapshots:", str(len(jdata)) ),
-        ( "Snapshot Interval (s):", str(jheader["njmon"]["sample_interval_seconds"]) ),
+        ( "Samples:", str(len(jdata)) ),
+        ( "Sampling Interval (s):", str(jheader["njmon"]["sample_interval_seconds"]) ),
         ( "Total time sampled (s):", str(jheader["njmon"]["sample_interval_seconds"] * len(jdata)) )
     ]
     

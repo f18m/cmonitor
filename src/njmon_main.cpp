@@ -18,6 +18,7 @@
  */
 
 #include <arpa/inet.h>
+#include <assert.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -59,10 +60,6 @@
 #define PID_FILE "/var/run/njmon.pid"
 
 #define ADDITIONAL_HELP_COLUMN_START (40)
-
-#define DEBUGLOG_FUNCTION_START()                                                                                      \
-    if (g_cfg.m_bDebug)                                                                                                \
-        fprintf(stderr, "%s called line %d\n", __func__, __LINE__);
 
 //------------------------------------------------------------------------------
 // Globals
@@ -134,7 +131,8 @@ struct option_extended {
 
     // help
     { "Other options", &g_long_opts[10], "Show version and exit" }, // force newline
-    { "Other options", &g_long_opts[11], "Enable debug mode" }, // force newline
+    { "Other options", &g_long_opts[11],
+        "Enable debug mode; automatically activates --foreground mode" }, // force newline
     { "Other options", &g_long_opts[12], "Show this help" },
 
     { NULL, NULL, NULL }
@@ -161,35 +159,6 @@ void interrupt(int signum)
 //------------------------------------------------------------------------------
 // Helper functions
 //------------------------------------------------------------------------------
-
-void LogDebug(const char* line, ...)
-{
-    char currLogLine[256];
-
-    va_list args;
-    va_start(args, line);
-    vsnprintf(currLogLine, 255, line, args);
-    va_end(args);
-
-    if (g_cfg.m_bDebug) {
-        printf("%s", currLogLine);
-        size_t lastCh = strlen(currLogLine) - 1;
-        if (currLogLine[lastCh] != '\n')
-            printf("\n");
-    }
-}
-
-void LogError(const char* line, ...)
-{
-    char currLogLine[256];
-
-    va_list args;
-    va_start(args, line);
-    vsnprintf(currLogLine, 255, line, args);
-    va_end(args);
-
-    printf("ERROR: %s\n", currLogLine);
-}
 
 PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
 {
@@ -391,6 +360,7 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
                 break;
             case 'd':
                 g_cfg.m_bDebug = true;
+                g_cfg.m_bForeground = true; // stay in foreground!
                 break;
             case 'h':
                 print_help();
@@ -432,6 +402,46 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
 //------------------------------------------------------------------------------
 // Application core functions
 //------------------------------------------------------------------------------
+
+void NjmonCollectorApp::LogDebug(const char* line, ...)
+{
+    char currLogLine[256];
+
+    va_list args;
+    va_start(args, line);
+    vsnprintf(currLogLine, 255, line, args);
+    va_end(args);
+
+    if (g_cfg.m_bDebug) {
+        // in debug mode stdout is still open, so we can printf:
+        printf("%s", currLogLine);
+        size_t lastCh = strlen(currLogLine) - 1;
+        if (currLogLine[lastCh] != '\n')
+            printf("\n");
+    }
+}
+
+void NjmonCollectorApp::LogError(const char* line, ...)
+{
+    char currLogLine[256];
+
+    va_list args;
+    va_start(args, line);
+    vsnprintf(currLogLine, 255, line, args);
+    va_end(args);
+
+    if (!m_outputErr && !m_strErrorFileName.empty()) {
+        // apparently this is the first error happening: time to open the logfile for errors:
+        if ((m_outputErr = fopen(m_strErrorFileName.c_str(), "w")) == 0) {
+            exit(14);
+        }
+    }
+
+    if (m_outputErr) {
+        // errors always go in their dedicated file
+        fprintf(m_outputErr, "ERROR: %s\n", currLogLine);
+    }
+}
 
 std::string NjmonCollectorApp::get_hostname()
 {
@@ -486,7 +496,7 @@ void NjmonCollectorApp::date_time(long loop)
     sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
         tim->tm_sec);
     pstring("UTC", buffer);
-    plong("snapshot_loop", loop);
+    plong("sample_index", loop);
     psectionend();
 }
 
@@ -674,7 +684,8 @@ int NjmonCollectorApp::run(int argc, char** argv)
 
         struct hostent* he = gethostbyname(g_cfg.m_strRemoteAddress.c_str());
         if (he == NULL) {
-            printf("hostname=%s to IP address convertion failed, bailing out\n", g_cfg.m_strRemoteAddress.c_str());
+            fprintf(
+                stderr, "hostname=%s to IP address convertion failed, bailing out\n", g_cfg.m_strRemoteAddress.c_str());
             exit(98);
         }
         /*
@@ -693,7 +704,8 @@ int NjmonCollectorApp::run(int argc, char** argv)
         if (he->h_addr_list[0] != NULL) {
             host = inet_ntoa(*(struct in_addr*)(he->h_addr_list[0]));
         } else {
-            printf("hostname=%s to IP address convertion failed, bailing out\n", g_cfg.m_strRemoteAddress.c_str());
+            fprintf(
+                stderr, "hostname=%s to IP address convertion failed, bailing out\n", g_cfg.m_strRemoteAddress.c_str());
             exit(99);
         }
         /*
@@ -707,7 +719,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
     if (!g_cfg.m_strOutputDir.empty()) {
         if (chdir(g_cfg.m_strOutputDir.c_str()) == -1) {
             perror("Change Directory failed");
-            printf("Directory attempted was: %s\n", g_cfg.m_strOutputDir.c_str());
+            fprintf(stderr, "Directory attempted was: %s\n", g_cfg.m_strOutputDir.c_str());
             exit(11);
         } else {
             printf("Changed to directory: %s\n", g_cfg.m_strOutputDir.c_str());
@@ -736,35 +748,32 @@ int NjmonCollectorApp::run(int argc, char** argv)
 
         printf("Opened output JSON file '%s'\n", filename);
 
+        // prepare output error file but don't open it yet
         sprintf(filename, "%s.err", g_cfg.m_strOutputFilenamePrefix.c_str());
-        if ((m_outputErr = fopen(filename, "w")) == 0) {
-            perror("opening file for stderr");
-            fprintf(stderr, "ERROR nmon filename=%s\n", filename);
-            exit(14);
-        }
-
-        printf("Opened output error file '%s'\n", filename);
+        m_strErrorFileName = filename;
+        printf("Errors (if any) will be logged into the file '%s'\n", m_strErrorFileName.c_str());
     }
 
     fflush(NULL);
 
     if (!g_cfg.m_bForeground) {
+        assert(!g_cfg.m_bDebug); // in debug mode we enable foreground mode!
+
         /* disconnect from terminal */
-        LogDebug("forking for daemon");
+        LogDebug("Forking for daemonization");
         __pid_t childpid;
         if ((childpid = fork()) != 0) {
             exit(0); /* parent returns OK */
         }
 
-        LogDebug("child running\n");
-        if (!g_cfg.m_bDebug) {
-            /*	close(0);
-                            close(1);
-                            close(2);
-            */
-            setpgrp(); /* become process group leader */
-            signal(SIGHUP, SIG_IGN); /* ignore hangups */
-        }
+        LogDebug("Running in daemon process:\n");
+
+        // close default file descriptors
+        close(STDIN_FILENO);
+        close(STDOUT_FILENO);
+        close(STDERR_FILENO);
+        setpgrp(); /* become process group leader */
+        signal(SIGHUP, SIG_IGN); /* ignore hangups */
     }
 
     // allocate output buffer
