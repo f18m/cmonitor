@@ -62,7 +62,7 @@ extern NjmonCollectorAppConfig g_cfg;
 
 class NjmonCollectorApp {
 public:
-    NjmonCollectorApp() { memset(&timer, 0, sizeof(timer)); }
+    NjmonCollectorApp() {}
 
     void init_defaults();
     void parse_args(int argc, char** argv);
@@ -73,9 +73,7 @@ private:
     void make_pid_file();
     void check_pid_file();
     std::string get_hostname();
-    void get_time();
-    void get_localtime();
-    void get_utc();
+    void get_timestamps(std::string& localTime, std::string& utcTime);
     void date_time(long loop);
     void identity();
     void njmon_info(int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags);
@@ -146,9 +144,6 @@ private:
     std::string m_strErrorFileName;
 
     bool m_bCGroupsFound = false;
-
-    time_t timer; /* used to work out the time details*/
-    struct tm* tim = nullptr; /* used to work out the local hour/min/second */
 
     // output:
 

@@ -279,8 +279,15 @@ void NjmonCollectorApp::init_defaults()
 
     // output file names
     get_hostname();
-    get_time();
-    get_localtime();
+
+    time_t timer; /* used to work out the time details*/
+    struct tm* tim = nullptr; /* used to work out the local hour/min/second */
+
+    timer = time(0);
+    tim = localtime(&timer);
+    tim->tm_year += 1900; /* read localtime() manual page!! */
+    tim->tm_mon += 1; /* because it is 0 to 11 */
+
     char filename[1024];
     sprintf(filename, "%s_%02d%02d%02d_%02d%02d", m_strShortHostname.c_str(), tim->tm_year, tim->tm_mon, tim->tm_mday,
         tim->tm_hour, tim->tm_min);
@@ -464,48 +471,45 @@ std::string NjmonCollectorApp::get_hostname()
     return m_strHostname;
 }
 
-void NjmonCollectorApp::get_time() { timer = time(0); }
-
-void NjmonCollectorApp::get_localtime()
+void NjmonCollectorApp::get_timestamps(std::string& localTime, std::string& utcTime)
 {
+    time_t timer; /* used to work out the time details*/
+    struct tm* tim = nullptr; /* used to work out the local hour/min/second */
+
+    timer = time(0);
     tim = localtime(&timer);
     tim->tm_year += 1900; /* read localtime() manual page!! */
     tim->tm_mon += 1; /* because it is 0 to 11 */
-}
 
-void NjmonCollectorApp::get_utc()
-{
+    /* This is ISO 8601 datatime string format - ughly but get over it! :-) */
+
+    char buffer[256];
+    sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
+        tim->tm_sec);
+    localTime = buffer;
+
     tim = gmtime(&timer);
     tim->tm_year += 1900; /* read gmtime() manual page!! */
     tim->tm_mon += 1; /* because it is 0 to 11 */
+
+    sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
+        tim->tm_sec);
+    utcTime = buffer;
 }
 
 void NjmonCollectorApp::date_time(long loop)
 {
-    char buffer[256];
-
     DEBUGLOG_FUNCTION_START();
-    /* This is ISO 8601 datatime string format - ughly but get over it! :-) */
-    get_time();
-    get_localtime();
+
+    std::string localTime, utcTime;
+    get_timestamps(localTime, utcTime);
+
     psection("timestamp");
-    sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
-        tim->tm_sec);
-    pstring("datetime", buffer);
-    get_utc();
-    sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
-        tim->tm_sec);
-    pstring("UTC", buffer);
+    pstring("datetime", localTime.c_str());
+    pstring("UTC", utcTime.c_str());
     plong("sample_index", loop);
     psectionend();
 }
-
-/*    check_pid_file() and make_pid_file()
- *    If you start njmon and it finds there is a copy running already then it will quietly stop.
- *    You can hourly start njmon via crontab and not end up with dozens of copies running.
- *    It also means if the server reboots then njmon start in the next hour.
- *    Side-effect: it creates a file called /tmp/njmon.pid
- */
 
 void NjmonCollectorApp::check_pid_file()
 {
