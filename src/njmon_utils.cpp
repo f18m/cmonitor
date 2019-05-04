@@ -35,6 +35,30 @@
 // C++ Helper functions
 // ----------------------------------------------------------------------------------
 
+void strip_spaces(char* s)
+{
+    char* p;
+    int spaced = 1;
+
+    p = s;
+    for (p = s; *p != 0; p++) {
+        if (*p == ':')
+            *p = ' ';
+        if (*p != ' ') {
+            *s = *p;
+            s++;
+            spaced = 0;
+        } else if (spaced) {
+            /* do no thing as this is second space */
+        } else {
+            *s = *p;
+            s++;
+            spaced = 1;
+        }
+    }
+    *s = 0;
+}
+
 std::string to_lower(const std::string& orig_str)
 {
     std::string str(orig_str);

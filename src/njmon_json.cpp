@@ -22,7 +22,7 @@
 
 char* output;
 long output_size = 0;
-long output_char = 0;
+long output_char = 0; // number of chars ready to be output in "output" buffer
 long level = 0;
 
 const char* saved_section;
@@ -61,7 +61,7 @@ int njmon_hex = 0;
  *        we can write the whole record in a single write (push()) to help down stream tools
  */
 
-void NjmonCollectorApp::remove_ending_comma_if_any()
+void NjmonCollectorApp::premove_ending_comma_if_any()
 {
     if (output_char >= 2 && output[output_char - 2] == ',') {
         output[output_char - 2] = '\n';
@@ -69,7 +69,7 @@ void NjmonCollectorApp::remove_ending_comma_if_any()
     }
 }
 
-void NjmonCollectorApp::buffer_check()
+void NjmonCollectorApp::pbuffer_check()
 {
     long size;
     if (!output || output_char > (long)(output_size * 0.95)) { /* within 5% of the end */
@@ -102,7 +102,7 @@ void NjmonCollectorApp::pstart()
 
 void NjmonCollectorApp::pfinish()
 {
-    remove_ending_comma_if_any();
+    premove_ending_comma_if_any();
     praw("}\n");
 }
 
@@ -114,14 +114,14 @@ void NjmonCollectorApp::psample()
 
 void NjmonCollectorApp::psampleend(bool comma_needed)
 {
-    remove_ending_comma_if_any();
+    premove_ending_comma_if_any();
     if (comma_needed)
         praw("  }\n"); /* end of sample */
     else
         praw("  },\n"); /* end of sample more to come */
 }
 
-void NjmonCollectorApp::indent()
+void NjmonCollectorApp::pindent()
 {
     int i;
 
@@ -131,29 +131,29 @@ void NjmonCollectorApp::indent()
 
 void NjmonCollectorApp::psection(const char* section)
 {
-    buffer_check();
+    pbuffer_check();
     njmon_sections++;
     saved_section = section;
-    indent();
+    pindent();
     output_char += sprintf(&output[output_char], "\"%s\": {\n", section);
     saved_level++;
 }
 
 void NjmonCollectorApp::psub(const char* resource)
 {
-    buffer_check();
+    pbuffer_check();
     njmon_subsections++;
     saved_resource = resource;
     saved_level++;
-    indent();
+    pindent();
     output_char += sprintf(&output[output_char], "\"%s\": {\n", resource);
 }
 
 void NjmonCollectorApp::psubend()
 {
     saved_resource = NULL;
-    remove_ending_comma_if_any();
-    indent();
+    premove_ending_comma_if_any();
+    pindent();
     praw("},\n");
     saved_level--;
 }
@@ -163,14 +163,14 @@ void NjmonCollectorApp::psectionend()
     saved_section = NULL;
     saved_resource = NULL;
     saved_level--;
-    remove_ending_comma_if_any();
-    indent();
+    premove_ending_comma_if_any();
+    pindent();
     praw("},\n");
 }
 
 void NjmonCollectorApp::phex(const char* name, long long value)
 {
-    indent();
+    pindent();
     njmon_hex++;
     output_char += sprintf(&output[output_char], "\"%s\": \"0x%08llx\",\n", name, value);
     // LogDebug("plong(%s,%lld) count=%ld\n", name, value, output_char);
@@ -178,7 +178,7 @@ void NjmonCollectorApp::phex(const char* name, long long value)
 
 void NjmonCollectorApp::plong(const char* name, long long value)
 {
-    indent();
+    pindent();
     njmon_long++;
     output_char += sprintf(&output[output_char], "\"%s\": %lld,\n", name, value);
     // LogDebug("plong(%s,%lld) count=%ld\n", name, value, output_char);
@@ -186,7 +186,7 @@ void NjmonCollectorApp::plong(const char* name, long long value)
 
 void NjmonCollectorApp::pdouble(const char* name, double value)
 {
-    indent();
+    pindent();
     njmon_double++;
     output_char += sprintf(&output[output_char], "\"%s\": %.3f,\n", name, value);
     // LogDebug("pdouble(%s,%.1f) count=%ld\n", name, value, output_char);
@@ -206,9 +206,9 @@ void NjmonCollectorApp::pstats()
 
 void NjmonCollectorApp::pstring(const char* name, const char* value)
 {
-    buffer_check();
+    pbuffer_check();
     njmon_string++;
-    indent();
+    pindent();
     output_char += sprintf(&output[output_char], "\"%s\": \"%s\",\n", name, value);
     // LogDebug("pstring(%s,%s) count=%ld\n", name, value, output_char);
 }
@@ -216,16 +216,9 @@ void NjmonCollectorApp::pstring(const char* name, const char* value)
 void NjmonCollectorApp::push()
 {
     DEBUGLOG_FUNCTION_START();
-    buffer_check();
-    // LogDebug("XXX size=%ld\n", output_char);
+    pbuffer_check();
 
-    if (m_outputSocketFd) {
-        if (write(m_outputSocketFd, output, output_char) < 0) {
-            /* if stdout failed there is not must we can do so stop */
-            perror("njmon write to output socket failed, stopping now.");
-            exit(99);
-        }
-    }
+    //remote_push();
 
     if (m_outputJson) {
         if (fputs(output, m_outputJson) < 0) {
@@ -233,11 +226,12 @@ void NjmonCollectorApp::push()
             perror("njmon write to output JSON failed, stopping now.");
             exit(99);
         }
+
+        LogDebug("pushed %ld chars in JSON output file", output_char);
     }
 
     fflush(NULL); /* force I/O output now */
 
-    LogDebug("pushed %ld chars", output_char);
     output[0] = 0;
     output_char = 0;
 }

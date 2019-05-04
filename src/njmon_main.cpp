@@ -497,7 +497,7 @@ void NjmonCollectorApp::get_timestamps(std::string& localTime, std::string& utcT
     utcTime = buffer;
 }
 
-void NjmonCollectorApp::date_time(long loop)
+void NjmonCollectorApp::psample_date_time(long loop)
 {
     DEBUGLOG_FUNCTION_START();
 
@@ -528,196 +528,15 @@ void NjmonCollectorApp::check_pid_file()
     // else: this is the first instance of this software... continue
 }
 
-void NjmonCollectorApp::file_read_one_stat(const char* file, const char* name)
-{
-    FILE* fp;
-    char buf[1024 + 1];
-
-    if ((fp = fopen(file, "r")) != NULL) {
-        if (fgets(buf, 1024, fp) != NULL) {
-            if (buf[strlen(buf) - 1] == '\n') /* remove last char = newline */
-                buf[strlen(buf) - 1] = 0;
-            pstring(name, buf);
-        }
-        fclose(fp);
-    }
-}
-
-void NjmonCollectorApp::identity()
-{
-    int i;
-
-    /* hostname */
-    char label[512];
-    struct addrinfo hints;
-    struct addrinfo* info = NULL;
-    struct addrinfo* p = NULL;
-
-    /* network IP addresses */
-    struct ifaddrs* interfaces = NULL;
-    struct ifaddrs* ifaddrs_ptr = NULL;
-    char address_buf[INET6_ADDRSTRLEN];
-    char* str;
-
-    DEBUGLOG_FUNCTION_START();
-
-    psection("identity");
-    get_hostname();
-    pstring("hostname", m_strHostname.c_str());
-    pstring("shorthostname", m_strShortHostname.c_str());
-
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_CANONNAME;
-
-    char hostname[1024] = { 0 };
-    if (getaddrinfo(hostname, "http", &hints, &info) == 0) {
-        for (p = info, i = 1; p != NULL; p = p->ai_next, i++) {
-            sprintf(label, "fullhostname%d", i);
-            pstring(label, p->ai_canonname);
-        }
-    }
-
-    if (getifaddrs(&interfaces) == 0) { /* retrieve the current interfaces */
-        for (ifaddrs_ptr = interfaces; ifaddrs_ptr != NULL; ifaddrs_ptr = ifaddrs_ptr->ifa_next) {
-
-            if (ifaddrs_ptr->ifa_addr) {
-                switch (ifaddrs_ptr->ifa_addr->sa_family) {
-                case AF_INET:
-                    if ((str = (char*)inet_ntop(ifaddrs_ptr->ifa_addr->sa_family,
-                             &((struct sockaddr_in*)ifaddrs_ptr->ifa_addr)->sin_addr, address_buf, sizeof(address_buf)))
-                        != NULL) {
-                        sprintf(label, "%s_IP4", ifaddrs_ptr->ifa_name);
-                        pstring(label, str);
-                    }
-                    break;
-                case AF_INET6:
-                    if ((str = (char*)inet_ntop(ifaddrs_ptr->ifa_addr->sa_family,
-                             &((struct sockaddr_in6*)ifaddrs_ptr->ifa_addr)->sin6_addr, address_buf,
-                             sizeof(address_buf)))
-                        != NULL) {
-                        sprintf(label, "%s_IP6", ifaddrs_ptr->ifa_name);
-                        pstring(label, str);
-                    }
-                    break;
-                default:
-                    // sprintf(label,"%s_Not_Supported_%d", ifaddrs_ptr->ifa_name, ifaddrs_ptr->ifa_addr->sa_family);
-                    // pstring(label,"");
-                    break;
-                }
-            } else {
-                sprintf(label, "%s_network_ignored", ifaddrs_ptr->ifa_name);
-                pstring(label, "null_address");
-            }
-        }
-
-        freeifaddrs(interfaces); /* free the dynamic memory */
-    }
-
-    /* POWER and AMD and may be others */
-    if (access("/proc/device-tree", R_OK) == 0) {
-        file_read_one_stat("/proc/device-tree/compatible", "compatible");
-        file_read_one_stat("/proc/device-tree/model", "model");
-        file_read_one_stat("/proc/device-tree/part-number", "part-number");
-        file_read_one_stat("/proc/device-tree/serial-number", "serial-number");
-        file_read_one_stat("/proc/device-tree/system-id", "system-id");
-        file_read_one_stat("/proc/device-tree/vendor", "vendor");
-    }
-    /*x86_64 and AMD64 */
-    if (access("/sys/devices/virtual/dmi/id/", R_OK) == 0) {
-        file_read_one_stat("/sys/devices/virtual/dmi/id/product_serial", "serial-number");
-        file_read_one_stat("/sys/devices/virtual/dmi/id/product_name", "model");
-        file_read_one_stat("/sys/devices/virtual/dmi/id/sys_vendor", "vendor");
-    }
-    psectionend();
-}
-
-void NjmonCollectorApp::njmon_info(
-    int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags)
-{
-    /* user name and id */
-    struct passwd* pw;
-    uid_t uid;
-
-    psection("njmon");
-
-    char command[1024] = { 0 };
-    for (int i = 0; i < argc; i++) {
-        strcat(command, argv[i]);
-        if (i != argc - 1)
-            strcat(command, " ");
-    }
-
-    pstring("njmon_command", command);
-    plong("sample_interval_seconds", sampling_interval_sec);
-    plong("sample_num", num_samples);
-    pstring("njmon_version", VERSION_STRING);
-
-    std::string str;
-    for (size_t j = 1; j < PK_MAX; j *= 2) {
-        PerformanceKpiFamily k = (PerformanceKpiFamily)j;
-        if (collect_flags & k) {
-            std::string str2 = string2PerformanceKpiFamily(k);
-            if (!str2.empty())
-                str += str2 + ",";
-        }
-    }
-    if (!str.empty())
-        str.pop_back();
-    pstring("collecting", str.c_str());
-
-    uid = geteuid();
-    if ((pw = getpwuid(uid)) != NULL) {
-        pstring("username", pw->pw_name);
-        plong("userid", uid);
-    } else {
-        pstring("username", "unknown");
-    }
-    psectionend();
-}
-
 int NjmonCollectorApp::run(int argc, char** argv)
 {
     // if only one instance allowed, do the check:
     if (!g_cfg.m_bAllowMultipleInstances)
         check_pid_file();
 
-    if (!g_cfg.m_strRemoteAddress.empty()
-        && g_cfg.m_nRemotePort != 0) { /* We are attempting sending the data remotely */
-
-        struct hostent* he = gethostbyname(g_cfg.m_strRemoteAddress.c_str());
-        if (he == NULL) {
-            fprintf(
-                stderr, "hostname=%s to IP address convertion failed, bailing out\n", g_cfg.m_strRemoteAddress.c_str());
-            exit(98);
-        }
-        /*
-                printf("name=%s\n",he->h_name);
-                printf("type=%d = ",he->h_addrtype);
-                switch(he->h_addrtype) {
-                        case AF_INET: printf("IPv4\n"); break;
-                        case AF_INET6: printf("(IPv6\n"); break;
-                        default: printf("unknown\n");
-                }
-                printf("length=%d\n",he->h_length);
-        */
-
-        /* this could return multiple IP addresses but we assume its the first one */
-        std::string host;
-        if (he->h_addr_list[0] != NULL) {
-            host = inet_ntoa(*(struct in_addr*)(he->h_addr_list[0]));
-        } else {
-            fprintf(
-                stderr, "hostname=%s to IP address convertion failed, bailing out\n", g_cfg.m_strRemoteAddress.c_str());
-            exit(99);
-        }
-        /*
-                get_hostname();
-                get_time();
-                get_utc();
-                sprintf(datastring, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday,
-           tim->tm_hour, tim->tm_min, tim->tm_sec); create_socket(host, port, hostname, datastring, secret);*/
+    if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort != 0) {
+        /* We are attempting sending the data remotely */
+        remote_create_influxdb_connection(g_cfg.m_strRemoteAddress, g_cfg.m_nRemotePort);
     }
 
     if (!g_cfg.m_strOutputDir.empty()) {
@@ -781,7 +600,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
     }
 
     // allocate output buffer
-    buffer_check();
+    pbuffer_check();
 #if 0
     commlen = 1; /* for the terminating zero */
     for (i = 0; i < argc; i++) {
@@ -821,16 +640,16 @@ int NjmonCollectorApp::run(int argc, char** argv)
 
     // write stuff that is present only in the very first sample (never changes):
     praw("  \"header\": {\n");
-    identity();
-    njmon_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
-    etc_os_release();
-    proc_version();
+    header_identity();
+    header_njmon_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
+    header_etc_os_release();
+    header_version();
     if (g_cfg.m_nCollectFlags & PK_CGROUPS)
         cgroup_config(); // needs to run _BEFORE_ lscpu() and proc_cpuinfo()
-    lscpu();
-    proc_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
-    lshw();
-    remove_ending_comma_if_any();
+    header_lscpu();
+    header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
+    header_lshw();
+    premove_ending_comma_if_any();
     praw("  },\n"); // end of "header"
 
     // start actual data samples:
@@ -847,7 +666,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
         double elapsed = current_time - previous_time;
 
         // some stats are always collected, regardless of g_cfg.m_nCollectFlags
-        date_time(loop);
+        psample_date_time(loop);
         // proc_uptime(); // not really useful!!
         proc_loadavg();
 
@@ -889,7 +708,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
     }
 
     /* finish-of */
-    remove_ending_comma_if_any();
+    premove_ending_comma_if_any();
     praw(" ]\n");
     pfinish();
     push();

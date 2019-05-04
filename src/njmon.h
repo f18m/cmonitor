@@ -6,6 +6,14 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
+// Forward declarations
+//------------------------------------------------------------------------------
+
+namespace influxdb_cpp {
+struct server_info;
+}
+
+//------------------------------------------------------------------------------
 // Macros
 //------------------------------------------------------------------------------
 
@@ -62,7 +70,10 @@ extern NjmonCollectorAppConfig g_cfg;
 
 class NjmonCollectorApp {
 public:
-    NjmonCollectorApp() {}
+    NjmonCollectorApp()
+        : m_influxdb_server(nullptr)
+    {
+    }
 
     void init_defaults();
     void parse_args(int argc, char** argv);
@@ -70,21 +81,21 @@ public:
 
 private:
     void print_help();
-    void make_pid_file();
     void check_pid_file();
     std::string get_hostname();
     void get_timestamps(std::string& localTime, std::string& utcTime);
-    void date_time(long loop);
-    void identity();
-    void njmon_info(int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags);
     void file_read_one_stat(const char* file, const char* name);
+    void read_data_number(const char* statname);
 
-    // Global logging function for this app
+    //------------------------------------------------------------------------------
+    // Logging functions for this app
+    //------------------------------------------------------------------------------
+
     void LogDebug(const char* line, ...);
     void LogError(const char* line, ...);
 
     //------------------------------------------------------------------------------
-    // JSON functions
+    // JSON low-level functions
     //------------------------------------------------------------------------------
 
     void prawc(const char c);
@@ -93,7 +104,7 @@ private:
     void pfinish();
     void psample();
     void psampleend(bool comma_needed);
-    void indent();
+    void pindent();
     void psection(const char* section);
     void psub(const char* resource);
     void psubend();
@@ -101,11 +112,27 @@ private:
     void phex(const char* name, long long value);
     void plong(const char* name, long long value);
     void pdouble(const char* name, double value);
-    void pstats();
     void pstring(const char* name, const char* value);
-    void push();
-    void remove_ending_comma_if_any();
-    void buffer_check();
+    void pstats();
+
+    void premove_ending_comma_if_any();
+    void pbuffer_check();
+
+    void push(); // writes on file, stdout or socket
+    void psample_date_time(long loop);
+
+    //------------------------------------------------------------------------------
+    // JSON header functions
+    //------------------------------------------------------------------------------
+
+    void header_identity();
+    void header_njmon_info(
+        int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags);
+    void header_etc_os_release();
+    void header_cpuinfo();
+    void header_version();
+    void header_lscpu();
+    void header_lshw();
 
     //------------------------------------------------------------------------------
     // CGroup functions
@@ -118,44 +145,46 @@ private:
     void cgroup_proc_cpuacct(double elapsed_sec, bool print);
 
     //------------------------------------------------------------------------------
-    // Collect functions
+    // Functions to collect /proc stats
     //------------------------------------------------------------------------------
 
     void proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bool print);
     void proc_diskstats(double elapsed, int print);
     void proc_net_dev(double elapsed, int print);
-    void proc_cpuinfo();
-    void etc_os_release();
-    void read_data_number(const char* statname);
     void proc_loadavg();
     void proc_filesystems();
-    void proc_version();
-    void lscpu();
-    void lshw();
-    void strip_spaces(char* s);
     void proc_uptime();
 
-private:
-    // other globals:
+    //------------------------------------------------------------------------------
+    // Remote connection functions
+    //------------------------------------------------------------------------------
 
+    void remote_create_influxdb_connection(const std::string& hostname, unsigned int port);
+    void remote_push();
+
+private:
     std::string m_strHostname;
     std::string m_strShortHostname;
-
     std::string m_strErrorFileName;
-
     bool m_bCGroupsFound = false;
+
+    influxdb_cpp::server_info* m_influxdb_server; //("127.0.0.1", 8086, "db", "usr", "pwd");
 
     // output:
 
     FILE* m_outputJson = nullptr;
     FILE* m_outputErr = nullptr;
-    int m_outputSocketFd = 0; /*default is stdout, only changed if we are using a remote socket */
+    //    int m_outputSocketFd = 0; /*default is stdout, only changed if we are using a remote socket */
 };
 
-// Utilities
+//------------------------------------------------------------------------------
+// String/File utilities
+//------------------------------------------------------------------------------
+
 unsigned int replace_string(std::string& str, const std::string& from, const std::string& to, bool allOccurrences);
 std::string to_lower(const std::string& orig_str);
 std::string trim_string(const std::string& s);
+void strip_spaces(char* s);
 bool string2int(const std::string& str, int& result);
 bool string2int(const std::string& str, uint64_t& result);
 bool file_exists(const char* filename);

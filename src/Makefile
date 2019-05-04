@@ -5,8 +5,8 @@
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 CXXFLAGS=-Wall -Werror -std=c++11 -DVERSION_STRING=\"$(RPM_VERSION)-$(RPM_RELEASE)\"
-#CXXFLAGS+=-g -O0    #useful for debugging
-CXXFLAGS+=-g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
+CXXFLAGS+=-g -O0    #useful for debugging
+#CXXFLAGS+=-g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
 OUT=njmon_collector
 
 VALGRIND_LOGFILE_POSTFIX:=${OUT}-$(shell date +%F-%H%M%S)
@@ -21,7 +21,9 @@ OBJS = \
     njmon_cgroups.o \
     njmon_json.o \
     njmon_proc_stats.o \
-    njmon_utils.o
+    njmon_utils.o \
+    njmon_json_header.o \
+    njmon_remote.o
 
 
 # Targets
