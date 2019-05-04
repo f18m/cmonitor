@@ -23,7 +23,6 @@ RPM_RELEASE:=7
 
 all:
 	$(MAKE) -C src RPM_VERSION=$(RPM_VERSION) RPM_RELEASE=$(RPM_RELEASE)
-	$(MAKE) -C examples RPM_VERSION=$(RPM_VERSION) RPM_RELEASE=$(RPM_RELEASE)
 	
 clean:
 	$(MAKE) -C src clean
@@ -63,6 +62,7 @@ examples:
 #
 
 srpm_tarball:
+	$(MAKE) -C src RPM_VERSION=$(RPM_VERSION) RPM_RELEASE=$(RPM_RELEASE)
 	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
 	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
 	# prepare the tarball with
