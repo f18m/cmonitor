@@ -22,7 +22,6 @@ COPY example-load.sh .
 #  - put resulting files in /perf folder which is actually a volume shared with the host (see docker run command)
 CMD /usr/bin/njmon_collector \
       --sampling-interval=3 \
-      --num-samples=60 \
       --output-filename=docker-ubuntu1804-userapp-with-embedded-collector \
       --output-directory /perf ; \
     bash example-load.sh

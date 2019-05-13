@@ -1,6 +1,7 @@
 src/*.o
 src/njmon_collector
-examples/docker-ubuntu1804-userapp-with-embedded-collector/njmon_collector
+examples/*/njmon_collector
+examples/*/example-load.sh
 docker/njmon_collector
 .cproject
 .project

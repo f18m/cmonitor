@@ -6,7 +6,7 @@ set -e
 set -u
 
 # Constants
-num_cycles=10
+num_cycles=50
 
 # Check utility "stress" is available
 if [ -z "$(command -v stress)" ]; then

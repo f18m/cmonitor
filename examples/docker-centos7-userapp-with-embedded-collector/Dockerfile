@@ -7,7 +7,7 @@ RUN yum install -y python36 stress
 # then install nmon-cgroup-aware from COPR repo:
 RUN yum install -y yum-plugin-copr
 RUN yum copr enable -y f18m/nmon-cgroup-aware
-RUN yum install -y nmon-cgroup-aware-22-6
+RUN yum install -y nmon-cgroup-aware-22-7
 
 COPY example-load.sh .
 
@@ -19,7 +19,6 @@ COPY example-load.sh .
 #  - put resulting files in /perf folder which is actually a volume shared with the host (see docker run command)
 CMD /usr/bin/njmon_collector \
       --sampling-interval=3 \
-      --num-samples=60 \
       --output-filename=docker-centos7-userapp-with-embedded-collector \
       --output-directory /perf ; \
     bash example-load.sh

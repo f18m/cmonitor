@@ -14,7 +14,6 @@ RUN yum install -y nmon-cgroup-aware-22-6
 #  - do not collect "cgroups": in this way we just collect baremetal performance stats
 #  - for this example collect 3minutes of data (60 samples) and then stop
 #  - put resulting files in /perf folder which is actually a volume shared with the host (see docker run command)
-CMD /usr/bin/njmon_collector  --output-directory /perf
 CMD /usr/bin/njmon_collector \
       --foreground \
       --sampling-interval=3 \

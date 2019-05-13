@@ -44,6 +44,41 @@
 // ----------------------------------------------------------------------------------
 
 /* static */
+bool get_cgroup_name_for_pid(std::string& cgroup_nameOUT)
+{
+    /*
+     *
+     * ABOUT /proc/%d/cgroup:
+     *   See http://man7.org/linux/man-pages/man7/cgroups.7.html, look for "/proc/[pid]/cgroup (since Linux 2.6.24)"
+     *   Each line is composed by:
+     *                     hierarchy-ID:controller-list:cgroup-path
+     *   and the "controller-list"="name=systemd" seems to be always the indicative name of the whole cgroup
+     */
+    std::ifstream inputf("/proc/self/cgroup");
+    if (!inputf.is_open())
+        return false; // cannot read the cgroup information!
+
+    std::string line;
+    while (std::getline(inputf, line)) {
+        std::vector<std::string> tuple = split_string_in_array(line, ':');
+        if (tuple.size() != 3)
+            return false; // invalid format
+
+        std::string hierarchy_id = tuple[0];
+        std::string controller_list = tuple[1];
+        std::string path = tuple[2];
+
+        if (controller_list == "name=systemd") {
+            // this indicates the name of the cgroup
+            cgroup_nameOUT = path;
+            return true;
+        }
+    }
+
+    return false; // cgroup name not found
+}
+
+/* static */
 bool get_cgroup_path_for_pid(const std::string& cgroup_type, std::string& cgroup_pathOUT)
 {
     /*
@@ -53,7 +88,7 @@ bool get_cgroup_path_for_pid(const std::string& cgroup_type, std::string& cgroup
      *   Each line is composed by:
      *                     hierarchy-ID:controller-list:cgroup-path
      *   The problem is that this file does not provide you the FULL cgroup path, which depends on where exactly that
-     * cgroup has been mounted.
+     *   cgroup has been mounted.
      *
      * ABOUT /proc/%d/mounts:
      *   See http://man7.org/linux/man-pages/man5/fstab.5.html
@@ -61,10 +96,12 @@ bool get_cgroup_path_for_pid(const std::string& cgroup_type, std::string& cgroup
      *                     fs_spec  fs_file  fs_vfstype  fs_mntops  fs_freq  fs_passno
      *   We are interested into the lines that indicate a specific CGROUP TYPE mountpoint like:
      *   under LXC:
-     *     cgroup /sys/fs/cgroup/cpuset/lxc/eva-allinone-correlator-main cgroup rw,nosuid,nodev,noexec,relatime,cpuset 0
-     * 0 under Docker: cgroup /sys/fs/cgroup/cpuset cgroup ro,nosuid,nodev,noexec,relatime,cpuset 0 0 the second string
-     * fs_file (/sys/fs/cgroup/cpuset/lxc/eva-allinone-correlator-main or /sys/fs/cgroup/cpuset) tells you where to find
-     * all the current value of that cgroup; the fourth string fs_mntops contains the indication of the cgroup type
+     *    cgroup /sys/fs/cgroup/cpuset/lxc/container1-main cgroup rw,nosuid,nodev,noexec,relatime,cpuset 0 0
+     *   under Docker:
+     *    cgroup /sys/fs/cgroup/cpuset cgroup ro,nosuid,nodev,noexec,relatime,cpuset 0 0
+     *
+     * the second string fs_file (/sys/fs/cgroup/cpuset/lxc/container1-main or /sys/fs/cgroup/cpuset) tells you where to
+     * find all the current value of that cgroup; the fourth string fs_mntops contains the indication of the cgroup type
      * (e.g. cpuset)
      */
     std::ifstream inputf("/proc/self/mounts");
@@ -146,6 +183,7 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
 
 // GLOBALS: paths of cgroups for this process:
 
+std::string cgroup_systemd_name;
 std::string cgroup_memory_kernel_path;
 std::string cgroup_cpuacct_kernel_path;
 std::string cgroup_cpuset_kernel_path;
@@ -189,8 +227,14 @@ void NjmonCollectorApp::cgroup_init()
         return;
     }
 
+    if (!get_cgroup_name_for_pid(cgroup_systemd_name)) {
+        LogDebug("Could not get the cgroup name. CGroup mode disabled.\n");
+        return;
+    }
+
     // cpuset and memory cgroups found:
     m_bCGroupsFound = true;
+    LogDebug("CGroup name is %s\n", cgroup_systemd_name.c_str());
     LogDebug("Found cpuset cgroup limiting to CPUs: %s, mounted at %s\n",
         stl_container2string(cgroup_cpus, ",").c_str(), cgroup_cpuset_kernel_path.c_str());
     LogDebug("Found cpuacct cgroup mounted at %s\n", cgroup_cpuacct_kernel_path.c_str());
@@ -204,6 +248,7 @@ void NjmonCollectorApp::cgroup_config()
         return;
 
     psection("cgroup_config");
+    pstring("name", cgroup_systemd_name.c_str());
     pstring("memory_path", &cgroup_memory_kernel_path[0]);
     pstring("cpuacct_path", &cgroup_cpuacct_kernel_path[0]);
     pstring("cpuset_path", &cgroup_cpuset_kernel_path[0]);
