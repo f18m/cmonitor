@@ -124,7 +124,7 @@ Example of resulting output files:
 
 1) [baremetal1](https://f18m.github.io/nmon-cgroup-aware/examples/baremetal1.html): 
    example of graph generated with the performance stats collected from a physical server running Ubuntu 18.04; 
-   in this case the `njmon_collector` was running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
+   the `njmon_collector` utility was running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
    graphs are present;
 2) [docker_centos7_collecting_baremetal_stats](https://f18m.github.io/nmon-cgroup-aware/examples/docker-centos7-collecting-baremetal-stats.html): 
    example of graph generated with the performance stats collected from a physical server from inside a Docker container;
@@ -137,6 +137,12 @@ Example of resulting output files:
 4) [docker_centos7_userapp_with_embedded_collector](https://f18m.github.io/nmon-cgroup-aware/examples/docker-centos7-userapp-with-embedded-collector.html):
    same graph as example n. 3, but obtained from a Docker container running Centos 7 instead of Ubuntu as base image.
 
+A longer example of collected statistics (results in a larger file, may take some time to download):
+
+1) [baremetal2](https://f18m.github.io/nmon-cgroup-aware/examples/baremetal2.html): 
+   example of graph generated with 9 hours of performance stats collected from a physical server running Centos7 and with 56 CPUs (!!); 
+   the `njmon_collector` utility was running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
+   graphs are present;
 
 ## Links
 
@@ -147,7 +153,6 @@ Example of resulting output files:
 ## TODO collector-side
 
 - Add 'blkio' cgroup data collection
-- Add info about RAM, disk model, NIC model
 - Test integration with InfluxDB (JSON streaming over socket)
 
 ## TODO chart-side
