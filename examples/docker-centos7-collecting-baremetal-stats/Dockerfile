@@ -7,7 +7,7 @@ RUN yum install -y python36
 # then install nmon-cgroup-aware from COPR repo:
 RUN yum install -y yum-plugin-copr
 RUN yum copr enable -y f18m/nmon-cgroup-aware
-RUN yum install -y nmon-cgroup-aware-22-6
+RUN yum install -y nmon-cgroup-aware-22-7
 
 # finally run the njmon collector 
 #  - in foreground since Docker does not like daemons
@@ -17,7 +17,7 @@ RUN yum install -y nmon-cgroup-aware-22-6
 CMD /usr/bin/njmon_collector \
       --foreground \
       --sampling-interval=3 \
-      --num-samples=60 \
+      --num-samples=180 \
       --collect=cpu,memory,disk,network \
       --output-filename=docker-centos7-collecting-baremetal-stats \
       --output-directory /perf

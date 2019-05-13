@@ -16,8 +16,9 @@ fi
 
 cycle=1
 while (( cycle<num_cycles )); do
-    echo "Running cycle #$cycle..."
-    stress --cpu 2 --vm 1 --timeout $(( $RANDOM % 10 + 1 )) &
+    NJPID="$(pidof njmon_collector)"
+    echo "njmon_collector pid=$NJPID; running CPU/memory/disk load simulator cycle #$cycle..."
+    stress --cpu 1 --vm 1 --timeout $(( $RANDOM % 10 + 1 )) &
     sleep 2
     stress --cpu 1 --timeout $(( $RANDOM % 3 + 1 )) &
     sleep 6
