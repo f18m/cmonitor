@@ -29,7 +29,7 @@ typedef struct _influx_client_t influx_client_t;
 
 class NjmonOutputFrontend {
 public:
-    NjmonOutputFrontend() { m_current_sample_sections.reserve(16); }
+    NjmonOutputFrontend() { m_current_sections.reserve(16); }
 
     //------------------------------------------------------------------------------
     // setup API
@@ -42,8 +42,11 @@ public:
     // Sample/Section/Subsection
     //------------------------------------------------------------------------------
 
+    void pheader_start();
     void psample_start();
-    void psample_end(bool comma_needed);
+
+    void psample_array_start();
+    void psample_array_end();
 
     void psection_start(const char* section);
     void psection_end();
@@ -67,7 +70,8 @@ public:
     //------------------------------------------------------------------------------
 
     size_t get_current_sample_measurements() const;
-    void push_current_sample(); // writes on file, stdout or socket
+    void push_header() { push_current_sections(true); } // writes on file, stdout or socket
+    void push_current_sample() { push_current_sections(false); } // writes on file, stdout or socket
 
 private:
     class NjmonOutputMeasurement {
@@ -103,9 +107,10 @@ private:
     // JSON low-level functions
     //------------------------------------------------------------------------------
 
+    void push_json_indent(unsigned int indent);
     void push_json_measurements(NjmonMeasurementVector& measurements, unsigned int indent);
     void push_json_object_start(const std::string& str, unsigned int indent);
-    void push_json_object_end(unsigned int indent, bool last);
+    void push_json_object_end(bool last, unsigned int indent);
 
     //------------------------------------------------------------------------------
     // InfluxDB low-level functions
@@ -114,9 +119,11 @@ private:
     std::string generate_influxdb_line(
         NjmonMeasurementVector& measurements, const std::string& meas_name, const std::string& ts_nsec);
 
+    void push_current_sections(bool is_header);
+
 private:
     // Structured measurements generated so far for last sample:
-    std::vector<NjmonOutputSection> m_current_sample_sections;
+    std::vector<NjmonOutputSection> m_current_sections;
     NjmonMeasurementVector* m_current_meas_list = nullptr;
 
     // InfluxDB internals
@@ -126,7 +133,7 @@ private:
     FILE* m_outputJson = nullptr;
 
     // Stats on the generated output
-    unsigned int m_njmon_stats = 0;
+    unsigned int m_njmon_samples = 0;
     unsigned int m_njmon_sections = 0;
     unsigned int m_njmon_subsections = 0;
     unsigned int m_njmon_string = 0;

@@ -151,48 +151,56 @@ std::string NjmonOutputFrontend::generate_influxdb_line(
 // Low level JSON functions
 //------------------------------------------------------------------------------
 
+void NjmonOutputFrontend::push_json_indent(unsigned int indent)
+{
+    for (size_t i = 0; i < indent; i++)
+        fputs("     ", m_outputJson);
+}
+
 void NjmonOutputFrontend::push_json_measurements(NjmonMeasurementVector& measurements, unsigned int indent)
 {
     for (size_t n = 0; n < measurements.size(); n++) {
         auto& m = measurements[n];
 
-        for (size_t i = 0; i < indent; i++)
-            fputs("     ", m_outputJson);
+        push_json_indent(indent);
 
         fputs("\"", m_outputJson);
         fputs(m.m_name.data(), m_outputJson);
         if (m.m_numeric) {
             fputs("\": ", m_outputJson);
             fputs(m.m_value.data(), m_outputJson);
-            fputs(",\n", m_outputJson);
         } else {
             fputs("\": \"", m_outputJson);
             fputs(m.m_value.data(), m_outputJson);
-            fputs("\",\n", m_outputJson);
+            fputs("\"", m_outputJson);
         }
+
+        bool last = (n == measurements.size() - 1);
+        if (last)
+            fputs("\n", m_outputJson);
+        else
+            fputs(",\n", m_outputJson);
     }
 }
 
 void NjmonOutputFrontend::push_json_object_start(const std::string& str, unsigned int indent)
 {
-    for (size_t i = 0; i < indent; i++)
-        fputs("     ", m_outputJson);
+    push_json_indent(indent);
     fputs("\"", m_outputJson);
     fwrite(str.c_str(), 1, str.size(), m_outputJson);
     fputs("\": {\n", m_outputJson);
 }
 
-void NjmonOutputFrontend::push_json_object_end(unsigned int indent, bool last)
+void NjmonOutputFrontend::push_json_object_end(bool last, unsigned int indent)
 {
-    for (size_t i = 0; i < indent; i++)
-        fputs("     ", m_outputJson);
+    push_json_indent(indent);
     if (last)
         fputs("}\n", m_outputJson);
     else
         fputs("},\n", m_outputJson);
 }
 
-void NjmonOutputFrontend::push_current_sample()
+void NjmonOutputFrontend::push_current_sections(bool is_header)
 {
     DEBUGLOG_FUNCTION_START();
 
@@ -201,29 +209,43 @@ void NjmonOutputFrontend::push_current_sample()
     if (m_outputJson) {
 
         // convert the current sample into JSON format:
-        fputs("  {\n", m_outputJson);
-        for (size_t i = 0; i < m_current_sample_sections.size(); i++) {
-            auto& sec = m_current_sample_sections[i];
 
-            push_json_object_start(sec.m_name, 1);
+        if (is_header) {
+            fputs("{\n", m_outputJson); // document begin
+            fputs("    \"header\": {\n", m_outputJson);
+        } else {
+            if (m_njmon_samples > 0)
+                fputs(",\n", m_outputJson); // add separator from previous sample
+            fputs("    {\n", m_outputJson); // start of new sample inside sample array
+        }
+        for (size_t sec_idx = 0; sec_idx < m_current_sections.size(); sec_idx++) {
+            auto& sec = m_current_sections[sec_idx];
+
+            push_json_object_start(sec.m_name, 2);
             if (sec.m_measurements.empty()) {
-                for (size_t i = 0; i < sec.m_subsections.size(); i++) {
-                    auto& subsec = sec.m_subsections[i];
+                for (size_t subsec_idx = 0; subsec_idx < sec.m_subsections.size(); subsec_idx++) {
+                    auto& subsec = sec.m_subsections[subsec_idx];
 
-                    push_json_object_start(subsec.m_name, 2);
-                    push_json_measurements(subsec.m_measurements, 3);
-                    push_json_object_end(2, i == sec.m_subsections.size() - 1);
+                    push_json_object_start(subsec.m_name, 3);
+                    push_json_measurements(subsec.m_measurements, 4);
+                    push_json_object_end(subsec_idx == sec.m_subsections.size() - 1, 3);
                 }
             } else {
-                push_json_measurements(sec.m_measurements, 2);
+                push_json_measurements(sec.m_measurements, 3);
             }
-            push_json_object_end(1, i == sec.m_subsections.size() - 1);
+            push_json_object_end(sec_idx == m_current_sections.size() - 1, 2);
         }
-        fputs("  },\n", m_outputJson);
+        if (is_header) {
+            fputs("    },\n", m_outputJson); // for sure at least 1 sample will follow
+        } else {
+            fputs("    }", m_outputJson); // not sure if more samples will follow
+            m_njmon_samples++;
+        }
+
         g_logger.LogDebug("push_current_sample() writing on the JSON output %lu measurements\n", num_measurements);
     }
 
-    if (m_influxdb_client_conn) {
+    if (m_influxdb_client_conn && !is_header) {
 
         std::string all_measurements;
 
@@ -234,16 +256,16 @@ void NjmonOutputFrontend::push_current_sample()
         char ts_nsec_str[64];
         snprintf(ts_nsec_str, sizeof(ts_nsec_str), "%lu", ts_nsec);
 
-        for (size_t i = 0; i < m_current_sample_sections.size(); i++) {
-            auto& sec = m_current_sample_sections[i];
+        for (size_t sec_idx = 0; sec_idx < m_current_sections.size(); sec_idx++) {
+            auto& sec = m_current_sections[sec_idx];
             if (sec.m_measurements.empty()) {
 
-                for (size_t i = 0; i < sec.m_subsections.size(); i++) {
-                    auto& subsec = sec.m_subsections[i];
+                for (size_t subsec_idx = 0; subsec_idx < sec.m_subsections.size(); subsec_idx++) {
+                    auto& subsec = sec.m_subsections[subsec_idx];
                     all_measurements
                         += generate_influxdb_line(subsec.m_measurements, sec.m_name + "_" + subsec.m_name, ts_nsec_str);
 
-                    if (i < sec.m_subsections.size() - 1)
+                    if (subsec_idx < sec.m_subsections.size() - 1)
                         all_measurements += "\n";
                 }
 
@@ -251,7 +273,7 @@ void NjmonOutputFrontend::push_current_sample()
                 all_measurements += generate_influxdb_line(sec.m_measurements, sec.m_name, ts_nsec_str);
             }
 
-            if (i < m_current_sample_sections.size() - 1)
+            if (sec_idx < m_current_sections.size() - 1)
                 all_measurements += "\n";
         }
 
@@ -263,13 +285,15 @@ void NjmonOutputFrontend::push_current_sample()
     }
 
     fflush(NULL); /* force I/O output now */
+
+    m_current_sections.clear();
 }
 
 size_t NjmonOutputFrontend::get_current_sample_measurements() const
 {
     size_t ntotal_meas = 0;
-    for (size_t i = 0; i < m_current_sample_sections.size(); i++) {
-        auto& sec = m_current_sample_sections[i];
+    for (size_t i = 0; i < m_current_sections.size(); i++) {
+        auto& sec = m_current_sections[i];
         if (sec.m_measurements.empty()) {
             for (size_t i = 0; i < sec.m_subsections.size(); i++) {
                 auto& subsec = sec.m_subsections[i];
@@ -299,24 +323,24 @@ void NjmonOutputFrontend::pstats()
     psection_end(); //"njmon_stats");
 }
 
-void NjmonOutputFrontend::psample_start()
+void NjmonOutputFrontend::pheader_start() {}
+
+void NjmonOutputFrontend::psample_array_start()
 {
-    // start JSON data sample
-    // praw("  {\n");
-    m_current_sample_sections.clear();
+    if (m_outputJson) {
+        fputs("    \"samples\": [\n", m_outputJson);
+    }
 }
 
-void NjmonOutputFrontend::psample_end(bool comma_needed)
+void NjmonOutputFrontend::psample_array_end()
 {
-#if 1
-#else
-    premove_ending_comma_if_any();
-    if (comma_needed)
-        praw("  }\n"); /* end of sample */
-    else
-        praw("  },\n"); /* end of sample more to come */
-#endif
+    if (m_outputJson) {
+        fputs("]\n", m_outputJson);
+        fputs("}\n", m_outputJson);
+    }
 }
+
+void NjmonOutputFrontend::psample_start() {}
 
 void NjmonOutputFrontend::psection_start(const char* section)
 {
@@ -336,8 +360,8 @@ void NjmonOutputFrontend::psection_start(const char* section)
             m_influxdb_meas_ready = true;
             break;
         }*/
-    m_current_sample_sections.push_back(sec);
-    m_current_meas_list = &m_current_sample_sections.back().m_measurements;
+    m_current_sections.push_back(sec);
+    m_current_meas_list = &m_current_sections.back().m_measurements;
 #else
     pbuffer_check();
     saved_section = section;
@@ -355,7 +379,7 @@ void NjmonOutputFrontend::psection_start(const char* section)
 void NjmonOutputFrontend::psection_end()
 {
 #if 1
-
+    m_current_meas_list = nullptr;
 #else
     saved_section = NULL;
     saved_resource = NULL;
@@ -376,8 +400,8 @@ void NjmonOutputFrontend::psubsection_start(const char* resource)
 #if 1
     NjmonOutputSubsection sec;
     sec.m_name = resource;
-    m_current_sample_sections.back().m_subsections.push_back(sec);
-    m_current_meas_list = &m_current_sample_sections.back().m_subsections.back().m_measurements;
+    m_current_sections.back().m_subsections.push_back(sec);
+    m_current_meas_list = &m_current_sections.back().m_subsections.back().m_measurements;
 #else
     pbuffer_check();
     saved_resource = resource;
@@ -390,7 +414,7 @@ void NjmonOutputFrontend::psubsection_start(const char* resource)
 void NjmonOutputFrontend::psubsection_end()
 {
 #if 1
-
+    m_current_meas_list = nullptr;
 #else
     saved_resource = NULL;
     premove_ending_comma_if_any();

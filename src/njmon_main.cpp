@@ -54,9 +54,6 @@
 // Constants
 //------------------------------------------------------------------------------
 
-#define PRINT_FALSE 0
-#define PRINT_TRUE 1
-
 #define PID_FILE "/var/run/njmon.pid"
 
 #define ADDITIONAL_HELP_COLUMN_START (40)
@@ -575,13 +572,10 @@ int NjmonCollectorApp::run(int argc, char** argv)
     }
 
     // init debug/error channels:
-
     g_logger.init_error_output_file(g_cfg.m_strOutputFilenamePrefix);
 
     // init the output channels:
-
     g_output.init_json_output_file(g_cfg.m_strOutputFilenamePrefix);
-
     if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort != 0) {
         /* We are attempting sending the data remotely */
         g_output.init_influxdb_connection(g_cfg.m_strRemoteAddress, g_cfg.m_nRemotePort);
@@ -610,8 +604,8 @@ int NjmonCollectorApp::run(int argc, char** argv)
     // init incremental stats (don't write yet anything!)
     bool bCollectCGroupInfo = g_cfg.m_nCollectFlags & PK_CGROUPS;
     proc_stat(0, bCollectCGroupInfo, false /* do not emit JSON data */);
-    proc_diskstats(0, PRINT_FALSE);
-    proc_net_dev(0, PRINT_FALSE);
+    proc_diskstats(0, false /* do not emit JSON data */);
+    proc_net_dev(0, false /* do not emit JSON data */);
     if (bCollectCGroupInfo) {
         cgroup_init();
         cgroup_proc_cpuacct(0, false /* do not emit JSON */);
@@ -619,17 +613,8 @@ int NjmonCollectorApp::run(int argc, char** argv)
 
     double current_time = get_timestamp_sec();
 
-    /* first time just sleep(1) so the first snapshot has some real-ish data */
-    if (g_cfg.m_nSamplingInterval <= 60)
-        sleep(g_cfg.m_nSamplingInterval);
-    else
-        sleep(60); /* if a long time between snapshot do a quick one now so we have one in the bank */
-
-    /* pre-amble */
-    // praw("{\n");
-
     // write stuff that is present only in the very first sample (never changes):
-    // praw("  \"header\": {\n");
+    g_output.pheader_start();
     header_identity();
     header_njmon_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
     header_etc_os_release();
@@ -639,11 +624,16 @@ int NjmonCollectorApp::run(int argc, char** argv)
     header_lscpu();
     header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
     header_lshw();
-    // premove_ending_comma_if_any();
-    // praw("  },\n"); // end of "header"
+    g_output.push_header();
+
+    /* first time just sleep(1) so the first snapshot has some real-ish data */
+    if (g_cfg.m_nSamplingInterval <= 60)
+        sleep(g_cfg.m_nSamplingInterval);
+    else
+        sleep(60); /* if a long time between snapshot do a quick one now so we have one in the bank */
 
     // start actual data samples:
-    // praw("  \"samples\": [\n");
+    g_output.psample_array_start();
     for (unsigned int loop = 0; g_cfg.m_nSamples == 0 || loop < g_cfg.m_nSamples; loop++) {
         if (loop != 0)
             sleep(g_cfg.m_nSamplingInterval);
@@ -682,15 +672,14 @@ int NjmonCollectorApp::run(int argc, char** argv)
         }
 
         if (g_cfg.m_nCollectFlags & PK_NETWORK) {
-            proc_net_dev(elapsed, PRINT_TRUE);
+            proc_net_dev(elapsed, true /* emit JSON */);
         }
 
         if (g_cfg.m_nCollectFlags & PK_DISK) {
-            proc_diskstats(elapsed, PRINT_TRUE);
+            proc_diskstats(elapsed, true /* emit JSON */);
             // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
 
-        g_output.psample_end(loop == (g_cfg.m_nSamples - 1) || g_bExiting);
         g_output.push_current_sample();
 
         if (g_bExiting)
@@ -698,11 +687,9 @@ int NjmonCollectorApp::run(int argc, char** argv)
     }
 
     /* finish-of */
-    // premove_ending_comma_if_any();
-    // praw(" ]\n");
-    // premove_ending_comma_if_any();
-    // praw("}\n");
-    g_output.push_current_sample();
+    g_output.psample_array_end();
+    fflush(NULL);
+
     return 0;
 }
 
