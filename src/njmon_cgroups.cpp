@@ -247,16 +247,16 @@ void NjmonCollectorApp::cgroup_config()
     if (!m_bCGroupsFound)
         return;
 
-    psection("cgroup_config");
-    pstring("name", cgroup_systemd_name.c_str());
-    pstring("memory_path", &cgroup_memory_kernel_path[0]);
-    pstring("cpuacct_path", &cgroup_cpuacct_kernel_path[0]);
-    pstring("cpuset_path", &cgroup_cpuset_kernel_path[0]);
+    m_output.psection_start("cgroup_config", NjmonOutputFrontend::CONTAINS_MEASUREMENTS);
+    m_output.pstring("name", cgroup_systemd_name.c_str());
+    m_output.pstring("memory_path", &cgroup_memory_kernel_path[0]);
+    m_output.pstring("cpuacct_path", &cgroup_cpuacct_kernel_path[0]);
+    m_output.pstring("cpuset_path", &cgroup_cpuset_kernel_path[0]);
 
     std::string tmp = stl_container2string(cgroup_cpus, ",");
-    pstring("cpus", &tmp[0]);
-    plong("memory_limit_bytes", cgroup_memory_limit_bytes);
-    psectionend();
+    m_output.pstring("cpus", &tmp[0]);
+    m_output.plong("memory_limit_bytes", cgroup_memory_limit_bytes);
+    m_output.psection_end();
 }
 
 bool NjmonCollectorApp::cgroup_is_allowed_cpu(int cpu)
@@ -292,7 +292,7 @@ void NjmonCollectorApp::cgroup_proc_memory()
     } else
         rewind(fp);
 
-    psection("cgroup_memory_stats");
+    m_output.psection_start("cgroup_memory_stats", NjmonOutputFrontend::CONTAINS_MEASUREMENTS);
     while (fgets(line, 1000, fp) != NULL) {
         len = strlen(line);
         if (strncmp(line, "total_", 6) != 0)
@@ -310,13 +310,13 @@ void NjmonCollectorApp::cgroup_proc_memory()
         }
         value = 0;
         sscanf(line, "%s %lu", label, &value);
-        plong(label, value);
+        m_output.plong(label, value);
     }
 
     if (read_integer(cgroup_memory_kernel_path + "/memory.failcnt", value))
-        plong("failcnt", value);
+        m_output.plong("failcnt", value);
 
-    psectionend();
+    m_output.psection_end();
 }
 
 void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
@@ -371,7 +371,7 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
             elapsed_sec, counter_nsec_user_mode.size(), print);
 
         if (print)
-            psection("cgroup_cpuacct_stats");
+            m_output.psection_start("cgroup_cpuacct_stats", NjmonOutputFrontend::CONTAINS_SUBSECTIONS);
         for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
 
             /*
@@ -399,10 +399,10 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 
                 // output JSON counter
                 sprintf(label, "cpu%zu", i);
-                psub(label);
-                pdouble("user", cpuUserPercent);
-                pdouble("sys", cpuSysPercent);
-                psubend();
+                m_output.psubsection_start(label);
+                m_output.pdouble("user", cpuUserPercent);
+                m_output.pdouble("sys", cpuSysPercent);
+                m_output.psubsection_end();
             }
 
             // save for next cycle
@@ -410,7 +410,7 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
             prev_values[i].counter_nsec_sys_mode = counter_nsec_sys_mode[i];
         }
         if (print)
-            psectionend();
+            m_output.psection_end();
     } else {
 
         // just get the per-cpu total:
@@ -424,7 +424,7 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         LogDebug("Reading data from cgroup cpuacct.usage_percpu");
 
         if (print)
-            psection("cgroup_cpuacct_stats");
+            m_output.psection_start("cgroup_cpuacct_stats", NjmonOutputFrontend::CONTAINS_SUBSECTIONS);
         for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
 
             /*
@@ -437,15 +437,15 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 
                 // output JSON counter
                 sprintf(label, "cpu%zu", i);
-                psub(label);
-                pdouble("user", cpuUserPercent);
-                psubend();
+                m_output.psubsection_start(label);
+                m_output.pdouble("user", cpuUserPercent);
+                m_output.psubsection_end();
             }
 
             // save for next cycle
             prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
         }
         if (print)
-            psectionend();
+            m_output.psection_end();
     }
 }

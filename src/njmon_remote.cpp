@@ -17,7 +17,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "influxdb.hpp"
 #include "njmon.h"
 
 #include <arpa/inet.h>
@@ -71,7 +70,7 @@ std::string hostname_to_ip(const std::string& hostname)
     return "";
 }
 
-void NjmonCollectorApp::remote_create_influxdb_connection(const std::string& hostname, unsigned int port)
+void NjmonOutputFrontend::remote_create_influxdb_connection(const std::string& hostname, unsigned int port)
 {
     std::string ipaddress = hostname_to_ip(hostname);
     if (ipaddress.empty()) {
@@ -80,10 +79,10 @@ void NjmonCollectorApp::remote_create_influxdb_connection(const std::string& hos
         fprintf(stderr, "hostname=%s to IP address convertion failed, bailing out: %s\n", hostname.c_str(), buf);
         exit(98);
     }
-
+#if 0
     m_influxdb_server = new influxdb_cpp::server_info(ipaddress, port, "njmon", "usr", "pwd");
 
-    int ret_code = influxdb_cpp::builder()
+    /*int ret_code =*/ influxdb_cpp::builder()
                        .meas("foo")
                        .tag("k", "v")
                        .tag("x", "y")
@@ -93,6 +92,14 @@ void NjmonCollectorApp::remote_create_influxdb_connection(const std::string& hos
                        .field("b", !!10)
                        .timestamp(1512722735522840439)
                        .post_http(*m_influxdb_server);
-    if (ret_code != 0)
-        LogError("Failed sending sample to InfluxDB server");
+    //if (ret_code != 0)
+        //LogError("Failed sending sample to InfluxDB server");
+#else
+    m_influxdb_client_conn.host = strdup(ipaddress.c_str()); // force newline
+    m_influxdb_client_conn.port = port; // force newline
+    m_influxdb_client_conn.db = strdup("njmon"); // force newline
+    m_influxdb_client_conn.usr = strdup("usr"); // force newline
+    m_influxdb_client_conn.pwd = strdup("pwd"); // force newline
+
+#endif
 }

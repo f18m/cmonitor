@@ -59,7 +59,7 @@ void NjmonCollectorApp::file_read_one_stat(const char* file, const char* name)
         if (fgets(buf, 1024, fp) != NULL) {
             if (buf[strlen(buf) - 1] == '\n') /* remove last char = newline */
                 buf[strlen(buf) - 1] = 0;
-            pstring(name, buf);
+            m_output.pstring(name, buf);
         }
         fclose(fp);
     }
@@ -83,10 +83,10 @@ void NjmonCollectorApp::header_identity()
 
     DEBUGLOG_FUNCTION_START();
 
-    psection("identity");
+    m_output.psection_start("identity");
     get_hostname();
-    pstring("hostname", m_strHostname.c_str());
-    pstring("shorthostname", m_strShortHostname.c_str());
+    m_output.pstring("hostname", m_strHostname.c_str());
+    m_output.pstring("shorthostname", m_strShortHostname.c_str());
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
@@ -97,7 +97,7 @@ void NjmonCollectorApp::header_identity()
     if (getaddrinfo(hostname, "http", &hints, &info) == 0) {
         for (p = info, i = 1; p != NULL; p = p->ai_next, i++) {
             sprintf(label, "fullhostname%d", i);
-            pstring(label, p->ai_canonname);
+            m_output.pstring(label, p->ai_canonname);
         }
     }
 
@@ -111,7 +111,7 @@ void NjmonCollectorApp::header_identity()
                              &((struct sockaddr_in*)ifaddrs_ptr->ifa_addr)->sin_addr, address_buf, sizeof(address_buf)))
                         != NULL) {
                         sprintf(label, "%s_IP4", ifaddrs_ptr->ifa_name);
-                        pstring(label, str);
+                        m_output.pstring(label, str);
                     }
                     break;
                 case AF_INET6:
@@ -120,17 +120,17 @@ void NjmonCollectorApp::header_identity()
                              sizeof(address_buf)))
                         != NULL) {
                         sprintf(label, "%s_IP6", ifaddrs_ptr->ifa_name);
-                        pstring(label, str);
+                        m_output.pstring(label, str);
                     }
                     break;
                 default:
                     // sprintf(label,"%s_Not_Supported_%d", ifaddrs_ptr->ifa_name, ifaddrs_ptr->ifa_addr->sa_family);
-                    // pstring(label,"");
+                    // m_output.pstring(label,"");
                     break;
                 }
             } else {
                 sprintf(label, "%s_network_ignored", ifaddrs_ptr->ifa_name);
-                pstring(label, "null_address");
+                m_output.pstring(label, "null_address");
             }
         }
 
@@ -152,7 +152,7 @@ void NjmonCollectorApp::header_identity()
         file_read_one_stat("/sys/devices/virtual/dmi/id/product_name", "model");
         file_read_one_stat("/sys/devices/virtual/dmi/id/sys_vendor", "vendor");
     }
-    psectionend();
+    m_output.psection_end();
 }
 
 void NjmonCollectorApp::header_njmon_info(
@@ -162,7 +162,7 @@ void NjmonCollectorApp::header_njmon_info(
     struct passwd* pw;
     uid_t uid;
 
-    psection("njmon");
+    m_output.psection_start("njmon");
 
     char command[1024] = { 0 };
     for (int i = 0; i < argc; i++) {
@@ -171,10 +171,10 @@ void NjmonCollectorApp::header_njmon_info(
             strcat(command, " ");
     }
 
-    pstring("njmon_command", command);
-    plong("sample_interval_seconds", sampling_interval_sec);
-    plong("sample_num", num_samples);
-    pstring("njmon_version", VERSION_STRING);
+    m_output.pstring("njmon_command", command);
+    m_output.plong("sample_interval_seconds", sampling_interval_sec);
+    m_output.plong("sample_num", num_samples);
+    m_output.pstring("njmon_version", VERSION_STRING);
 
     std::string str;
     for (size_t j = 1; j < PK_MAX; j *= 2) {
@@ -187,16 +187,16 @@ void NjmonCollectorApp::header_njmon_info(
     }
     if (!str.empty())
         str.pop_back();
-    pstring("collecting", str.c_str());
+    m_output.pstring("collecting", str.c_str());
 
     uid = geteuid();
     if ((pw = getpwuid(uid)) != NULL) {
-        pstring("username", pw->pw_name);
-        plong("userid", uid);
+        m_output.pstring("username", pw->pw_name);
+        m_output.plong("userid", uid);
     } else {
-        pstring("username", "unknown");
+        m_output.pstring("username", "unknown");
     }
-    psectionend();
+    m_output.psection_end();
 }
 
 void NjmonCollectorApp::header_etc_os_release()
@@ -212,26 +212,26 @@ void NjmonCollectorApp::header_etc_os_release()
     } else
         rewind(fp);
 
-    psection("os_release");
+    m_output.psection_start("os_release");
     while (fgets(buf, 1024, fp) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
         if (buf[strlen(buf) - 1] == '"')
             buf[strlen(buf) - 1] = 0; /* remove double quote */
 
         if (!strncmp(buf, "NAME=", strlen("NAME="))) {
-            pstring("name", &buf[strlen("NAME=") + 1]);
+            m_output.pstring("name", &buf[strlen("NAME=") + 1]);
         }
         if (!strncmp(buf, "VERSION=", strlen("VERSION="))) {
-            pstring("version", &buf[strlen("VERSION=") + 1]);
+            m_output.pstring("version", &buf[strlen("VERSION=") + 1]);
         }
         if (!strncmp(buf, "PRETTY_NAME=", strlen("PRETTY_NAME="))) {
-            pstring("pretty_name", &buf[strlen("PRETTY_NAME=") + 1]);
+            m_output.pstring("pretty_name", &buf[strlen("PRETTY_NAME=") + 1]);
         }
         if (!strncmp(buf, "VERSION_ID=", strlen("VERSION_ID="))) {
-            pstring("version_id", &buf[strlen("VERSION_ID=") + 1]);
+            m_output.pstring("version_id", &buf[strlen("VERSION_ID=") + 1]);
         }
     }
-    psectionend();
+    m_output.psection_end();
 }
 
 long power_timebase = 0;
@@ -255,7 +255,7 @@ void NjmonCollectorApp::header_cpuinfo()
     } else
         rewind(fp);
 
-    psection("cpuinfo");
+    m_output.psection_start("cpuinfo");
     processor = -1;
     while (fgets(buf, 1024, fp) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
@@ -264,13 +264,13 @@ void NjmonCollectorApp::header_cpuinfo()
         if (!strncmp("processor", buf, strlen("processor"))) {
             // end previous section
             if (processor != -1)
-                psubend();
+                m_output.psubsection_end();
 
             // start new section
             sscanf(&buf[12], "%d", &int_val);
             processor = int_val;
             sprintf(string, "proc%d", processor);
-            psub(string);
+            m_output.psubsection_start(string);
             // processor++;
         }
 
@@ -278,39 +278,39 @@ void NjmonCollectorApp::header_cpuinfo()
 
             if (!strncmp("clock", buf, strlen("clock"))) { /* POWER ONLY */
                 sscanf(&buf[9], "%lf", &value);
-                pdouble("mhz_clock", value);
+                m_output.pdouble("mhz_clock", value);
                 power_nominal_mhz = value; /* save for sys_device_system_cpu() */
                 ispower = 1;
             }
             if (!strncmp("vendor_id", buf, strlen("vendor_id"))) {
-                pstring("vendor_id", &buf[12]);
+                m_output.pstring("vendor_id", &buf[12]);
             }
             if (!strncmp("cpu MHz", buf, strlen("cpu MHz"))) {
                 sscanf(&buf[11], "%lf", &value);
-                pdouble("cpu_mhz", value);
+                m_output.pdouble("cpu_mhz", value);
             }
             if (!strncmp("cache size", buf, strlen("cache size"))) {
                 sscanf(&buf[13], "%lf", &value);
-                pdouble("cache_size", value);
+                m_output.pdouble("cache_size", value);
             }
             if (!strncmp("physical id", buf, strlen("physical id"))) {
                 sscanf(&buf[14], "%d", &int_val);
-                plong("physical_id", int_val);
+                m_output.plong("physical_id", int_val);
             }
             if (!strncmp("siblings", buf, strlen("siblings"))) {
                 sscanf(&buf[11], "%d", &int_val);
-                plong("siblings", int_val);
+                m_output.plong("siblings", int_val);
             }
             if (!strncmp("core id", buf, strlen("core id"))) {
                 sscanf(&buf[10], "%d", &int_val);
-                plong("core_id", int_val);
+                m_output.plong("core_id", int_val);
             }
             if (!strncmp("cpu cores", buf, strlen("cpu cores"))) {
                 sscanf(&buf[12], "%d", &int_val);
-                plong("cpu_cores", int_val);
+                m_output.plong("cpu_cores", int_val);
             }
             if (!strncmp("model name", buf, strlen("model name"))) {
-                pstring("model_name", &buf[13]);
+                m_output.pstring("model_name", &buf[13]);
             }
             if (!strncmp("timebase", buf, strlen("timebase"))) { /* POWER only */
                 ispower = 1;
@@ -319,31 +319,31 @@ void NjmonCollectorApp::header_cpuinfo()
         }
     }
     if (processor != -1)
-        psubend();
-    psectionend();
+        m_output.psubsection_end();
+    m_output.psection_end();
     if (ispower) {
-        psection("cpuinfo_power");
+        m_output.psection_start("cpuinfo_power");
         if (!strncmp("timebase", buf, strlen("timebase"))) { /* POWER only */
-            pstring("timebase", &buf[11]);
+            m_output.pstring("timebase", &buf[11]);
             power_timebase = atol(&buf[11]);
-            plong("power_timebase", power_timebase);
+            m_output.plong("power_timebase", power_timebase);
         }
         while (fgets(buf, 1024, fp) != NULL) {
             buf[strlen(buf) - 1] = 0; /* remove newline */
             if (!strncmp("platform", buf, strlen("platform"))) { /* POWER only */
-                pstring("platform", &buf[11]);
+                m_output.pstring("platform", &buf[11]);
             }
             if (!strncmp("model", buf, strlen("model"))) {
-                pstring("model", &buf[9]);
+                m_output.pstring("model", &buf[9]);
             }
             if (!strncmp("machine", buf, strlen("machine"))) {
-                pstring("machine", &buf[11]);
+                m_output.pstring("machine", &buf[11]);
             }
             if (!strncmp("firmware", buf, strlen("firmware"))) {
-                pstring("firmware", &buf[11]);
+                m_output.pstring("firmware", &buf[11]);
             }
         }
-        psectionend();
+        m_output.psection_end();
     }
 }
 
@@ -365,9 +365,9 @@ void NjmonCollectorApp::header_version()
             if (buf[i] == '"')
                 buf[i] = '|';
         }
-        psection("proc_version");
-        pstring("version", buf);
-        psectionend();
+        m_output.psection_start("proc_version");
+        m_output.pstring("version", buf);
+        m_output.psection_end();
     }
 }
 
@@ -384,7 +384,7 @@ void NjmonCollectorApp::header_lscpu()
         return;
 
     buf[0] = 0;
-    psection("lscpu");
+    m_output.psection_start("lscpu");
     while (fgets(buf, 1024, pop) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
         // LogDebug("DEBUG: lscpu line is |%s|\n", buf);
@@ -394,67 +394,68 @@ void NjmonCollectorApp::header_lscpu()
                 if (isalnum(buf[data_col]))
                     break;
             }
-            pstring("architecture", &buf[data_col]);
+            m_output.pstring("architecture", &buf[data_col]);
         }
         if (!strncmp("Byte Order:", buf, strlen("Byte Order:"))) {
-            pstring("byte_order", &buf[data_col]);
+            m_output.pstring("byte_order", &buf[data_col]);
         }
         if (!strncmp("CPU(s):", buf, strlen("CPU(s):"))) {
-            pstring("cpus", &buf[data_col]);
+            m_output.pstring("cpus", &buf[data_col]);
         }
         if (!strncmp("On-line CPU(s) list:", buf, strlen("On-line CPU(s) list:"))) {
-            pstring("online_cpu_list", &buf[data_col]);
+            m_output.pstring("online_cpu_list", &buf[data_col]);
         }
         if (!strncmp("Off-line CPU(s) list:", buf, strlen("Off-line CPU(s) list:"))) {
-            pstring("online_cpu_list", &buf[data_col]);
+            m_output.pstring("online_cpu_list", &buf[data_col]);
         }
         if (!strncmp("Model:", buf, strlen("Model:"))) {
-            pstring("model", &buf[data_col]);
+            m_output.pstring("model", &buf[data_col]);
         }
         if (!strncmp("Model name:", buf, strlen("Model name:"))) {
-            pstring("model_name", &buf[data_col]);
+            m_output.pstring("model_name", &buf[data_col]);
         }
         if (!strncmp("Thread(s) per core:", buf, strlen("Thread(s) per core:"))) {
-            pstring("threads_per_core", &buf[data_col]);
+            m_output.pstring("threads_per_core", &buf[data_col]);
         }
         if (!strncmp("Core(s) per socket:", buf, strlen("Core(s) per socket:"))) {
-            pstring("cores_per_socket", &buf[data_col]);
+            m_output.pstring("cores_per_socket", &buf[data_col]);
         }
         if (!strncmp("Socket(s):", buf, strlen("Socket(s):"))) {
-            pstring("sockets", &buf[data_col]);
+            m_output.pstring("sockets", &buf[data_col]);
         }
         if (!strncmp("NUMA node(s):", buf, strlen("NUMA node(s):"))) {
-            pstring("numa_nodes", &buf[data_col]);
+            m_output.pstring("numa_nodes", &buf[data_col]);
         }
         if (!strncmp("CPU MHz:", buf, strlen("CPU MHz:"))) {
-            pstring("cpu_mhz", &buf[data_col]);
+            m_output.pstring("cpu_mhz", &buf[data_col]);
         }
         if (!strncmp("CPU max MHz:", buf, strlen("CPU max MHz:"))) {
-            pstring("cpu_max_mhz", &buf[data_col]);
+            m_output.pstring("cpu_max_mhz", &buf[data_col]);
         }
         if (!strncmp("CPU min MHz:", buf, strlen("CPU min MHz:"))) {
-            pstring("cpu_min_mhz", &buf[data_col]);
+            m_output.pstring("cpu_min_mhz", &buf[data_col]);
         }
         /* Intel only */
         if (!strncmp("BogoMIPS:", buf, strlen("BogoMIPS:"))) {
-            pstring("bogomips", &buf[data_col]);
+            m_output.pstring("bogomips", &buf[data_col]);
         }
         if (!strncmp("Vendor ID:", buf, strlen("Vendor ID:"))) {
-            pstring("vendor_id", &buf[data_col]);
+            m_output.pstring("vendor_id", &buf[data_col]);
         }
         if (!strncmp("CPU family:", buf, strlen("CPU family:"))) {
-            pstring("cpu_family", &buf[data_col]);
+            m_output.pstring("cpu_family", &buf[data_col]);
         }
         if (!strncmp("Stepping:", buf, strlen("Stepping:"))) {
-            pstring("stepping", &buf[data_col]);
+            m_output.pstring("stepping", &buf[data_col]);
         }
     }
-    psectionend();
+    m_output.psection_end();
     pclose(pop);
 }
 
 void NjmonCollectorApp::header_lshw()
 {
+#if 0
     FILE* pop = 0;
     char buf[4096 + 1];
 
@@ -481,4 +482,5 @@ void NjmonCollectorApp::header_lshw()
         buf[0] = 0;
     }
     pclose(pop);
+#endif
 }

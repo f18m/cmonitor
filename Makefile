@@ -149,4 +149,24 @@ docker_run:
 		f18m/nmon-cgroup-aware:v$(RPM_VERSION)-$(RPM_RELEASE)
 	
 
+
+#
+# INFLUXDB
+# 
+reset_influxdb:
+	# assuming you started in another console or in background the "influxd" daemon:
+	influx -execute "DROP DATABASE njmon"
+	influx -execute "CREATE DATABASE njmon"
+
+show_njmon_data_in_influxdb:
+	influx -execute 'SHOW SERIES' -database="njmon"
+	influx -execute 'SELECT * FROM "stat_cpu0"' -database="njmon"
+	#influx -execute 'SELECT * FROM "cgroup_memory_stats"' -database="njmon"
+
+
+
 .PHONY: all clean install examples generate_patch srpm_tarball srpm rpm docker_image
+
+
+
+

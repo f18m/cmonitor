@@ -497,6 +497,13 @@ void NjmonCollectorApp::get_timestamps(std::string& localTime, std::string& utcT
     utcTime = buffer;
 }
 
+double NjmonCollectorApp::get_timestamp_sec()
+{
+    struct timeval tv;
+    gettimeofday(&tv, 0);
+    return (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
+}
+
 void NjmonCollectorApp::psample_date_time(long loop)
 {
     DEBUGLOG_FUNCTION_START();
@@ -504,11 +511,11 @@ void NjmonCollectorApp::psample_date_time(long loop)
     std::string localTime, utcTime;
     get_timestamps(localTime, utcTime);
 
-    psection("timestamp");
-    pstring("datetime", localTime.c_str());
-    pstring("UTC", utcTime.c_str());
-    plong("sample_index", loop);
-    psectionend();
+    m_output.psection_start("timestamp");
+    m_output.pstring("datetime", localTime.c_str());
+    m_output.pstring("UTC", utcTime.c_str());
+    m_output.plong("sample_index", loop);
+    m_output.psection_end();
 }
 
 void NjmonCollectorApp::check_pid_file()
@@ -536,7 +543,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
 
     if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort != 0) {
         /* We are attempting sending the data remotely */
-        remote_create_influxdb_connection(g_cfg.m_strRemoteAddress, g_cfg.m_nRemotePort);
+        m_output.remote_create_influxdb_connection(g_cfg.m_strRemoteAddress, g_cfg.m_nRemotePort);
     }
 
     if (!g_cfg.m_strOutputDir.empty()) {
@@ -549,9 +556,10 @@ int NjmonCollectorApp::run(int argc, char** argv)
         }
     }
 
+    FILE* outputJson = nullptr;
     if (g_cfg.m_strOutputFilenamePrefix == "stdout") {
         // open stdout/stderr as FILE*
-        if ((m_outputJson = fdopen(STDOUT_FILENO, "w")) == 0) {
+        if ((outputJson = fdopen(STDOUT_FILENO, "w")) == 0) {
             perror("opening stdout for write");
             exit(13);
         }
@@ -563,7 +571,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
         // open output files
         char filename[1024];
         sprintf(filename, "%s.json", g_cfg.m_strOutputFilenamePrefix.c_str());
-        if ((m_outputJson = fopen(filename, "w")) == 0) {
+        if ((outputJson = fopen(filename, "w")) == 0) {
             perror("opening file for stdout");
             fprintf(stderr, "ERROR nmon filename=%s\n", filename);
             exit(13);
@@ -600,20 +608,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
     }
 
     // allocate output buffer
-    pbuffer_check();
-#if 0
-    commlen = 1; /* for the terminating zero */
-    for (i = 0; i < argc; i++) {
-        commlen = commlen + strlen(argv[i]) + 1; /* +1 for spaces */
-    }
-    command = malloc(commlen);
-    command[0] = 0;
-    for (i = 0; i < argc; i++) {
-        strcat(command, argv[i]);
-        if (i != (argc - 1))
-            strcat(command, " ");
-    }
-#endif
+    m_output.init(outputJson);
 
     // init incremental stats (don't write yet anything!)
     bool bCollectCGroupInfo = g_cfg.m_nCollectFlags & PK_CGROUPS;
@@ -625,9 +620,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
         cgroup_proc_cpuacct(0, false /* do not emit JSON */);
     }
 
-    struct timeval tv;
-    gettimeofday(&tv, 0);
-    double current_time = (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
+    double current_time = get_timestamp_sec();
 
     /* first time just sleep(1) so the first snapshot has some real-ish data */
     if (g_cfg.m_nSamplingInterval <= 60)
@@ -636,10 +629,10 @@ int NjmonCollectorApp::run(int argc, char** argv)
         sleep(60); /* if a long time between snapshot do a quick one now so we have one in the bank */
 
     /* pre-amble */
-    pstart();
+    // praw("{\n");
 
     // write stuff that is present only in the very first sample (never changes):
-    praw("  \"header\": {\n");
+    // praw("  \"header\": {\n");
     header_identity();
     header_njmon_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
     header_etc_os_release();
@@ -649,21 +642,21 @@ int NjmonCollectorApp::run(int argc, char** argv)
     header_lscpu();
     header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
     header_lshw();
-    premove_ending_comma_if_any();
-    praw("  },\n"); // end of "header"
+    // premove_ending_comma_if_any();
+    // praw("  },\n"); // end of "header"
 
     // start actual data samples:
-    praw("  \"samples\": [\n");
+    // praw("  \"samples\": [\n");
     for (unsigned int loop = 0; g_cfg.m_nSamples == 0 || loop < g_cfg.m_nSamples; loop++) {
-        psample();
         if (loop != 0)
             sleep(g_cfg.m_nSamplingInterval);
 
         /* calculate elapsed time to include sleep and data collection time */
         double previous_time = current_time;
-        gettimeofday(&tv, 0);
-        current_time = (double)tv.tv_sec + ((double)tv.tv_usec * 1.0e-6);
+        current_time = get_timestamp_sec();
         double elapsed = current_time - previous_time;
+
+        m_output.psample_start();
 
         // some stats are always collected, regardless of g_cfg.m_nCollectFlags
         psample_date_time(loop);
@@ -700,18 +693,19 @@ int NjmonCollectorApp::run(int argc, char** argv)
             // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
 
-        psampleend(loop == (g_cfg.m_nSamples - 1) || g_bExiting);
-        push();
+        m_output.psample_end(loop == (g_cfg.m_nSamples - 1) || g_bExiting);
+        m_output.push_last_sample();
 
         if (g_bExiting)
             break; // graceful exit allows to produce a valid JSON on SIGTERM signals!
     }
 
     /* finish-of */
-    premove_ending_comma_if_any();
-    praw(" ]\n");
-    pfinish();
-    push();
+    // premove_ending_comma_if_any();
+    // praw(" ]\n");
+    // premove_ending_comma_if_any();
+    // praw("}\n");
+    m_output.push_last_sample();
     return 0;
 }
 
