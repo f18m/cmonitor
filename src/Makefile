@@ -17,14 +17,18 @@ MEMCHECK_COMMON_OPTS:=--tool=memcheck --track-origins=yes --malloc-fill=AF --fre
 
 
 OBJS = \
-    njmon_main.o \
     njmon_cgroups.o \
-    njmon_json.o \
+    njmon_header_info.o \
+    njmon_main.o \
+    njmon_output_frontend.o \
     njmon_proc_stats.o \
-    njmon_utils.o \
-    njmon_json_header.o \
-    njmon_remote.o
-
+    njmon_utils.o
+    
+HEADERS = \
+    njmon.h \
+    njmon_output_frontend.h \
+    influxdb.h
+    
 
 # Targets
 
@@ -43,11 +47,12 @@ valgrind:
 	valgrind $(MEMCHECK_COMMON_OPTS) \
 			 $(VALGRIND_COMMON_OPTS) \
 			--log-file=valgrind-$(VALGRIND_LOGFILE_POSTFIX).log \
-			$(THIS_DIR)/$(OUT) --num-samples=10 --sampling-interval=1 --foreground --debug
+			$(THIS_DIR)/$(OUT) \
+			--num-samples=10 --sampling-interval=1 --foreground --debug --collect=all --remote-ip=localhost --remote-port=8086
 	@echo "Valgrind exited"
 
 
 # Rules
 
-%.o: %.cpp njmon.h
+%.o: %.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c -o $@ $< 

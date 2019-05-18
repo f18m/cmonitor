@@ -65,7 +65,7 @@
 // Globals
 //------------------------------------------------------------------------------
 
-// app-wide config settings:
+NjmonLoggerUtils g_logger;
 NjmonCollectorAppConfig g_cfg;
 NjmonCollectorApp g_app;
 bool g_bExiting = false;
@@ -194,6 +194,69 @@ std::string string2PerformanceKpiFamily(PerformanceKpiFamily k)
 
     default:
         return "";
+    }
+}
+
+//------------------------------------------------------------------------------
+// Logger functions
+//------------------------------------------------------------------------------
+
+void NjmonLoggerUtils::init_error_output_file(const std::string& filenamePrefix)
+{
+    if (filenamePrefix == "stdout") {
+        // open stderr as FILE* as well:
+        if ((m_outputErr = fdopen(STDERR_FILENO, "w")) == 0) {
+            perror("opening stderr for write");
+            exit(13);
+        }
+    } else {
+        // prepare output error file but don't open it yet
+        char filename[1024];
+        sprintf(filename, "%s.err", filenamePrefix.c_str());
+        m_strErrorFileName = filename;
+        printf("Errors (if any) will be logged into the file '%s'\n", m_strErrorFileName.c_str());
+    }
+
+    fflush(NULL);
+}
+
+void NjmonLoggerUtils::LogDebug(const char* line, ...)
+{
+    char currLogLine[256];
+
+    va_list args;
+    va_start(args, line);
+    vsnprintf(currLogLine, 255, line, args);
+    va_end(args);
+
+    if (g_cfg.m_bDebug) {
+        // in debug mode stdout is still open, so we can printf:
+        printf("%s", currLogLine);
+        size_t lastCh = strlen(currLogLine) - 1;
+        if (currLogLine[lastCh] != '\n')
+            printf("\n");
+    }
+}
+
+void NjmonLoggerUtils::LogError(const char* line, ...)
+{
+    char currLogLine[256];
+
+    va_list args;
+    va_start(args, line);
+    vsnprintf(currLogLine, 255, line, args);
+    va_end(args);
+
+    if (!m_outputErr && !m_strErrorFileName.empty()) {
+        // apparently this is the first error happening: time to open the logfile for errors:
+        if ((m_outputErr = fopen(m_strErrorFileName.c_str(), "w")) == 0) {
+            exit(14);
+        }
+    }
+
+    if (m_outputErr) {
+        // errors always go in their dedicated file
+        fprintf(m_outputErr, "ERROR: %s\n", currLogLine);
     }
 }
 
@@ -395,11 +458,11 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
     // check arguments we just parsed:
 
     if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort <= 0) {
-        printf("Option -i %s provided but not the -p port option\n", g_cfg.m_strRemoteAddress.c_str());
+        printf("Option -i=%s provided but the -p=port option was not provided\n", g_cfg.m_strRemoteAddress.c_str());
         exit(52);
     }
     if (g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort > 0) {
-        printf("Option -p %ud provided but not the -i ip-address option\n", g_cfg.m_nRemotePort);
+        printf("Option -p=%ud provided but the -i=ip-address option was not provided\n", g_cfg.m_nRemotePort);
         exit(53);
     }
 
@@ -409,46 +472,6 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
 //------------------------------------------------------------------------------
 // Application core functions
 //------------------------------------------------------------------------------
-
-void NjmonCollectorApp::LogDebug(const char* line, ...)
-{
-    char currLogLine[256];
-
-    va_list args;
-    va_start(args, line);
-    vsnprintf(currLogLine, 255, line, args);
-    va_end(args);
-
-    if (g_cfg.m_bDebug) {
-        // in debug mode stdout is still open, so we can printf:
-        printf("%s", currLogLine);
-        size_t lastCh = strlen(currLogLine) - 1;
-        if (currLogLine[lastCh] != '\n')
-            printf("\n");
-    }
-}
-
-void NjmonCollectorApp::LogError(const char* line, ...)
-{
-    char currLogLine[256];
-
-    va_list args;
-    va_start(args, line);
-    vsnprintf(currLogLine, 255, line, args);
-    va_end(args);
-
-    if (!m_outputErr && !m_strErrorFileName.empty()) {
-        // apparently this is the first error happening: time to open the logfile for errors:
-        if ((m_outputErr = fopen(m_strErrorFileName.c_str(), "w")) == 0) {
-            exit(14);
-        }
-    }
-
-    if (m_outputErr) {
-        // errors always go in their dedicated file
-        fprintf(m_outputErr, "ERROR: %s\n", currLogLine);
-    }
-}
 
 std::string NjmonCollectorApp::get_hostname()
 {
@@ -511,11 +534,11 @@ void NjmonCollectorApp::psample_date_time(long loop)
     std::string localTime, utcTime;
     get_timestamps(localTime, utcTime);
 
-    m_output.psection_start("timestamp");
-    m_output.pstring("datetime", localTime.c_str());
-    m_output.pstring("UTC", utcTime.c_str());
-    m_output.plong("sample_index", loop);
-    m_output.psection_end();
+    g_output.psection_start("timestamp");
+    g_output.pstring("datetime", localTime.c_str());
+    g_output.pstring("UTC", utcTime.c_str());
+    g_output.plong("sample_index", loop);
+    g_output.psection_end();
 }
 
 void NjmonCollectorApp::check_pid_file()
@@ -541,11 +564,6 @@ int NjmonCollectorApp::run(int argc, char** argv)
     if (!g_cfg.m_bAllowMultipleInstances)
         check_pid_file();
 
-    if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort != 0) {
-        /* We are attempting sending the data remotely */
-        m_output.remote_create_influxdb_connection(g_cfg.m_strRemoteAddress, g_cfg.m_nRemotePort);
-    }
-
     if (!g_cfg.m_strOutputDir.empty()) {
         if (chdir(g_cfg.m_strOutputDir.c_str()) == -1) {
             perror("Change Directory failed");
@@ -556,48 +574,30 @@ int NjmonCollectorApp::run(int argc, char** argv)
         }
     }
 
-    FILE* outputJson = nullptr;
-    if (g_cfg.m_strOutputFilenamePrefix == "stdout") {
-        // open stdout/stderr as FILE*
-        if ((outputJson = fdopen(STDOUT_FILENO, "w")) == 0) {
-            perror("opening stdout for write");
-            exit(13);
-        }
-        if ((m_outputErr = fdopen(STDERR_FILENO, "w")) == 0) {
-            perror("opening stderr for write");
-            exit(13);
-        }
-    } else {
-        // open output files
-        char filename[1024];
-        sprintf(filename, "%s.json", g_cfg.m_strOutputFilenamePrefix.c_str());
-        if ((outputJson = fopen(filename, "w")) == 0) {
-            perror("opening file for stdout");
-            fprintf(stderr, "ERROR nmon filename=%s\n", filename);
-            exit(13);
-        }
+    // init debug/error channels:
 
-        printf("Opened output JSON file '%s'\n", filename);
+    g_logger.init_error_output_file(g_cfg.m_strOutputFilenamePrefix);
 
-        // prepare output error file but don't open it yet
-        sprintf(filename, "%s.err", g_cfg.m_strOutputFilenamePrefix.c_str());
-        m_strErrorFileName = filename;
-        printf("Errors (if any) will be logged into the file '%s'\n", m_strErrorFileName.c_str());
+    // init the output channels:
+
+    g_output.init_json_output_file(g_cfg.m_strOutputFilenamePrefix);
+
+    if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort != 0) {
+        /* We are attempting sending the data remotely */
+        g_output.init_influxdb_connection(g_cfg.m_strRemoteAddress, g_cfg.m_nRemotePort);
     }
-
-    fflush(NULL);
 
     if (!g_cfg.m_bForeground) {
         assert(!g_cfg.m_bDebug); // in debug mode we enable foreground mode!
 
         /* disconnect from terminal */
-        LogDebug("Forking for daemonization");
+        g_logger.LogDebug("Forking for daemonization");
         __pid_t childpid;
         if ((childpid = fork()) != 0) {
             exit(0); /* parent returns OK */
         }
 
-        LogDebug("Running in daemon process:\n");
+        g_logger.LogDebug("Running in daemon process:\n");
 
         // close default file descriptors
         close(STDIN_FILENO);
@@ -606,9 +606,6 @@ int NjmonCollectorApp::run(int argc, char** argv)
         setpgrp(); /* become process group leader */
         signal(SIGHUP, SIG_IGN); /* ignore hangups */
     }
-
-    // allocate output buffer
-    m_output.init(outputJson);
 
     // init incremental stats (don't write yet anything!)
     bool bCollectCGroupInfo = g_cfg.m_nCollectFlags & PK_CGROUPS;
@@ -656,7 +653,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
         current_time = get_timestamp_sec();
         double elapsed = current_time - previous_time;
 
-        m_output.psample_start();
+        g_output.psample_start();
 
         // some stats are always collected, regardless of g_cfg.m_nCollectFlags
         psample_date_time(loop);
@@ -693,8 +690,8 @@ int NjmonCollectorApp::run(int argc, char** argv)
             // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
 
-        m_output.psample_end(loop == (g_cfg.m_nSamples - 1) || g_bExiting);
-        m_output.push_last_sample();
+        g_output.psample_end(loop == (g_cfg.m_nSamples - 1) || g_bExiting);
+        g_output.push_current_sample();
 
         if (g_bExiting)
             break; // graceful exit allows to produce a valid JSON on SIGTERM signals!
@@ -705,7 +702,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
     // praw(" ]\n");
     // premove_ending_comma_if_any();
     // praw("}\n");
-    m_output.push_last_sample();
+    g_output.push_current_sample();
     return 0;
 }
 

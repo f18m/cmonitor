@@ -1,5 +1,6 @@
 /*
- * njmon_proc_stats.cpp -- collects Linux performance data and generates JSON format data.
+ * njmon_proc_stats.cpp -- collects Linux performance data and
+ *                         generates structured output measurements.
  * Developer: Nigel Griffiths.
  * (C) Copyright 2018 Nigel Griffiths
 
@@ -67,11 +68,11 @@ void NjmonCollectorApp::read_data_number(const char* statname)
     DEBUGLOG_FUNCTION_START();
     sprintf(filename, "/proc/%s", statname);
     if ((fp = fopen(filename, "r")) == NULL) {
-        LogError("Failed to open performance file %s", filename);
+        g_logger.LogError("Failed to open performance file %s", filename);
         return;
     }
     sprintf(label, "proc_%s", statname);
-    m_output.psection_start(label);
+    g_output.psection_start(label);
     while (fgets(line, 1000, fp) != NULL) {
         len = strlen(line);
         for (i = 0; i < len; i++) {
@@ -85,10 +86,10 @@ void NjmonCollectorApp::read_data_number(const char* statname)
                 line[i] = 0;
         }
         sscanf(line, "%s %s", label, number);
-        // LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr, atoll(numstr));
-        m_output.plong(label, atoll(number));
+        // g_logger.LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr, atoll(numstr));
+        g_output.plong(label, atoll(number));
     }
-    m_output.psection_end();
+    g_output.psection_end();
     (void)fclose(fp);
 }
 
@@ -138,10 +139,10 @@ void NjmonCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bo
     char label[512];
 
     DEBUGLOG_FUNCTION_START();
-    LogDebug("proc_stat(%.4f, %d) max_cpuno=%d\n", elapsed, print, max_cpuno);
+    g_logger.LogDebug("proc_stat(%.4f, %d) max_cpuno=%d\n", elapsed, print, max_cpuno);
     if (fp == 0) {
         if ((fp = fopen("/proc/stat", "r")) == NULL) {
-            LogError("failed to open file /proc/stat");
+            g_logger.LogError("failed to open file /proc/stat");
             fp = 0;
             return;
         }
@@ -149,7 +150,7 @@ void NjmonCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bo
         rewind(fp);
 
     if (print)
-        m_output.psection_start("stat");
+        g_output.psection_start("stat");
     while (fgets(line, 1000, fp) != NULL) {
         // len = strlen(line);
 
@@ -161,20 +162,20 @@ void NjmonCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bo
                         "%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", &user, &nice, &sys, &idle, &iowait,
                         &hardirq, &softirq, &steal, &guest, &guestnice);
                     if (print) {
-                        m_output.psubsection_start("cpu_total");
-                        m_output.pdouble("user", DELTA_TOTAL(user)); /* incrementing counter */
-                        m_output.pdouble("nice", DELTA_TOTAL(nice)); /* incrementing counter */
-                        m_output.pdouble("sys", DELTA_TOTAL(sys)); /* incrementing counter */
-                        m_output.pdouble("idle", DELTA_TOTAL(idle)); /* incrementing counter */
-                        /*			m_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n", total_cpu.idle,
+                        g_output.psubsection_start("cpu_total");
+                        g_output.pdouble("user", DELTA_TOTAL(user)); /* incrementing counter */
+                        g_output.pdouble("nice", DELTA_TOTAL(nice)); /* incrementing counter */
+                        g_output.pdouble("sys", DELTA_TOTAL(sys)); /* incrementing counter */
+                        g_output.pdouble("idle", DELTA_TOTAL(idle)); /* incrementing counter */
+                        /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n", total_cpu.idle,
                          * idle, idle-total_cpu.idle); */
-                        m_output.pdouble("iowait", DELTA_TOTAL(iowait)); /* incrementing counter */
-                        m_output.pdouble("hardirq", DELTA_TOTAL(hardirq)); /* incrementing counter */
-                        m_output.pdouble("softirq", DELTA_TOTAL(softirq)); /* incrementing counter */
-                        m_output.pdouble("steal", DELTA_TOTAL(steal)); /* incrementing counter */
-                        m_output.pdouble("guest", DELTA_TOTAL(guest)); /* incrementing counter */
-                        m_output.pdouble("guestnice", DELTA_TOTAL(guestnice)); /* incrementing counter */
-                        m_output.psubsection_end();
+                        g_output.pdouble("iowait", DELTA_TOTAL(iowait)); /* incrementing counter */
+                        g_output.pdouble("hardirq", DELTA_TOTAL(hardirq)); /* incrementing counter */
+                        g_output.pdouble("softirq", DELTA_TOTAL(softirq)); /* incrementing counter */
+                        g_output.pdouble("steal", DELTA_TOTAL(steal)); /* incrementing counter */
+                        g_output.pdouble("guest", DELTA_TOTAL(guest)); /* incrementing counter */
+                        g_output.pdouble("guestnice", DELTA_TOTAL(guestnice)); /* incrementing counter */
+                        g_output.psubsection_end();
                     }
                     total_cpu.user = user;
                     total_cpu.nice = nice;
@@ -201,20 +202,20 @@ void NjmonCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bo
                     continue;
                 if (print) {
                     sprintf(label, "cpu%d", cpuno);
-                    m_output.psubsection_start(label);
-                    m_output.pdouble("user", DELTA_LOGICAL(user)); /* counter */
-                    m_output.pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
-                    m_output.pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
-                    m_output.pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
-                    /*			m_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n", logical_cpu[cpuno].idle,
+                    g_output.psubsection_start(label);
+                    g_output.pdouble("user", DELTA_LOGICAL(user)); /* counter */
+                    g_output.pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
+                    g_output.pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
+                    g_output.pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
+                    /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n", logical_cpu[cpuno].idle,
                      * idle, idle-logical_cpu[cpuno].idle); */
-                    m_output.pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
-                    m_output.pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
-                    m_output.pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
-                    m_output.pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
-                    m_output.pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
-                    m_output.pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
-                    m_output.psubsection_end();
+                    g_output.pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
+                    g_output.pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
+                    g_output.pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
+                    g_output.pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
+                    g_output.pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
+                    g_output.pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
+                    g_output.psubsection_end();
                 }
                 logical_cpu[cpuno].user = user;
                 logical_cpu[cpuno].nice = nice;
@@ -233,8 +234,8 @@ void NjmonCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bo
             count = sscanf(&line[5], "%lld", &value); /* counter */
             if (count == 1) {
                 if (print) {
-                    m_output.psubsection_start("counters");
-                    m_output.pdouble("ctxt", ((double)(value - old_ctxt) / elapsed));
+                    g_output.psubsection_start("counters");
+                    g_output.pdouble("ctxt", ((double)(value - old_ctxt) / elapsed));
                 }
                 old_ctxt = value;
             }
@@ -243,32 +244,32 @@ void NjmonCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bo
             value = 0;
             count = sscanf(&line[6], "%lld", &value); /* seconds since boot */
             if (print)
-                m_output.plong("btime", value);
+                g_output.plong("btime", value);
         }
         if (!strncmp(line, "processes", 9)) {
             value = 0;
             count = sscanf(&line[10], "%lld", &value); /* counter  actually forks */
             if (print)
-                m_output.pdouble("processes_forks", ((double)(value - old_processes) / elapsed));
+                g_output.pdouble("processes_forks", ((double)(value - old_processes) / elapsed));
             old_processes = value;
         }
         if (!strncmp(line, "procs_running", 13)) {
             value = 0;
             count = sscanf(&line[14], "%lld", &value);
             if (print)
-                m_output.plong("procs_running", value);
+                g_output.plong("procs_running", value);
         }
         if (!strncmp(line, "procs_blocked", 13)) {
             value = 0;
             count = sscanf(&line[14], "%lld", &value);
             if (print) {
-                m_output.plong("procs_blocked", value);
-                m_output.psubsection_end();
+                g_output.plong("procs_blocked", value);
+                g_output.psubsection_end();
             }
         }
     }
     if (print)
-        m_output.psection_end();
+        g_output.psection_end();
 }
 
 void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
@@ -319,13 +320,13 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
                     tmpstr[0] = 0;
                     if (fgets(tmpstr, 127, pop) == NULL)
                         break;
-                    // LogDebug("DEBUG %ld disks - %s\n", disks, tmpstr);
+                    // g_logger.LogDebug("DEBUG %ld disks - %s\n", disks, tmpstr);
                 }
             }
             pclose(pop);
         } else
             disks_found = 0;
-        // LogDebug("DEBUG %ld disks\n", disks);
+        // g_logger.LogDebug("DEBUG %ld disks\n", disks);
         previous = (diskinfo*)calloc(sizeof(struct diskinfo), disks_found);
 
         pop = popen("lsblk --nodeps --output NAME,TYPE --raw 2>/dev/null", "r");
@@ -343,11 +344,11 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
                             tmpstr[j] = 0;
 
                     if (strncmp(tmpstr, "loop", 4) != 0) {
-                        // LogDebug("DEBUG saved %ld %s disk name\n", i, previous[i].dk_name);
+                        // g_logger.LogDebug("DEBUG saved %ld %s disk name\n", i, previous[i].dk_name);
                         strcpy(previous[disks_sampled].dk_name, tmpstr);
                         disks_sampled++;
                     } else {
-                        LogDebug("Discarding disk %s\n", tmpstr);
+                        g_logger.LogDebug("Discarding disk %s\n", tmpstr);
                         /* loop**** disks are not real */
                     }
                 }
@@ -357,18 +358,18 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
             disks_sampled = 0;
 
         if ((fp = fopen("/proc/diskstats", "r")) == NULL) {
-            LogError("failed to open - /proc/diskstats");
+            g_logger.LogError("failed to open - /proc/diskstats");
             return;
         }
     } else
         rewind(fp);
 
     if (print)
-        m_output.psection_start("disks");
+        g_output.psection_start("disks");
     while (fgets(buf, 1024, fp) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
 
-        // LogDebug("DISKSTATS: \"%s\"", buf);
+        // g_logger.LogDebug("DISKSTATS: \"%s\"", buf);
 
         /* zero the data ready for reading */
         bzero(&current, sizeof(struct diskinfo));
@@ -385,7 +386,7 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
             current.dk_rmsec = 0;
             current.dk_rmerge = 0;
         } else if (dk_stats != 14)
-            LogError("disk sscanf wanted 14 but returned=%d line=%s\n", dk_stats, buf);
+            g_logger.LogError("disk sscanf wanted 14 but returned=%d line=%s\n", dk_stats, buf);
 
         current.dk_rkb /= 2; /* sectors = 512 bytes */
         current.dk_wkb /= 2;
@@ -398,29 +399,30 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
         current.dk_time /= 10.0; /* in milli-seconds to make it upto 100%, 1000/100 = 10 */
 
         for (i = 0; i < disks_found; i++) {
-            // LogDebug("DEBUG disks new %s old %s\n", current.dk_name, previous[i].dk_name);
+            // g_logger.LogDebug("DEBUG disks new %s old %s\n", current.dk_name, previous[i].dk_name);
             if (!strcmp(current.dk_name, previous[i].dk_name)) {
 
                 if (print && !filtered_out) {
-                    m_output.psubsection_start(current.dk_name);
+                    g_output.psubsection_start(current.dk_name);
 
-                    m_output.pdouble("reads", (current.dk_reads - previous[i].dk_reads) / elapsed);
-                    // LogDebug("DEBUG  reads: %lld %lld %.2f,\n", current.dk_reads, previous[i].dk_reads, elapsed);
-                    m_output.pdouble("rmerge", (current.dk_rmerge - previous[i].dk_rmerge) / elapsed);
-                    m_output.pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed);
-                    m_output.pdouble("rmsec", (current.dk_rmsec - previous[i].dk_rmsec) / elapsed);
+                    g_output.pdouble("reads", (current.dk_reads - previous[i].dk_reads) / elapsed);
+                    // g_logger.LogDebug("DEBUG  reads: %lld %lld %.2f,\n", current.dk_reads, previous[i].dk_reads,
+                    // elapsed);
+                    g_output.pdouble("rmerge", (current.dk_rmerge - previous[i].dk_rmerge) / elapsed);
+                    g_output.pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed);
+                    g_output.pdouble("rmsec", (current.dk_rmsec - previous[i].dk_rmsec) / elapsed);
 
-                    m_output.pdouble("writes", (current.dk_writes - previous[i].dk_writes) / elapsed);
-                    m_output.pdouble("wmerge", (current.dk_wmerge - previous[i].dk_wmerge) / elapsed);
-                    m_output.pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed);
-                    m_output.pdouble("wmsec", (current.dk_wmsec - previous[i].dk_wmsec) / elapsed);
+                    g_output.pdouble("writes", (current.dk_writes - previous[i].dk_writes) / elapsed);
+                    g_output.pdouble("wmerge", (current.dk_wmerge - previous[i].dk_wmerge) / elapsed);
+                    g_output.pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed);
+                    g_output.pdouble("wmsec", (current.dk_wmsec - previous[i].dk_wmsec) / elapsed);
 
-                    m_output.plong("inflight", current.dk_inflight);
-                    m_output.pdouble("time", (current.dk_time - previous[i].dk_time) / elapsed);
-                    m_output.pdouble("backlog", (current.dk_backlog - previous[i].dk_backlog) / elapsed);
-                    m_output.pdouble("xfers", (current.dk_xfers - previous[i].dk_xfers) / elapsed);
-                    m_output.plong("bsize", current.dk_bsize);
-                    m_output.psubsection_end();
+                    g_output.plong("inflight", current.dk_inflight);
+                    g_output.pdouble("time", (current.dk_time - previous[i].dk_time) / elapsed);
+                    g_output.pdouble("backlog", (current.dk_backlog - previous[i].dk_backlog) / elapsed);
+                    g_output.pdouble("xfers", (current.dk_xfers - previous[i].dk_xfers) / elapsed);
+                    g_output.plong("bsize", current.dk_bsize);
+                    g_output.psubsection_end();
                 }
                 memcpy(&previous[i], &current, sizeof(struct diskinfo));
                 break; /* once found stop searching */
@@ -428,7 +430,7 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
         }
     }
     if (print)
-        m_output.psection_end();
+        g_output.psection_end();
 }
 
 void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
@@ -479,13 +481,13 @@ void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
                     tmpstr[0] = 0;
                     if (fgets(tmpstr, 1024, pop) == NULL)
                         break;
-                    // LogDebug("DEBUG %ld interfaces - %s\n", interfaces, tmpstr);
+                    // g_logger.LogDebug("DEBUG %ld interfaces - %s\n", interfaces, tmpstr);
                 }
             }
             pclose(pop);
         } else
             interfaces_found = 0;
-        // LogDebug("DEBUG %ld intergaces\n", interfaces);
+        // g_logger.LogDebug("DEBUG %ld intergaces\n", interfaces);
         previous = (netinfo*)calloc(sizeof(struct netinfo), interfaces_found);
 
         pop = popen("/sbin/ifconfig -s 2>/dev/null", "r");
@@ -507,7 +509,7 @@ void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
                         interfaces_sampled++;
                     } else {
                         /* veth**** interfaces are not real */
-                        LogDebug("Discarding net interface %s\n", tmpstr);
+                        g_logger.LogDebug("Discarding net interface %s\n", tmpstr);
                     }
                 }
             }
@@ -516,7 +518,7 @@ void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
             interfaces_found = 0;
 
         if ((fp = fopen("/proc/net/dev", "r")) == NULL) {
-            LogError("failed to open - /proc/net/dev");
+            g_logger.LogError("failed to open - /proc/net/dev");
             return;
         }
     } else
@@ -531,7 +533,7 @@ void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
         return; /* throw away the header line */
 
     if (print)
-        m_output.psection_start("network_interfaces");
+        g_output.psection_start("network_interfaces");
     while (fgets(buf, 1024, fp) != NULL) {
         strip_spaces(buf);
 
@@ -542,30 +544,30 @@ void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
             &current.if_oerrs, &current.if_odrop, &current.if_ofifo, &current.if_ocolls, &current.if_ocarrier);
 
         if (ret != 16) {
-            LogError("net sscanf wanted 16 returned = %d line=%s\n", ret, (char*)buf);
+            g_logger.LogError("net sscanf wanted 16 returned = %d line=%s\n", ret, (char*)buf);
         } else {
             for (i = 0; i < interfaces_found; i++) {
-                // LogDebug("DEBUG: i=%ld current.if_name=%s, previous=%s interfaces=%ld\n", i, *current.if_name,
-                // previous[i].if_name, interfaces);
+                // g_logger.LogDebug("DEBUG: i=%ld current.if_name=%s, previous=%s interfaces=%ld\n", i,
+                // *current.if_name, previous[i].if_name, interfaces);
                 if (!strcmp(current.if_name, previous[i].if_name)) {
                     if (print) {
-                        m_output.psubsection_start(current.if_name);
-                        m_output.pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed);
-                        m_output.pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed);
-                        m_output.pdouble("ierrs", (current.if_ierrs - previous[i].if_ierrs) / elapsed);
-                        m_output.pdouble("idrop", (current.if_idrop - previous[i].if_idrop) / elapsed);
-                        m_output.pdouble("ififo", (current.if_ififo - previous[i].if_ififo) / elapsed);
-                        m_output.pdouble("iframe", (current.if_iframe - previous[i].if_iframe) / elapsed);
+                        g_output.psubsection_start(current.if_name);
+                        g_output.pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed);
+                        g_output.pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed);
+                        g_output.pdouble("ierrs", (current.if_ierrs - previous[i].if_ierrs) / elapsed);
+                        g_output.pdouble("idrop", (current.if_idrop - previous[i].if_idrop) / elapsed);
+                        g_output.pdouble("ififo", (current.if_ififo - previous[i].if_ififo) / elapsed);
+                        g_output.pdouble("iframe", (current.if_iframe - previous[i].if_iframe) / elapsed);
 
-                        m_output.pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed);
-                        m_output.pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed);
-                        m_output.pdouble("oerrs", (current.if_oerrs - previous[i].if_oerrs) / elapsed);
-                        m_output.pdouble("odrop", (current.if_odrop - previous[i].if_odrop) / elapsed);
-                        m_output.pdouble("ofifo", (current.if_ofifo - previous[i].if_ofifo) / elapsed);
+                        g_output.pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed);
+                        g_output.pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed);
+                        g_output.pdouble("oerrs", (current.if_oerrs - previous[i].if_oerrs) / elapsed);
+                        g_output.pdouble("odrop", (current.if_odrop - previous[i].if_odrop) / elapsed);
+                        g_output.pdouble("ofifo", (current.if_ofifo - previous[i].if_ofifo) / elapsed);
 
-                        m_output.pdouble("ocolls", (current.if_ocolls - previous[i].if_ocolls) / elapsed);
-                        m_output.pdouble("ocarrier", (current.if_ocarrier - previous[i].if_ocarrier) / elapsed);
-                        m_output.psubsection_end();
+                        g_output.pdouble("ocolls", (current.if_ocolls - previous[i].if_ocolls) / elapsed);
+                        g_output.pdouble("ocarrier", (current.if_ocarrier - previous[i].if_ocarrier) / elapsed);
+                        g_output.psubsection_end();
                     }
                     memcpy(&previous[i], &current, sizeof(struct netinfo));
                     break; /* once found stop searching */
@@ -574,7 +576,7 @@ void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
         }
     }
     if (print)
-        m_output.psection_end();
+        g_output.psection_end();
 }
 
 void NjmonCollectorApp::proc_uptime()
@@ -597,13 +599,13 @@ void NjmonCollectorApp::proc_uptime()
     if (fgets(buf, 1024, fp) != NULL) {
         count = sscanf(buf, "%lld", &value);
         if (count == 1) {
-            m_output.psection_start("proc_uptime");
-            m_output.plong("total_seconds", value);
+            g_output.psection_start("proc_uptime");
+            g_output.plong("total_seconds", value);
             days = value / 60 / 60 / 24;
             hours = (value - (days * 60 * 60 * 24)) / 60 / 60;
-            m_output.plong("days", days);
-            m_output.plong("hours", hours);
-            m_output.psection_end();
+            g_output.plong("days", days);
+            g_output.plong("hours", hours);
+            g_output.psection_end();
         }
     }
 }
@@ -641,11 +643,11 @@ void NjmonCollectorApp::proc_loadavg()
 
         count = sscanf(buf, "%f %f %f", &load_avg_1min, &load_avg_5min, &load_avg_15min);
         if (count == 3) {
-            m_output.psection_start("proc_loadavg");
-            m_output.pdouble("load_avg_1min", load_avg_1min);
-            m_output.pdouble("load_avg_5min", load_avg_5min);
-            m_output.pdouble("load_avg_15min", load_avg_15min);
-            m_output.psection_end();
+            g_output.psection_start("proc_loadavg");
+            g_output.pdouble("load_avg_1min", load_avg_1min);
+            g_output.pdouble("load_avg_5min", load_avg_5min);
+            g_output.pdouble("load_avg_15min", load_avg_15min);
+            g_output.psection_end();
         }
     }
 
@@ -660,42 +662,42 @@ void NjmonCollectorApp::proc_filesystems()
 
     DEBUGLOG_FUNCTION_START();
     if ((fp = setmntent("/etc/mtab", "r")) == NULL)
-        LogError("setmntent(\"/etc/mtab\", \"r\") failed");
+        g_logger.LogError("setmntent(\"/etc/mtab\", \"r\") failed");
 
-    m_output.psection_start("filesystems");
+    g_output.psection_start("filesystems");
     while ((fs = getmntent(fp)) != NULL) {
         // NOTE: /dev/loop* filesystems are not real filesystems - e.g. on Ubuntu they are used for SNAPs
         if (fs->mnt_fsname[0] == '/' && strncmp(fs->mnt_fsname, "/dev/loop", 9) != 0) {
             if (statfs(fs->mnt_dir, &vfs) != 0) {
-                LogError("%s: statfs failed: %d\n", fs->mnt_dir, errno);
+                g_logger.LogError("%s: statfs failed: %d\n", fs->mnt_dir, errno);
             }
-            // LogDebug("%s, mounted on %s:\n", fs->mnt_dir, fs->mnt_fsname);
+            // g_logger.LogDebug("%s, mounted on %s:\n", fs->mnt_dir, fs->mnt_fsname);
 
-            m_output.psubsection_start(fs->mnt_fsname);
-            m_output.pstring("fs_dir", fs->mnt_dir);
-            m_output.pstring("fs_type", fs->mnt_type);
-            m_output.pstring("fs_opts", fs->mnt_opts);
+            g_output.psubsection_start(fs->mnt_fsname);
+            g_output.pstring("fs_dir", fs->mnt_dir);
+            g_output.pstring("fs_type", fs->mnt_type);
+            g_output.pstring("fs_opts", fs->mnt_opts);
 
-            m_output.plong("fs_freqs", fs->mnt_freq);
-            m_output.plong("fs_passno", fs->mnt_passno);
-            m_output.plong("fs_bsize", vfs.f_bsize);
-            m_output.plong("fs_size_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024);
-            m_output.plong("fs_free_mb", (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024);
-            m_output.plong(
+            g_output.plong("fs_freqs", fs->mnt_freq);
+            g_output.plong("fs_passno", fs->mnt_passno);
+            g_output.plong("fs_bsize", vfs.f_bsize);
+            g_output.plong("fs_size_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024);
+            g_output.plong("fs_free_mb", (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024);
+            g_output.plong(
                 "fs_used_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024 - (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024);
-            m_output.pdouble(
+            g_output.pdouble(
                 "fs_full_percent", ((double)vfs.f_blocks - (double)vfs.f_bfree) / (double)vfs.f_blocks * (double)100.0);
             /*
-             * m_output.pdouble("fs_full_percent", ((vfs.f_blocks * vfs.f_bsize) - (vfs.f_bfree * vfs.f_bsize) ) /
+             * g_output.pdouble("fs_full_percent", ((vfs.f_blocks * vfs.f_bsize) - (vfs.f_bfree * vfs.f_bsize) ) /
              *					(vfs.f_blocks * vfs.f_bsize) * 100.00);
              */
-            m_output.plong("fs_avail", (vfs.f_bavail * vfs.f_bsize) / 1024 / 1024);
-            m_output.plong("fs_files", vfs.f_files);
-            m_output.plong("fs_files_free", vfs.f_ffree);
-            m_output.plong("fs_namelength", vfs.f_namelen);
-            m_output.psubsection_end();
+            g_output.plong("fs_avail", (vfs.f_bavail * vfs.f_bsize) / 1024 / 1024);
+            g_output.plong("fs_files", vfs.f_files);
+            g_output.plong("fs_files_free", vfs.f_ffree);
+            g_output.plong("fs_namelength", vfs.f_namelen);
+            g_output.psubsection_end();
         }
     }
-    m_output.psection_end();
+    g_output.psection_end();
     endmntent(fp);
 }

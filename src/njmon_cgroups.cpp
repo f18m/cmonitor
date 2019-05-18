@@ -200,45 +200,45 @@ void NjmonCollectorApp::cgroup_init()
     m_bCGroupsFound = false;
 
     if (!get_cgroup_path_for_pid("memory", cgroup_memory_kernel_path)) {
-        LogDebug("Could not find the 'memory' cgroup path. CGroup mode disabled.\n");
+        g_logger.LogDebug("Could not find the 'memory' cgroup path. CGroup mode disabled.\n");
         return;
     }
     if (!get_cgroup_path_for_pid("cpu,cpuacct", cgroup_cpuacct_kernel_path)) {
         if (!get_cgroup_path_for_pid("cpuacct,cpu", cgroup_cpuacct_kernel_path)) {
-            LogDebug("Could not find the 'cpuacct' cgroup path. CGroup mode disabled.\n");
+            g_logger.LogDebug("Could not find the 'cpuacct' cgroup path. CGroup mode disabled.\n");
             return;
         }
     }
     if (!get_cgroup_path_for_pid("cpuset", cgroup_cpuset_kernel_path)) {
-        LogDebug("Could not find the 'cpuset' cgroup path. CGroup mode disabled.\n");
+        g_logger.LogDebug("Could not find the 'cpuset' cgroup path. CGroup mode disabled.\n");
         return;
     }
 
     if (!read_integer(cgroup_memory_kernel_path + "/memory.limit_in_bytes", cgroup_memory_limit_bytes)) {
-        LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        g_logger.LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
     if (!read_from_system_cpu_for_current_cgroup(cgroup_cpuset_kernel_path, cgroup_cpus)) {
-        LogDebug("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
+        g_logger.LogDebug("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
         return;
     }
     if (cgroup_memory_limit_bytes == 0) {
-        LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        g_logger.LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
 
     if (!get_cgroup_name_for_pid(cgroup_systemd_name)) {
-        LogDebug("Could not get the cgroup name. CGroup mode disabled.\n");
+        g_logger.LogDebug("Could not get the cgroup name. CGroup mode disabled.\n");
         return;
     }
 
     // cpuset and memory cgroups found:
     m_bCGroupsFound = true;
-    LogDebug("CGroup name is %s\n", cgroup_systemd_name.c_str());
-    LogDebug("Found cpuset cgroup limiting to CPUs: %s, mounted at %s\n",
+    g_logger.LogDebug("CGroup name is %s\n", cgroup_systemd_name.c_str());
+    g_logger.LogDebug("Found cpuset cgroup limiting to CPUs: %s, mounted at %s\n",
         stl_container2string(cgroup_cpus, ",").c_str(), cgroup_cpuset_kernel_path.c_str());
-    LogDebug("Found cpuacct cgroup mounted at %s\n", cgroup_cpuacct_kernel_path.c_str());
-    LogDebug("Found memory cgroup limiting to Bytes: %lu, mounted at %s\n", cgroup_memory_limit_bytes,
+    g_logger.LogDebug("Found cpuacct cgroup mounted at %s\n", cgroup_cpuacct_kernel_path.c_str());
+    g_logger.LogDebug("Found memory cgroup limiting to Bytes: %lu, mounted at %s\n", cgroup_memory_limit_bytes,
         cgroup_memory_kernel_path.c_str());
 }
 
@@ -247,16 +247,16 @@ void NjmonCollectorApp::cgroup_config()
     if (!m_bCGroupsFound)
         return;
 
-    m_output.psection_start("cgroup_config", NjmonOutputFrontend::CONTAINS_MEASUREMENTS);
-    m_output.pstring("name", cgroup_systemd_name.c_str());
-    m_output.pstring("memory_path", &cgroup_memory_kernel_path[0]);
-    m_output.pstring("cpuacct_path", &cgroup_cpuacct_kernel_path[0]);
-    m_output.pstring("cpuset_path", &cgroup_cpuset_kernel_path[0]);
+    g_output.psection_start("cgroup_config");
+    g_output.pstring("name", cgroup_systemd_name.c_str());
+    g_output.pstring("memory_path", &cgroup_memory_kernel_path[0]);
+    g_output.pstring("cpuacct_path", &cgroup_cpuacct_kernel_path[0]);
+    g_output.pstring("cpuset_path", &cgroup_cpuset_kernel_path[0]);
 
     std::string tmp = stl_container2string(cgroup_cpus, ",");
-    m_output.pstring("cpus", &tmp[0]);
-    m_output.plong("memory_limit_bytes", cgroup_memory_limit_bytes);
-    m_output.psection_end();
+    g_output.pstring("cpus", &tmp[0]);
+    g_output.plong("memory_limit_bytes", cgroup_memory_limit_bytes);
+    g_output.psection_end();
 }
 
 bool NjmonCollectorApp::cgroup_is_allowed_cpu(int cpu)
@@ -292,7 +292,7 @@ void NjmonCollectorApp::cgroup_proc_memory()
     } else
         rewind(fp);
 
-    m_output.psection_start("cgroup_memory_stats", NjmonOutputFrontend::CONTAINS_MEASUREMENTS);
+    g_output.psection_start("cgroup_memory_stats");
     while (fgets(line, 1000, fp) != NULL) {
         len = strlen(line);
         if (strncmp(line, "total_", 6) != 0)
@@ -310,13 +310,13 @@ void NjmonCollectorApp::cgroup_proc_memory()
         }
         value = 0;
         sscanf(line, "%s %lu", label, &value);
-        m_output.plong(label, value);
+        g_output.plong(label, value);
     }
 
     if (read_integer(cgroup_memory_kernel_path + "/memory.failcnt", value))
-        m_output.plong("failcnt", value);
+        g_output.plong("failcnt", value);
 
-    m_output.psection_end();
+    g_output.psection_end();
 }
 
 void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
@@ -366,12 +366,13 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         if (counter_nsec_sys_mode.empty())
             return;
 
-        LogDebug("Found cpuacct.usage_percpu_sys/user cgroups; computing CPU usage for %.2fsec delta time and %zu CPUs "
-                 "(print=%d)\n",
+        g_logger.LogDebug(
+            "Found cpuacct.usage_percpu_sys/user cgroups; computing CPU usage for %.2fsec delta time and %zu CPUs "
+            "(print=%d)\n",
             elapsed_sec, counter_nsec_user_mode.size(), print);
 
         if (print)
-            m_output.psection_start("cgroup_cpuacct_stats", NjmonOutputFrontend::CONTAINS_SUBSECTIONS);
+            g_output.psection_start("cgroup_cpuacct_stats");
         for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
 
             /*
@@ -387,7 +388,7 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
              *     watch -n1 'grep cpu3 -A6 -B1 test.json | tail -20'
              * produces cpu3 at 100%
              */
-            LogDebug("CPU %d, prev user=%lu, prev sys=%lu", i, prev_values[i].counter_nsec_user_mode,
+            g_logger.LogDebug("CPU %d, prev user=%lu, prev sys=%lu", i, prev_values[i].counter_nsec_user_mode,
                 prev_values[i].counter_nsec_sys_mode);
             if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
                 double cpuUserPercent = // force newline
@@ -399,10 +400,10 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 
                 // output JSON counter
                 sprintf(label, "cpu%zu", i);
-                m_output.psubsection_start(label);
-                m_output.pdouble("user", cpuUserPercent);
-                m_output.pdouble("sys", cpuSysPercent);
-                m_output.psubsection_end();
+                g_output.psubsection_start(label);
+                g_output.pdouble("user", cpuUserPercent);
+                g_output.pdouble("sys", cpuSysPercent);
+                g_output.psubsection_end();
             }
 
             // save for next cycle
@@ -410,7 +411,7 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
             prev_values[i].counter_nsec_sys_mode = counter_nsec_sys_mode[i];
         }
         if (print)
-            m_output.psection_end();
+            g_output.psection_end();
     } else {
 
         // just get the per-cpu total:
@@ -421,10 +422,10 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         if (counter_nsec_user_mode.empty())
             return;
 
-        LogDebug("Reading data from cgroup cpuacct.usage_percpu");
+        g_logger.LogDebug("Reading data from cgroup cpuacct.usage_percpu");
 
         if (print)
-            m_output.psection_start("cgroup_cpuacct_stats", NjmonOutputFrontend::CONTAINS_SUBSECTIONS);
+            g_output.psection_start("cgroup_cpuacct_stats");
         for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
 
             /*
@@ -437,15 +438,15 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 
                 // output JSON counter
                 sprintf(label, "cpu%zu", i);
-                m_output.psubsection_start(label);
-                m_output.pdouble("user", cpuUserPercent);
-                m_output.psubsection_end();
+                g_output.psubsection_start(label);
+                g_output.pdouble("user", cpuUserPercent);
+                g_output.psubsection_end();
             }
 
             // save for next cycle
             prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
         }
         if (print)
-            m_output.psection_end();
+            g_output.psection_end();
     }
 }

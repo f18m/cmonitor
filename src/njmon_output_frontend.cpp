@@ -1,7 +1,9 @@
 /*
- * njmon_json.cpp -- collects Linux performance data and generates JSON format data.
- * Developer: Nigel Griffiths.
- * (C) Copyright 2018 Nigel Griffiths
+ * njmon_output_frontend.cpp -- routines to generate the JSON output and/or
+ *                              generate the InfluxDB measurements and send them
+ *                              over TCP/UDP socket
+ * Developer: Nigel Griffiths, Francesco Montorsi
+ * (C) Copyright 2018 Nigel Griffiths, Francesco Montorsi
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,113 +19,97 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "influxdb.h"
 #include "njmon.h"
+#include <assert.h>
+#include <netdb.h>
 #include <sys/time.h>
 #include <unistd.h>
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-/*   p functions to generate JSON output
- *    psection(name) and psectionend()
- *       Adds
- *           "name": {
- *
- *           }
- *
- *    psub(name) and psubend()
- *       similar to psection/psectionend but one level deeper
- *
- *    pstring(name,"abc")
- *    plong(name, 1234)
- *    pdouble(name, 1234.546)
- *    phex(name, hedadecimal number)
- *    praw(name) for other stuff in a raw format
- *       add "name": data,
- *
- *    the JSON is appended to the buffer "output" so
- *        we can remove the trailing "," before we close the entry with a "}"
- *        we can write the whole record in a single write (push()) to help down stream tools
- */
+//------------------------------------------------------------------------------
+// Globals
+//------------------------------------------------------------------------------
+
+NjmonOutputFrontend g_output;
 
 //------------------------------------------------------------------------------
-// Low level JSON functions
+// Init functions
 //------------------------------------------------------------------------------
-#if 0
-void NjmonOutputFrontend::premove_ending_comma_if_any()
+
+void NjmonOutputFrontend::init_json_output_file(const std::string& filenamePrefix)
 {
-    if (output_char >= 2 && output[output_char - 2] == ',') {
-        output[output_char - 2] = '\n';
-        output_char--;
+    if (filenamePrefix == "stdout") {
+        // open stdout as FILE*
+        if ((m_outputJson = fdopen(STDOUT_FILENO, "w")) == 0) {
+            perror("opening stdout for write");
+            exit(13);
+        }
+    } else {
+        // open output files
+        char filename[1024];
+        sprintf(filename, "%s.json", filenamePrefix.c_str());
+        if ((m_outputJson = fopen(filename, "w")) == 0) {
+            perror("opening file for stdout");
+            fprintf(stderr, "ERROR nmon filename=%s\n", filename);
+            exit(13);
+        }
+
+        printf("Opened output JSON file '%s'\n", filename);
     }
 }
 
-void NjmonOutputFrontend::pbuffer_check()
+std::string hostname_to_ip(const std::string& hostname)
 {
-    long size;
-    if (!output || output_char > (long)(output_size * 0.95)) { /* within 5% of the end */
-        size = output_size + (1024 * 1024); /* add another MB */
-        output = (char*)realloc((void*)output, size);
-        output_size = size;
-    }
-}
-
-void NjmonOutputFrontend::praw(const char* string)
-{
-    // FIXME: sprintf() is much slower
-    output_char += sprintf(&output[output_char], "%s", string);
-    /*size_t len = strlen(string);
-    strcat(&output[output_char], string);
-    output_char += len;*/
-}
-
-void NjmonOutputFrontend::pindent()
-{
+    struct hostent* he;
+    struct in_addr** addr_list;
+    std::string ip;
     int i;
 
-    for (i = 0; i < saved_level; i++)
-        praw("     ");
-}
-#endif
+    if ((he = gethostbyname(hostname.c_str())) == NULL)
+        return "";
 
-void NjmonOutputFrontend::pstats()
-{
-    psection_start("njmon_stats", NjmonOutputFrontend::CONTAINS_MEASUREMENTS);
-    plong("section", njmon_sections);
-    plong("subsections", njmon_subsections);
-    plong("string", njmon_string);
-    plong("long", njmon_long);
-    plong("double", njmon_double);
-    plong("hex", njmon_hex);
-    psection_end(); //"njmon_stats");
-}
-
-#if 0
-void NjmonOutputFrontend::push_influxdb_measurements(
-    char** line, int* len, size_t used, NjmonMeasurementVector& measurements, const std::string& meas_name)
-{
-    used = format_line(line, len, used, // force newline
-        INFLUX_MEAS(meas_name.c_str()), // force newline
-        INFLUX_TAG("k", "v"), // force newline
-        INFLUX_F_STR("dummy", "val"), INFLUX_END);
-
-    for (const auto& m : measurements) {
-
-        // if (m.m_numeric) {
-
-        used = format_line(line, len, used, // force newline
-            INFLUX_F_STR(m.m_name, m.m_value), // force newline
-            INFLUX_END);
-        /*} else {
-        }*/
+    addr_list = (struct in_addr**)he->h_addr_list;
+    for (i = 0; addr_list[i] != NULL; i++) {
+        // Return the first one;
+        ip = inet_ntoa(*addr_list[i]);
+        return ip;
     }
+
+    return "";
 }
-#else
+
+void NjmonOutputFrontend::init_influxdb_connection(const std::string& hostname, unsigned int port)
+{
+    std::string ipaddress = hostname_to_ip(hostname);
+    if (ipaddress.empty()) {
+        char buf[1024];
+        herror(buf);
+        fprintf(stderr, "hostname=%s to IP address convertion failed, bailing out: %s\n", hostname.c_str(), buf);
+        exit(98);
+    }
+
+    m_influxdb_client_conn = new influx_client_t();
+    m_influxdb_client_conn->host = strdup(ipaddress.c_str()); // force newline
+    m_influxdb_client_conn->port = port; // force newline
+    m_influxdb_client_conn->db = strdup("njmon"); // force newline
+    m_influxdb_client_conn->usr = strdup("usr"); // force newline
+    m_influxdb_client_conn->pwd = strdup("pwd"); // force newline
+
+    g_logger.LogDebug("init_influxdb_connection() initialized InfluxDB connection to %s:%d",
+        m_influxdb_client_conn->host, m_influxdb_client_conn->port);
+}
+
+//------------------------------------------------------------------------------
+// Low level InfluxDB functions
+//------------------------------------------------------------------------------
+
 std::string NjmonOutputFrontend::generate_influxdb_line(
     NjmonMeasurementVector& measurements, const std::string& meas_name, const std::string& ts_nsec)
 {
     // format data according to the InfluxDB "line protocol":
     // see https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/
 
-    printf("Generating measurement: %s\n", meas_name.c_str());
+    g_logger.LogDebug("generate_influxdb_line() generating measurement: %s\n", meas_name.c_str());
 
     std::string ret;
     ret.reserve(1024);
@@ -160,7 +146,10 @@ std::string NjmonOutputFrontend::generate_influxdb_line(
 
     return ret;
 }
-#endif
+
+//------------------------------------------------------------------------------
+// Low level JSON functions
+//------------------------------------------------------------------------------
 
 void NjmonOutputFrontend::push_json_measurements(NjmonMeasurementVector& measurements, unsigned int indent)
 {
@@ -203,19 +192,20 @@ void NjmonOutputFrontend::push_json_object_end(unsigned int indent, bool last)
         fputs("},\n", m_outputJson);
 }
 
-void NjmonOutputFrontend::push_last_sample()
+void NjmonOutputFrontend::push_current_sample()
 {
-    // DEBUGLOG_FUNCTION_START();
+    DEBUGLOG_FUNCTION_START();
+
+    size_t num_measurements = get_current_sample_measurements();
 
     if (m_outputJson) {
 
         // convert the current sample into JSON format:
         fputs("  {\n", m_outputJson);
-        for (size_t i = 0; i < m_current_sample.size(); i++) {
-            auto& sec = m_current_sample[i];
+        for (size_t i = 0; i < m_current_sample_sections.size(); i++) {
+            auto& sec = m_current_sample_sections[i];
 
             push_json_object_start(sec.m_name, 1);
-
             if (sec.m_measurements.empty()) {
                 for (size_t i = 0; i < sec.m_subsections.size(); i++) {
                     auto& subsec = sec.m_subsections[i];
@@ -227,23 +217,13 @@ void NjmonOutputFrontend::push_last_sample()
             } else {
                 push_json_measurements(sec.m_measurements, 2);
             }
-
             push_json_object_end(1, i == sec.m_subsections.size() - 1);
         }
         fputs("  },\n", m_outputJson);
-
-#if 0
-        pbuffer_check();
-        if (fputs(output, m_outputJson) < 0) {
-            /* if stdout failed there is not must we can do so stop */
-            perror("njmon write to output JSON failed, stopping now.");
-            exit(99);
-        }
-#endif
-        // LogDebug("pushed %ld chars in JSON output file", output_char);
+        g_logger.LogDebug("push_current_sample() writing on the JSON output %lu measurements\n", num_measurements);
     }
 
-    if (m_influxdb_client_conn.host) {
+    if (m_influxdb_client_conn) {
 
         std::string all_measurements;
 
@@ -254,16 +234,14 @@ void NjmonOutputFrontend::push_last_sample()
         char ts_nsec_str[64];
         snprintf(ts_nsec_str, sizeof(ts_nsec_str), "%lu", ts_nsec);
 
-        size_t ntotal_meas = 0;
-        for (size_t i = 0; i < m_current_sample.size(); i++) {
-            auto& sec = m_current_sample[i];
+        for (size_t i = 0; i < m_current_sample_sections.size(); i++) {
+            auto& sec = m_current_sample_sections[i];
             if (sec.m_measurements.empty()) {
 
                 for (size_t i = 0; i < sec.m_subsections.size(); i++) {
                     auto& subsec = sec.m_subsections[i];
                     all_measurements
                         += generate_influxdb_line(subsec.m_measurements, sec.m_name + "_" + subsec.m_name, ts_nsec_str);
-                    ntotal_meas += subsec.m_measurements.size();
 
                     if (i < sec.m_subsections.size() - 1)
                         all_measurements += "\n";
@@ -271,34 +249,61 @@ void NjmonOutputFrontend::push_last_sample()
 
             } else {
                 all_measurements += generate_influxdb_line(sec.m_measurements, sec.m_name, ts_nsec_str);
-                ntotal_meas += sec.m_measurements.size();
             }
 
-            if (i < m_current_sample.size() - 1)
+            if (i < m_current_sample_sections.size() - 1)
                 all_measurements += "\n";
         }
 
-        printf("Pushing to InfluxDB a total of %zu measurements for this timestamp: %s\n", ntotal_meas, ts_nsec_str);
+        g_logger.LogDebug("push_current_sample() pushing to InfluxDB %zu measurements for timestamp: %s\n",
+            num_measurements, ts_nsec_str);
         char* influxdb_data = (char*)malloc(all_measurements.size() + 1);
         memcpy(influxdb_data, all_measurements.data(), all_measurements.size());
-        post_http_send_line(&m_influxdb_client_conn, influxdb_data, all_measurements.size());
+        post_http_send_line(m_influxdb_client_conn, influxdb_data, all_measurements.size());
     }
 
     fflush(NULL); /* force I/O output now */
+}
 
-    // output[0] = 0;
-    // output_char = 0;
+size_t NjmonOutputFrontend::get_current_sample_measurements() const
+{
+    size_t ntotal_meas = 0;
+    for (size_t i = 0; i < m_current_sample_sections.size(); i++) {
+        auto& sec = m_current_sample_sections[i];
+        if (sec.m_measurements.empty()) {
+            for (size_t i = 0; i < sec.m_subsections.size(); i++) {
+                auto& subsec = sec.m_subsections[i];
+                ntotal_meas += subsec.m_measurements.size();
+            }
+        } else {
+            ntotal_meas += sec.m_measurements.size();
+        }
+    }
+
+    return ntotal_meas;
 }
 
 //------------------------------------------------------------------------------
 // JSON objects
 //------------------------------------------------------------------------------
 
+void NjmonOutputFrontend::pstats()
+{
+    psection_start("njmon_stats");
+    plong("section", m_njmon_sections);
+    plong("subsections", m_njmon_subsections);
+    plong("string", m_njmon_string);
+    plong("long", m_njmon_long);
+    plong("double", m_njmon_double);
+    plong("hex", m_njmon_hex);
+    psection_end(); //"njmon_stats");
+}
+
 void NjmonOutputFrontend::psample_start()
 {
     // start JSON data sample
     // praw("  {\n");
-    m_current_sample.clear();
+    m_current_sample_sections.clear();
 }
 
 void NjmonOutputFrontend::psample_end(bool comma_needed)
@@ -313,9 +318,10 @@ void NjmonOutputFrontend::psample_end(bool comma_needed)
 #endif
 }
 
-void NjmonOutputFrontend::psection_start(const char* section, SectionType type)
+void NjmonOutputFrontend::psection_start(const char* section)
 {
 #if 1
+    m_njmon_sections++;
     NjmonOutputSection sec;
     sec.m_name = section;
     /*
@@ -330,11 +336,10 @@ void NjmonOutputFrontend::psection_start(const char* section, SectionType type)
             m_influxdb_meas_ready = true;
             break;
         }*/
-    m_current_sample.push_back(sec);
-    m_current_meas_list = &m_current_sample.back().m_measurements;
+    m_current_sample_sections.push_back(sec);
+    m_current_meas_list = &m_current_sample_sections.back().m_measurements;
 #else
     pbuffer_check();
-    njmon_sections++;
     saved_section = section;
     pindent();
     output_char += sprintf(&output[output_char], "\"%s\": {\n", section);
@@ -367,14 +372,14 @@ void NjmonOutputFrontend::psection_end()
 
 void NjmonOutputFrontend::psubsection_start(const char* resource)
 {
+    m_njmon_subsections++;
 #if 1
     NjmonOutputSubsection sec;
     sec.m_name = resource;
-    m_current_sample.back().m_subsections.push_back(sec);
-    m_current_meas_list = &m_current_sample.back().m_subsections.back().m_measurements;
+    m_current_sample_sections.back().m_subsections.push_back(sec);
+    m_current_meas_list = &m_current_sample_sections.back().m_subsections.back().m_measurements;
 #else
     pbuffer_check();
-    njmon_subsections++;
     saved_resource = resource;
     saved_level++;
     pindent();
@@ -401,6 +406,8 @@ void NjmonOutputFrontend::psubsection_end()
 
 void NjmonOutputFrontend::phex(const char* name, long long value)
 {
+    m_njmon_hex++;
+    assert(m_current_meas_list);
 #if 1
     char buff[128];
     snprintf(buff, sizeof(buff), "0x%08llx", value);
@@ -410,7 +417,6 @@ void NjmonOutputFrontend::phex(const char* name, long long value)
     snprintf(buff, sizeof(buff), "0x%08llx", value);
 
     pindent();
-    njmon_hex++;
     output_char += sprintf(&output[output_char], "\"%s\": \"%s\",\n", name, buff);
     // LogDebug("plong(%s,%lld) count=%ld\n", name, value, output_char);
 
@@ -421,13 +427,14 @@ void NjmonOutputFrontend::phex(const char* name, long long value)
 
 void NjmonOutputFrontend::plong(const char* name, long long value)
 {
+    m_njmon_long++;
+    assert(m_current_meas_list);
 #if 1
     char buff[128];
     snprintf(buff, sizeof(buff), "%lld", value);
     m_current_meas_list->push_back(NjmonOutputMeasurement(name, buff, true));
 #else
     pindent();
-    njmon_long++;
     output_char += sprintf(&output[output_char], "\"%s\": %lld,\n", name, value);
     // LogDebug("plong(%s,%lld) count=%ld\n", name, value, output_char);
 #endif
@@ -435,13 +442,14 @@ void NjmonOutputFrontend::plong(const char* name, long long value)
 
 void NjmonOutputFrontend::pdouble(const char* name, double value)
 {
+    m_njmon_double++;
+    assert(m_current_meas_list);
 #if 1
     char buff[128];
     snprintf(buff, sizeof(buff), "%.3f", value);
     m_current_meas_list->push_back(NjmonOutputMeasurement(name, buff, true));
 #else
     pindent();
-    njmon_double++;
     output_char += sprintf(&output[output_char], "\"%s\": %.3f,\n", name, value);
     // LogDebug("pdouble(%s,%.1f) count=%ld\n", name, value, output_char);
 #endif
@@ -449,11 +457,12 @@ void NjmonOutputFrontend::pdouble(const char* name, double value)
 
 void NjmonOutputFrontend::pstring(const char* name, const char* value)
 {
+    m_njmon_string++;
+    assert(m_current_meas_list);
 #if 1
     m_current_meas_list->push_back(NjmonOutputMeasurement(name, value));
 #else
     pbuffer_check();
-    njmon_string++;
     pindent();
     output_char += sprintf(&output[output_char], "\"%s\": \"%s\",\n", name, value);
     // LogDebug("pstring(%s,%s) count=%ld\n", name, value, output_char);
