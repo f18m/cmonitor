@@ -247,8 +247,6 @@ void NjmonOutputFrontend::push_current_sections(bool is_header)
 
     if (m_influxdb_client_conn && !is_header) {
 
-        std::string all_measurements;
-
         struct timeval tv;
         gettimeofday(&tv, 0);
         uint64_t ts_nsec = ((uint64_t)tv.tv_sec * 1E9) + ((uint64_t)tv.tv_usec * 1E3);
@@ -256,6 +254,8 @@ void NjmonOutputFrontend::push_current_sections(bool is_header)
         char ts_nsec_str[64];
         snprintf(ts_nsec_str, sizeof(ts_nsec_str), "%lu", ts_nsec);
 
+        std::string all_measurements;
+        all_measurements.reserve(4096);
         for (size_t sec_idx = 0; sec_idx < m_current_sections.size(); sec_idx++) {
             auto& sec = m_current_sections[sec_idx];
             if (sec.m_measurements.empty()) {
@@ -279,13 +279,13 @@ void NjmonOutputFrontend::push_current_sections(bool is_header)
 
         g_logger.LogDebug("push_current_sample() pushing to InfluxDB %zu measurements for timestamp: %s\n",
             num_measurements, ts_nsec_str);
-        char* influxdb_data = (char*)malloc(all_measurements.size() + 1);
-        memcpy(influxdb_data, all_measurements.data(), all_measurements.size());
-        post_http_send_line(m_influxdb_client_conn, influxdb_data, all_measurements.size());
+
+        post_http_send_line(m_influxdb_client_conn, all_measurements.data(), all_measurements.size());
     }
 
     fflush(NULL); /* force I/O output now */
 
+    // IMPORTANT: clear() but do not shrink_to_fit() to avoid a bunch of reallocations for next sample:
     m_current_sections.clear();
 }
 

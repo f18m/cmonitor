@@ -1,3 +1,28 @@
+// taken from https://github.com/orca-zhang/influxdb-c
+/*
+MIT License
+
+Copyright (c) 2017 Orca
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stdarg.h>
@@ -61,21 +86,21 @@ static inline int _escaped_append(char** dest, size_t* len, size_t* used, const 
 static inline int _begin_line(char** buf);
 static inline int _format_line(char** buf, va_list ap);
 static inline int _format_line2(char** buf, va_list ap, size_t*, size_t);
-static inline int post_http_send_line(influx_client_t* c, char* buf, int len);
+static inline int post_http_send_line(influx_client_t* c, const char* buf, int len);
 static inline int send_udp_line(influx_client_t* c, char* line, int len);
 
-static inline int post_http_send_line(influx_client_t* c, char* buf, int len)
+static inline int post_http_send_line(influx_client_t* c, const char* buf, int len)
 {
     int sock, ret_code = 0, content_length = 0;
     struct sockaddr_in addr;
     struct iovec iv[2];
     char ch;
 
-    iv[1].iov_base = buf;
+    iv[1].iov_base = (void*)buf;
     iv[1].iov_len = len;
 
     if (!(iv[0].iov_base = (char*)malloc(len = 0x100))) {
-        free(iv[1].iov_base);
+        // free(iv[1].iov_base); // do not free given buffer
         return -2;
     }
     for (;;) {
@@ -83,7 +108,7 @@ static inline int post_http_send_line(influx_client_t* c, char* buf, int len)
             "POST /write?db=%s&u=%s&p=%s HTTP/1.1\r\nHost: %s\r\nContent-Length: %zd\r\n\r\n", c->db,
             c->usr ? c->usr : "", c->pwd ? c->pwd : "", c->host, iv[1].iov_len);
         if ((int)iv[0].iov_len >= len && !(iv[0].iov_base = (char*)realloc(iv[0].iov_base, len *= 2))) {
-            free(iv[1].iov_base);
+            // free(iv[1].iov_base); // do not free given buffer
             free(iv[0].iov_base);
             return -3;
         } else
@@ -96,13 +121,13 @@ static inline int post_http_send_line(influx_client_t* c, char* buf, int len)
     addr.sin_family = AF_INET;
     addr.sin_port = htons(c->port);
     if ((addr.sin_addr.s_addr = inet_addr(c->host)) == INADDR_NONE) {
-        free(iv[1].iov_base);
+        // free(iv[1].iov_base); // do not free given buffer
         free(iv[0].iov_base);
         return -4;
     }
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        free(iv[1].iov_base);
+        // free(iv[1].iov_base); // do not free given buffer
         free(iv[0].iov_base);
         return -5;
     }
@@ -146,8 +171,8 @@ static inline int post_http_send_line(influx_client_t* c, char* buf, int len)
             _('n')
             _('t')
             _('e')
-            _('n') _('t') _('-') _('L') _('e') _('n') _('g') _('t') _('h') _(':') _(' ')
-                _GET_NUMBER(content_length) break;
+            _('n')
+            _('t') _('-') _('L') _('e') _('n') _('g') _('t') _('h') _(':') _(' ') _GET_NUMBER(content_length) break;
         case '\r':
             _('\n')
             while (content_length-- > 0 && _GET_NEXT_CHAR())
@@ -163,7 +188,7 @@ static inline int post_http_send_line(influx_client_t* c, char* buf, int len)
 END:
     close(sock);
     free(iv[0].iov_base);
-    free(iv[1].iov_base);
+    // free(iv[1].iov_base); // do not free given buffer
     return ret_code / 100 == 2 ? 0 : ret_code;
 }
 #undef _GET_NEXT_CHAR
@@ -185,6 +210,9 @@ static inline int post_http(influx_client_t* c, ...)
         return -1;
 
     ret_code = post_http_send_line(c, line, len);
+
+    if (line)
+        free(line);
 
     return ret_code;
 }
