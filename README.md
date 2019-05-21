@@ -148,12 +148,27 @@ A longer example of collected statistics (results in a larger file, may take som
 ## Connecting with InfluxDB and Grafana
 
 The `njmon_collector` can be connected to an [InfluxDB](https://www.influxdata.com/) deployment to store collected data (this can happen
-in parallel to the JSON default storage). The InfluxDB instance can then be used as data source for graphing tools like [Grafana](https://grafana.com/)
+in parallel to the JSON default storage). This can be done by simply providing the IP and port of the InfluxDB instance when launching
+the collector:
+
+```
+njmon_collector --remote-ip=1.2.3.4 --remote-port=8086
+```
+
+The InfluxDB instance can then be used as data source for graphing tools like [Grafana](https://grafana.com/)
 which allow you to create nice interactive dashboards like the following one:
 
 ![Basic Dashboard Example](examples/grafana-dashboards/BasicDashboardExample.png)
 
 You can also play with the [live dashboard example](https://snapshot.raintank.io/dashboard/snapshot/JdX4hDukUCGuJHsXymM86KbFO5LC9GrY?orgId=2&from=1558478922136&to=1558479706448)
+
+To setup easily and quickly the chain "njmon_collector-InfluxDB-Grafana" you can checkout the repo of this project and run:
+
+```
+make -C examples regen_grafana_screenshots
+```
+
+which uses Docker files to deploy a temporary setup and fill the InfluxDB with 10minutes of data collected from the baremetal.
 
 
 ## Links
