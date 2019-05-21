@@ -102,6 +102,7 @@ void NjmonCollectorApp::header_identity()
         }
     }
 
+    std::string all_ips;
     if (getifaddrs(&interfaces) == 0) { /* retrieve the current interfaces */
         for (ifaddrs_ptr = interfaces; ifaddrs_ptr != NULL; ifaddrs_ptr = ifaddrs_ptr->ifa_next) {
 
@@ -113,6 +114,7 @@ void NjmonCollectorApp::header_identity()
                         != NULL) {
                         sprintf(label, "%s_IP4", ifaddrs_ptr->ifa_name);
                         g_output.pstring(label, str);
+                        all_ips += std::string(str) + ",";
                     }
                     break;
                 case AF_INET6:
@@ -122,6 +124,7 @@ void NjmonCollectorApp::header_identity()
                         != NULL) {
                         sprintf(label, "%s_IP6", ifaddrs_ptr->ifa_name);
                         g_output.pstring(label, str);
+                        all_ips += std::string(str) + ",";
                     }
                     break;
                 default:
@@ -136,6 +139,11 @@ void NjmonCollectorApp::header_identity()
         }
 
         freeifaddrs(interfaces); /* free the dynamic memory */
+
+        if (all_ips.size() > 1) {
+            all_ips.pop_back(); // remove last comma
+            g_output.pstring("all_ip_addresses", all_ips.c_str());
+        }
     }
 
     /* POWER and AMD and may be others */

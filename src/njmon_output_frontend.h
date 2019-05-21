@@ -94,6 +94,14 @@ private:
     public:
         std::string m_name;
         NjmonMeasurementVector m_measurements;
+
+        std::string get_value_for_measurement(const std::string& name) const
+        {
+            for (const auto& m : m_measurements)
+                if (strncmp(m.m_name.data(), name.c_str(), m.m_name.size()) == 0)
+                    return std::string(m.m_value.data());
+            return "";
+        }
     };
 
     class NjmonOutputSection {
@@ -101,6 +109,14 @@ private:
         std::string m_name;
         std::vector<NjmonOutputSubsection> m_subsections;
         NjmonMeasurementVector m_measurements;
+
+        std::string get_value_for_measurement(const std::string& name) const
+        {
+            for (const auto& m : m_measurements)
+                if (strncmp(m.m_name.data(), name.c_str(), m.m_name.size()) == 0)
+                    return std::string(m.m_value.data());
+            return "";
+        }
     };
 
     //------------------------------------------------------------------------------
@@ -111,14 +127,22 @@ private:
     void push_json_measurements(NjmonMeasurementVector& measurements, unsigned int indent);
     void push_json_object_start(const std::string& str, unsigned int indent);
     void push_json_object_end(bool last, unsigned int indent);
+    void push_current_sections_to_json(bool is_header);
 
     //------------------------------------------------------------------------------
     // InfluxDB low-level functions
     //------------------------------------------------------------------------------
 
+    static bool contains_char_to_escape(const char* string);
+    static void get_quoted_field_value(std::string& out, const char* value);
+    static void get_quoted_tag_value(std::string& out, const char* value);
+
     std::string generate_influxdb_line(
         NjmonMeasurementVector& measurements, const std::string& meas_name, const std::string& ts_nsec);
 
+    void push_current_sections_to_influxdb(bool is_header);
+
+    // main output routine:
     void push_current_sections(bool is_header);
 
 private:
@@ -128,6 +152,7 @@ private:
 
     // InfluxDB internals
     influx_client_t* m_influxdb_client_conn = nullptr;
+    std::string m_influxdb_tagset;
 
     // JSON internals
     FILE* m_outputJson = nullptr;
