@@ -144,6 +144,18 @@ A longer example of collected statistics (results in a larger file, may take som
    the `njmon_collector` utility was running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
    graphs are present;
 
+
+## Connecting with InfluxDB and Grafana
+
+The `njmon_collector` can be connected to an [InfluxDB](https://www.influxdata.com/) deployment to store collected data (this can happen
+in parallel to the JSON default storage). The InfluxDB instance can then be used as data source for graphing tools like [Grafana](https://grafana.com/)
+which allow you to create nice interactive dashboards like the following one:
+
+![Basic Dashboard Example](examples/grafana-dashboards/BasicDashboardExample.png)
+
+You can also play with the [live dashboard example](https://snapshot.raintank.io/dashboard/snapshot/JdX4hDukUCGuJHsXymM86KbFO5LC9GrY?orgId=2&from=1558478922136&to=1558479706448)
+
+
 ## Links
 
 - Original project: [http://nmon.sourceforge.net](http://nmon.sourceforge.net)
@@ -153,7 +165,6 @@ A longer example of collected statistics (results in a larger file, may take som
 ## TODO collector-side
 
 - Add 'blkio' cgroup data collection
-- Test integration with InfluxDB (JSON streaming over socket)
 
 ## TODO chart-side
 

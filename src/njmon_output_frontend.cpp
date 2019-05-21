@@ -175,7 +175,8 @@ std::string NjmonOutputFrontend::generate_influxdb_line(
     // Tag set
     // NOTE: unlike fields, tags are indexed and can be used to tag measurements and allow to search
     //       for them:
-    ret += m_influxdb_tagset;
+    if (!m_influxdb_tagset.empty())
+        ret += "," + m_influxdb_tagset;
 
     // Whitespace I
     ret += " ";

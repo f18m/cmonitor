@@ -113,7 +113,7 @@ endif
 
 
 
-# DEBIAN PACKAGE:
+# DEBIAN PACKAGE
 #
 # Reference guide:
 #   https://www.debian.org/doc/manuals/maint-guide/dreq.en.html
@@ -130,7 +130,7 @@ deb:
 	@echo "    dput ppa:francesco-montorsi/ppa ../nmon-cgroup-aware_$(RPM_VERSION).$(RPM_RELEASE)-1ubuntu1_source.changes"
 
 #
-# DOCKER IMAGE:
+# DOCKER IMAGE
 # 
 
 docker_image:
@@ -150,22 +150,9 @@ docker_run:
 	
 
 
-#
-# INFLUXDB
-# 
-reset_influxdb:
-	# assuming you started in another console or in background the "influxd" daemon:
-	influx -execute "DROP DATABASE njmon"
-	influx -execute "CREATE DATABASE njmon"
-
-show_njmon_data_in_influxdb:
-	influx -execute 'SHOW SERIES' -database="njmon"
-	influx -execute 'SELECT * FROM "stat_cpu0"' -database="njmon"
-	#influx -execute 'SELECT * FROM "cgroup_memory_stats"' -database="njmon"
-
-
-
-.PHONY: all clean install examples generate_patch srpm_tarball srpm rpm docker_image
+.PHONY: all clean install examples \
+		srpm_tarball srpm rpm \
+		docker_image docker_run
 
 
 
