@@ -44,6 +44,12 @@ void NjmonOutputFrontend::init_json_output_file(const std::string& filenamePrefi
             perror("opening stdout for write");
             exit(13);
         }
+    } else if (filenamePrefix == "none") {
+        m_outputJson = nullptr;
+        g_logger.LogDebug("Disabled JSON generation (filename prefix = none)");
+        printf("Disabling JSON file generation (collected data will be available only via InfluxDB, if IP/port is "
+               "provided)\n",
+            filename);
     } else {
         // open output files
         char filename[1024];

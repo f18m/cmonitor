@@ -107,7 +107,8 @@ struct option_extended {
         "Name the output files using provided prefix instead of defaulting to the filenames:\n"
         "\thostname_<year><month><day>_<hour><minutes>.json  (for JSON data)\n"
         "\thostname_<year><month><day>_<hour><minutes>.err   (for error log)\n"
-        "Use special prefix 'stdout' to indicate that you want the utility to write on stdout." },
+        "Use special prefix 'stdout' to indicate that you want the utility to write on stdout.\n"
+        "Use special prefix 'none' to indicate that you want to disable JSON genreation." },
     { "Data sampling options", &g_long_opts[4], "Allow multiple instances of njmon_collector to run on this system." },
     { "Data sampling options", &g_long_opts[5], "Stay in foreground." },
     { "Data sampling options", &g_long_opts[6],
@@ -201,11 +202,14 @@ std::string string2PerformanceKpiFamily(PerformanceKpiFamily k)
 void NjmonLoggerUtils::init_error_output_file(const std::string& filenamePrefix)
 {
     if (filenamePrefix == "stdout") {
-        // open stderr as FILE* as well:
+        // open stderr as FILE*:
         if ((m_outputErr = fdopen(STDERR_FILENO, "w")) == 0) {
             perror("opening stderr for write");
             exit(13);
         }
+    } else if (filenamePrefix == "none") {
+        // avoid opening an error file:
+        m_outputErr = nullptr;
     } else {
         // prepare output error file but don't open it yet
         char filename[1024];
@@ -387,9 +391,14 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
             case 'm':
                 g_cfg.m_strOutputDir = optarg;
                 break;
-            case 'f':
+            case 'f': {
                 g_cfg.m_strOutputFilenamePrefix = optarg;
-                break;
+
+                // if the filename contains the JSON extension, remove it
+                size_t nchars = g_cfg.m_strOutputFilenamePrefix.size();
+                if (nchars > 4 && g_cfg.m_strOutputFilenamePrefix.substr(nchars - 4) == ".json")
+                    g_cfg.m_strOutputFilenamePrefix = g_cfg.m_strOutputFilenamePrefix.substr(0, nchars - 4);
+            } break;
             case 'k':
                 g_cfg.m_bAllowMultipleInstances = true;
                 break;
