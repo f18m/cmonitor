@@ -1,8 +1,8 @@
 src/*.o
-src/njmon_collector
-examples/*/njmon_collector
+src/cmonitor_collector
+examples/*/cmonitor_collector
 examples/*/example-load.sh
-docker/njmon_collector
+docker/cmonitor_collector
 .cproject
 .project
 .pydevproject

@@ -10,11 +10,9 @@ ROOT_DIR:=$(THIS_DIR)
 RPM_TMP_DIR:=/tmp/cmonitor/rpm
 RPM_TARBALL_DIR:=/tmp/cmonitor/tarball
 
-# reason for this version is that this is a fork of Nigel's performance Monitor v22
-RPM_VERSION:=22
-
-# RPM_RELEASE is what is actually incremented release after release!
-RPM_RELEASE:=7
+# main versioning constants
+RPM_VERSION:=1.1
+RPM_RELEASE:=8
 
 
 #

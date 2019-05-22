@@ -12,4 +12,4 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: a container performance monitoring solution
  A Docker/LXC, database-free, lightweight container performance monitoring solution, perfect for ephemeral containers
  (e.g. containers used for DevOps automatic testing). Can also be used with InfluxDB and Grafana to monitor long-lived 
-c ontainers in real-time.
+ containers in real-time.

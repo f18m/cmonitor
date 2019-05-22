@@ -12,7 +12,7 @@ EXAMPLE_JSON_FILES=\
 all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
 		echo "--------------------------------------------------------" ; \
-		../html2json/cmonitor_chart.py $$jsonExample ; \
+		../json2html/cmonitor_chart.py $$jsonExample ; \
 	done
 
 clean:
