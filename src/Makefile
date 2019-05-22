@@ -17,16 +17,16 @@ MEMCHECK_COMMON_OPTS:=--tool=memcheck --track-origins=yes --malloc-fill=AF --fre
 
 
 OBJS = \
-    njmon_cgroups.o \
-    njmon_header_info.o \
-    njmon_main.o \
-    njmon_output_frontend.o \
-    njmon_proc_stats.o \
-    njmon_utils.o
+    cgroups.o \
+    header_info.o \
+    main.o \
+    output_frontend.o \
+    proc_stats.o \
+    utils.o
     
 HEADERS = \
-    njmon.h \
-    njmon_output_frontend.h \
+    cmonitor.h \
+    output_frontend.h \
     influxdb.h
     
 

@@ -1,7 +1,7 @@
 /*
- * njmon_output_frontend.cpp -- routines to generate the JSON output and/or
- *                              generate the InfluxDB measurements and send them
- *                              over TCP/UDP socket
+ * output_frontend.cpp -- routines to generate the JSON output and/or
+ *                        generate the InfluxDB measurements and send them
+ *                        over TCP/UDP socket
  * Developer: Nigel Griffiths, Francesco Montorsi
  * (C) Copyright 2018 Nigel Griffiths, Francesco Montorsi
 
@@ -19,8 +19,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "cmonitor.h"
 #include "influxdb.h"
-#include "njmon.h"
 #include <algorithm>
 #include <assert.h>
 #include <netdb.h>
@@ -359,7 +359,7 @@ void NjmonOutputFrontend::push_current_sections_to_json(bool is_header)
         fputs("{\n", m_outputJson); // document begin
         fputs("    \"header\": {\n", m_outputJson);
     } else {
-        if (m_njmon_samples > 0)
+        if (m_samples > 0)
             fputs(",\n", m_outputJson); // add separator from previous sample
         fputs("    {\n", m_outputJson); // start of new sample inside sample array
     }
@@ -384,7 +384,7 @@ void NjmonOutputFrontend::push_current_sections_to_json(bool is_header)
         fputs("    },\n", m_outputJson); // for sure at least 1 sample will follow
     } else {
         fputs("    }", m_outputJson); // not sure if more samples will follow
-        m_njmon_samples++;
+        m_samples++;
     }
 
     size_t num_measurements = get_current_sample_measurements();
@@ -436,13 +436,13 @@ size_t NjmonOutputFrontend::get_current_sample_measurements() const
 
 void NjmonOutputFrontend::pstats()
 {
-    psection_start("njmon_stats");
-    plong("section", m_njmon_sections);
-    plong("subsections", m_njmon_subsections);
-    plong("string", m_njmon_string);
-    plong("long", m_njmon_long);
-    plong("double", m_njmon_double);
-    plong("hex", m_njmon_hex);
+    psection_start("cmonitor_stats");
+    plong("section", m_sections);
+    plong("subsections", m_subsections);
+    plong("string", m_string);
+    plong("long", m_long);
+    plong("double", m_double);
+    plong("hex", m_hex);
     psection_end();
 }
 
@@ -473,7 +473,7 @@ void NjmonOutputFrontend::psample_start()
 
 void NjmonOutputFrontend::psection_start(const char* section)
 {
-    m_njmon_sections++;
+    m_sections++;
 
     NjmonOutputSection sec;
     sec.m_name = section;
@@ -491,7 +491,7 @@ void NjmonOutputFrontend::psection_end()
 
 void NjmonOutputFrontend::psubsection_start(const char* resource)
 {
-    m_njmon_subsections++;
+    m_subsections++;
 
     NjmonOutputSubsection sec;
     sec.m_name = resource;
@@ -513,7 +513,7 @@ void NjmonOutputFrontend::psubsection_end()
 
 void NjmonOutputFrontend::phex(const char* name, long long value)
 {
-    m_njmon_hex++;
+    m_hex++;
     assert(m_current_meas_list);
 
     char buff[128];
@@ -523,7 +523,7 @@ void NjmonOutputFrontend::phex(const char* name, long long value)
 
 void NjmonOutputFrontend::plong(const char* name, long long value)
 {
-    m_njmon_long++;
+    m_long++;
     assert(m_current_meas_list);
 
     char buff[128];
@@ -533,7 +533,7 @@ void NjmonOutputFrontend::plong(const char* name, long long value)
 
 void NjmonOutputFrontend::pdouble(const char* name, double value)
 {
-    m_njmon_double++;
+    m_double++;
     assert(m_current_meas_list);
 
     char buff[128];
@@ -543,7 +543,7 @@ void NjmonOutputFrontend::pdouble(const char* name, double value)
 
 void NjmonOutputFrontend::pstring(const char* name, const char* value)
 {
-    m_njmon_string++;
+    m_string++;
     assert(m_current_meas_list);
 
     m_current_meas_list->push_back(NjmonOutputMeasurement(name, value));

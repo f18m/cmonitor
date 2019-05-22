@@ -1,6 +1,6 @@
 /*
- * njmon_header_info.cpp: routines to generate the initial header
- *                        of information about the server being monitored
+ * header_info.cpp: routines to generate the initial header
+ *                  of information about the server being monitored
  * Developer: Nigel Griffiths, Francesco Montorsi.
  * (C) Copyright 2018 Nigel Griffiths, Francesco Montorsi
 
@@ -49,9 +49,9 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "njmon.h"
+#include "cmonitor.h"
 
-void NjmonCollectorApp::file_read_one_stat(const char* file, const char* name)
+void CMonitorCollectorApp::file_read_one_stat(const char* file, const char* name)
 {
     FILE* fp;
     char buf[1024 + 1];
@@ -66,7 +66,7 @@ void NjmonCollectorApp::file_read_one_stat(const char* file, const char* name)
     }
 }
 
-void NjmonCollectorApp::header_identity()
+void CMonitorCollectorApp::header_identity()
 {
     int i;
 
@@ -164,7 +164,7 @@ void NjmonCollectorApp::header_identity()
     g_output.psection_end();
 }
 
-void NjmonCollectorApp::header_cmonitor_info(
+void CMonitorCollectorApp::header_cmonitor_info(
     int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags)
 {
     /* user name and id */
@@ -208,7 +208,7 @@ void NjmonCollectorApp::header_cmonitor_info(
     g_output.psection_end();
 }
 
-void NjmonCollectorApp::header_etc_os_release()
+void CMonitorCollectorApp::header_etc_os_release()
 {
     static FILE* fp = 0;
     char buf[1024 + 1];
@@ -247,7 +247,7 @@ long power_timebase = 0;
 long power_nominal_mhz = 0;
 int ispower = 0;
 
-void NjmonCollectorApp::header_cpuinfo()
+void CMonitorCollectorApp::header_cpuinfo()
 {
     static FILE* fp = 0;
     char buf[1024 + 1];
@@ -356,7 +356,7 @@ void NjmonCollectorApp::header_cpuinfo()
     }
 }
 
-void NjmonCollectorApp::header_version()
+void CMonitorCollectorApp::header_version()
 {
     static FILE* fp = 0;
     char buf[1024 + 1];
@@ -380,7 +380,7 @@ void NjmonCollectorApp::header_version()
     }
 }
 
-void NjmonCollectorApp::header_lscpu()
+void CMonitorCollectorApp::header_lscpu()
 {
     FILE* pop = 0;
     int data_col = 21;
@@ -461,7 +461,7 @@ void NjmonCollectorApp::header_lscpu()
     pclose(pop);
 }
 
-void NjmonCollectorApp::header_lshw()
+void CMonitorCollectorApp::header_lshw()
 {
 #if 0
     FILE* pop = 0;

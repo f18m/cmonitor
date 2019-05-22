@@ -1,6 +1,6 @@
 /*
- * njmon_utils.cpp - a few reusable C++ utility functions for string/file
- * 					 manipulation
+ * utils.cpp - a few reusable C++ utility functions for string/file
+ *             manipulation
  * Developer: Francesco Montorsi.
  * (C) Copyright 2018 Francesco Montorsi
 
@@ -18,7 +18,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "njmon.h"
+#include "cmonitor.h"
 #include <cstdint>
 #include <cstdio>
 #include <fstream>

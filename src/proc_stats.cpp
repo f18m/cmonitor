@@ -1,6 +1,6 @@
 /*
- * njmon_proc_stats.cpp -- collects Linux performance data and
- *                         generates structured output measurements.
+ * proc_stats.cpp -- collects Linux performance data and
+ *                   generates structured output measurements.
  * Developer: Nigel Griffiths.
  * (C) Copyright 2018 Nigel Griffiths
 
@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "njmon.h"
+#include "cmonitor.h"
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -55,7 +55,7 @@ name number
 name: number
 name: number kB
 */
-void NjmonCollectorApp::read_data_number(const char* statname)
+void CMonitorCollectorApp::read_data_number(const char* statname)
 {
     FILE* fp = 0;
     char line[1024];
@@ -96,7 +96,7 @@ void NjmonCollectorApp::read_data_number(const char* statname)
 /*
 read /proc/stat and unpick
 */
-void NjmonCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bool print)
+void CMonitorCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bool print)
 {
     long long user;
     long long nice;
@@ -272,7 +272,7 @@ void NjmonCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bo
         g_output.psection_end();
 }
 
-void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
+void CMonitorCollectorApp::proc_diskstats(double elapsed, int print)
 {
     struct diskinfo {
         long dk_major;
@@ -433,7 +433,7 @@ void NjmonCollectorApp::proc_diskstats(double elapsed, int print)
         g_output.psection_end();
 }
 
-void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
+void CMonitorCollectorApp::proc_net_dev(double elapsed, int print)
 {
     struct netinfo {
         char if_name[128];
@@ -579,7 +579,7 @@ void NjmonCollectorApp::proc_net_dev(double elapsed, int print)
         g_output.psection_end();
 }
 
-void NjmonCollectorApp::proc_uptime()
+void CMonitorCollectorApp::proc_uptime()
 {
     static FILE* fp = 0;
     char buf[1024 + 1];
@@ -610,7 +610,7 @@ void NjmonCollectorApp::proc_uptime()
     }
 }
 
-void NjmonCollectorApp::proc_loadavg()
+void CMonitorCollectorApp::proc_loadavg()
 {
     char buf[1024 + 1];
     int count;
@@ -654,7 +654,7 @@ void NjmonCollectorApp::proc_loadavg()
     fclose(fp);
 }
 
-void NjmonCollectorApp::proc_filesystems()
+void CMonitorCollectorApp::proc_filesystems()
 {
     FILE* fp;
     struct mntent* fs;

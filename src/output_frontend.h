@@ -158,13 +158,13 @@ private:
     FILE* m_outputJson = nullptr;
 
     // Stats on the generated output
-    unsigned int m_njmon_samples = 0;
-    unsigned int m_njmon_sections = 0;
-    unsigned int m_njmon_subsections = 0;
-    unsigned int m_njmon_string = 0;
-    unsigned int m_njmon_long = 0;
-    unsigned int m_njmon_double = 0;
-    unsigned int m_njmon_hex = 0;
+    unsigned int m_samples = 0;
+    unsigned int m_sections = 0;
+    unsigned int m_subsections = 0;
+    unsigned int m_string = 0;
+    unsigned int m_long = 0;
+    unsigned int m_double = 0;
+    unsigned int m_hex = 0;
 };
 
 extern NjmonOutputFrontend g_output;

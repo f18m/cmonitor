@@ -1,5 +1,5 @@
 /*
- * njmon_main.cpp: core routines for "cmonitor_collector"
+ * main.cpp: core routines for "cmonitor_collector"
  * Developer: Nigel Griffiths, Francesco Montorsi.
  * (C) Copyright 2018 Nigel Griffiths, Francesco Montorsi
 
@@ -48,7 +48,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "njmon.h"
+#include "cmonitor.h"
 
 //------------------------------------------------------------------------------
 // Constants
@@ -62,9 +62,9 @@
 // Globals
 //------------------------------------------------------------------------------
 
-NjmonLoggerUtils g_logger;
-NjmonCollectorAppConfig g_cfg;
-NjmonCollectorApp g_app;
+CMonitorLoggerUtils g_logger;
+CMonitorCollectorAppConfig g_cfg;
+CMonitorCollectorApp g_app;
 bool g_bExiting = false;
 
 //------------------------------------------------------------------------------
@@ -123,10 +123,11 @@ struct option_extended {
         "Note that a comma-separated list of above stats can be provided." },
 
     // Remote data collection options
-    { "Remote data collection options", &g_long_opts[7], "IP address or hostname of the njmon central collector." },
-    { "Remote data collection options", &g_long_opts[8], "Port number on collector host." },
+    { "Remote data collection options", &g_long_opts[7],
+        "IP address or hostname of the InfluxDB instance to send measurements to (database 'cmonitor' will be used)." },
+    { "Remote data collection options", &g_long_opts[8], "Port used by InfluxDB." },
     { "Remote data collection options", &g_long_opts[9],
-        "Set the remote collector secret (by default use environment variable NJMON_SECRET)." },
+        "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET)." },
 
     // help
     { "Other options", &g_long_opts[10], "Show version and exit" }, // force newline
@@ -200,7 +201,7 @@ std::string string2PerformanceKpiFamily(PerformanceKpiFamily k)
 // Logger functions
 //------------------------------------------------------------------------------
 
-void NjmonLoggerUtils::init_error_output_file(const std::string& filenamePrefix)
+void CMonitorLoggerUtils::init_error_output_file(const std::string& filenamePrefix)
 {
     if (filenamePrefix == "stdout") {
         // open stderr as FILE*:
@@ -222,7 +223,7 @@ void NjmonLoggerUtils::init_error_output_file(const std::string& filenamePrefix)
     fflush(NULL);
 }
 
-void NjmonLoggerUtils::LogDebug(const char* line, ...)
+void CMonitorLoggerUtils::LogDebug(const char* line, ...)
 {
     char currLogLine[256];
 
@@ -240,7 +241,7 @@ void NjmonLoggerUtils::LogDebug(const char* line, ...)
     }
 }
 
-void NjmonLoggerUtils::LogError(const char* line, ...)
+void CMonitorLoggerUtils::LogError(const char* line, ...)
 {
     char currLogLine[256];
 
@@ -266,7 +267,7 @@ void NjmonLoggerUtils::LogError(const char* line, ...)
 // Command line functions
 //------------------------------------------------------------------------------
 
-void NjmonCollectorApp::print_help()
+void CMonitorCollectorApp::print_help()
 {
     static_assert(sizeof(g_opts_extended) / sizeof(g_opts_extended[0]) == sizeof(g_long_opts) / sizeof(g_long_opts[0]),
         "Mismatching number of options");
@@ -326,9 +327,8 @@ void NjmonCollectorApp::print_help()
     std::cerr << "\tcmonitor_collector --output-filename=my_server_today" << std::endl;
     std::cerr << "    4) Crontab entry:" << std::endl;
     std::cerr << "\t0 4 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -m /home/perf" << std::endl;
-    std::cerr << "    5) Crontab entry for pumping data to the njmon central collector:" << std::endl;
-    std::cerr << "\t* 0 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -i admin.acme.com -p 8181 -X SECRET42 "
-              << std::endl;
+    std::cerr << "    5) Crontab entry for pumping data to an InfluxDB:" << std::endl;
+    std::cerr << "\t* 0 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -i admin.acme.com -p 8086" << std::endl;
     std::cerr << "" << std::endl;
     std::cerr
         << "NOTE: this is the cgroup-aware fork of original njmon software (https://github.com/f18m/nmon-cgroup-aware)"
@@ -337,10 +337,10 @@ void NjmonCollectorApp::print_help()
     exit(0);
 }
 
-void NjmonCollectorApp::init_defaults()
+void CMonitorCollectorApp::init_defaults()
 {
-    if (getenv("NJMON_SECRET"))
-        g_cfg.m_strRemoteSecret = getenv("NJMON_SECRET");
+    if (getenv("CMONITOR_SECRET"))
+        g_cfg.m_strRemoteSecret = getenv("CMONITOR_SECRET");
 
     // output file names
     get_hostname();
@@ -359,7 +359,7 @@ void NjmonCollectorApp::init_defaults()
     g_cfg.m_strOutputFilenamePrefix = filename;
 }
 
-void NjmonCollectorApp::parse_args(int argc, char** argv)
+void CMonitorCollectorApp::parse_args(int argc, char** argv)
 {
     // assemble the string of short options by the long options:
     // to keep things we have that the
@@ -480,7 +480,7 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
 // Application core functions
 //------------------------------------------------------------------------------
 
-std::string NjmonCollectorApp::get_hostname()
+std::string CMonitorCollectorApp::get_hostname()
 {
     DEBUGLOG_FUNCTION_START();
     if (!m_strHostname.empty())
@@ -501,7 +501,7 @@ std::string NjmonCollectorApp::get_hostname()
     return m_strHostname;
 }
 
-void NjmonCollectorApp::get_timestamps(std::string& localTime, std::string& utcTime)
+void CMonitorCollectorApp::get_timestamps(std::string& localTime, std::string& utcTime)
 {
     time_t timer; /* used to work out the time details*/
     struct tm* tim = nullptr; /* used to work out the local hour/min/second */
@@ -527,14 +527,14 @@ void NjmonCollectorApp::get_timestamps(std::string& localTime, std::string& utcT
     utcTime = buffer;
 }
 
-double NjmonCollectorApp::get_timestamp_sec()
+double CMonitorCollectorApp::get_timestamp_sec()
 {
     struct timeval tv;
     gettimeofday(&tv, 0);
     return (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
 }
 
-void NjmonCollectorApp::psample_date_time(long loop)
+void CMonitorCollectorApp::psample_date_time(long loop)
 {
     DEBUGLOG_FUNCTION_START();
 
@@ -548,7 +548,7 @@ void NjmonCollectorApp::psample_date_time(long loop)
     g_output.psection_end();
 }
 
-void NjmonCollectorApp::check_pid_file()
+void CMonitorCollectorApp::check_pid_file()
 {
     // immediately stop running if another instance of this software is already running.
     // Note that hmmonitor creates its own /var/run/ProcName.pid to track current PID,
@@ -565,7 +565,7 @@ void NjmonCollectorApp::check_pid_file()
     // else: this is the first instance of this software... continue
 }
 
-int NjmonCollectorApp::run(int argc, char** argv)
+int CMonitorCollectorApp::run(int argc, char** argv)
 {
     // if only one instance allowed, do the check:
     if (!g_cfg.m_bAllowMultipleInstances)

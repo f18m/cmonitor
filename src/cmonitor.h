@@ -1,11 +1,11 @@
 #pragma once
 
-#include "njmon_output_frontend.h"
 #include <array>
 #include <set>
 #include <string.h>
 #include <string>
 #include <vector>
+#include "output_frontend.h"
 
 //------------------------------------------------------------------------------
 // Macros
@@ -35,9 +35,9 @@ enum PerformanceKpiFamily {
 PerformanceKpiFamily string2PerformanceKpiFamily(const std::string&);
 std::string string2PerformanceKpiFamily(PerformanceKpiFamily k);
 
-class NjmonCollectorAppConfig {
+class CMonitorCollectorAppConfig {
 public:
-    NjmonCollectorAppConfig() {}
+    CMonitorCollectorAppConfig() {}
 
     // configuration from command-line:
     bool m_bAllowMultipleInstances = false; // --allow-multiple-instances
@@ -57,13 +57,13 @@ public:
 };
 
 // app-wide config settings:
-extern NjmonCollectorAppConfig g_cfg;
+extern CMonitorCollectorAppConfig g_cfg;
 
 //------------------------------------------------------------------------------
 // Logging functions for this app
 //------------------------------------------------------------------------------
 
-class NjmonLoggerUtils {
+class CMonitorLoggerUtils {
 public:
     void init_error_output_file(const std::string& filenamePrefix);
 
@@ -78,15 +78,15 @@ private:
 };
 
 // app-wide logger:
-extern NjmonLoggerUtils g_logger;
+extern CMonitorLoggerUtils g_logger;
 
 //------------------------------------------------------------------------------
 // The App object
 //------------------------------------------------------------------------------
 
-class NjmonCollectorApp {
+class CMonitorCollectorApp {
 public:
-    NjmonCollectorApp() {}
+    CMonitorCollectorApp() {}
 
     void init_defaults();
     void parse_args(int argc, char** argv);

@@ -1,7 +1,7 @@
 /*
- * njmon_cgroups.cpp -- interacts with Linux control groups to allow
- *                      njmon to monitor only the CPU/memory/disk resources
- *                      that the current cgroup allows to use.
+ * cgroups.cpp -- interacts with Linux control groups to allow
+ *                njmon to monitor only the CPU/memory/disk resources
+ *                that the current cgroup allows to use.
  * Developer: Francesco Montorsi.
  * (C) Copyright 2018 Francesco Montorsi
 
@@ -19,7 +19,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "njmon.h"
+#include "cmonitor.h"
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
@@ -178,7 +178,7 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
 }
 
 // ----------------------------------------------------------------------------------
-// NjmonCollectorApp - Functions used by the njmon engine
+// CMonitorCollectorApp - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
 
 // GLOBALS: paths of cgroups for this process:
@@ -195,7 +195,7 @@ std::set<int> cgroup_cpus;
 
 // FUNCTIONS
 
-void NjmonCollectorApp::cgroup_init()
+void CMonitorCollectorApp::cgroup_init()
 {
     m_bCGroupsFound = false;
 
@@ -242,7 +242,7 @@ void NjmonCollectorApp::cgroup_init()
         cgroup_memory_kernel_path.c_str());
 }
 
-void NjmonCollectorApp::cgroup_config()
+void CMonitorCollectorApp::cgroup_config()
 {
     if (!m_bCGroupsFound)
         return;
@@ -259,14 +259,14 @@ void NjmonCollectorApp::cgroup_config()
     g_output.psection_end();
 }
 
-bool NjmonCollectorApp::cgroup_is_allowed_cpu(int cpu)
+bool CMonitorCollectorApp::cgroup_is_allowed_cpu(int cpu)
 {
     if (!m_bCGroupsFound)
         return true; // allowed
     return cgroup_cpus.find(cpu) != cgroup_cpus.end();
 }
 
-void NjmonCollectorApp::cgroup_proc_memory()
+void CMonitorCollectorApp::cgroup_proc_memory()
 {
     if (!m_bCGroupsFound)
         return;
@@ -319,7 +319,7 @@ void NjmonCollectorApp::cgroup_proc_memory()
     g_output.psection_end();
 }
 
-void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
+void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 {
     if (!m_bCGroupsFound)
         return;
@@ -382,7 +382,7 @@ void NjmonCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
              *
              * HOW TO TEST THIS CODE:
              * run
-             *     make ; src/njmon_collector -C -c100 -s1 >test.json
+             *     make ; src/cmonitor_collector -C -c100 -s1 >test.json
              *     taskset --cpu-list 3 stress --cpu 1   # launch a "stress" process with CPU-affinity on cpu #3
              * then just verify that
              *     watch -n1 'grep cpu3 -A6 -B1 test.json | tail -20'

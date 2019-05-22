@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.com/f18m/cmonitor.svg?branch=master)](https://travis-ci.com/f18m/cmonitor "TravisCI status")
-[![COPR RPM Build](https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/package/cmonitor/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/ "RPMs on Fedora COPR")
+[![Copr build status](https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/package/cmonitor/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/package/cmonitor/ "RPMs on Fedora COPR")
 [![Docker Version](https://images.microbadger.com/badges/version/f18m/cmonitor.svg)](https://hub.docker.com/r/f18m/cmonitor "Docker Image on DockerHub")
 
 # cmonitor - lightweight container monitor
