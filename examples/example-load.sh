@@ -16,8 +16,8 @@ fi
 
 cycle=1
 while (( cycle<num_cycles )); do
-    NJPID="$(pidof njmon_collector)"
-    echo "njmon_collector pid=$NJPID; running CPU/memory/disk load simulator cycle #$cycle..."
+    NJPID="$(pidof cmonitor_collector)"
+    echo "cmonitor_collector pid=$NJPID; running CPU/memory/disk load simulator cycle #$cycle..."
     stress --cpu 1 --vm 1 --timeout $(( $RANDOM % 10 + 1 )) &
     sleep 2
     stress --cpu 1 --timeout $(( $RANDOM % 3 + 1 )) &
@@ -29,8 +29,8 @@ while (( cycle<num_cycles )); do
     (( cycle++ ))
 done
 
-echo "Stopping njmon_collector"
-pkill njmon_collector
+echo "Stopping cmonitor_collector"
+pkill cmonitor_collector
 sleep 1
 
 echo "Exiting the example-load.sh script..."

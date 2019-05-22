@@ -5,8 +5,8 @@ DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f ..)
 
 all:
 	@cp -fv ../example-load.sh .
-	@docker build -t centos7-nmon-image . && \
-		echo "Njmon-cgroup-aware docker example built successfully; now running it" && \
+	@docker build -t centos7-cmonitor-image . && \
+		echo "cmonitor docker example built successfully; now running it" && \
 		docker run \
 			--detach \
 			--tty \
@@ -15,8 +15,8 @@ all:
 			--memory=$(DOCKER_EXAMPLE_MEMORY_LIMIT) \
 			--volume=$(DOCKER_EXAMPLE_FOLDER):/perf \
 			--hostname=docker-centos7-userapp-with-embedded-collector \
-			--name centos7-nmon-example \
-			centos7-nmon-image && \
-		echo "Njmon-cgroup-aware docker successfully started: baremetal+container performance stats are collected in $(DOCKER_EXAMPLE_FOLDER)." && \
+			--name centos7-cmonitor-example \
+			centos7-cmonitor-image && \
+		echo "cmonitor docker successfully started: baremetal+container performance stats are collected in $(DOCKER_EXAMPLE_FOLDER)." && \
 		echo "The docker will stop automatically after a while." && \
-		docker logs -f centos7-nmon-example
+		docker logs -f centos7-cmonitor-example

@@ -9,11 +9,11 @@
           "model": "All Series",
           "vendor": "ASUS"
      },
-     "njmon": {
-          "njmon_command": "/usr/bin/njmon_collector --foreground --sampling-interval=3 --num-samples=180 --collect=cpu,memory,disk,network --output-filename=docker-centos7-collecting-baremetal-stats --output-directory /perf",
+     "cmonitor": {
+          "command": "/usr/bin/cmonitor_collector --foreground --sampling-interval=3 --num-samples=180 --collect=cpu,memory,disk,network --output-filename=docker-centos7-collecting-baremetal-stats --output-directory /perf",
           "sample_interval_seconds": 3,
           "sample_num": 180,
-          "njmon_version": "22-6",
+          "version": "22-6",
           "collecting": "cpu,disk,memory,network",
           "username": "root",
           "userid": 0

@@ -164,14 +164,14 @@ void NjmonCollectorApp::header_identity()
     g_output.psection_end();
 }
 
-void NjmonCollectorApp::header_njmon_info(
+void NjmonCollectorApp::header_cmonitor_info(
     int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags)
 {
     /* user name and id */
     struct passwd* pw;
     uid_t uid;
 
-    g_output.psection_start("njmon");
+    g_output.psection_start("cmonitor");
 
     char command[1024] = { 0 };
     for (int i = 0; i < argc; i++) {
@@ -180,10 +180,10 @@ void NjmonCollectorApp::header_njmon_info(
             strcat(command, " ");
     }
 
-    g_output.pstring("njmon_command", command);
+    g_output.pstring("command", command);
     g_output.plong("sample_interval_seconds", sampling_interval_sec);
     g_output.plong("sample_num", num_samples);
-    g_output.pstring("njmon_version", VERSION_STRING);
+    g_output.pstring("version", VERSION_STRING);
 
     std::string str;
     for (size_t j = 1; j < PK_MAX; j *= 2) {

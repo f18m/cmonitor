@@ -4,8 +4,8 @@ DOCKER_EXAMPLE_MEMORY_LIMIT:=100m
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f ..)
 
 all:
-	@docker build -t centos7-nmon-for-baremetal-image . && \
-		echo "Njmon-cgroup-aware docker example built successfully; now running it" && \
+	@docker build -t centos7-cmonitor-for-baremetal-image . && \
+		echo "cmonitor docker example built successfully; now running it" && \
 		docker run \
 			--detach \
 			--tty \
@@ -15,7 +15,7 @@ all:
 			--volume=$(DOCKER_EXAMPLE_FOLDER):/perf \
 			--hostname=docker-centos7-collecting-baremetal-stats \
 			--name centos7-collecting-baremetal-stats \
-			centos7-nmon-for-baremetal-image && \
-		echo "Njmon-cgroup-aware docker successfully started: baremetal performance stats are collected in $(DOCKER_EXAMPLE_FOLDER)." && \
+			centos7-cmonitor-for-baremetal-image && \
+		echo "cmonitor docker successfully started: baremetal performance stats are collected in $(DOCKER_EXAMPLE_FOLDER)." && \
 		echo "The docker will stop automatically after 3minutes." && \
 		docker logs -f centos7-collecting-baremetal-stats

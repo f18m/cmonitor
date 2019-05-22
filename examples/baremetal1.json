@@ -12,11 +12,11 @@
           "model": "All Series",
           "vendor": "ASUS"
      },
-     "njmon": {
-          "njmon_command": "../src/njmon_collector --sampling-interval=3 --num-samples=60 --foreground --output-filename baremetal1",
+     "cmonitor": {
+          "command": "../src/cmonitor_collector --sampling-interval=3 --num-samples=60 --foreground --output-filename baremetal1",
           "sample_interval_seconds": 3,
           "sample_num": 60,
-          "njmon_version": "22-7",
+          "version": "22-7",
           "collecting": "cgroups,cpu,disk,memory,network",
           "username": "root",
           "userid": 0

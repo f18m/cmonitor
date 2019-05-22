@@ -1,5 +1,5 @@
 #
-# Main makefile to build njmon_collector
+# Main makefile to build cmonitor_collector
 #
 
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -7,7 +7,7 @@ THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 -DVERSION_STRING=\"$(RPM_VERSION)-$(RPM_RELEASE)\"
 CXXFLAGS+=-g -O0    #useful for debugging
 #CXXFLAGS+=-g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
-OUT=njmon_collector
+OUT=cmonitor_collector
 
 VALGRIND_LOGFILE_POSTFIX:=${OUT}-$(shell date +%F-%H%M%S)
 VALGRIND_COMMON_OPTS:=--gen-suppressions=all --time-stamp=yes --error-limit=no

@@ -1,5 +1,5 @@
 /*
- * njmon_main.cpp: core routines for "njmon_collector"
+ * njmon_main.cpp: core routines for "cmonitor_collector"
  * Developer: Nigel Griffiths, Francesco Montorsi.
  * (C) Copyright 2018 Nigel Griffiths, Francesco Montorsi
 
@@ -54,7 +54,7 @@
 // Constants
 //------------------------------------------------------------------------------
 
-#define PID_FILE "/var/run/njmon.pid"
+#define PID_FILE "/var/run/cmonitor.pid"
 
 #define ADDITIONAL_HELP_COLUMN_START (40)
 
@@ -109,7 +109,8 @@ struct option_extended {
         "\thostname_<year><month><day>_<hour><minutes>.err   (for error log)\n"
         "Use special prefix 'stdout' to indicate that you want the utility to write on stdout.\n"
         "Use special prefix 'none' to indicate that you want to disable JSON genreation." },
-    { "Data sampling options", &g_long_opts[4], "Allow multiple instances of njmon_collector to run on this system." },
+    { "Data sampling options", &g_long_opts[4],
+        "Allow multiple instances of cmonitor_collector to run on this system." },
     { "Data sampling options", &g_long_opts[5], "Stay in foreground." },
     { "Data sampling options", &g_long_opts[6],
         "Collect specified list of performance stats. Available performance stats are:\n"
@@ -270,7 +271,7 @@ void NjmonCollectorApp::print_help()
     static_assert(sizeof(g_opts_extended) / sizeof(g_opts_extended[0]) == sizeof(g_long_opts) / sizeof(g_long_opts[0]),
         "Mismatching number of options");
 
-    std::cerr << "njmon_collector: Performance stats collector outputting JSON format." << std::endl;
+    std::cerr << "cmonitor_collector: Performance stats collector outputting JSON format." << std::endl;
     std::cerr << "List of arguments that can be provided follows:" << std::endl;
     std::cerr << std::endl;
 
@@ -316,17 +317,17 @@ void NjmonCollectorApp::print_help()
     std::cerr << "" << std::endl;
     std::cerr << "Examples:" << std::endl;
     std::cerr << "    1) Collect data every 5 mins all day:" << std::endl;
-    std::cerr << "\tnjmon_collector -s 300 -c 288 -m /home/perf" << std::endl;
+    std::cerr << "\tcmonitor_collector -s 300 -c 288 -m /home/perf" << std::endl;
     std::cerr << "    2) Pipe to data handler using half a day of data:" << std::endl;
-    std::cerr
-        << "\tnjmon_collector --sampling-interval=30 --num-samples=1440 --output-filename=stdout --foreground | myprog"
-        << std::endl;
+    std::cerr << "\tcmonitor_collector --sampling-interval=30 --num-samples=1440 --output-filename=stdout --foreground "
+                 "| myprog"
+              << std::endl;
     std::cerr << "    3) Use the defaults (-s 60, collect forever), saving to custom file in background:" << std::endl;
-    std::cerr << "\tnjmon_collector --output-filename=my_server_today" << std::endl;
+    std::cerr << "\tcmonitor_collector --output-filename=my_server_today" << std::endl;
     std::cerr << "    4) Crontab entry:" << std::endl;
-    std::cerr << "\t0 4 * * * /usr/bin/njmon_collector -s 300 -c 288 -m /home/perf" << std::endl;
+    std::cerr << "\t0 4 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -m /home/perf" << std::endl;
     std::cerr << "    5) Crontab entry for pumping data to the njmon central collector:" << std::endl;
-    std::cerr << "\t* 0 * * * /usr/bin/njmon_collector -s 300 -c 288 -i admin.acme.com -p 8181 -X SECRET42 "
+    std::cerr << "\t* 0 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -i admin.acme.com -p 8181 -X SECRET42 "
               << std::endl;
     std::cerr << "" << std::endl;
     std::cerr
@@ -431,7 +432,7 @@ void NjmonCollectorApp::parse_args(int argc, char** argv)
 
             // help
             case 'v':
-                printf("njmon_collector version: %s\n", VERSION_STRING);
+                printf("cmonitor_collector version: %s\n", VERSION_STRING);
                 exit(0);
                 break;
             case 'd':
@@ -625,7 +626,7 @@ int NjmonCollectorApp::run(int argc, char** argv)
     // write stuff that is present only in the very first sample (never changes):
     g_output.pheader_start();
     header_identity();
-    header_njmon_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
+    header_cmonitor_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
     header_etc_os_release();
     header_version();
     if (g_cfg.m_nCollectFlags & PK_CGROUPS)

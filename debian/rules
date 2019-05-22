@@ -14,4 +14,4 @@ export DH_VERBOSE=1
 
 # we just override the 'install' phase to provide not only the DESTDIR but also the BINDIR variable
 override_dh_auto_install: 
-	$(MAKE) install BINDIR=usr/bin DESTDIR=$(PWD)/debian/nmon-cgroup-aware
+	$(MAKE) install BINDIR=usr/bin DESTDIR=$(PWD)/debian/cmonitor

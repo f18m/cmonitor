@@ -107,7 +107,7 @@ private:
     //------------------------------------------------------------------------------
 
     void header_identity();
-    void header_njmon_info(
+    void header_cmonitor_info(
         int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags);
     void header_etc_os_release();
     void header_cpuinfo();

@@ -97,7 +97,7 @@ void NjmonOutputFrontend::init_influxdb_connection(const std::string& hostname, 
     m_influxdb_client_conn = new influx_client_t();
     m_influxdb_client_conn->host = strdup(ipaddress.c_str()); // force newline
     m_influxdb_client_conn->port = port; // force newline
-    m_influxdb_client_conn->db = strdup("njmon"); // force newline
+    m_influxdb_client_conn->db = strdup("cmonitor"); // force newline
     m_influxdb_client_conn->usr = strdup("usr"); // force newline
     m_influxdb_client_conn->pwd = strdup("pwd"); // force newline
 
