@@ -51,7 +51,7 @@ examples:
 #
 
 srpm_tarball:
-	$(MAKE) -C src RPM_VERSION=$(RPM_VERSION) RPM_RELEASE=$(RPM_RELEASE)
+	$(MAKE) clean # make sure we don't include any build result in the source RPM!
 	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
 	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
 	# prepare the tarball with

@@ -1,4 +1,5 @@
 FROM centos:7
+ARG rpm_version=1.1-8
 
 # first install Python3:
 RUN yum install -y epel-release
@@ -7,7 +8,7 @@ RUN yum install -y python36
 # then install cmonitor from COPR repo:
 RUN yum install -y yum-plugin-copr
 RUN yum copr enable -y f18m/cmonitor
-RUN yum install -y cmonitor-22-7
+RUN yum install -y cmonitor-$rpm_version
 
 # finally run the cmonitor collector 
 #  - in foreground since Docker does not like daemons
