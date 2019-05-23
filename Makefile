@@ -10,10 +10,21 @@ ROOT_DIR:=$(THIS_DIR)
 RPM_TMP_DIR:=/tmp/cmonitor/rpm
 RPM_TARBALL_DIR:=/tmp/cmonitor/tarball
 
+# get RPM release from GIT
+TAGVERSION:=$(shell git describe --long --tags)
+#TMPVERSION1:=$(subst ., ,$(TAGVERSION))
+#TMPVERSION2:=$(subst -, ,$(TMPVERSION1))
+ 
 # main versioning constants
 RPM_VERSION:=1.1
-RPM_RELEASE:=8
-
+NUM_COMMITS_SINCE_TAG=$(shell git rev-list v1.1..HEAD --count)
+#RPM_RELEASE:=$(subst v$(RPM_VERSION)-,,$(TAGVERSION))
+#RPM_RELEASE:=$(subst -,_,$(RPM_RELEASE))
+RPM_RELEASE:=$(NUM_COMMITS_SINCE_TAG)
+ifeq ($(RPM_RELEASE),)
+RPM_RELEASE:=1
+endif
+$(info RPM version is $(RPM_VERSION), RPM release is $(RPM_RELEASE))
 
 #
 # BUILD TARGETS
