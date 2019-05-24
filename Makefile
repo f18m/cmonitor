@@ -1,5 +1,7 @@
 #
-# Main makefile for this project
+# Main makefile for cmonitor project
+# https://github.com/f18m/cmonitor
+# Francesco Montorsi (c) 2019
 #
 
 # constants
@@ -12,10 +14,12 @@ RPM_TARBALL_DIR:=/tmp/cmonitor/tarball
 
 # get RPM release from GIT
 TAGVERSION:=$(shell git describe --long --tags)
-#TMPVERSION1:=$(subst ., ,$(TAGVERSION))
-#TMPVERSION2:=$(subst -, ,$(TMPVERSION1))
- 
+
 # main versioning constants
+# IMPORTANT: other places where the version must be updated:
+#  1) examples/docker*/Dockerfile  -> rpm_version string
+#  2) debian/changelog             -> to release a new Ubuntu package
+#
 RPM_VERSION:=1.1
 NUM_COMMITS_SINCE_TAG=$(shell git rev-list v1.1..HEAD --count)
 #RPM_RELEASE:=$(subst v$(RPM_VERSION)-,,$(TAGVERSION))
@@ -124,10 +128,15 @@ endif
 #  - make deb
 #  - run dput to upload to your PPA
 deb:
-	dpkg-buildpackage -S  # build source only otherwise Ubuntu PPA rejects with "Source/binary (i.e. mixed) uploads are not allowed"
+ifeq ($(shell whoami),root)
+	@echo "*** ERROR: generating the Debian/Ubuntu package requires using a normal user, having a valid GPG secret key registered;"
+	@echo "           both 'gpg -k' and 'gpg -K' must show the same key."
+	@exit 1
+endif
+	dpkg-buildpackage -tc -S --force-sign # build source only otherwise Ubuntu PPA rejects with "Source/binary (i.e. mixed) uploads are not allowed"
 	## PROBABLY NOT NECESSARY: debsign -S            # you must have the GPG key setup properly for this to work (see e.g. https://help.github.com/en/articles/generating-a-new-gpg-key)
 	@echo "When ready to upload to your PPA run dput as e.g.:"
-	@echo "    dput ppa:francesco-montorsi/ppa ../cmonitor_$(RPM_VERSION).$(RPM_RELEASE)-1ubuntu1_source.changes"
+	@echo "    cd .. && dput ppa:francesco-montorsi/cmonitor cmonitor_$(RPM_VERSION).$(RPM_RELEASE)-1ubuntu1_source.changes"
 
 #
 # DOCKER IMAGE
