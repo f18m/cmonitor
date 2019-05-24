@@ -133,7 +133,7 @@ deb:
 # DOCKER IMAGE
 # 
 
-docker_image:
+docker_image: all
 	@cp -fv src/cmonitor_collector docker
 	@docker build \
 		--tag f18m/cmonitor:v$(RPM_VERSION)-$(RPM_RELEASE) \
