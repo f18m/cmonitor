@@ -1,5 +1,5 @@
 FROM centos:7
-ARG rpm_version=1.1-8
+ARG rpm_version=1.1
 
 # first install Python3:
 RUN yum install -y epel-release

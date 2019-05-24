@@ -4,7 +4,7 @@
 
 # cmonitor - lightweight container monitor
 
-A Docker/LXC, database-free, lightweight container performance monitoring solution, perfect for ephemeral containers
+A **Docker, LXC, database-free, lightweight container performance monitoring solution**, perfect for ephemeral containers
 (e.g. containers used for DevOps automatic testing). Can also be used with InfluxDB and Grafana to monitor long-lived 
 containers in real-time.
 
@@ -14,11 +14,26 @@ The project is composed by 2 tools:
 2) a simple Python script to convert the generated JSON to a self-contained HTML page.
 
 The agent is actually a cgroup-aware statistics collector; cgroups (i.e. Linux Control Groups) are the basic technology used 
-to create containers; this project is thus aimed at monitoring your LXC/Docker container performances but can equally monitor
-physical servers.
+to create containers (you can [read more on them here](https://en.wikipedia.org/wiki/Cgroups)); this project is thus aimed at monitoring your LXC/Docker container performances but can equally monitor physical servers.
 
 This project supports only **Linux x86_64 architectures**.
 
+Table of contents of this README:
+
+- [Features](#section-id-22)
+- [Yet-Another-Monitoring-Project?](#section-id-39)
+- [How to install](#section-id-63)
+  - [RPM](#section-id-65)
+  - [Ubuntu](#section-id-76)
+  - [Docker](#section-id-86)
+- [How to collect stats](#section-id-98)
+- [How to plot stats collected as JSON](#section-id-116)
+- [Connecting with InfluxDB and Grafana](#section-id-150)
+- [Project History](#section-id-176)
+
+
+
+<div id='section-id-22'/>
 
 ## Features
 
@@ -29,13 +44,15 @@ This project collects performance data about:
 - network traffic (PPS and MB/s or Mbps);
 - disk load;
 - average Linux load;
-- CPU usage as reported by the 'cpuacct' (CPU accounting) cgroup;
-- memory usage as reported by the 'memory' cgroup;
-- disk usage as reported by the 'blkio' cgroup;
+- CPU usage as reported by the `cpuacct` (CPU accounting) cgroup;
+- memory usage as reported by the `memory` cgroup;
+- disk usage as reported by the `blkio` cgroup;
 
 Moreover the project allows you to easily post-process collected data and produce a **self-contained** HTML page which allows
 to visualize all the performance data easily using [Google Charts](https://developers.google.com/chart/).
 
+
+<div id='section-id-39'/>
 
 ## Yet-Another-Monitoring-Project?
 
@@ -61,7 +78,11 @@ perfect for **ephemeral** containers (e.g. containers used for DevOps automatic 
   are required to visualize it later!
 
 
+<div id='section-id-63'/>
+
 ## How to install
+
+<div id='section-id-65'/>
 
 ### RPM
 
@@ -74,15 +95,19 @@ yum copr enable -y f18m/cmonitor
 yum install -y cmonitor
 ```
 
+<div id='section-id-76'/>
+
 ### Ubuntu
 
-If you use an LXC/Docker container based on a Ubuntu distribution you can similarly install from [my Ubuntu PPA](https://launchpad.net/~francesco-montorsi/+archive/ubuntu/ppa)
+If you use an LXC/Docker container based on a Ubuntu distribution you can similarly install from [my Ubuntu PPA](https://launchpad.net/~francesco-montorsi/+archive/ubuntu/cmonitor)
 using the following commands:
 
 ```
 add-apt-repository ppa:francesco-montorsi/ppa
 apt-get install cmonitor
 ```
+
+<div id='section-id-86'/>
 
 ### Docker
 
@@ -95,6 +120,8 @@ docker run -d --name=cmonitor-baremetal-collector -v /root:/perf f18m/cmonitor
 which downloads the Docker image for this project from [Docker Hub](https://hub.docker.com/r/f18m/cmonitor)
 and runs the stats collector saving data in JSON format inside your /root folder.
 
+
+<div id='section-id-98'/>
 
 ## How to collect stats
 
@@ -109,26 +136,28 @@ sampling all supported performance statistics every 3 seconds.
 Whenever you want you can either:
 
 - inject that JSON inside InfluxDB (mostly useful for **persistent** containers that you want to monitor in real-time);
-  this is not covered by this README;
-- use the `cmonitor_chart` utility to convert that JSON into a self-contained HTML file (mostly useful for **ephemeral** containers);
+  see section "Connecting with InfluxDB and Grafana" below;
+- or use the `cmonitor_chart` utility to convert that JSON into a self-contained HTML file (mostly useful for **ephemeral** containers);
   see below for practical examples.
 
 
-## How to plot stats
+<div id='section-id-116'/>
+
+## How to plot stats collected as JSON
 
 To plot the JSON containing the collected statistics, simply launch the `cmonitor_chart` utility installed together
 with the RPM/Debian package:
 
 ```
-cmonitor_chart /path/to/json-stats.json /path/to/output-file.html
+cmonitor_chart /path/to/json-stats.json
 ```
 
 Example of resulting output files:
 
 1) [baremetal1](https://f18m.github.io/cmonitor/examples/baremetal1.html): 
    example of graph generated with the performance stats collected from a physical server running Ubuntu 18.04; 
-   the `cmonitor_collector` utility was running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
-   graphs are present;
+   the `cmonitor_collector` utility was running inside the default "user.slice" cgroup and collected both the stats of that cgroup 
+   and all baremetal stats;
 2) [docker_centos7_collecting_baremetal_stats](https://f18m.github.io/cmonitor/examples/docker-centos7-collecting-baremetal-stats.html): 
    example of graph generated with the performance stats collected from a physical server from inside a Docker container;
    in this case cgroup stat collection was explicitely disabled so that only baremetal performance graphs are present;
@@ -147,6 +176,8 @@ A longer example of collected statistics (results in a larger file, may take som
    the `cmonitor_collector` utility was running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
    graphs are present;
 
+
+<div id='section-id-150'/>
 
 ## Connecting with InfluxDB and Grafana
 
@@ -174,14 +205,21 @@ make -C examples regen_grafana_screenshots
 which uses Docker files to deploy a temporary setup and fill the InfluxDB with 10minutes of data collected from the baremetal.
 
 
+<div id='section-id-176'/>
+
 ## Project History
 
 This project started as a fork of [Nigel's performance Monitor for Linux](http://nmon.sourceforge.net), adding cgroup-awareness;
 but it has quickly evolved to a point where it shares very little code pieces with the original `njmon` tool.
+
+Some key differences now include:
+ - cgroup-aware: several performance cgroup stats are collected by `cmonitor_collector` and plotted by `cmonitor_chart`
+ - more command-line options for `cmonitor_collector`;
+ - HTML page generated by `cmonitor_chart` differently organized;
+ - `cmonitor_collector` is able to connect to InfluxDB directly and does not need intermediate Python scripts to transform
+   from JSON streamed data to InfluxDB-compatible stream.
+
 This fork supports only Linux x86_64 architectures; support for AIX/PowerPC (present in original `nmon`) has been dropped.
-
-
-## Links
 
 - Original project: [http://nmon.sourceforge.net](http://nmon.sourceforge.net)
 - Other forks: [https://github.com/axibase/nmon](https://github.com/axibase/nmon)

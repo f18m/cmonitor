@@ -27,13 +27,28 @@ distclean: clean
 #
 
 regen_baremetal1:
+	@echo "Launching load simulator to have some CPu at 100% and so on..."
+	./example-load.sh &
 	@echo "Regenerating example JSON... this will take about 3*60secs."
 	@../src/cmonitor_collector --sampling-interval=3 --num-samples=60 --foreground --output-filename baremetal1
 	@jq -e . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED !!!" ; exit 10 )
 
 
 #
-# INFLUXDB & GRAFANA
+# docker examples:
+#
+
+regen_docker_examples:
+	for dir in docker-centos7-collecting-baremetal-stats \
+			   docker-centos7-userapp-with-embedded-collector \
+			   docker-ubuntu1804-userapp-with-embedded-collector; do \
+		cd $dir && make ; \
+		sleep 10 ; \
+	done
+
+
+#
+# INFLUXDB & GRAFANA example:
 #
 
 reset_influxdb:
