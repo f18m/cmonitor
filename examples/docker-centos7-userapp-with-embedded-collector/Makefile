@@ -2,6 +2,7 @@
 DOCKER_EXAMPLE_CPUS:=0,1
 DOCKER_EXAMPLE_MEMORY_LIMIT:=100m
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f ..)
+HOSTNAME:=docker-centos7-userapp-with-embedded-collector
 
 all:
 	@cp -fv ../example-load.sh .
@@ -14,9 +15,10 @@ all:
 			--cpuset-cpus=$(DOCKER_EXAMPLE_CPUS) \
 			--memory=$(DOCKER_EXAMPLE_MEMORY_LIMIT) \
 			--volume=$(DOCKER_EXAMPLE_FOLDER):/perf \
-			--hostname=docker-centos7-userapp-with-embedded-collector \
+			--hostname=$(HOSTNAME) \
 			--name centos7-cmonitor-example \
 			centos7-cmonitor-image && \
 		echo "cmonitor docker successfully started: baremetal+container performance stats are collected in $(DOCKER_EXAMPLE_FOLDER)." && \
 		echo "The docker will stop automatically after a while." && \
-		docker logs -f centos7-cmonitor-example
+		docker logs -f centos7-cmonitor-example && \
+		gzip -f ../$(HOSTNAME).json

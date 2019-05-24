@@ -10,6 +10,7 @@
 
 import sys
 import json
+import gzip
 
 # =======================================================================================================
 # CONSTANTS
@@ -920,12 +921,20 @@ def generate_load_avg(web, jheader, jdata, hostname):
 # =======================================================================================================
 
 
-def main_process_file(cmd, infile, outfile):
+def main_process_file(infile, outfile):
+    
     # read the raw .json as text
-    print("Loading %s" % infile)
-    f = open(infile, "r")
-    text = f.read()
-    f.close()
+    if infile[-8:] == '.json.gz':
+        print("Loading gzipped JSON file %s" % infile)
+        f = gzip.open(infile, 'rb')
+        text = f.read()
+        f.close()
+    else:
+        print("Loading JSON file %s" % infile)
+        f = open(infile, "r")
+        text = f.read()
+        f.close()
+    
     # fix up the end of the file if it is not complete
     ending = text[-3:-1]  # The last two character
     if ending == "},":  # the data capture is still running or halted
@@ -1034,6 +1043,11 @@ if __name__ == '__main__':
     try:
         outfile = sys.argv[2]
     except:
-        outfile = infile[:-4] + "html"
+        if infile[-8:] == '.json.gz':
+            outfile = infile[:-8] + '.html'
+        elif infile[-5:] == '.json':
+            outfile = infile[:-5] + '.html'
+        else:
+            outfile = infile + '.html'
 
-    main_process_file(cmd, infile, outfile)
+    main_process_file(infile, outfile)

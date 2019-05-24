@@ -3,11 +3,11 @@
 # 
 
 EXAMPLE_JSON_FILES=\
-	baremetal1.json \
-	baremetal2.json \
-	docker-centos7-collecting-baremetal-stats.json \
-	docker-centos7-userapp-with-embedded-collector.json \
-	docker-ubuntu1804-userapp-with-embedded-collector.json
+	baremetal1.json.gz \
+	baremetal2.json.gz \
+	docker-centos7-collecting-baremetal-stats.json.gz \
+	docker-centos7-userapp-with-embedded-collector.json.gz \
+	docker-ubuntu1804-userapp-with-embedded-collector.json.gz
 
 all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
