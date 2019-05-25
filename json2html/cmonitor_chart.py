@@ -924,16 +924,24 @@ def generate_load_avg(web, jheader, jdata, hostname):
 def main_process_file(infile, outfile):
     
     # read the raw .json as text
-    if infile[-8:] == '.json.gz':
-        print("Loading gzipped JSON file %s" % infile)
-        f = gzip.open(infile, 'rb')
-        text = f.read()
-        f.close()
-    else:
-        print("Loading JSON file %s" % infile)
-        f = open(infile, "r")
-        text = f.read()
-        f.close()
+    try:
+        if infile[-8:] == '.json.gz':
+            print("Loading gzipped JSON file %s" % infile)
+            f = gzip.open(infile, 'rb')
+            text = f.read()
+            f.close()
+            
+            # in Python 3.5 the gzip returns a sequence of "bytes" and not a "str"
+            if isinstance(text, bytes):
+                text = text.decode('utf-8')
+        else:
+            print("Loading JSON file %s" % infile)
+            f = open(infile, "r")
+            text = f.read()
+            f.close()
+    except OSError as err:
+        print("Error while opening input JSON file '%s': %s" % (infile, err))
+        sys.exit(1)
     
     # fix up the end of the file if it is not complete
     ending = text[-3:-1]  # The last two character
@@ -943,8 +951,13 @@ def main_process_file(infile, outfile):
     # Convert the text to json and extract the stats
     entry = []
     entry = json.loads(text)  # convert text to JSON
-    jheader = entry["header"]
-    jdata = entry["samples"]  # removes outer parts so we have a list of snapshot dictionaries
+    
+    try:
+        jheader = entry["header"]
+        jdata = entry["samples"]  # removes outer parts so we have a list of snapshot dictionaries
+    except:
+        print("Unexpected JSON format. Aborting.")
+        sys.exit(1)
     
     # - - - - - Start nchart functions
     next_graph_need_stacking = 0
