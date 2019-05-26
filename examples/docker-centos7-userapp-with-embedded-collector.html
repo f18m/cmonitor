@@ -15,6 +15,7 @@
      #button_table { border-collapse: collapse; }
      #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
   </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/pako/1.0.5/pako.min.js"></script>
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
   <script type="text/javascript">
 google.load("visualization", "1.1", {packages:["corechart"]});
@@ -22,15 +23,10 @@ google.setOnLoadCallback(setupCharts);
 
 function setupCharts() {
   var chart = null;
-  var data_1 = google.visualization.arrayToDataTable([
-[{type: 'datetime', label: 'Datetime'},'User','Nice','System','Idle','I/O wait','Hard IRQ','Soft IRQ','Steal'],
-['Date(2019,4,13,18,09,26)',4.665,0.0,1.666,92.297,0.0,0.0,0.333,0.0],
-['Date(2019,4,13,18,09,29)',4.997,0.0,2.332,90.609,0.0,0.0,0.0,0.0],
-['Date(2019,4,13,18,09,32)',3.997,0.0,1.332,90.597,0.333,0.0,0.0,0.0],
-['Date(2019,4,13,18,09,35)',4.664,0.0,1.666,92.288,0.0,0.0,0.333,0.0],
-['Date(2019,4,13,18,09,38)',5.331,0.0,1.0,92.622,0.0,0.0,0.0,0.0],
-['Date(2019,4,13,18,09,41)',5.329,0.0,1.998,91.262,0.666,0.0,0.0,0.0],
-  ]);
+  var deflated_data_base64_graph1 = 'eNqNz7FqwzAQBuBXCZpaOFTpZKm+zBnqJaUJnUwGNVbA4JASC4oJffeeHLmEQNoMht+/Tp99dX0ScfgMYi4aH0Ns90GA6PxH6LhaTNU3iPc+HPlo2W7TxHroY9hzqJouvVdPr7Mv30aOL/7YzKrVW5o67OIUY/Cd2EA9og+oNIEFbUCXQIDuUUAhnbOgpALNyQGhRHoei/NjjEnpJkIjQvkO8jwCKekUXSDqL8IgE+aX0BNhxyJ//1/E5mWKq2XK8v5lTMmI5SmdEZUIh3jvKoU+A0gZIOJaS3SJSL90iWx+APL1dcY=\n';
+  var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
+  var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
+  var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
   var options_1 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 0 (from baremetal stats), STACKED graph",
@@ -44,17 +40,12 @@ function setupCharts() {
     if (chart && chart.clearChart)
       chart.clearChart();
     chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_1, options_1);
+    chart.draw(data_graph1, options_1);
   });
-  var data_2 = google.visualization.arrayToDataTable([
-[{type: 'datetime', label: 'Datetime'},'User','Nice','System','Idle','I/O wait','Hard IRQ','Soft IRQ','Steal'],
-['Date(2019,4,13,18,09,26)',2.332,0.0,2.332,94.63,0.0,0.0,0.333,0.0],
-['Date(2019,4,13,18,09,29)',3.664,0.0,1.999,93.607,0.0,0.0,0.0,0.0],
-['Date(2019,4,13,18,09,32)',2.665,0.0,2.332,93.262,0.0,0.0,0.333,0.0],
-['Date(2019,4,13,18,09,35)',1.999,0.0,1.333,94.62,0.0,0.0,0.0,0.0],
-['Date(2019,4,13,18,09,38)',1.999,0.0,2.332,94.621,0.0,0.0,0.666,0.0],
-['Date(2019,4,13,18,09,41)',2.665,0.0,1.998,93.261,0.333,0.0,0.666,0.0],
-  ]);
+  var deflated_data_base64_graph2 = 'eNqNkDFrwzAQhf+K0dTAoUp39tXKnCFeGtrSyWRQaxUMCgmJoISQ/x5JbogzNHgwvDs9f3pPbXsS4bhzYi46G1zoN06A8PbL+bhaXFdnEJ8Ht49Hr/13cnwcD8Ftomg6n+bmeVX82j5EubT7rmje35Jr+xOuMjjrxRraDH1CpQ1UoAl0DQaQZwJQEiEoqf6UKSVTnoePKE//MkxkkGQus19LYwyYuFAvI4h6hCDMMZircQySyDg9B1URMtw+5Ej+1AUnx6jvCLfXQD36nZkfQUp91yXh6qGLvnUYYdYXv192KA==\n';
+  var deflated_data_binary_graph2 = window.atob(deflated_data_base64_graph2);
+  var inflated_data_graph2 = JSON.parse(pako.inflate(deflated_data_binary_graph2, { to: 'string' }));
+  var data_graph2 = google.visualization.arrayToDataTable(inflated_data_graph2);
   var options_2 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 1 (from baremetal stats), STACKED graph",
@@ -68,17 +59,12 @@ function setupCharts() {
     if (chart && chart.clearChart)
       chart.clearChart();
     chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_2, options_2);
+    chart.draw(data_graph2, options_2);
   });
-  var data_3 = google.visualization.arrayToDataTable([
-[{type: 'datetime', label: 'Datetime'},'CPU0','CPU1'],
-['Date(2019,4,13,18,09,26)',6.664,4.997],
-['Date(2019,4,13,18,09,29)',7.329,5.663],
-['Date(2019,4,13,18,09,32)',5.662,5.33],
-['Date(2019,4,13,18,09,35)',6.663,3.332],
-['Date(2019,4,13,18,09,38)',6.331,4.997],
-['Date(2019,4,13,18,09,41)',7.993,5.662000000000001],
-  ]);
+  var deflated_data_base64_graph3 = 'eNp9zrEKAjEMBuB3yaQQSpP0ehdXfQAXp9LhxA7CCQ5dRHx3Y1WcaoYE/nyQpHSHersW2MBprqWeLwUQlvlYFot23+iBsN0fPLRBkDG13Yo9KQ5IgjShIsc1YHQxBgxOdew6NTc6YQtNS88Jm3sJti59NnzOCoox7rqpORH6/16g9p6qvI/7X1HOT8vWRy4=\n';
+  var deflated_data_binary_graph3 = window.atob(deflated_data_base64_graph3);
+  var inflated_data_graph3 = JSON.parse(pako.inflate(deflated_data_binary_graph3, { to: 'string' }));
+  var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
   var options_3 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "All logical CPUs allowed in cmonitor_collector CGroup (from baremetal stats)",
@@ -92,17 +78,12 @@ function setupCharts() {
     if (chart && chart.clearChart)
       chart.clearChart();
     chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_3, options_3);
+    chart.draw(data_graph3, options_3);
   });
-  var data_4 = google.visualization.arrayToDataTable([
-[{type: 'datetime', label: 'Datetime'},'User','System'],
-['Date(2019,4,13,18,09,26)',0.0,0.0],
-['Date(2019,4,13,18,09,29)',0.0,0.0],
-['Date(2019,4,13,18,09,32)',0.052,0.0],
-['Date(2019,4,13,18,09,35)',0.0,0.0],
-['Date(2019,4,13,18,09,38)',0.0,0.0],
-['Date(2019,4,13,18,09,41)',0.028,0.0],
-  ]);
+  var deflated_data_base64_graph4 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lEKLU4uAUsGVxSWpuUqxOtFgWQ0jA0NLHVMdQ2MdQwsdSx0jM00lHQM9AxDGqcaSsBpjI4gaUyO8qkyJMMmCsBoTQ4gaIwuwqlgAS25Cbg==\n';
+  var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
+  var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
+  var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
   var options_4 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 0 (from CGroup stats), STACKED graph",
@@ -116,17 +97,12 @@ function setupCharts() {
     if (chart && chart.clearChart)
       chart.clearChart();
     chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_4, options_4);
+    chart.draw(data_graph4, options_4);
   });
-  var data_5 = google.visualization.arrayToDataTable([
-[{type: 'datetime', label: 'Datetime'},'User','System'],
-['Date(2019,4,13,18,09,26)',0.042,0.0],
-['Date(2019,4,13,18,09,29)',0.107,0.0],
-['Date(2019,4,13,18,09,32)',0.121,0.0],
-['Date(2019,4,13,18,09,35)',0.046,0.0],
-['Date(2019,4,13,18,09,38)',0.046,0.0],
-['Date(2019,4,13,18,09,41)',0.266,0.0],
-  ]);
+  var deflated_data_base64_graph5 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lEKLU4uAUsGVxSWpuUqxOtFgWQ0jA0NLHVMdQ2MdQwsdSx0jM00lHQM9AxMjEIlTlSVYlaGBOT5VxkYQVUaGeFWZQm00w6vKghhVJoZgVUZmEFWxAFkIRBE=\n';
+  var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
+  var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
+  var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
   var options_5 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 1 (from CGroup stats), STACKED graph",
@@ -140,17 +116,12 @@ function setupCharts() {
     if (chart && chart.clearChart)
       chart.clearChart();
     chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_5, options_5);
+    chart.draw(data_graph5, options_5);
   });
-  var data_6 = google.visualization.arrayToDataTable([
-[{type: 'datetime', label: 'Datetime'},'CPU0','CPU1'],
-['Date(2019,4,13,18,09,26)',0.0,0.042],
-['Date(2019,4,13,18,09,29)',0.0,0.107],
-['Date(2019,4,13,18,09,32)',0.052,0.121],
-['Date(2019,4,13,18,09,35)',0.0,0.046],
-['Date(2019,4,13,18,09,38)',0.0,0.046],
-['Date(2019,4,13,18,09,41)',0.028,0.266],
-  ]);
+  var deflated_data_base64_graph6 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lJwDQg2UwJShUqxONFhOw8jA0FLHVMfQWMfQQsdSx8hMU0nHQM8AhE2McKqyhKsyNDDHpcrYCKLK1AikzsgQpzpTJDvNcKqyIEaViSFElZEFkDQyM4uNBQBxuULv\n';
+  var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
+  var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
+  var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
   var options_6 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "All logical CPUs assigned to cmonitor_collector CGroup (from CGroup stats)",
@@ -164,17 +135,12 @@ function setupCharts() {
     if (chart && chart.clearChart)
       chart.clearChart();
     chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_6, options_6);
+    chart.draw(data_graph6, options_6);
   });
-  var data_7 = google.visualization.arrayToDataTable([
-[{type: 'datetime', label: 'Datetime'},'Used','Cached (DiskRead)','Free'],
-['Date(2019,4,13,18,09,26)',6,2,6],
-['Date(2019,4,13,18,09,29)',6,2,6],
-['Date(2019,4,13,18,09,32)',6,2,6],
-['Date(2019,4,13,18,09,35)',6,2,6],
-['Date(2019,4,13,18,09,38)',6,2,6],
-['Date(2019,4,13,18,09,41)',6,2,6],
-  ]);
+  var deflated_data_base64_graph7 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lEKLU1OAUs6JyRmpKQoaLpnF2UGpiSmaQDG3otRUpVidaLB6DSMDQ0sdUx1DYx1DCx1LHSMzoBIzHSMdM5wqLAmpMDYiqMKUoAoLQipMDOEqYgEL5kTA\n';
+  var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
+  var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
+  var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
   var options_7 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Memory usage in GB (from baremetal stats), STACKED graph",
@@ -188,17 +154,12 @@ function setupCharts() {
     if (chart && chart.clearChart)
       chart.clearChart();
     chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_7, options_7);
+    chart.draw(data_graph7, options_7);
   });
-  var data_8 = google.visualization.arrayToDataTable([
-[{type: 'datetime', label: 'Datetime'},'Used','Cached (DiskRead)','Alloc Failures'],
-['Date(2019,4,13,18,09,26)',1.032192,0.016384,0],
-['Date(2019,4,13,18,09,29)',1.036288,0.024576,0],
-['Date(2019,4,13,18,09,32)',1.036288,0.090112,0],
-['Date(2019,4,13,18,09,35)',1.036288,0.1024,0],
-['Date(2019,4,13,18,09,38)',1.036288,0.110592,0],
-['Date(2019,4,13,18,09,41)',1.036288,1.429504,0],
-  ]);
+  var deflated_data_base64_graph8 = 'eNp9zU0KwjAQBeCrSFYVhpKZ/Ji4E4sHEFyVLmITsBhRbF2IeHdTUdBCu33zvTdl+WDd/RLYknnXha45BQYsun2IKSq+0RPYrg0+ndauPgQ/y4qmPW6D8/OUrWI817ONa+LtGlpWQfluZsTRggIUgAYskE4Ycy4ILQHPOWphJPBRbz9ekzG9J6kWetwLGnjLEWnCq3+P6cGENgONXNmJdYm/HnNJVvF+v3oBLx5Ygw==\n';
+  var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
+  var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
+  var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
   var options_8 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Memory used by cmonitor_collector CGroup MB (from CGroup stats)",
@@ -220,17 +181,12 @@ function setupCharts() {
     if (chart && chart.clearChart)
       chart.clearChart();
     chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_8, options_8);
+    chart.draw(data_graph8, options_8);
   });
-  var data_9 = google.visualization.arrayToDataTable([
-[{type: 'datetime', label: 'Datetime'},'sr0 Read MB','sr0 Write MB','sda Read MB','sda Write MB','sdb Read MB','sdb Write MB','sdc Read MB','sdc Write MB'],
-['Date(2019,4,13,18,09,26)',0.0,-0.0,0.0,-0.14927500000000002,0.0,-0.0,0.0,-0.0],
-['Date(2019,4,13,18,09,29)',0.0,-0.0,0.0,-0.0,0.0,-0.0,0.0,-0.0],
-['Date(2019,4,13,18,09,32)',0.0,-0.0,0.018652000000000002,-0.030643,0.0,-0.0,0.0,-0.0],
-['Date(2019,4,13,18,09,35)',0.0,-0.0,0.0,-0.013327,0.0,-0.0,0.0,-0.0],
-['Date(2019,4,13,18,09,38)',0.0,-0.0,0.0,-0.0,0.0,-0.0,0.0,-0.0],
-['Date(2019,4,13,18,09,41)',0.0,-0.0,0.423671,-0.010657999999999999,0.0,-0.0,0.0,-0.0],
-  ]);
+  var deflated_data_base64_graph9 = 'eNqlj70KwjAUhV+lZFK4ys1/4yiuLi4OpUPaZihUkJpFxHe3tVUbrWDxDiHnfjmHkyS5EH8+OrIihfXOlwdHgFQ2c1Wz2jxWVyCnGqOds0W0XZNO7evSu14WdggbFcAsgFkI8wDmL5hCcm8wY0gNSKAcaAwGmJoTwCXCoj36CxWGaYnPYR8v8GueGcnD3/2cvflprCTDYZeWcFSCT0iVY60o50xPCIn/+5qgoV8wrjTtmqCS2gxmJDW9ASHiiak=\n';
+  var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
+  var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
+  var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
   var options_9 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Disk I/O (from baremetal stats)",
@@ -244,17 +200,12 @@ function setupCharts() {
     if (chart && chart.clearChart)
       chart.clearChart();
     chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_9, options_9);
+    chart.draw(data_graph9, options_9);
   });
-  var data_10 = google.visualization.arrayToDataTable([
-[{type: 'datetime', label: 'Datetime'},'LoadAvg (1min)','LoadAvg (5min)','LoadAvg (15min)'],
-['Date(2019,4,13,18,09,26)',11.0,13.5,13.5],
-['Date(2019,4,13,18,09,29)',11.0,13.5,13.5],
-['Date(2019,4,13,18,09,32)',11.0,13.5,13.5],
-['Date(2019,4,13,18,09,35)',11.0,13.5,13.5],
-['Date(2019,4,13,18,09,38)',11.0,13.5,13.5],
-['Date(2019,4,13,18,09,41)',11.0,13.5,13.5],
-  ]);
+  var deflated_data_base64_graph10 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lHzyE1Mcy9IVNAxzM/M0lZAETNEFDCEisTrRYBM0jAwMLXVMdQyNdQwtdCx1jMyAqg0N9QyAInqmYAKnUkuilRobEa/UlHilFkQrNTHEVBoLAPUSU+I=\n';
+  var deflated_data_binary_graph10 = window.atob(deflated_data_base64_graph10);
+  var inflated_data_graph10 = JSON.parse(pako.inflate(deflated_data_binary_graph10, { to: 'string' }));
+  var data_graph10 = google.visualization.arrayToDataTable(inflated_data_graph10);
   var options_10 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Average Load  (from baremetal stats)",
@@ -268,7 +219,7 @@ function setupCharts() {
     if (chart && chart.clearChart)
       chart.clearChart();
     chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_10, options_10);
+    chart.draw(data_graph10, options_10);
   });
 }
 

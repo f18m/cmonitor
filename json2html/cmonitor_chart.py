@@ -11,6 +11,9 @@
 import sys
 import json
 import gzip
+import datetime
+import zlib
+import binascii
 
 # =======================================================================================================
 # CONSTANTS
@@ -19,19 +22,22 @@ import gzip
 GRAPH_TYPE_BAREMETAL = 1
 GRAPH_TYPE_CGROUP = 2
 
+SAVE_DEFLATED_JS_DATATABLES = True
+
+
 # =======================================================================================================
 # TYPES
 # =======================================================================================================
 
 
-class Graph:
+class GoogleChartsGraph:
 
     def __init__(self, name, type):
         self.name = name
         self.type = type  # one of GRAPH_TYPE_BAREMETAL or GRAPH_TYPE_CGROUP
         
 
-class Table(object):
+class GoogleChartsTable(object):
 
     def __init__(self, column_names):
         self.column_names = column_names  # must be a LIST of strings
@@ -60,12 +66,61 @@ class Table(object):
             row_text += '],\n'
             file.write(row_text)
 
+    def toJSONForJS(self):
+        ret = '[[' # start 2D JSON array
+        
+        # convert 1st column:
+        assert(self.column_names[0] == 'Timestamp')
+        ret += '{"type":"datetime","label":"Datetime"},'
+        
+        # convert all other columns:
+        for colName in self.column_names[1:]:
+            ret += '"' + colName + '",'
+        ret = ret[:-1]
+        # separe first line; start conversion of actual table data:
+        ret += '],'
+        
+        data = json.dumps(self.rows, separators=(',', ':'))
+        data = data[1:]
+
+        return ret + data
+    
+    def toDeflatedJSONBase64Encoded(self):
+        ''' Returns this table in JSON format (for JS), deflated using zlib, and represented as a Base64-encoded ASCII string '''
+        json_string = self.toJSONForJS()
+        json_compressed_bytearray = zlib.compress(json_string.encode(), 9)
+        
+        ret = str(binascii.b2a_base64(json_compressed_bytearray))
+        return ret[1:]
+
+    def toGoogleChartTable(self, file):
+        ''' Writes in the given file the JavaScript GoogleCharts object representing this table '''
+        global g_num_generated_charts 
+        graph = 'graph' + str(g_num_generated_charts)
+        
+        if SAVE_DEFLATED_JS_DATATABLES:
+            # to reduce the HTML size save the deflated, serialized JSON of the 2D JS array:
+            file.write("  var deflated_data_base64_%s = %s;\n" % (graph, self.toDeflatedJSONBase64Encoded()))
+            
+            # then convert it base64 -> JS binary string
+            file.write("  var deflated_data_binary_%s = window.atob(deflated_data_base64_%s);\n" % (graph, graph))
+            
+            # now inflate it in the browser using "pako" library (https://github.com/nodeca/pako)
+            file.write("  var inflated_data_%s = JSON.parse(pako.inflate(deflated_data_binary_%s, { to: 'string' }));\n" % (graph, graph))
+        else:
+            file.write("  var inflated_data_%s = %s;\n" % (graph, self.toJSONForJS()))
+        
+        # finally create the GoogleCharts table from it:
+        file.write('  var data_%s = google.visualization.arrayToDataTable(inflated_data_%s);\n' % (graph, graph))
+
+
+
 # =======================================================================================================
 # GLOBALs
 # =======================================================================================================
 
 
-g_graphs = []  # global list of Graph class instances
+g_graphs = []  # global list of GoogleChartsGraph class instances
 g_num_generated_charts = 1
 
 # =======================================================================================================
@@ -92,6 +147,7 @@ def nchart_start_js(file, title):
     file.write('     #button_table { border-collapse: collapse; }\n')
     file.write('     #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
     file.write('  </style>\n')
+    file.write('  <script type="text/javascript" src="https://cdn.jsdelivr.net/pako/1.0.5/pako.min.js"></script>\n')
     file.write('  <script type="text/javascript" src="https://www.google.com/jsapi"></script>\n')
     file.write('  <script type="text/javascript">\n')
     file.write('google.load("visualization", "1.1", {packages:["corechart"]});\n')
@@ -106,24 +162,6 @@ def nchart_start_js_bubble_graph(file, columnnames):
     global g_num_generated_charts 
     file.write('  var data_' + str(g_num_generated_charts) + ' = google.visualization.arrayToDataTable([\n')
     file.write("[" + columnnames + "]\n")
-
-    
-def nchart_start_js_line_graph(file, columnnames):
-    ''' Before the graph data with datetime + multiple columns of data '''
-    global g_num_generated_charts 
-    file.write('  var data_' + str(g_num_generated_charts) + ' = google.visualization.arrayToDataTable([\n')
-    
-    assert(columnnames[0] == 'Timestamp')
-    columns_text = "{type: 'datetime', label: 'Datetime'}"
-    for col in columnnames[1:]:
-        columns_text += ",'%s'" % col
-    
-    file.write("[" + columns_text + "],\n")
-
-
-def nchart_write_js_graph_data(web, table_data):
-    table_data.writeTo(web)  # write all data points of the graph
-
     
 def nchart_end_js_bubble_graph(file, graphtitle):
     ''' After the JavaScript bubble graph data is output, the data is terminated and the bubble graph options set'''
@@ -147,7 +185,7 @@ def nchart_end_js_bubble_graph(file, graphtitle):
 
     
 def nchart_end_js_line_graph(file, num_series, graphtitle, y_axis_title, series_for_2nd_yaxis):
-    ''' After the JavaSctipt line graph data is output, the data is terminated and the graph options set'''
+    ''' After the JavaScript line graph data is output, the data is terminated and the graph options set'''
     global next_graph_need_stacking
     global g_num_generated_charts 
     
@@ -160,7 +198,6 @@ def nchart_end_js_line_graph(file, num_series, graphtitle, y_axis_title, series_
             else:
                 file.write('\n')
     
-    file.write('  ]);\n')
     file.write('  var options_' + str(g_num_generated_charts) + ' = {\n')
     file.write('    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n')
     file.write('    title: "' + graphtitle + '",\n')
@@ -200,7 +237,7 @@ def nchart_end_js_line_graph(file, num_series, graphtitle, y_axis_title, series_
     file.write('    if (chart && chart.clearChart)\n')
     file.write('      chart.clearChart();\n')
     file.write('    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));\n')
-    file.write('    chart.draw(data_' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
+    file.write('    chart.draw(data_graph' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
     file.write('  });\n')
     g_num_generated_charts += 1
 
@@ -278,27 +315,29 @@ def nchart_end_html_body(file):
 # Google Visualization charting routines
 # =======================================================================================================
 
-
 def googledate(date):
-    ''' convert ISO date like 2017-08-21T20:12:30 to google date+time 2017,04,21,20,12,30 '''
-    d = date[0:4] + "," + str(int(date[5:7]) - 1) + "," + date[8:10] + "," + date[11:13] + "," + date[14:16] + "," + date[17:19]
-    return d
+    ''' convert ISO datetime strings like 
+          "2017-08-21T20:12:30" 
+        to strings like:
+          "Date(2019,4,04,01,16,25)"
+        which are the datetime representation suitable for JS GoogleCharts
+     '''
+    dateAsPythonObj = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
+    return "Date(%d,%d,%d,%d,%d,%d)" % (dateAsPythonObj.year, dateAsPythonObj.month, dateAsPythonObj.day, dateAsPythonObj.hour, dateAsPythonObj.minute, dateAsPythonObj.second)
 
 
 def graphit(web, table_data, graph_title, button_label, graph_type, stack_state, y_axis_title="", series_for_2nd_yaxis=[]):
     global next_graph_need_stacking
     global g_graphs
     
+    table_data.toGoogleChartTable(web)
+
     graph_title += (', STACKED graph' if stack_state else '')
-    
-    # declare JS variables:
-    nchart_start_js_line_graph(web, table_data.getListColumnNames())
-    nchart_write_js_graph_data(web, table_data)
     next_graph_need_stacking = stack_state
     nchart_end_js_line_graph(web, table_data.getNumDataSeries(), graph_title, y_axis_title, series_for_2nd_yaxis)
     
     # register this graph into globals
-    g_graphs.append(Graph(button_label, graph_type))
+    g_graphs.append(GoogleChartsGraph(button_label, graph_type))
 
 
 
@@ -311,7 +350,7 @@ def bubbleit(web, column_names, data, title, button_label, graph_type):
     nchart_end_js_bubble_graph(web, title)
     
     # register this graph into globals
-    g_graphs.append(Graph(button_label, graph_type))
+    g_graphs.append(GoogleChartsGraph(button_label, graph_type))
 
 # =======================================================================================================
 # generate_* routines
@@ -517,7 +556,7 @@ def generate_disks_io(web, jdata, hostname):
     # Process JSON sample and fill the Table() object
     #
     
-    disk_table = Table(diskcols)
+    disk_table = GoogleChartsTable(diskcols)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
@@ -575,13 +614,13 @@ def generate_network_traffic(web, jdata, hostname):
 
     #
     # MAIN LOOP
-    # Process JSON sample and fill the Table() object
+    # Process JSON sample and fill the GoogleChartsTable() object
     #
     
     
     # MB/sec
     
-    net_table = Table(netcols)
+    net_table = GoogleChartsTable(netcols)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
@@ -607,7 +646,7 @@ def generate_network_traffic(web, jdata, hostname):
             
     # PPS
     
-    net_table = Table(netcols)
+    net_table = GoogleChartsTable(netcols)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
@@ -642,13 +681,13 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
     # prepare empty tables
     baremetal_cpu_stats = {}
     for c in logical_cpus_indexes:
-        baremetal_cpu_stats[c] = Table(['Timestamp', 'User', 'Nice', 'System', 'Idle', 'I/O wait', 'Hard IRQ', 'Soft IRQ', 'Steal'])
+        baremetal_cpu_stats[c] = GoogleChartsTable(['Timestamp', 'User', 'Nice', 'System', 'Idle', 'I/O wait', 'Hard IRQ', 'Soft IRQ', 'Steal'])
         
-    all_cpus_table = Table(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
+    all_cpus_table = GoogleChartsTable(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
     
     #
     # MAIN LOOP
-    # Process JSON sample and fill the Table() object
+    # Process JSON sample and fill the GoogleChartsTable() object
     #
 
     for i, s in enumerate(jdata):
@@ -703,13 +742,13 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
     # prepare empty tables
     cpu_stats_table = {}
     for c in logical_cpus_indexes:
-        cpu_stats_table[c] = Table(['Timestamp', 'User', 'System'])
+        cpu_stats_table[c] = GoogleChartsTable(['Timestamp', 'User', 'System'])
         
-    all_cpus_table = Table(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
+    all_cpus_table = GoogleChartsTable(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
         
     #
     # MAIN LOOP
-    # Process JSON sample and fill the Table() object
+    # Process JSON sample and fill the GoogleChartsTable() object
     #
 
     for i, s in enumerate(jdata):
@@ -783,7 +822,7 @@ def generate_baremetal_memory(web, jdata, hostname):
         return value * 1000
 
     mem_total_bytes = meminfo_stat_to_bytes(jdata[0]['proc_meminfo']['MemTotal'])
-    baremetal_memory_stats = Table(['Timestamp', 'Used', 'Cached (DiskRead)', 'Free'])
+    baremetal_memory_stats = GoogleChartsTable(['Timestamp', 'Used', 'Cached (DiskRead)', 'Free'])
     divider, unit = choose_byte_divider(mem_total_bytes)
 
     for i, s in enumerate(jdata):
@@ -840,7 +879,7 @@ def generate_cgroup_memory(web, jheader, jdata, hostname):
     else:
         mem_total_bytes = jdata[0]['cgroup_memory_stats']['total_cache'] + \
                           jdata[0]['cgroup_memory_stats']['total_rss'] 
-    cgroup_memory_stats = Table(['Timestamp', 'Used', 'Cached (DiskRead)', 'Alloc Failures'])
+    cgroup_memory_stats = GoogleChartsTable(['Timestamp', 'Used', 'Cached (DiskRead)', 'Alloc Failures'])
     divider, unit = choose_byte_divider(mem_total_bytes)
     
     for i, s in enumerate(jdata):
@@ -876,7 +915,7 @@ def generate_load_avg(web, jheader, jdata, hostname):
      
     num_baremetal_cpus = int(jheader["lscpu"]["cpus"])
      
-    load_avg_stats = Table(['Timestamp', 'LoadAvg (1min)', 'LoadAvg (5min)', 'LoadAvg (15min)'])
+    load_avg_stats = GoogleChartsTable(['Timestamp', 'LoadAvg (1min)', 'LoadAvg (5min)', 'LoadAvg (15min)'])
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
