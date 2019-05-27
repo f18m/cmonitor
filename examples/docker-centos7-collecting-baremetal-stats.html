@@ -15,19 +15,25 @@
      #button_table { border-collapse: collapse; }
      #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
   </style>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/pako/1.0.5/pako.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
   <script type="text/javascript">
+/* Load GoogleCharts: */
 google.load("visualization", "1.1", {packages:["corechart"]});
-google.setOnLoadCallback(setupCharts);
+google.setOnLoadCallback(setup_button_click_handlers);
 
-function setupCharts() {
-  var chart = null;
+/* The global chart object: */
+var g_chart = null;
+
+/* The global window showing the configuration of all collected data: */
+var g_configWindow = null;
+
+function draw_graph1() {
   var deflated_data_base64_graph1 = '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\n';
   var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
   var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
   var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
-  var options_1 = {
+  var options_graph1 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 0 (from baremetal stats), STACKED graph",
     focusTarget: "category",
@@ -36,17 +42,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
-  document.getElementById("draw_1").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph1, options_1);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph1, options_graph1);
+}
+
+function draw_graph2() {
   var deflated_data_base64_graph2 = 'eNqlWk2PJDUS/SuoT4uUqrUddtjeMwfmsohd7WnEoZfplUYaBIKWEFrx34kP22VnVVdGzhxQ5xSVr+LjxXM47Pfv///0+scvL0//ePrw/Pry+vGnl6ft6dPzf18+0Uff9I/+3J7+89vLr/S//vnxR/7Gv//47fXlJ3p49+ET//vd37/76vfnj6/0+O3zrx++evev7/lbP//vtT++vjx/evphey+gfwvO1y1tIW7BbTFusX79tHl3QYTNXdzm6Qm3nC41561eALx87ORjenoTKAUGihdM8r0t0Lthy+UScqQPAKABtae3gZJaBKG0nwWBKnDBEBuICah0oDRcS1tJl4AwwbgHIGnzhFHpxdAgaq1biZdQ7ZakLSpIqu27UcJdwqVCPhGbtGWNMQSNcZT85Hyp6O0eOQbp5jiKLoclU75cPGWMhyU2QWNDzBHgxpdjc5DNuWBMnWipbNVfYvZkWo3FhsI0VsppnvippkuqaA5MCPcx0NmDG4S8FIluNsekRrIj2jGEt8MODaX4coZzwMwlZrSXQie/Us6MotTVWpz4jyGY/QFmbfADBAQkE1bxZ4pIeMssy8Mj3Arh+rDw9rE1kVmbLjDLXXWXUM6YwpyNE1MEhEzL1RwVEd4oWZkw6E/IJ7xR1SWKQGyxhQAslXEObfuRt1GEtWxCHLoSRJ+K2R9V20zlCyPLmfUfnZ1wKHrLmt3WndgJZw8titzqi72OQbNTzBC5lXHdlyCaIVRnNSFdHwunJlW7K6Kxnp0ZidkKsTWXMzHFnl55IUmepYi93RCmaxlir4tGodW9gBkjhL4gYwup+sMcscdVJZajCc0dJpq4Y8dgsgY31sAgMcxIHIETayCqyk6Vw26RMWivHFSNlRYsNsI6RlBZcxOHH4LktnjBZAcxtp4hikhsHquXGFIJIpyKSex9QZrrj97zcXLooIRxsYT/E4S0qFp+jFGVKLvcpN2689gQFdh9XEnmIp4IrAjsNTtN7NccH1rCnIUREq3ASn+8vS3Ioq9xEnp+ov4EfTH3bFkENoxvq04S1/YN5GOQ3EDSCoLOqo65Seyk9I4DUlOyI8AOQRJDepuKHQOXcIzFAgPaMepN+eI1pDYMldepPIRiCP4EPULaZUVIRiUT7Flp/euVHlL/hIHZjCG6GqYeuLFj3bodeQNx54109Ge68dyFtWOMjr4GO0NEV28w2BtvxwDBuCriaElO2IEiIddNvWSGfbEzVVR1xhg7HDxR/CKrd1DORDWte62xX6vBzrO032u1zKRi5XvZ/JKYiWRghog7fpxuN8voWHf0sAejqJzCnaIr0Y4Bu8Q2O4Ldkz4RWKuWXTlhRpVdHuKyh+aBixmiyeluK38uomMcUD8/sSKneeye1Q5uy8BOUW1T95nFU3Zom7ofj+ApnkNeUvtZ8dA5wLTcii+ZGGbPSxPTztKxzIWEJ1rdooLqb4X9DEd2gjrobl8cisrpLCBtyT0Tk7TnapdkSHaM3qPmOb+R4mq1o7YOde2UYTe2eowQdU/WI5rEk8R7Mqom3ksnU3qraGoeUdWpSCLa0L4ZUAaVJodc67lbP1QIoDIAD6ahkD3ehiO9Kouan1pm4JFLJEbTn2Ca1demsLy9wmmUpp5mHqgV0xarqsx6uJ4eJHmMVWIU3BTrx7710UCtcxPN+2j78Kju5VbH40g20XuB422zRYYDrLj62y1QkCRhLX0WIFXdMG3sZcrA+9isQ51sdEy0F6b9o9tQEw5u2HloTr47qyA7lhnOUc5Ff+uiVzKTAu+FQtHo0xgTxInNlCweE4QxrDLg9FFBnqcndZwbmRSjtwtpjgzIpKBMzcxjlDYrwMV0Wqk5MrA0AY8jLEp804cB9WHJrIGtsV2HoDyvy2XDUa8PUZLTaexVubI0VNh1ApMJJK7yx4XJGhq3xGcCwYShm7CZoomEs2CXUZMz7t5cGKajJwMG3JwRAR/ABQIVZTAtLQzErL1OXHgWie04gCMbbWFR/R0u6S6EwspbbQoyRhOKiO+gpcQZ+XzQzyp4CMKkxd15Bg/bcl3If4BSbuYPsvyvhwiPMdrs4AYjZPPIjlE6bWEuQk8tVbRbktvpWZ5bd9IqO4R2u2k6n29yW62DdwbRM6/r6FCOd6iaoSyzzQMUXAq5jULP1Y/OZP04wW40gXaiYTVFlLbsFhshG5pNEZUta6NJMQEHJ2Kyk9nGktA2Z6Z5KpVZO0TojaCyjlQFXeKjytFuPOas3+KybvRxKNoj67c8XVXQIXPkyXu1TxHZH9fbwnEqqfnBaC1j36TWTXcvmtaupwAHIDLxYo7WucuI0hKaQWrrVKaY0FK6bsCPYhKUsruT9KoHz8YdJ8Ok3ijn6eRKGuU6afiRS2HP2zYJDNZpImGAb43g2mEgoB0i3p+dVcAToRWZxalOehFGe45FZ9N+fkYGyeUPayGPIe3SYpA/WO2WaD+7hpXYt3Q5h0pQ+7kxjjV9f55/hKHtbJZt86SypJTWUysGSfeuORBrvR2i3JueYxuQ2IQtiMbKOnP9YZ8m344R5CpMvXcTwfR67q+Xz3pdNJXev662cCthjxFkfuDcndjb3scv9KB+2fuioPJ+/rz30xf+fvmy97UvvbaDWgut0+7nduPM+22YuGjMaMPmU+3rLv9tmLw7km6n9LVMy0jqP/N2Ueg0YJ34cYubzQd1jAJt/z0PSuQyVLWXJ7YFts4X3mhhTN6OUe8df4J9FpvCuJLVR1+jxV0V/ACk76ZiC2lDidLO7WcMD5HK7q5aD611rJtAtXOaO7YcoyvL3AgfgsT1orG7NtzZbEjWvvIaWqd3w8xLNKiOXpvq1nJQuoKdsNC0tF6WO5p82c1He1Rx6QhHyxGyPSB6byDs7DhxP5MwdPbatx/suW43c22XMWxLLLTeFHujjHoDsO6odhRakVkcnQuM22re7hKsjJXrniQFwXrxhyF0M9WlIPSmEoUnVraJysL+4k+030XkwnHNkrjOrWq0c63feg112mGSN6necu2HvwBAiOwz\n';
   var deflated_data_binary_graph2 = window.atob(deflated_data_base64_graph2);
   var inflated_data_graph2 = JSON.parse(pako.inflate(deflated_data_binary_graph2, { to: 'string' }));
   var data_graph2 = google.visualization.arrayToDataTable(inflated_data_graph2);
-  var options_2 = {
+  var options_graph2 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 1 (from baremetal stats), STACKED graph",
     focusTarget: "category",
@@ -55,17 +63,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
-  document.getElementById("draw_2").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph2, options_2);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph2, options_graph2);
+}
+
+function draw_graph3() {
   var deflated_data_base64_graph3 = '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\n';
   var deflated_data_binary_graph3 = window.atob(deflated_data_base64_graph3);
   var inflated_data_graph3 = JSON.parse(pako.inflate(deflated_data_binary_graph3, { to: 'string' }));
   var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
-  var options_3 = {
+  var options_graph3 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 2 (from baremetal stats), STACKED graph",
     focusTarget: "category",
@@ -74,17 +84,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
-  document.getElementById("draw_3").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph3, options_3);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph3, options_graph3);
+}
+
+function draw_graph4() {
   var deflated_data_base64_graph4 = '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\n';
   var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
   var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
   var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
-  var options_4 = {
+  var options_graph4 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 3 (from baremetal stats), STACKED graph",
     focusTarget: "category",
@@ -93,17 +105,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
-  document.getElementById("draw_4").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph4, options_4);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph4, options_graph4);
+}
+
+function draw_graph5() {
   var deflated_data_base64_graph5 = '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\n';
   var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
   var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
   var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
-  var options_5 = {
+  var options_graph5 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "All logical CPUs allowed in cmonitor_collector CGroup (from baremetal stats)",
     focusTarget: "category",
@@ -112,17 +126,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
-  document.getElementById("draw_5").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph5, options_5);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph5, options_graph5);
+}
+
+function draw_graph6() {
   var deflated_data_base64_graph6 = 'eNqFlr1KBDEURl9FplJIMXt/chNbxQcQrBaL1Q0oriC6jYjv7ozOiI057ewhgcMh+223H8Px/aUN58N+d2zHx+c2pOGwu2uH6dPl+ukzDTdvbT/9dLG7f2j7k9PLx7en67bbn03frl5bG27T9ps/lXFTkyexJGMyS1YnJidN/i/iwogzUgDxtEHCkAi+ZWREGcmMVEREGHFGWK3+uLUeYowEIjYyooxkRioiS7hdxBkpgOS0QcKQCL5lZEQZyYxUREQYcUZYrbJbZbnKdo3tGts1tmts19mus10MNzDcwHADww0ONzjc4HCDww0ONzjc4HCDww0ONzjcWMPVHqKMZEYqIjgVgqdC8FQoOBUKToWCU6HwVCg8FQpPhcJTofBUKDwVCk+FsobbRViusl1ju8Z2je0a23W262wXw62/L679S/y49Q4RSCzhdhFlJDNSEVnC7SL04tY13N4pS7hdxFC/sl1ju8Z2je3iVKhruL1TlnC7CPyf+ZhA7kQYEtG3P98y4iEU7oxkRioiNBVmBN6EGSmI0Is7I8ZIIEIv7owoI5mRigi9uDPCdunF9Q1NhYkwJIJvGRlRRjIjFRGaCjPijLBaZbfKcpXtGts1tmts19ius11nuxiuYLiC4QqGKxyucLjC4QqHKxyucLjC4QqHKxyucLjC4QqHKxyucLjC4QqHKxyuYriK4SqGqxyucrjK4SqHqxyucrjK4SqHqxyucrjK4erfcG+/APysXC8=\n';
   var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
   var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
-  var options_6 = {
+  var options_graph6 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Memory usage in GB (from baremetal stats), STACKED graph",
     focusTarget: "category",
@@ -131,17 +147,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
-  document.getElementById("draw_6").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph6, options_6);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph6, options_graph6);
+}
+
+function draw_graph7() {
   var deflated_data_base64_graph7 = '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\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
-  var options_7 = {
+  var options_graph7 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Disk I/O (from baremetal stats)",
     focusTarget: "category",
@@ -150,17 +168,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
-  document.getElementById("draw_7").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph7, options_7);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph7, options_graph7);
+}
+
+function draw_graph8() {
   var deflated_data_base64_graph8 = 'eNqtmc2KHTkMhV8l3FUGiost2+VydoFZzhs0veghTQjkZxbNQAjz7lPWcf3k9rUsO+lFE26+U9cl6Uiq6oeHH5eX7/88X95dPjy9PL98+vJ8mS6fn/5+/rx+9Of20X/T5a9vTx/e//vxzVv75dPXPy6nD8LtBxafPE4PfIW3ZGyawkR+IjN5P/m04na5UphsuK7/YdZ/VulAoCPTsYmHPnzJeFSdZUUyPF9NZolhU2V9Bxsz668+nX+WrDSy0JphpcvKfMsKdsa3kL/5Fl8CLEjTsJQ48S5H8M4NplVfl4ZxKRcEQfrq1KLUWdSSKuXO98ARyYolW/I5vOmiXaWEOEMN7Yw4Z/f0BhpdYEyLnkBFeydLgjSMS7k0bJGan35Iks5oHIaVbr2xV0qqS/24NFdNurIwNFBuJFo2Vww6bIFNnZ2ZNVumRTbpWW4O8SZ/qXh+qdfOjN4wplxO9906IJoB4W7upE1Q+mFlaRO13iVVmRmXun3S3fWxJJ3PwxohFejUQ6NHpDLZm3ToosvWcDTYGhu3nQFNI8reitvWoKTjaYaYBotVQQsf24HiGMJ+cKceTP066fdcZ9scqj1ekIZx6XlzeDUdhM4SS7OwFcvLUj8ujefREho0OoSadsc8IYYFdsaV43FlAU4dMHqALfCd6AjSMC5d1Edcts3AtAO1bKuAisXsR7IMnrbqZzA9sEOZq25uRhBPZSBdOfXQMLnR0qGLXjgg8QiIqbLs3ZQpYoHI+g428raRz0rXBsve1LKO95+wLcGxbuMF1ow33cyWLicr06iSTYsRCPvJdOiic2LxZLTRNTixNUO5cgP1ejQeJWAa32/0qDueaqgVhgRfkq09ey3SN6VhKTuW7LFUiHDogXNaKRwvfaThlGBZ57YCELebBNPq6ZxfF7Y2Ku2GCb5VwznHbuPkx/oE5/rt1ULjPViCXfU4e9RzhyTaRXU89OE5nT6q8GDYpzudf9ta+1th3wPnXIY8cCmPOq76+ilMD5xz6RclPAPOgfBZYq8CnDpgdmTwDIcSk3o02JJ6etnjgbKSYHaknwHzoYV8syHVcM6hpxKP0KDZkHqaHZm92A41+9EhbK4UnkCnHprd6ByqiVrlxGbU0zmNDhFp4pa9SKmc2zRg3wNHwKSC2Yx6OueRlutPwyzNKukMqR+QpmEpJulcbNXKCUapmuZZ6gtNYoe0MO7OxRbtu2hOucGJ5SFg4Vw17PY3SfkELXre3w1h8WngqQvHM2osMxe/BTp00cv+OgmhqcME67qtoYqnJlhXC3Me89/Yzs8C/hjAJBzK/IKW27M9DVmB5fbMLb/V9wnO1cLsVYeMtQYhwat6mhcl1AHPQ5LigSHLoYiAhWNjyGrhuE/kePOuxHOZ1OvIDCsdRnWolkddOu9ze943wTqdemhsxkjg2mD8q94uJAhr8qCWS4HXkOXmvaUsddifOZC9Sj+s5IKxQ6c141J3mKur2tzeH+L9chOlaViK3kGq0nOld6jpBSsSt44WjDF/Z0PatgpJ639BG7G6nBqcUI2mB3ZYc7jPYjF6fPwfigxtwg==\n';
   var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
   var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
   var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
-  var options_8 = {
+  var options_graph8 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Average Load  (from baremetal stats)",
     focusTarget: "category",
@@ -169,19 +189,29 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
-  document.getElementById("draw_8").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph8, options_8);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph8, options_graph8);
 }
 
-var configWindow;
-function config() {
-    if (configWindow) configWindow.close();
-    configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");
-    configWindow.document.write("\
+function setup_button_click_handlers() {
+  document.getElementById("btn_draw_graph1").addEventListener("click", draw_graph1);
+  document.getElementById("btn_draw_graph2").addEventListener("click", draw_graph2);
+  document.getElementById("btn_draw_graph3").addEventListener("click", draw_graph3);
+  document.getElementById("btn_draw_graph4").addEventListener("click", draw_graph4);
+  document.getElementById("btn_draw_graph5").addEventListener("click", draw_graph5);
+  document.getElementById("btn_draw_graph6").addEventListener("click", draw_graph6);
+  document.getElementById("btn_draw_graph7").addEventListener("click", draw_graph7);
+  document.getElementById("btn_draw_graph8").addEventListener("click", draw_graph8);
+  document.getElementById("btn_show_config").addEventListener("click", show_config_window);
+}
+
+function show_config_window() {
+    if (g_configWindow) g_configWindow.close();
+    g_configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");
+    g_configWindow.document.write("\
     <html><head>\
       <title>Configuration</title>\
       <style>\
@@ -326,17 +356,17 @@ function config() {
   <tr><td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td><td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td></tr>
   <tr>
   <td id="button_table_col">
-    <button onclick="config()"><b>Configuration</b></button><br/>
+    <button id="btn_show_config"><b>Configuration</b></button><br/>
   </td><td id="button_table_col">
       </td><td id="button_table_col">
-    <button id="draw_1" style="color:red"><b>CPU0</b></button>
-    <button id="draw_2" style="color:red"><b>CPU1</b></button>
-    <button id="draw_3" style="color:red"><b>CPU2</b></button>
-    <button id="draw_4" style="color:red"><b>CPU3</b></button>
-    <button id="draw_5" style="color:red"><b>All CPUs</b></button>
-    <button id="draw_6" style="color:darkorange"><b>Memory Usage</b></button>
-    <button id="draw_7" style="color:darkgreen"><b>Disk I/O</b></button>
-    <button id="draw_8" style="color:black"><b>Average Load</b></button>
+    <button id="btn_draw_graph1" style="color:red"><b>CPU0</b></button>
+    <button id="btn_draw_graph2" style="color:red"><b>CPU1</b></button>
+    <button id="btn_draw_graph3" style="color:red"><b>CPU2</b></button>
+    <button id="btn_draw_graph4" style="color:red"><b>CPU3</b></button>
+    <button id="btn_draw_graph5" style="color:red"><b>All CPUs</b></button>
+    <button id="btn_draw_graph6" style="color:darkorange"><b>Memory Usage</b></button>
+    <button id="btn_draw_graph7" style="color:darkgreen"><b>Disk I/O</b></button>
+    <button id="btn_draw_graph8" style="color:black"><b>Average Load</b></button>
   </td></tr>
   </table>
   </div>

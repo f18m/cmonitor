@@ -15,19 +15,25 @@
      #button_table { border-collapse: collapse; }
      #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
   </style>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/pako/1.0.5/pako.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
   <script type="text/javascript">
+/* Load GoogleCharts: */
 google.load("visualization", "1.1", {packages:["corechart"]});
-google.setOnLoadCallback(setupCharts);
+google.setOnLoadCallback(setup_button_click_handlers);
 
-function setupCharts() {
-  var chart = null;
+/* The global chart object: */
+var g_chart = null;
+
+/* The global window showing the configuration of all collected data: */
+var g_configWindow = null;
+
+function draw_graph1() {
   var deflated_data_base64_graph1 = 'eNqNz7FqwzAQBuBXCZpaOFTpZKm+zBnqJaUJnUwGNVbA4JASC4oJffeeHLmEQNoMht+/Tp99dX0ScfgMYi4aH0Ns90GA6PxH6LhaTNU3iPc+HPlo2W7TxHroY9hzqJouvVdPr7Mv30aOL/7YzKrVW5o67OIUY/Cd2EA9og+oNIEFbUCXQIDuUUAhnbOgpALNyQGhRHoei/NjjEnpJkIjQvkO8jwCKekUXSDqL8IgE+aX0BNhxyJ//1/E5mWKq2XK8v5lTMmI5SmdEZUIh3jvKoU+A0gZIOJaS3SJSL90iWx+APL1dcY=\n';
   var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
   var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
   var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
-  var options_1 = {
+  var options_graph1 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 0 (from baremetal stats), STACKED graph",
     focusTarget: "category",
@@ -36,17 +42,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
-  document.getElementById("draw_1").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph1, options_1);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph1, options_graph1);
+}
+
+function draw_graph2() {
   var deflated_data_base64_graph2 = 'eNqNkDFrwzAQhf+K0dTAoUp39tXKnCFeGtrSyWRQaxUMCgmJoISQ/x5JbogzNHgwvDs9f3pPbXsS4bhzYi46G1zoN06A8PbL+bhaXFdnEJ8Ht49Hr/13cnwcD8Ftomg6n+bmeVX82j5EubT7rmje35Jr+xOuMjjrxRraDH1CpQ1UoAl0DQaQZwJQEiEoqf6UKSVTnoePKE//MkxkkGQus19LYwyYuFAvI4h6hCDMMZircQySyDg9B1URMtw+5Ej+1AUnx6jvCLfXQD36nZkfQUp91yXh6qGLvnUYYdYXv192KA==\n';
   var deflated_data_binary_graph2 = window.atob(deflated_data_base64_graph2);
   var inflated_data_graph2 = JSON.parse(pako.inflate(deflated_data_binary_graph2, { to: 'string' }));
   var data_graph2 = google.visualization.arrayToDataTable(inflated_data_graph2);
-  var options_2 = {
+  var options_graph2 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 1 (from baremetal stats), STACKED graph",
     focusTarget: "category",
@@ -55,17 +63,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
-  document.getElementById("draw_2").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph2, options_2);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph2, options_graph2);
+}
+
+function draw_graph3() {
   var deflated_data_base64_graph3 = 'eNp9zrEKAjEMBuB3yaQQSpP0ehdXfQAXp9LhxA7CCQ5dRHx3Y1WcaoYE/nyQpHSHersW2MBprqWeLwUQlvlYFot23+iBsN0fPLRBkDG13Yo9KQ5IgjShIsc1YHQxBgxOdew6NTc6YQtNS88Jm3sJti59NnzOCoox7rqpORH6/16g9p6qvI/7X1HOT8vWRy4=\n';
   var deflated_data_binary_graph3 = window.atob(deflated_data_base64_graph3);
   var inflated_data_graph3 = JSON.parse(pako.inflate(deflated_data_binary_graph3, { to: 'string' }));
   var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
-  var options_3 = {
+  var options_graph3 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "All logical CPUs allowed in cmonitor_collector CGroup (from baremetal stats)",
     focusTarget: "category",
@@ -74,17 +84,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
-  document.getElementById("draw_3").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph3, options_3);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph3, options_graph3);
+}
+
+function draw_graph4() {
   var deflated_data_base64_graph4 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lEKLU4uAUsGVxSWpuUqxOtFgWQ0jA0NLHVMdQ2MdQwsdSx0jM00lHQM9AxDGqcaSsBpjI4gaUyO8qkyJMMmCsBoTQ4gaIwuwqlgAS25Cbg==\n';
   var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
   var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
   var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
-  var options_4 = {
+  var options_graph4 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 0 (from CGroup stats), STACKED graph",
     focusTarget: "category",
@@ -93,17 +105,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
-  document.getElementById("draw_4").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph4, options_4);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph4, options_graph4);
+}
+
+function draw_graph5() {
   var deflated_data_base64_graph5 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lEKLU4uAUsGVxSWpuUqxOtFgWQ0jA0NLHVMdQ2MdQwsdSx0jM00lHQM9AxMjEIlTlSVYlaGBOT5VxkYQVUaGeFWZQm00w6vKghhVJoZgVUZmEFWxAFkIRBE=\n';
   var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
   var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
   var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
-  var options_5 = {
+  var options_graph5 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 1 (from CGroup stats), STACKED graph",
     focusTarget: "category",
@@ -112,17 +126,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
-  document.getElementById("draw_5").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph5, options_5);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph5, options_graph5);
+}
+
+function draw_graph6() {
   var deflated_data_base64_graph6 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lJwDQg2UwJShUqxONFhOw8jA0FLHVMfQWMfQQsdSx8hMU0nHQM8AhE2McKqyhKsyNDDHpcrYCKLK1AikzsgQpzpTJDvNcKqyIEaViSFElZEFkDQyM4uNBQBxuULv\n';
   var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
   var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
-  var options_6 = {
+  var options_graph6 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "All logical CPUs assigned to cmonitor_collector CGroup (from CGroup stats)",
     focusTarget: "category",
@@ -131,17 +147,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
-  document.getElementById("draw_6").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph6, options_6);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph6, options_graph6);
+}
+
+function draw_graph7() {
   var deflated_data_base64_graph7 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lEKLU1OAUs6JyRmpKQoaLpnF2UGpiSmaQDG3otRUpVidaLB6DSMDQ0sdUx1DYx1DCx1LHSMzoBIzHSMdM5wqLAmpMDYiqMKUoAoLQipMDOEqYgEL5kTA\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
-  var options_7 = {
+  var options_graph7 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Memory usage in GB (from baremetal stats), STACKED graph",
     focusTarget: "category",
@@ -150,19 +168,21 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
-  document.getElementById("draw_7").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph7, options_7);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph7, options_graph7);
+}
+
+function draw_graph8() {
   var deflated_data_base64_graph8 = 'eNp9zU0KwjAQBeCrSFYVhpKZ/Ji4E4sHEFyVLmITsBhRbF2IeHdTUdBCu33zvTdl+WDd/RLYknnXha45BQYsun2IKSq+0RPYrg0+ndauPgQ/y4qmPW6D8/OUrWI817ONa+LtGlpWQfluZsTRggIUgAYskE4Ycy4ILQHPOWphJPBRbz9ekzG9J6kWetwLGnjLEWnCq3+P6cGENgONXNmJdYm/HnNJVvF+v3oBLx5Ygw==\n';
   var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
   var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
   var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
-  var options_8 = {
+  var options_graph8 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Memory used by cmonitor_collector CGroup MB (from CGroup stats)",
+    title: "Memory used by cmonitor_collector CGroup in MB (from CGroup stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
     series: {
@@ -177,17 +197,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
-  document.getElementById("draw_8").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph8, options_8);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph8, options_graph8);
+}
+
+function draw_graph9() {
   var deflated_data_base64_graph9 = 'eNqlj70KwjAUhV+lZFK4ys1/4yiuLi4OpUPaZihUkJpFxHe3tVUbrWDxDiHnfjmHkyS5EH8+OrIihfXOlwdHgFQ2c1Wz2jxWVyCnGqOds0W0XZNO7evSu14WdggbFcAsgFkI8wDmL5hCcm8wY0gNSKAcaAwGmJoTwCXCoj36CxWGaYnPYR8v8GueGcnD3/2cvflprCTDYZeWcFSCT0iVY60o50xPCIn/+5qgoV8wrjTtmqCS2gxmJDW9ASHiiak=\n';
   var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
   var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
   var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
-  var options_9 = {
+  var options_graph9 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Disk I/O (from baremetal stats)",
     focusTarget: "category",
@@ -196,17 +218,19 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
-  document.getElementById("draw_9").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph9, options_9);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph9, options_graph9);
+}
+
+function draw_graph10() {
   var deflated_data_base64_graph10 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lHzyE1Mcy9IVNAxzM/M0lZAETNEFDCEisTrRYBM0jAwMLXVMdQyNdQwtdCx1jMyAqg0N9QyAInqmYAKnUkuilRobEa/UlHilFkQrNTHEVBoLAPUSU+I=\n';
   var deflated_data_binary_graph10 = window.atob(deflated_data_base64_graph10);
   var inflated_data_graph10 = JSON.parse(pako.inflate(deflated_data_binary_graph10, { to: 'string' }));
   var data_graph10 = google.visualization.arrayToDataTable(inflated_data_graph10);
-  var options_10 = {
+  var options_graph10 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Average Load  (from baremetal stats)",
     focusTarget: "category",
@@ -215,19 +239,31 @@ function setupCharts() {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
-  document.getElementById("draw_10").addEventListener("click", function() {
-    if (chart && chart.clearChart)
-      chart.clearChart();
-    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
-    chart.draw(data_graph10, options_10);
-  });
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart.draw(data_graph10, options_graph10);
 }
 
-var configWindow;
-function config() {
-    if (configWindow) configWindow.close();
-    configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");
-    configWindow.document.write("\
+function setup_button_click_handlers() {
+  document.getElementById("btn_draw_graph1").addEventListener("click", draw_graph1);
+  document.getElementById("btn_draw_graph2").addEventListener("click", draw_graph2);
+  document.getElementById("btn_draw_graph3").addEventListener("click", draw_graph3);
+  document.getElementById("btn_draw_graph4").addEventListener("click", draw_graph4);
+  document.getElementById("btn_draw_graph5").addEventListener("click", draw_graph5);
+  document.getElementById("btn_draw_graph6").addEventListener("click", draw_graph6);
+  document.getElementById("btn_draw_graph7").addEventListener("click", draw_graph7);
+  document.getElementById("btn_draw_graph8").addEventListener("click", draw_graph8);
+  document.getElementById("btn_draw_graph9").addEventListener("click", draw_graph9);
+  document.getElementById("btn_draw_graph10").addEventListener("click", draw_graph10);
+  document.getElementById("btn_show_config").addEventListener("click", show_config_window);
+}
+
+function show_config_window() {
+    if (g_configWindow) g_configWindow.close();
+    g_configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");
+    g_configWindow.document.write("\
     <html><head>\
       <title>Configuration</title>\
       <style>\
@@ -388,19 +424,19 @@ function config() {
   <tr><td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td><td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td></tr>
   <tr>
   <td id="button_table_col">
-    <button onclick="config()"><b>Configuration</b></button><br/>
+    <button id="btn_show_config"><b>Configuration</b></button><br/>
   </td><td id="button_table_col">
-    <button id="draw_4" style="color:red"><b>CPU0</b></button>
-    <button id="draw_5" style="color:red"><b>CPU1</b></button>
-    <button id="draw_6" style="color:red"><b>All CPUs</b></button>
-    <button id="draw_8" style="color:darkorange"><b>Memory Usage</b></button>
+    <button id="btn_draw_graph4" style="color:red"><b>CPU0</b></button>
+    <button id="btn_draw_graph5" style="color:red"><b>CPU1</b></button>
+    <button id="btn_draw_graph6" style="color:red"><b>All CPUs</b></button>
+    <button id="btn_draw_graph8" style="color:darkorange"><b>Memory Usage</b></button>
       </td><td id="button_table_col">
-    <button id="draw_1" style="color:red"><b>CPU0</b></button>
-    <button id="draw_2" style="color:red"><b>CPU1</b></button>
-    <button id="draw_3" style="color:red"><b>All CPUs</b></button>
-    <button id="draw_7" style="color:darkorange"><b>Memory Usage</b></button>
-    <button id="draw_9" style="color:darkgreen"><b>Disk I/O</b></button>
-    <button id="draw_10" style="color:black"><b>Average Load</b></button>
+    <button id="btn_draw_graph1" style="color:red"><b>CPU0</b></button>
+    <button id="btn_draw_graph2" style="color:red"><b>CPU1</b></button>
+    <button id="btn_draw_graph3" style="color:red"><b>All CPUs</b></button>
+    <button id="btn_draw_graph7" style="color:darkorange"><b>Memory Usage</b></button>
+    <button id="btn_draw_graph9" style="color:darkgreen"><b>Disk I/O</b></button>
+    <button id="btn_draw_graph10" style="color:black"><b>Average Load</b></button>
   </td></tr>
   </table>
   </div>

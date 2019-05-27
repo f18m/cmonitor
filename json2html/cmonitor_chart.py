@@ -14,6 +14,7 @@ import gzip
 import datetime
 import zlib
 import binascii
+import textwrap
 
 # =======================================================================================================
 # CONSTANTS
@@ -23,28 +24,35 @@ GRAPH_TYPE_BAREMETAL = 1
 GRAPH_TYPE_CGROUP = 2
 
 SAVE_DEFLATED_JS_DATATABLES = True
+JS_INDENT_SIZE = 2
 
 
 # =======================================================================================================
-# TYPES
+# GoogleChartsTable
+# This is the table of X;Y1;Y2;...;YN data points for a GoogleCharts graph
 # =======================================================================================================
-
-
-class GoogleChartsGraph:
-
-    def __init__(self, name, type):
-        self.name = name
-        self.type = type  # one of GRAPH_TYPE_BAREMETAL or GRAPH_TYPE_CGROUP
-        
-
+    
 class GoogleChartsTable(object):
 
     def __init__(self, column_names):
         self.column_names = column_names  # must be a LIST of strings
         self.rows = []  # list of lists with values
 
+    def ISOdatetimeToJSDate(self, date):
+        ''' convert ISO datetime strings like 
+              "2017-08-21T20:12:30" 
+            to strings like:
+              "Date(2019,4,04,01,16,25)"
+            which are the datetime representation suitable for JS GoogleCharts
+         '''
+        dateAsPythonObj = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
+        return "Date(%d,%d,%d,%d,%d,%d)" % (dateAsPythonObj.year, dateAsPythonObj.month, dateAsPythonObj.day, dateAsPythonObj.hour, dateAsPythonObj.minute, dateAsPythonObj.second)
+
     def addRow(self, row_data_list):
         assert(len(row_data_list) == len(self.column_names))
+        
+        # convert first column to a GoogleCharts-compatible datetime:
+        row_data_list[0] = self.ISOdatetimeToJSDate(row_data_list[0])
         self.rows.append(row_data_list)
 
     def getRow(self, index):
@@ -77,6 +85,7 @@ class GoogleChartsTable(object):
         for colName in self.column_names[1:]:
             ret += '"' + colName + '",'
         ret = ret[:-1]
+        
         # separe first line; start conversion of actual table data:
         ret += '],'
         
@@ -93,43 +102,154 @@ class GoogleChartsTable(object):
         ret = str(binascii.b2a_base64(json_compressed_bytearray))
         return ret[1:]
 
-    def toGoogleChartTable(self, file):
+    def toGoogleChartTable(self, graphName):
         ''' Writes in the given file the JavaScript GoogleCharts object representing this table '''
-        global g_num_generated_charts 
-        graph = 'graph' + str(g_num_generated_charts)
-        
+        ret_string = ""
         if SAVE_DEFLATED_JS_DATATABLES:
             # to reduce the HTML size save the deflated, serialized JSON of the 2D JS array:
-            file.write("  var deflated_data_base64_%s = %s;\n" % (graph, self.toDeflatedJSONBase64Encoded()))
+            ret_string += "var deflated_data_base64_%s = %s;\n" % (graphName, self.toDeflatedJSONBase64Encoded())
             
             # then convert it base64 -> JS binary string
-            file.write("  var deflated_data_binary_%s = window.atob(deflated_data_base64_%s);\n" % (graph, graph))
+            ret_string += "var deflated_data_binary_%s = window.atob(deflated_data_base64_%s);\n" % (graphName, graphName)
             
             # now inflate it in the browser using "pako" library (https://github.com/nodeca/pako)
-            file.write("  var inflated_data_%s = JSON.parse(pako.inflate(deflated_data_binary_%s, { to: 'string' }));\n" % (graph, graph))
+            ret_string += "var inflated_data_%s = JSON.parse(pako.inflate(deflated_data_binary_%s, { to: 'string' }));\n" % (graphName, graphName)
         else:
-            file.write("  var inflated_data_%s = %s;\n" % (graph, self.toJSONForJS()))
+            ret_string += "var inflated_data_%s = %s;\n" % (graphName, self.toJSONForJS())
         
         # finally create the GoogleCharts table from it:
-        file.write('  var data_%s = google.visualization.arrayToDataTable(inflated_data_%s);\n' % (graph, graph))
+        ret_string += "var data_%s = google.visualization.arrayToDataTable(inflated_data_%s);\n" % (graphName, graphName)
+        return ret_string
 
 
+# =======================================================================================================
+# GoogleChartsGraph
+# This is a simple object that can generate JavaScript for GoogleChart drawing 
+# =======================================================================================================
+    
+class GoogleChartsGraph:
+
+    def __init__(self, 
+                 button_label="", 
+                 graph_type=GRAPH_TYPE_BAREMETAL, 
+                 graph_title="", 
+                 stack_state=False, 
+                 y_axis_title="", 
+                 series_for_2nd_yaxis=[],
+                 data=[]):
+        self.button_label = button_label
+        self.type = graph_type  # one of GRAPH_TYPE_BAREMETAL or GRAPH_TYPE_CGROUP
+        self.graph_title = graph_title
+        self.stack_state = stack_state
+        self.y_axis_title = y_axis_title
+        self.series_for_2nd_yaxis = series_for_2nd_yaxis
+        self.data_table = data
+        self.graph_title += (', STACKED graph' if self.stack_state else '')
+
+        # generate new JS name for this graph
+        global g_num_generated_charts 
+        self.js_name = 'graph' + str(g_num_generated_charts)
+        g_num_generated_charts += 1
+
+        
+    def genGoogleChartJSDrawFunction(self, ):
+        ''' After the JavaScript line graph data is output, the data is terminated and the graph options set'''
+        global next_graph_need_stacking
+        
+        def __internalWriteAxis(series_indexes, target_axis_index):
+            ret = ""
+            for i, idx in enumerate(series_indexes, start=0):
+                ret += '   %d: {targetAxisIndex:%d}' % (idx,target_axis_index)
+                #print("i=%d, idx=%d, target_axis_index=%d" % (i,idx,target_axis_index))
+                if i < len(series_indexes):
+                    ret += ',\n'
+                else:
+                    ret += '\n'
+            return ret
+        
+        ret_string = ""
+        ret_string += 'var options_%s = {\n' % (self.js_name)
+        ret_string += '  chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n'
+        ret_string += '  title: "%s",\n' % (self.graph_title)
+        ret_string += '  focusTarget: "category",\n'
+        ret_string += '  hAxis: { gridlines: { color: "lightgrey", count: 30 } },\n'
+        if len(self.series_for_2nd_yaxis)>0:
+            # compute series that use 1st Y axis:
+            num_series=self.data_table.getNumDataSeries()
+            series_for_1st_yaxis = range(0,num_series)
+            series_for_1st_yaxis = [item for item in series_for_1st_yaxis if item not in self.series_for_2nd_yaxis]
+            #print("series_for_1st_yaxis: %s" % ','.join(str(x) for x in series_for_1st_yaxis))
+            #print("self.series_for_2nd_yaxis: %s" % ','.join(str(x) for x in self.series_for_2nd_yaxis))
+    
+            # assign data series to the 2 Y axes:
+            ret_string += '  series: {\n'
+            ret_string += __internalWriteAxis(series_for_1st_yaxis, 0)
+            ret_string += __internalWriteAxis(self.series_for_2nd_yaxis, 1)
+            ret_string += '  },\n'
+            
+            # allocate 2 Y axes:
+            assert(len(self.y_axis_title) == 2)
+            ret_string += '  vAxes: {\n'
+            ret_string += '    0: { title: "%s" },\n' % str(self.y_axis_title[0])
+            ret_string += '    1: { title: "%s" }\n' % str(self.y_axis_title[1])
+            ret_string += '  },\n'
+        else:
+            ret_string += '  vAxis: { title: "%s", gridlines: { color: "lightgrey", count: 11 } },\n' % str(self.y_axis_title)
+        ret_string += '  explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },\n'
+        
+        # graph stacking
+        next_graph_need_stacking = self.stack_state
+        if next_graph_need_stacking:
+            ret_string += '  isStacked:  1\n'
+            next_graph_need_stacking = 0
+        else:
+            ret_string += '  isStacked:  0\n'
+            
+        ret_string += '};\n'  # end of "options_%s" variable
+        ret_string += '\n'
+        ret_string += 'if (g_chart && g_chart.clearChart)\n'
+        ret_string += '  g_chart.clearChart();\n'
+        ret_string += 'g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));\n'
+        ret_string += 'g_chart.draw(data_%s, options_%s);\n' % (self.js_name, self.js_name)
+        return ret_string
+    
+#     def bubbleit(self,web, column_names, data, title, button_label, graph_type):
+#         global g_graphs
+#         
+#         # declare JS variables:
+#         nchart_start_js_bubble_graph(web, column_names)
+#         nchart_write_js_graph_data(web, data)
+#         nchart_end_js_bubble_graph(web, title)
+        
+    def toGoogleChartJS(self):
+        global next_graph_need_stacking
+        
+        # generate the JS
+        js_code_inner = self.data_table.toGoogleChartTable(self.js_name)
+        js_code_inner += self.genGoogleChartJSDrawFunction()
+
+        js_code = 'function draw_%s() {\n' % (self.js_name)
+        js_code += textwrap.indent(js_code_inner, ' ' * JS_INDENT_SIZE)
+        js_code += '}\n' # end of draw_%s function
+        js_code += '\n'
+
+        return js_code
+        
 
 # =======================================================================================================
 # GLOBALs
 # =======================================================================================================
 
-
 g_graphs = []  # global list of GoogleChartsGraph class instances
 g_num_generated_charts = 1
+
 
 # =======================================================================================================
 # nchart_* routines to actually produce HTML+JavaScript
 # =======================================================================================================
 
-
 def nchart_start_js(file, title):
-    ''' Head of the HTML webpage'''
+    ''' Write the head of the HTML webpage and start the JS section '''
     file.write('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
     file.write('<html xmlns="http://www.w3.org/1999/xhtml">' + '\n')
     file.write('<head>' + '\n')
@@ -147,109 +267,65 @@ def nchart_start_js(file, title):
     file.write('     #button_table { border-collapse: collapse; }\n')
     file.write('     #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
     file.write('  </style>\n')
-    file.write('  <script type="text/javascript" src="https://cdn.jsdelivr.net/pako/1.0.5/pako.min.js"></script>\n')
+    file.write('  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>\n')
     file.write('  <script type="text/javascript" src="https://www.google.com/jsapi"></script>\n')
     file.write('  <script type="text/javascript">\n')
+    file.write('/* Load GoogleCharts: */\n')
     file.write('google.load("visualization", "1.1", {packages:["corechart"]});\n')
-    file.write('google.setOnLoadCallback(setupCharts);\n')
+    file.write('google.setOnLoadCallback(setup_button_click_handlers);\n')
     file.write('\n')
-    file.write('function setupCharts() {\n')
-    file.write('  var chart = null;\n')
+    file.write('/* The global chart object: */\n')
+    file.write('var g_chart = null;\n')
+    file.write('\n')
+    file.write('/* The global window showing the configuration of all collected data: */\n')
+    file.write('var g_configWindow = null;\n')
+    file.write('\n')
+    # at this point we will generate all helper JS functions
 
-    
-def nchart_start_js_bubble_graph(file, columnnames):
-    ''' Before the graph data with datetime + multiple columns of data '''
-    global g_num_generated_charts 
-    file.write('  var data_' + str(g_num_generated_charts) + ' = google.visualization.arrayToDataTable([\n')
-    file.write("[" + columnnames + "]\n")
-    
-def nchart_end_js_bubble_graph(file, graphtitle):
-    ''' After the JavaScript bubble graph data is output, the data is terminated and the bubble graph options set'''
-    global g_num_generated_charts
-    file.write('  ]);\n')
-    file.write('  var options_' + str(g_num_generated_charts) + ' = {\n')
-    file.write('    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n')
-    file.write('    title: "' + graphtitle + '",\n')
-    file.write('    hAxis: { title:"CPU seconds in Total"},\n')
-    file.write('    vAxis: { title:"Character I/O in Total"},\n')
-    file.write('    sizeAxis: {maxSize: 200},\n')
-    file.write('    bubble: {textStyle: {fontSize: 15}}\n')
-    file.write('  };\n')
-    file.write('  document.getElementById("draw_' + str(g_num_generated_charts) + '").addEventListener("click", function() {\n')
-    file.write('  if (chart && chart.clearChart)\n')
-    file.write('    chart.clearChart();\n')
-    file.write('  chart = new google.visualization.BubbleChart(document.getElementById("chart_master"));\n')
-    file.write('  chart.draw(data_' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
-    file.write('  });\n')
-    g_num_generated_charts += 1
-
-    
-def nchart_end_js_line_graph(file, num_series, graphtitle, y_axis_title, series_for_2nd_yaxis):
-    ''' After the JavaScript line graph data is output, the data is terminated and the graph options set'''
-    global next_graph_need_stacking
-    global g_num_generated_charts 
-    
-    def write_series_json(file, series_indexes, target_axis_index):
-        for i, idx in enumerate(series_indexes, start=0):
-            file.write('     %d: {targetAxisIndex:%d}' % (idx,target_axis_index))
-            #print("i=%d, idx=%d, target_axis_index=%d" % (i,idx,target_axis_index))
-            if i < len(series_indexes):
-                file.write(',\n')
-            else:
-                file.write('\n')
-    
-    file.write('  var options_' + str(g_num_generated_charts) + ' = {\n')
-    file.write('    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n')
-    file.write('    title: "' + graphtitle + '",\n')
-    file.write('    focusTarget: "category",\n')
-    file.write('    hAxis: { gridlines: { color: "lightgrey", count: 30 } },\n')
-    if len(series_for_2nd_yaxis)>0:
-        # compute series that use 1st Y axis:
-        series_for_1st_yaxis = range(0,num_series)
-        series_for_1st_yaxis = [item for item in series_for_1st_yaxis if item not in series_for_2nd_yaxis]
-        #print("series_for_1st_yaxis: %s" % ','.join(str(x) for x in series_for_1st_yaxis))
-        #print("series_for_2nd_yaxis: %s" % ','.join(str(x) for x in series_for_2nd_yaxis))
-
-        # assign data series to the 2 Y axes:
-        file.write('    series: {\n')
-        write_series_json(file, series_for_1st_yaxis, 0)
-        write_series_json(file, series_for_2nd_yaxis, 1)
-        file.write('    },\n')
-        
-        # allocate 2 Y axes:
-        assert(len(y_axis_title) == 2)
-        file.write('    vAxes: {\n')
-        #file.write('      0: { title: "%s", gridlines: { color: "lightgrey", count: 11 } },\n' % str(y_axis_title[0]))
-        #file.write('      1: { title: "%s", gridlines: { color: "lightgrey", count: 11 } }\n' % str(y_axis_title[1]))
-        file.write('      0: { title: "%s" },\n' % str(y_axis_title[0]))
-        file.write('      1: { title: "%s" }\n' % str(y_axis_title[1]))
-        file.write('    },\n')
-    else:
-        file.write('    vAxis: { title: "%s", gridlines: { color: "lightgrey", count: 11 } },\n' % str(y_axis_title))
-    file.write('    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },\n')
-    if next_graph_need_stacking:
-        file.write('    isStacked:  1\n')
-        next_graph_need_stacking = 0
-    else:
-        file.write('    isStacked:  0\n')
-    file.write('  };\n')
-    file.write('  document.getElementById("draw_' + str(g_num_generated_charts) + '").addEventListener("click", function() {\n')
-    file.write('    if (chart && chart.clearChart)\n')
-    file.write('      chart.clearChart();\n')
-    file.write('    chart = new google.visualization.AreaChart(document.getElementById("chart_master"));\n')
-    file.write('    chart.draw(data_graph' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
-    file.write('  });\n')
-    g_num_generated_charts += 1
-
-    
 def nchart_end_js(file, config):
-    ''' Generic version using named arguments for 1 to 10 buttons for Server graphs - Finish off the web page '''
+    ''' Finish the JS portion and HTML head tag '''
+    
+    global g_graphs
+    
+    # add all event listeners for button clicks:
+    file.write('function setup_button_click_handlers() {\n')
+    for num, graph in enumerate(g_graphs, start=1):
+        file.write('  document.getElementById("btn_draw_%s").addEventListener("click", draw_%s);\n' % (graph.js_name, graph.js_name))
+    file.write('  document.getElementById("btn_show_config").addEventListener("click", show_config_window);\n')
     file.write('}\n')
+    
     file.write(config)
     file.write('  </script>\n')
     file.write('</head>\n')
-
     
+    
+# def nchart_start_js_bubble_graph(file, columnnames):
+#     ''' Before the graph data with datetime + multiple columns of data '''
+#     global g_num_generated_charts 
+#     file.write('  var data_' + str(g_num_generated_charts) + ' = google.visualization.arrayToDataTable([\n')
+#     file.write("[" + columnnames + "]\n")
+#     
+# def nchart_end_js_bubble_graph(file, graphtitle):
+#     ''' After the JavaScript bubble graph data is output, the data is terminated and the bubble graph options set'''
+#     global g_num_generated_charts
+#     file.write('  ]);\n')
+#     file.write('  var options_' + str(g_num_generated_charts) + ' = {\n')
+#     file.write('    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n')
+#     file.write('    title: "' + graphtitle + '",\n')
+#     file.write('    hAxis: { title:"CPU seconds in Total"},\n')
+#     file.write('    vAxis: { title:"Character I/O in Total"},\n')
+#     file.write('    sizeAxis: {maxSize: 200},\n')
+#     file.write('    bubble: {textStyle: {fontSize: 15}}\n')
+#     file.write('  };\n')
+#     file.write('  document.getElementById("draw_' + str(g_num_generated_charts) + '").addEventListener("click", function() {\n')
+#     file.write('  if (chart && chart.clearChart)\n')
+#     file.write('    chart.clearChart();\n')
+#     file.write('  chart = new google.visualization.BubbleChart(document.getElementById("chart_master"));\n')
+#     file.write('  chart.draw(data_' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
+#     file.write('  });\n')
+#     g_num_generated_charts += 1
+    
+
 def nchart_start_html_body(file, hostname):
     global g_graphs
     file.write('<body bgcolor="#EEEEFF">\n')
@@ -263,24 +339,24 @@ def nchart_start_html_body(file, hostname):
     # Datarow
     file.write('  <tr>\n')
     file.write('  <td id="button_table_col">\n')
-    file.write('    <button onclick="config()"><b>Configuration</b></button><br/>\n')
+    file.write('    <button id="btn_show_config"><b>Configuration</b></button><br/>\n')
     file.write('  </td><td id="button_table_col">\n')
 
     def write_buttons_for_graph_type(type):
         # find in all graphs registered so far all those related to the CGROUP
         for num, graph in enumerate(g_graphs, start=1):
             if graph.type == type:
-                if graph.name.startswith('CPU') or graph.name.endswith('CPUs'):
+                if graph.button_label.startswith('CPU') or graph.button_label.endswith('CPUs'):
                     colour = 'red'
-                elif graph.name.startswith('Memory'):
+                elif graph.button_label.startswith('Memory'):
                     colour = 'darkorange'
-                elif graph.name.startswith('Network'):
+                elif graph.button_label.startswith('Network'):
                     colour = 'darkblue'
-                elif graph.name.startswith('Disk'):
+                elif graph.button_label.startswith('Disk'):
                     colour = 'darkgreen'
                 else:
                     colour = 'black'
-                file.write('    <button id="draw_' + str(num) + '" style="color:' + colour + '"><b>' + graph.name + '</b></button>\n')
+                file.write('    <button id="btn_draw_' + graph.js_name + '" style="color:' + colour + '"><b>' + graph.button_label + '</b></button>\n')
 
     write_buttons_for_graph_type(GRAPH_TYPE_CGROUP)
     file.write('      </td><td id="button_table_col">\n')
@@ -311,46 +387,7 @@ def nchart_end_html_body(file):
     file.write('</body>\n')
     file.write('</html>\n')
 
-# =======================================================================================================
-# Google Visualization charting routines
-# =======================================================================================================
 
-def googledate(date):
-    ''' convert ISO datetime strings like 
-          "2017-08-21T20:12:30" 
-        to strings like:
-          "Date(2019,4,04,01,16,25)"
-        which are the datetime representation suitable for JS GoogleCharts
-     '''
-    dateAsPythonObj = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
-    return "Date(%d,%d,%d,%d,%d,%d)" % (dateAsPythonObj.year, dateAsPythonObj.month, dateAsPythonObj.day, dateAsPythonObj.hour, dateAsPythonObj.minute, dateAsPythonObj.second)
-
-
-def graphit(web, table_data, graph_title, button_label, graph_type, stack_state, y_axis_title="", series_for_2nd_yaxis=[]):
-    global next_graph_need_stacking
-    global g_graphs
-    
-    table_data.toGoogleChartTable(web)
-
-    graph_title += (', STACKED graph' if stack_state else '')
-    next_graph_need_stacking = stack_state
-    nchart_end_js_line_graph(web, table_data.getNumDataSeries(), graph_title, y_axis_title, series_for_2nd_yaxis)
-    
-    # register this graph into globals
-    g_graphs.append(GoogleChartsGraph(button_label, graph_type))
-
-
-
-def bubbleit(web, column_names, data, title, button_label, graph_type):
-    global g_graphs
-    
-    # declare JS variables:
-    nchart_start_js_bubble_graph(web, column_names)
-    nchart_write_js_graph_data(web, data)
-    nchart_end_js_bubble_graph(web, title)
-    
-    # register this graph into globals
-    g_graphs.append(GoogleChartsGraph(button_label, graph_type))
 
 # =======================================================================================================
 # generate_* routines
@@ -389,11 +426,10 @@ def generate_config_js(jheader):
             jheader['cmonitor']['sample_num'] = "Infinite"
           
     config_str = ""
-    config_str += '\nvar configWindow;'
-    config_str += '\nfunction config() {\n'
-    config_str += '    if (configWindow) configWindow.close();\n'
-    config_str += '    configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");\n'
-    config_str += '    configWindow.document.write("\\\n'
+    config_str += '\nfunction show_config_window() {\n'
+    config_str += '    if (g_configWindow) g_configWindow.close();\n'
+    config_str += '    g_configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");\n'
+    config_str += '    g_configWindow.document.write("\\\n'
     config_str += '    <html><head>\\\n'
     config_str += '      <title>Configuration</title>\\\n'
     config_str += '      <style>\\\n'
@@ -553,7 +589,7 @@ def generate_disks_io(web, jdata, hostname):
     
     #
     # MAIN LOOP
-    # Process JSON sample and fill the Table() object
+    # Process JSON sample and fill the GoogleChartsTable() object
     #
     
     disk_table = GoogleChartsTable(diskcols)
@@ -561,7 +597,8 @@ def generate_disks_io(web, jdata, hostname):
         if i == 0:
             continue
 
-        row = [ googledate(s['timestamp']['datetime']) ]
+        row = []
+        row.append(s['timestamp']['datetime'])
         for device in all_disks:
             #row.append(s["disks"][device]["time"])
             #row.append(s["disks"][device]["reads"])
@@ -570,13 +607,13 @@ def generate_disks_io(web, jdata, hostname):
             row.append(-s["disks"][device]["wkb"]/divider)
         disk_table.addRow(row)
 
-    graphit(web,
-            disk_table,  # Data
-            graph_title="Disk I/O (from baremetal stats)",
-            button_label='Disk I/O',
-            y_axis_title="MB",
-            graph_type=GRAPH_TYPE_BAREMETAL,
-            stack_state=False)
+    g = GoogleChartsGraph(button_label='Disk I/O', 
+                          graph_type=GRAPH_TYPE_BAREMETAL,
+                          graph_title="Disk I/O (from baremetal stats)",
+                          y_axis_title="MB",
+                          data=disk_table)
+    web.write(g.toGoogleChartJS())
+    g_graphs.append(g)    # register this graph into globals
 
 # def generate_filesystems(web, jdata):
 #     global g_graphs
@@ -590,7 +627,7 @@ def generate_disks_io(web, jdata, hostname):
 #         for fs in s["filesystems"].keys():
 #             web.write(", %.1f" % (s["filesystems"][fs]["fs_full_percent"]))
 #         web.write("]\n")
-#     nchart_end_js_line_graph(web, 'File Systems Used percent')
+#     g = GoogleChartsGraph( 'File Systems Used percent')
 #     g_graphs.append("File Systems")
 #     return web
 
@@ -625,7 +662,7 @@ def generate_network_traffic(web, jdata, hostname):
         if i == 0:
             continue
 
-        row = [ googledate(s['timestamp']['datetime']) ]
+        row = [ s['timestamp']['datetime'] ]
         for device in all_netdevices:
             try:
                 row.append(+s["network_interfaces"][device]["ibytes"]/divider)
@@ -636,13 +673,16 @@ def generate_network_traffic(web, jdata, hostname):
                 row.append(0)
         net_table.addRow(row)
 
-    graphit(web,
-            net_table,  # Data
+    g = GoogleChartsGraph(
             graph_title='Network Traffic in MB/s for ' + hostname + " (from baremetal stats)",
             button_label='Network Traffic (MB/s)',
             y_axis_title="MB/s",
             graph_type=GRAPH_TYPE_BAREMETAL,
-            stack_state=False)
+            stack_state=False,
+            data=net_table)
+    web.write(g.toGoogleChartJS())
+    g_graphs.append(g)    # register this graph into globals
+    
             
     # PPS
     
@@ -651,7 +691,7 @@ def generate_network_traffic(web, jdata, hostname):
         if i == 0:
             continue
 
-        row = [ googledate(s['timestamp']['datetime']) ]
+        row = [ s['timestamp']['datetime'] ]
         for device in all_netdevices:
             try:
                 row.append(+s["network_interfaces"][device]["ipackets"])
@@ -662,13 +702,15 @@ def generate_network_traffic(web, jdata, hostname):
                 row.append(0)
         net_table.addRow(row)
 
-    graphit(web,
-            net_table,  # Data
+    g = GoogleChartsGraph(
             graph_title='Network Traffic in PPS for ' + hostname + " (from baremetal stats)",
             button_label='Network Traffic (PPS)',
             y_axis_title="PPS",
             graph_type=GRAPH_TYPE_BAREMETAL,
-            stack_state=False)
+            stack_state=False,
+            data=net_table)
+    web.write(g.toGoogleChartJS())
+    g_graphs.append(g)    # register this graph into globals
     
     return web
 
@@ -694,7 +736,7 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
         if i == 0:
             continue  # skip first sample
 
-        ts = googledate(s['timestamp']['datetime'])
+        ts = s['timestamp']['datetime']
         all_cpus_row = [ ts ]
         for c in logical_cpus_indexes:
             cpu_stats = s['stat']['cpu' + str(c)]
@@ -717,22 +759,26 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
     
     # Produce the javascript:
     for c in logical_cpus_indexes:
-        graphit(web,
-                baremetal_cpu_stats[c],  # Data
+        g = GoogleChartsGraph(
+                data=baremetal_cpu_stats[c],  # Data
                 graph_title='Logical CPU ' + str(c) + " (from baremetal stats)",
                 button_label="CPU" + str(c),
                 y_axis_title="Time (%)",
                 graph_type=GRAPH_TYPE_BAREMETAL,
                 stack_state=True)
+        web.write(g.toGoogleChartJS())
+        g_graphs.append(g)    # register this graph into globals
 
     # Also produce the "all CPUs" graph
-    graphit(web,
-            all_cpus_table,  # Data
+    g = GoogleChartsGraph(
+            data=all_cpus_table,  # Data
             graph_title="All logical CPUs allowed in cmonitor_collector CGroup (from baremetal stats)",
             button_label="All CPUs",
             y_axis_title="Time (%)",
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=False)
+    web.write(g.toGoogleChartJS())
+    g_graphs.append(g)    # register this graph into globals
     
 
 def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
@@ -755,7 +801,7 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
         if i == 0:
             continue  # skip first sample
         
-        ts = googledate(s['timestamp']['datetime'])
+        ts = s['timestamp']['datetime']
         all_cpus_row = [ ts ]
         for c in logical_cpus_indexes:
             # get data:
@@ -774,22 +820,26 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
 
     # Produce 1 graph for each CPU:
     for c in logical_cpus_indexes:
-        graphit(web,
-                cpu_stats_table[c],  # Data
+        g = GoogleChartsGraph(
+                data=cpu_stats_table[c],  # Data
                 graph_title='Logical CPU ' + str(c) + " (from CGroup stats)",
                 button_label="CPU" + str(c),
                 y_axis_title="Time (%)",
                 graph_type=GRAPH_TYPE_CGROUP,
                 stack_state=True)
+        web.write(g.toGoogleChartJS())
+        g_graphs.append(g)    # register this graph into globals
 
     # Also produce the "all CPUs" graph
-    graphit(web,
-            all_cpus_table,  # Data
+    g = GoogleChartsGraph(
+            data=all_cpus_table,  # Data
             graph_title="All logical CPUs assigned to cmonitor_collector CGroup (from CGroup stats)",
             button_label="All CPUs",
             y_axis_title="Time (%)",
             graph_type=GRAPH_TYPE_CGROUP,
             stack_state=False)
+    web.write(g.toGoogleChartJS())
+    g_graphs.append(g)    # register this graph into globals
 
 
 def choose_byte_divider(mem_total_bytes):
@@ -848,20 +898,22 @@ def generate_baremetal_memory(web, jdata, hostname):
         mc = meminfo_stat_to_bytes(s['proc_meminfo']['Cached'])
         
         baremetal_memory_stats.addRow([
-                googledate(s['timestamp']['datetime']),
+                s['timestamp']['datetime'],
                 int((mem_total_bytes - mf - mc) / divider),   # compute used memory
                 int(mc / divider), # cached
                 int(mf / divider), # free
             ])
 
     # Produce the javascript:
-    graphit(web,
-            baremetal_memory_stats,  # Data
+    g = GoogleChartsGraph(
+            data=baremetal_memory_stats,  # Data
             graph_title='Memory usage in ' + unit + " (from baremetal stats)",
             button_label="Memory Usage",
             y_axis_title=unit,
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=True)
+    web.write(g.toGoogleChartJS())
+    g_graphs.append(g)    # register this graph into globals
 
 
 def generate_cgroup_memory(web, jheader, jdata, hostname):
@@ -890,21 +942,23 @@ def generate_cgroup_memory(web, jheader, jdata, hostname):
         mc = s['cgroup_memory_stats']['total_cache']
         mfail = s['cgroup_memory_stats']['failcnt']
         cgroup_memory_stats.addRow([
-                googledate(s['timestamp']['datetime']),
+                s['timestamp']['datetime'],
                 mu / divider,
                 mc / divider,
                 mfail,
             ])
 
     # Produce the javascript:
-    graphit(web,
-            cgroup_memory_stats,  # Data
-            graph_title='Memory used by cmonitor_collector CGroup ' + unit +  " (from CGroup stats)",
+    g = GoogleChartsGraph(
+            data=cgroup_memory_stats,  # Data
+            graph_title='Memory used by cmonitor_collector CGroup in ' + unit +  " (from CGroup stats)",
             button_label="Memory Usage",
             y_axis_title=[unit, "Alloc Failures"],
             graph_type=GRAPH_TYPE_CGROUP,
             stack_state=False,
             series_for_2nd_yaxis=[2]) # put "failcnt" on 2nd y axis
+    web.write(g.toGoogleChartJS())
+    g_graphs.append(g)    # register this graph into globals
 
 def generate_load_avg(web, jheader, jdata, hostname):
     #
@@ -938,20 +992,22 @@ def generate_load_avg(web, jheader, jdata, hostname):
         # we remap that in range [0-100%]
         
         load_avg_stats.addRow([
-                googledate(s['timestamp']['datetime']),
+                s['timestamp']['datetime'],
                 100 * float(s['proc_loadavg']['load_avg_1min']) / num_baremetal_cpus,
                 100 * float(s['proc_loadavg']['load_avg_5min']) / num_baremetal_cpus,
                 100 * float(s['proc_loadavg']['load_avg_15min']) / num_baremetal_cpus
             ])
 
     # Produce the javascript:
-    graphit(web,
-            load_avg_stats,  # Data
+    g = GoogleChartsGraph(
+            data=load_avg_stats,  # Data
             graph_title='Average Load ' +  " (from baremetal stats)",
             button_label="Average Load",
             y_axis_title="Load (%)",
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=False)
+    web.write(g.toGoogleChartJS())
+    g_graphs.append(g)    # register this graph into globals
 
 
 
@@ -1035,7 +1091,7 @@ def main_process_file(infile, outfile):
 
     # if process_data_found:
     #    bubbleit(web, topprocs_title, topprocs,  'Top Processes Summary' + details, "TopSum")
-    #    graphit(web, top_header, top_data,  'Top Procs by CPU time' + details, "TopProcs",unstacked)
+    #    g = GoogleChartsGraph( top_header, top_data,  'Top Procs by CPU time' + details, "TopProcs",unstacked)
   
     # generate_filesystems(web, jdata)
     
