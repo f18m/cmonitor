@@ -7,12 +7,13 @@
      h3 {margin: 0px;}
      ul {margin: 0 0 0 0;padding-left: 20px;}
      button { margin-bottom: 3px; }
+     #hostnameSpan { background-color: white; color: red; padding: 4px; }
      #chart_master {width:100%; height:85%;}
      #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
      #bottom_div h3 {font-size: medium;}
      #bottom_div li {font-size: smaller;}
      #bottom_table_val {font-family: monospace;}
-     #button_table { border-collapse: collapse; }
+     #button_table { width:100%; border-collapse: collapse; }
      #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
   </style>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
@@ -27,6 +28,23 @@ var g_chart = null;
 
 /* The global window showing the configuration of all collected data: */
 var g_configWindow = null;
+
+/* Utility function used with combobox controls: */
+function call_function_named(func_name) {
+  eval(func_name + "()");
+}
+
+/* Utility function used to clear main graph: */
+function clear_chart() {
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+}
+
+/* Utility function used to reset combobox controls: */
+function reset_combo_boxes() {
+  document.getElementById("select_cpu_combobox1").value = "clear_chart";
+  document.getElementById("select_cpu_combobox2").value = "clear_chart";
+}
 
 function draw_graph1() {
   var deflated_data_base64_graph1 = 'eNqNz7FqwzAQBuBXCZpaOFTpZKm+zBnqJaUJnUwGNVbA4JASC4oJffeeHLmEQNoMht+/Tp99dX0ScfgMYi4aH0Ns90GA6PxH6LhaTNU3iPc+HPlo2W7TxHroY9hzqJouvVdPr7Mv30aOL/7YzKrVW5o67OIUY/Cd2EA9og+oNIEFbUCXQIDuUUAhnbOgpALNyQGhRHoei/NjjEnpJkIjQvkO8jwCKekUXSDqL8IgE+aX0BNhxyJ//1/E5mWKq2XK8v5lTMmI5SmdEZUIh3jvKoU+A0gZIOJaS3SJSL90iWx+APL1dcY=\n';
@@ -89,6 +107,7 @@ function draw_graph3() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph3, options_graph3);
+  reset_combo_boxes();
 }
 
 function draw_graph4() {
@@ -152,6 +171,7 @@ function draw_graph6() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph6, options_graph6);
+  reset_combo_boxes();
 }
 
 function draw_graph7() {
@@ -173,6 +193,7 @@ function draw_graph7() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph7, options_graph7);
+  reset_combo_boxes();
 }
 
 function draw_graph8() {
@@ -202,6 +223,7 @@ function draw_graph8() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph8, options_graph8);
+  reset_combo_boxes();
 }
 
 function draw_graph9() {
@@ -223,6 +245,7 @@ function draw_graph9() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph9, options_graph9);
+  reset_combo_boxes();
 }
 
 function draw_graph10() {
@@ -244,14 +267,11 @@ function draw_graph10() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph10, options_graph10);
+  reset_combo_boxes();
 }
 
 function setup_button_click_handlers() {
-  document.getElementById("btn_draw_graph1").addEventListener("click", draw_graph1);
-  document.getElementById("btn_draw_graph2").addEventListener("click", draw_graph2);
   document.getElementById("btn_draw_graph3").addEventListener("click", draw_graph3);
-  document.getElementById("btn_draw_graph4").addEventListener("click", draw_graph4);
-  document.getElementById("btn_draw_graph5").addEventListener("click", draw_graph5);
   document.getElementById("btn_draw_graph6").addEventListener("click", draw_graph6);
   document.getElementById("btn_draw_graph7").addEventListener("click", draw_graph7);
   document.getElementById("btn_draw_graph8").addEventListener("click", draw_graph8);
@@ -418,21 +438,30 @@ function show_config_window() {
   </script>
 </head>
 <body bgcolor="#EEEEFF">
-  <h1>Monitoring data for hostname: docker-centos7-userapp-with-embedded-collector</h1>
+  <h1>Monitoring data for hostname: <span id="hostnameSpan">docker-centos7-userapp-with-embedded-collector</span></h1>
   <div id="button_div">
   <table id="button_table">
-  <tr><td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td><td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td></tr>
+  <tr>
+    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td>
+    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
+  </tr>
   <tr>
   <td id="button_table_col">
     <button id="btn_show_config"><b>Configuration</b></button><br/>
   </td><td id="button_table_col">
-    <button id="btn_draw_graph4" style="color:red"><b>CPU0</b></button>
-    <button id="btn_draw_graph5" style="color:red"><b>CPU1</b></button>
+    <select id="select_cpu_combobox2" onchange="call_function_named(this.value)">
+      <option value="clear_chart">None</option>
+      <option value="draw_graph4">CPU0</option>
+      <option value="draw_graph5">CPU1</option>
+    </select>
     <button id="btn_draw_graph6" style="color:red"><b>All CPUs</b></button>
     <button id="btn_draw_graph8" style="color:darkorange"><b>Memory Usage</b></button>
       </td><td id="button_table_col">
-    <button id="btn_draw_graph1" style="color:red"><b>CPU0</b></button>
-    <button id="btn_draw_graph2" style="color:red"><b>CPU1</b></button>
+    <select id="select_cpu_combobox1" onchange="call_function_named(this.value)">
+      <option value="clear_chart">None</option>
+      <option value="draw_graph1">CPU0</option>
+      <option value="draw_graph2">CPU1</option>
+    </select>
     <button id="btn_draw_graph3" style="color:red"><b>All CPUs</b></button>
     <button id="btn_draw_graph7" style="color:darkorange"><b>Memory Usage</b></button>
     <button id="btn_draw_graph9" style="color:darkgreen"><b>Disk I/O</b></button>
@@ -454,7 +483,7 @@ function show_config_window() {
       <li>Started sampling at: <span id='bottom_table_val'>2019-05-13T18:09:23 (UTC)</span></li>
       <li>Samples: <span id='bottom_table_val'>7</span></li>
       <li>Sampling Interval (s): <span id='bottom_table_val'>3</span></li>
-      <li>Total time sampled (s): <span id='bottom_table_val'>21</span></li>
+      <li>Total time sampled (hh:mm:ss): <span id='bottom_table_val'>0:00:21</span></li>
       </ul></td><td><ul>
     </ul></td></tr>
     </table>

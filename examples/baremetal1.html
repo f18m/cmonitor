@@ -7,12 +7,13 @@
      h3 {margin: 0px;}
      ul {margin: 0 0 0 0;padding-left: 20px;}
      button { margin-bottom: 3px; }
+     #hostnameSpan { background-color: white; color: red; padding: 4px; }
      #chart_master {width:100%; height:85%;}
      #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
      #bottom_div h3 {font-size: medium;}
      #bottom_div li {font-size: smaller;}
      #bottom_table_val {font-family: monospace;}
-     #button_table { border-collapse: collapse; }
+     #button_table { width:100%; border-collapse: collapse; }
      #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
   </style>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
@@ -27,6 +28,23 @@ var g_chart = null;
 
 /* The global window showing the configuration of all collected data: */
 var g_configWindow = null;
+
+/* Utility function used with combobox controls: */
+function call_function_named(func_name) {
+  eval(func_name + "()");
+}
+
+/* Utility function used to clear main graph: */
+function clear_chart() {
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+}
+
+/* Utility function used to reset combobox controls: */
+function reset_combo_boxes() {
+  document.getElementById("select_cpu_combobox1").value = "clear_chart";
+  document.getElementById("select_cpu_combobox2").value = "clear_chart";
+}
 
 function draw_graph1() {
   var deflated_data_base64_graph1 = 'eNqNV02P5EQM/SurPoFUCilXuT44c2AuIECcRnsYdhpppFmBdltCK8R/59muVNIMSeow/ZFJXtnPz8/ux8e/L7cvf14v316en27X28vH68VdXp9+u77i0nfLpX/c5dfP10/41w8vH+SOX758vl0/4sPD86t8f/jmx3d/Pb3c8PH7p0/P7x5+/knu+uP32/Lxdn16vbx3jwr6Fc2+OnYUHZELjvjriwtTrezmaXY0heBdDRNR0gubv12IAoh5SsmeIAKad16ukEt4izQCE7xEgtvZcDxCCS7FCQEFYFmA+BroECYCJsepptpOlMAIz1HoYYRTlAwUZBJwQYORCLyjjPCiC4Q3aoTVWo+Q4gwk39nx+Kv4iqRiT+qEmRgUQuiwO5WYCmIRUeoxnqEkSWlJXAOJaaqFXCzgeCySKpF4PFV79hmUIx92PE9UyggMk9RIn105jMgLdyGm4NMQikpXgrFDIZWa+b4qpxiiXZSzFgsl5SnMb5S/jxCdX4RiJ3soJIFcOZ/BSzSwpH11ACOqFa3PC7EiGF+AE0R8gcqmKQ5wVLeQBls4DJwowNaEi4TSwv1uVqpaxrm5Pear5hhRtlydF4Zj78jD1LzIt5aJmsf43pUrvSdZedUusuCytKM4VhMuXkNr69ZRuziqX+tlO9ScoAIuuTwjtzBSdDIBJ67tXHlcPhWeuNAQhKhXCF4LzmqawMxpSt6PUaPu2+XVnKbgwsZ0TkIx50UOZXNkwYVUVm7PMETAEfL0zV7QjJUciXS9CLk76VlCar0gwihV87ac8BbWfHwfWrstNd8bXtZmCqzNrm7TxCSnHIakBpy0ldbpkYuqJffL+ayp1IG58yx9gEIJy2tn9sT3UUTDsaMYOa0TQtkMpsMRF82EU2uFxcoz4GbWevkyUnc1Yerym9X4MH4pZbVFP6QeteFWoFXFWWxrMyd60v8Pw+bFqU8nc2F0dZjXKE7sitWJSz+zYYCPOW4mtj8e+6w+zFJc3iSkw8or6WHT9UcZzRrNcr81T8nw0u14a32+CxK0v3vspJuZagUjXYbfwPBnM+Goz66llk8VEHMZgqhtk6GN0wgrMqR4Iq4jKOq+fvGB1jryWrkTfgbB/1mG5HEWvUq3gxg/hKKylcGYNj0nIxIzgEoX4mmF1IFlac1xM8i8FH5buGPrZDNhGJzUdfUGxnTL6c0CeYQj6gUNyyLmo9qE6RDlEksfoEcNuFaINd/TMLZbsfkuABLV+8CHAdRxs+a/WK7yQxsHPcOoVuTVm0T3JChZdt4Uy1h11HA3P3BYnUiWZ/lJwfq27kf7MCLd7PuqYueSzJXRhYqb4YpVpr62CimzOov8qOj7x6F0k3puIvh927zVs8ViOLyt1x5ItK01kLWjLmI0Xuikduv9uk2RroptmDLcN5oEl3VmN5v5brgatzrpbeXloY0hvbFcsydcoO2wP5nRabXctdQktSdZwVNXzEm5k/kuB13dVw0HsuXMbzzdWH7/L4PYbbQ=\n';
@@ -131,6 +149,7 @@ function draw_graph5() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph5, options_graph5);
+  reset_combo_boxes();
 }
 
 function draw_graph6() {
@@ -236,6 +255,7 @@ function draw_graph10() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph10, options_graph10);
+  reset_combo_boxes();
 }
 
 function draw_graph11() {
@@ -257,6 +277,7 @@ function draw_graph11() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph11, options_graph11);
+  reset_combo_boxes();
 }
 
 function draw_graph12() {
@@ -286,6 +307,7 @@ function draw_graph12() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph12, options_graph12);
+  reset_combo_boxes();
 }
 
 function draw_graph13() {
@@ -307,6 +329,7 @@ function draw_graph13() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph13, options_graph13);
+  reset_combo_boxes();
 }
 
 function draw_graph14() {
@@ -328,6 +351,7 @@ function draw_graph14() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph14, options_graph14);
+  reset_combo_boxes();
 }
 
 function draw_graph15() {
@@ -349,6 +373,7 @@ function draw_graph15() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph15, options_graph15);
+  reset_combo_boxes();
 }
 
 function draw_graph16() {
@@ -370,18 +395,11 @@ function draw_graph16() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
   g_chart.draw(data_graph16, options_graph16);
+  reset_combo_boxes();
 }
 
 function setup_button_click_handlers() {
-  document.getElementById("btn_draw_graph1").addEventListener("click", draw_graph1);
-  document.getElementById("btn_draw_graph2").addEventListener("click", draw_graph2);
-  document.getElementById("btn_draw_graph3").addEventListener("click", draw_graph3);
-  document.getElementById("btn_draw_graph4").addEventListener("click", draw_graph4);
   document.getElementById("btn_draw_graph5").addEventListener("click", draw_graph5);
-  document.getElementById("btn_draw_graph6").addEventListener("click", draw_graph6);
-  document.getElementById("btn_draw_graph7").addEventListener("click", draw_graph7);
-  document.getElementById("btn_draw_graph8").addEventListener("click", draw_graph8);
-  document.getElementById("btn_draw_graph9").addEventListener("click", draw_graph9);
   document.getElementById("btn_draw_graph10").addEventListener("click", draw_graph10);
   document.getElementById("btn_draw_graph11").addEventListener("click", draw_graph11);
   document.getElementById("btn_draw_graph12").addEventListener("click", draw_graph12);
@@ -565,25 +583,34 @@ function show_config_window() {
   </script>
 </head>
 <body bgcolor="#EEEEFF">
-  <h1>Monitoring data for hostname: francesco-workstation</h1>
+  <h1>Monitoring data for hostname: <span id="hostnameSpan">francesco-workstation</span></h1>
   <div id="button_div">
   <table id="button_table">
-  <tr><td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td><td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td></tr>
+  <tr>
+    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td>
+    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
+  </tr>
   <tr>
   <td id="button_table_col">
     <button id="btn_show_config"><b>Configuration</b></button><br/>
   </td><td id="button_table_col">
-    <button id="btn_draw_graph6" style="color:red"><b>CPU0</b></button>
-    <button id="btn_draw_graph7" style="color:red"><b>CPU1</b></button>
-    <button id="btn_draw_graph8" style="color:red"><b>CPU2</b></button>
-    <button id="btn_draw_graph9" style="color:red"><b>CPU3</b></button>
+    <select id="select_cpu_combobox2" onchange="call_function_named(this.value)">
+      <option value="clear_chart">None</option>
+      <option value="draw_graph6">CPU0</option>
+      <option value="draw_graph7">CPU1</option>
+      <option value="draw_graph8">CPU2</option>
+      <option value="draw_graph9">CPU3</option>
+    </select>
     <button id="btn_draw_graph10" style="color:red"><b>All CPUs</b></button>
     <button id="btn_draw_graph12" style="color:darkorange"><b>Memory Usage</b></button>
       </td><td id="button_table_col">
-    <button id="btn_draw_graph1" style="color:red"><b>CPU0</b></button>
-    <button id="btn_draw_graph2" style="color:red"><b>CPU1</b></button>
-    <button id="btn_draw_graph3" style="color:red"><b>CPU2</b></button>
-    <button id="btn_draw_graph4" style="color:red"><b>CPU3</b></button>
+    <select id="select_cpu_combobox1" onchange="call_function_named(this.value)">
+      <option value="clear_chart">None</option>
+      <option value="draw_graph1">CPU0</option>
+      <option value="draw_graph2">CPU1</option>
+      <option value="draw_graph3">CPU2</option>
+      <option value="draw_graph4">CPU3</option>
+    </select>
     <button id="btn_draw_graph5" style="color:red"><b>All CPUs</b></button>
     <button id="btn_draw_graph11" style="color:darkorange"><b>Memory Usage</b></button>
     <button id="btn_draw_graph13" style="color:darkblue"><b>Network Traffic (MB/s)</b></button>
@@ -607,7 +634,7 @@ function show_config_window() {
       <li>Started sampling at: <span id='bottom_table_val'>2019-05-24T20:03:22 (UTC)</span></li>
       <li>Samples: <span id='bottom_table_val'>60</span></li>
       <li>Sampling Interval (s): <span id='bottom_table_val'>3</span></li>
-      <li>Total time sampled (s): <span id='bottom_table_val'>180</span></li>
+      <li>Total time sampled (hh:mm:ss): <span id='bottom_table_val'>0:03:00</span></li>
       </ul></td><td><ul>
     </ul></td></tr>
     </table>

@@ -152,7 +152,7 @@ class GoogleChartsGraph:
         g_num_generated_charts += 1
 
         
-    def genGoogleChartJSDrawFunction(self, ):
+    def genGoogleChartJSDrawFunction(self):
         ''' After the JavaScript line graph data is output, the data is terminated and the graph options set'''
         global next_graph_need_stacking
         
@@ -230,6 +230,10 @@ class GoogleChartsGraph:
 
         js_code = 'function draw_%s() {\n' % (self.js_name)
         js_code += textwrap.indent(js_code_inner, ' ' * JS_INDENT_SIZE)
+
+        if not self.button_label.startswith('CPU'):
+            js_code += '  reset_combo_boxes();\n'
+        
         js_code += '}\n' # end of draw_%s function
         js_code += '\n'
 
@@ -259,12 +263,13 @@ def nchart_start_js(file, title):
     file.write('     h3 {margin: 0px;}\n')
     file.write('     ul {margin: 0 0 0 0;padding-left: 20px;}\n')
     file.write('     button { margin-bottom: 3px; }\n')
+    file.write('     #hostnameSpan { background-color: white; color: red; padding: 4px; }\n')
     file.write('     #chart_master {width:100%; height:85%;}\n')
     file.write('     #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
     file.write('     #bottom_div h3 {font-size: medium;}\n')
     file.write('     #bottom_div li {font-size: smaller;}\n')
     file.write('     #bottom_table_val {font-family: monospace;}\n')
-    file.write('     #button_table { border-collapse: collapse; }\n')
+    file.write('     #button_table { width:100%; border-collapse: collapse; }\n')
     file.write('     #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
     file.write('  </style>\n')
     file.write('  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>\n')
@@ -280,7 +285,25 @@ def nchart_start_js(file, title):
     file.write('/* The global window showing the configuration of all collected data: */\n')
     file.write('var g_configWindow = null;\n')
     file.write('\n')
+    file.write('/* Utility function used with combobox controls: */\n')
+    file.write('function call_function_named(func_name) {\n')
+    file.write('  eval(func_name + "()");\n')
+    file.write('}\n')
+    file.write('\n')
+    file.write('/* Utility function used to clear main graph: */\n')
+    file.write('function clear_chart() {\n')
+    file.write('  if (g_chart && g_chart.clearChart)\n')
+    file.write('    g_chart.clearChart();\n')
+    file.write('}\n')
+    file.write('\n')
+    file.write('/* Utility function used to reset combobox controls: */\n')
+    file.write('function reset_combo_boxes() {\n')
+    file.write('  document.getElementById("select_cpu_combobox1").value = "clear_chart";\n')
+    file.write('  document.getElementById("select_cpu_combobox2").value = "clear_chart";\n')
+    file.write('}\n')
+    file.write('\n')
     # at this point we will generate all helper JS functions
+
 
 def nchart_end_js(file, config):
     ''' Finish the JS portion and HTML head tag '''
@@ -290,7 +313,8 @@ def nchart_end_js(file, config):
     # add all event listeners for button clicks:
     file.write('function setup_button_click_handlers() {\n')
     for num, graph in enumerate(g_graphs, start=1):
-        file.write('  document.getElementById("btn_draw_%s").addEventListener("click", draw_%s);\n' % (graph.js_name, graph.js_name))
+        if not graph.button_label.startswith('CPU'):
+            file.write('  document.getElementById("btn_draw_%s").addEventListener("click", draw_%s);\n' % (graph.js_name, graph.js_name))
     file.write('  document.getElementById("btn_show_config").addEventListener("click", show_config_window);\n')
     file.write('}\n')
     
@@ -329,12 +353,15 @@ def nchart_end_js(file, config):
 def nchart_start_html_body(file, hostname):
     global g_graphs
     file.write('<body bgcolor="#EEEEFF">\n')
-    file.write('  <h1>Monitoring data for hostname: ' + hostname + '</h1>\n')
+    file.write('  <h1>Monitoring data for hostname: <span id="hostnameSpan">' + hostname + '</span></h1>\n')
     file.write('  <div id="button_div">\n')
     file.write('  <table id="button_table">\n')
     
     # Table header row
-    file.write('  <tr><td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td><td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td></tr>\n')
+    file.write('  <tr>\n')
+    file.write('    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td>\n')
+    file.write('    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>\n')
+    file.write('  </tr>\n')
     
     # Datarow
     file.write('  <tr>\n')
@@ -343,10 +370,29 @@ def nchart_start_html_body(file, hostname):
     file.write('  </td><td id="button_table_col">\n')
 
     def write_buttons_for_graph_type(type):
+        # find all CPU graphs
+        cpu_graphs_combobox = []
+        for num, graph in enumerate(g_graphs, start=1):
+            if graph.type == type:
+                if graph.button_label.startswith('CPU'):
+                    cpu_graphs_combobox.append([ graph.button_label, graph.js_name ])
+                    
+        # generate the CPU select box:
+        if len(cpu_graphs_combobox)>0:
+            file.write('    <select id="select_cpu_combobox%s" onchange="call_function_named(this.value)">\n' % (str(type)))
+            file.write('      <option value="clear_chart">None</option>\n')
+            for entry in cpu_graphs_combobox:
+                button_label = entry[0]
+                js_name = entry[1]
+                file.write('      <option value="draw_%s">%s</option>\n' % (js_name, button_label))
+            file.write('    </select>\n')
+
         # find in all graphs registered so far all those related to the CGROUP
         for num, graph in enumerate(g_graphs, start=1):
             if graph.type == type:
-                if graph.button_label.startswith('CPU') or graph.button_label.endswith('CPUs'):
+                if graph.button_label.startswith('CPU'):
+                    continue # skip - already drawn via <select>
+                elif graph.button_label.endswith('CPUs'):
                     colour = 'red'
                 elif graph.button_label.startswith('Memory'):
                     colour = 'darkorange'
@@ -1103,7 +1149,7 @@ def main_process_file(infile, outfile):
         ( "Started sampling at:", jdata_first_sample["timestamp"]["UTC"] + " (UTC)" ),
         ( "Samples:", str(len(jdata)) ),
         ( "Sampling Interval (s):", str(jheader["cmonitor"]["sample_interval_seconds"]) ),
-        ( "Total time sampled (s):", str(jheader["cmonitor"]["sample_interval_seconds"] * len(jdata)) )
+        ( "Total time sampled (hh:mm:ss):", str(datetime.timedelta(seconds = jheader["cmonitor"]["sample_interval_seconds"]*len(jdata))) )
     ]
     
     # NOTE: unfortunately some useful information like:
