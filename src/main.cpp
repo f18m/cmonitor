@@ -511,7 +511,7 @@ void CMonitorCollectorApp::get_timestamps(std::string& localTime, std::string& u
     tim->tm_year += 1900; /* read localtime() manual page!! */
     tim->tm_mon += 1; /* because it is 0 to 11 */
 
-    /* This is ISO 8601 datatime string format - ughly but get over it! :-) */
+    /* This is ISO 8601 datatime string format - ugly but get over it! :-) */
 
     char buffer[256];
     sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,

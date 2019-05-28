@@ -31,13 +31,13 @@
 // Globals
 //------------------------------------------------------------------------------
 
-NjmonOutputFrontend g_output;
+CMonitorOutputFrontend g_output;
 
 //------------------------------------------------------------------------------
 // Init functions
 //------------------------------------------------------------------------------
 
-void NjmonOutputFrontend::init_json_output_file(const std::string& filenamePrefix)
+void CMonitorOutputFrontend::init_json_output_file(const std::string& filenamePrefix)
 {
     if (filenamePrefix == "stdout") {
         // open stdout as FILE*
@@ -84,7 +84,7 @@ std::string hostname_to_ip(const std::string& hostname)
     return "";
 }
 
-void NjmonOutputFrontend::init_influxdb_connection(const std::string& hostname, unsigned int port)
+void CMonitorOutputFrontend::init_influxdb_connection(const std::string& hostname, unsigned int port)
 {
     std::string ipaddress = hostname_to_ip(hostname);
     if (ipaddress.empty()) {
@@ -110,7 +110,7 @@ void NjmonOutputFrontend::init_influxdb_connection(const std::string& hostname, 
 //------------------------------------------------------------------------------
 
 /* static */
-bool NjmonOutputFrontend::contains_char_to_escape(const char* string)
+bool CMonitorOutputFrontend::contains_char_to_escape(const char* string)
 {
     // see https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/
     const char* special_chars = ",= \"";
@@ -120,7 +120,7 @@ bool NjmonOutputFrontend::contains_char_to_escape(const char* string)
 }
 
 /* static */
-void NjmonOutputFrontend::get_quoted_field_value(std::string& out, const char* value)
+void CMonitorOutputFrontend::get_quoted_field_value(std::string& out, const char* value)
 {
     out.clear();
     // see https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/
@@ -135,7 +135,7 @@ void NjmonOutputFrontend::get_quoted_field_value(std::string& out, const char* v
 }
 
 /* static */
-void NjmonOutputFrontend::get_quoted_tag_value(std::string& out, const char* value)
+void CMonitorOutputFrontend::get_quoted_tag_value(std::string& out, const char* value)
 {
     out.clear();
 
@@ -157,8 +157,8 @@ void NjmonOutputFrontend::get_quoted_tag_value(std::string& out, const char* val
     }
 }
 
-std::string NjmonOutputFrontend::generate_influxdb_line(
-    NjmonMeasurementVector& measurements, const std::string& meas_name, const std::string& ts_nsec)
+std::string CMonitorOutputFrontend::generate_influxdb_line(
+    CMonitorMeasurementVector& measurements, const std::string& meas_name, const std::string& ts_nsec)
 {
     // format data according to the InfluxDB "line protocol":
     // see https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/
@@ -217,7 +217,7 @@ std::string NjmonOutputFrontend::generate_influxdb_line(
     return ret;
 }
 
-void NjmonOutputFrontend::push_current_sections_to_influxdb(bool is_header)
+void CMonitorOutputFrontend::push_current_sections_to_influxdb(bool is_header)
 {
     if (is_header) {
         // instead of actually pushing something towards the InfluxDB server, generate the tagsets:
@@ -302,13 +302,13 @@ void NjmonOutputFrontend::push_current_sections_to_influxdb(bool is_header)
 // Low level JSON functions
 //------------------------------------------------------------------------------
 
-void NjmonOutputFrontend::push_json_indent(unsigned int indent)
+void CMonitorOutputFrontend::push_json_indent(unsigned int indent)
 {
     for (size_t i = 0; i < indent; i++)
         fputs("     ", m_outputJson);
 }
 
-void NjmonOutputFrontend::push_json_measurements(NjmonMeasurementVector& measurements, unsigned int indent)
+void CMonitorOutputFrontend::push_json_measurements(CMonitorMeasurementVector& measurements, unsigned int indent)
 {
     for (size_t n = 0; n < measurements.size(); n++) {
         auto& m = measurements[n];
@@ -334,7 +334,7 @@ void NjmonOutputFrontend::push_json_measurements(NjmonMeasurementVector& measure
     }
 }
 
-void NjmonOutputFrontend::push_json_object_start(const std::string& str, unsigned int indent)
+void CMonitorOutputFrontend::push_json_object_start(const std::string& str, unsigned int indent)
 {
     push_json_indent(indent);
     fputs("\"", m_outputJson);
@@ -342,7 +342,7 @@ void NjmonOutputFrontend::push_json_object_start(const std::string& str, unsigne
     fputs("\": {\n", m_outputJson);
 }
 
-void NjmonOutputFrontend::push_json_object_end(bool last, unsigned int indent)
+void CMonitorOutputFrontend::push_json_object_end(bool last, unsigned int indent)
 {
     push_json_indent(indent);
     if (last)
@@ -351,7 +351,7 @@ void NjmonOutputFrontend::push_json_object_end(bool last, unsigned int indent)
         fputs("},\n", m_outputJson);
 }
 
-void NjmonOutputFrontend::push_current_sections_to_json(bool is_header)
+void CMonitorOutputFrontend::push_current_sections_to_json(bool is_header)
 {
     // convert the current sample into JSON format:
 
@@ -396,7 +396,7 @@ void NjmonOutputFrontend::push_current_sections_to_json(bool is_header)
 // Generic routines
 //------------------------------------------------------------------------------
 
-void NjmonOutputFrontend::push_current_sections(bool is_header)
+void CMonitorOutputFrontend::push_current_sections(bool is_header)
 {
     DEBUGLOG_FUNCTION_START();
 
@@ -412,7 +412,7 @@ void NjmonOutputFrontend::push_current_sections(bool is_header)
     m_current_sections.clear();
 }
 
-size_t NjmonOutputFrontend::get_current_sample_measurements() const
+size_t CMonitorOutputFrontend::get_current_sample_measurements() const
 {
     size_t ntotal_meas = 0;
     for (size_t i = 0; i < m_current_sections.size(); i++) {
@@ -434,7 +434,7 @@ size_t NjmonOutputFrontend::get_current_sample_measurements() const
 // JSON objects
 //------------------------------------------------------------------------------
 
-void NjmonOutputFrontend::pstats()
+void CMonitorOutputFrontend::pstats()
 {
     psection_start("cmonitor_stats");
     plong("section", m_sections);
@@ -446,19 +446,19 @@ void NjmonOutputFrontend::pstats()
     psection_end();
 }
 
-void NjmonOutputFrontend::pheader_start()
+void CMonitorOutputFrontend::pheader_start()
 {
     // empty for now
 }
 
-void NjmonOutputFrontend::psample_array_start()
+void CMonitorOutputFrontend::psample_array_start()
 {
     if (m_outputJson) {
         fputs("    \"samples\": [\n", m_outputJson);
     }
 }
 
-void NjmonOutputFrontend::psample_array_end()
+void CMonitorOutputFrontend::psample_array_end()
 {
     if (m_outputJson) {
         fputs("]\n", m_outputJson);
@@ -466,16 +466,16 @@ void NjmonOutputFrontend::psample_array_end()
     }
 }
 
-void NjmonOutputFrontend::psample_start()
+void CMonitorOutputFrontend::psample_start()
 {
     // empty for now
 }
 
-void NjmonOutputFrontend::psection_start(const char* section)
+void CMonitorOutputFrontend::psection_start(const char* section)
 {
     m_sections++;
 
-    NjmonOutputSection sec;
+    CMonitorOutputSection sec;
     sec.m_name = section;
     m_current_sections.push_back(sec);
 
@@ -483,17 +483,17 @@ void NjmonOutputFrontend::psection_start(const char* section)
     m_current_meas_list = &m_current_sections.back().m_measurements;
 }
 
-void NjmonOutputFrontend::psection_end()
+void CMonitorOutputFrontend::psection_end()
 {
     // stop adding measurements to last section:
     m_current_meas_list = nullptr;
 }
 
-void NjmonOutputFrontend::psubsection_start(const char* resource)
+void CMonitorOutputFrontend::psubsection_start(const char* resource)
 {
     m_subsections++;
 
-    NjmonOutputSubsection sec;
+    CMonitorOutputSubsection sec;
     sec.m_name = resource;
     m_current_sections.back().m_subsections.push_back(sec);
 
@@ -501,7 +501,7 @@ void NjmonOutputFrontend::psubsection_start(const char* resource)
     m_current_meas_list = &m_current_sections.back().m_subsections.back().m_measurements;
 }
 
-void NjmonOutputFrontend::psubsection_end()
+void CMonitorOutputFrontend::psubsection_end()
 {
     // stop adding measurements to last subsection:
     m_current_meas_list = nullptr;
@@ -511,40 +511,40 @@ void NjmonOutputFrontend::psubsection_end()
 // JSON field/values
 //------------------------------------------------------------------------------
 
-void NjmonOutputFrontend::phex(const char* name, long long value)
+void CMonitorOutputFrontend::phex(const char* name, long long value)
 {
     m_hex++;
     assert(m_current_meas_list);
 
     char buff[128];
     snprintf(buff, sizeof(buff), "0x%08llx", value);
-    m_current_meas_list->push_back(NjmonOutputMeasurement(name, buff, true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, buff, true));
 }
 
-void NjmonOutputFrontend::plong(const char* name, long long value)
+void CMonitorOutputFrontend::plong(const char* name, long long value)
 {
     m_long++;
     assert(m_current_meas_list);
 
     char buff[128];
     snprintf(buff, sizeof(buff), "%lld", value);
-    m_current_meas_list->push_back(NjmonOutputMeasurement(name, buff, true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, buff, true));
 }
 
-void NjmonOutputFrontend::pdouble(const char* name, double value)
+void CMonitorOutputFrontend::pdouble(const char* name, double value)
 {
     m_double++;
     assert(m_current_meas_list);
 
     char buff[128];
     snprintf(buff, sizeof(buff), "%.3f", value);
-    m_current_meas_list->push_back(NjmonOutputMeasurement(name, buff, true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, buff, true));
 }
 
-void NjmonOutputFrontend::pstring(const char* name, const char* value)
+void CMonitorOutputFrontend::pstring(const char* name, const char* value)
 {
     m_string++;
     assert(m_current_meas_list);
 
-    m_current_meas_list->push_back(NjmonOutputMeasurement(name, value));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, value));
 }

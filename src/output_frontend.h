@@ -7,6 +7,13 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
+// Constants
+//------------------------------------------------------------------------------
+
+#define CMONITOR_MEASUREMENT_NAME_MAXLEN (64)
+#define CMONITOR_MEASUREMENT_VALUE_MAXLEN (256) // some strings like e.g. "uname -a" can be pretty long
+
+//------------------------------------------------------------------------------
 // Forward declarations
 //------------------------------------------------------------------------------
 
@@ -27,9 +34,9 @@ typedef struct _influx_client_t influx_client_t;
 //         -> MEASUREMENT
 //------------------------------------------------------------------------------
 
-class NjmonOutputFrontend {
+class CMonitorOutputFrontend {
 public:
-    NjmonOutputFrontend() { m_current_sections.reserve(16); }
+    CMonitorOutputFrontend() { m_current_sections.reserve(16); }
 
     //------------------------------------------------------------------------------
     // setup API
@@ -74,26 +81,26 @@ public:
     void push_current_sample() { push_current_sections(false); } // writes on file, stdout or socket
 
 private:
-    class NjmonOutputMeasurement {
+    class CMonitorOutputMeasurement {
     public:
-        NjmonOutputMeasurement(const char* name = "", const char* value = "", bool numeric = false)
+        CMonitorOutputMeasurement(const char* name = "", const char* value = "", bool numeric = false)
         {
-            strncpy(m_name.data(), name, 64);
-            strncpy(m_value.data(), value, 64);
+            strncpy(m_name.data(), name, CMONITOR_MEASUREMENT_NAME_MAXLEN);
+            strncpy(m_value.data(), value, CMONITOR_MEASUREMENT_VALUE_MAXLEN);
             m_numeric = numeric;
         }
 
-        std::array<char, 64> m_name; // use std::array to void dynamic allocations
-        std::array<char, 64> m_value; // use std::array to void dynamic allocations
+        std::array<char, CMONITOR_MEASUREMENT_NAME_MAXLEN> m_name; // use std::array to void dynamic allocations
+        std::array<char, CMONITOR_MEASUREMENT_VALUE_MAXLEN> m_value; // use std::array to void dynamic allocations
         bool m_numeric;
     };
 
-    typedef std::vector<NjmonOutputMeasurement> NjmonMeasurementVector;
+    typedef std::vector<CMonitorOutputMeasurement> CMonitorMeasurementVector;
 
-    class NjmonOutputSubsection {
+    class CMonitorOutputSubsection {
     public:
         std::string m_name;
-        NjmonMeasurementVector m_measurements;
+        CMonitorMeasurementVector m_measurements;
 
         std::string get_value_for_measurement(const std::string& name) const
         {
@@ -104,11 +111,11 @@ private:
         }
     };
 
-    class NjmonOutputSection {
+    class CMonitorOutputSection {
     public:
         std::string m_name;
-        std::vector<NjmonOutputSubsection> m_subsections;
-        NjmonMeasurementVector m_measurements;
+        std::vector<CMonitorOutputSubsection> m_subsections;
+        CMonitorMeasurementVector m_measurements;
 
         std::string get_value_for_measurement(const std::string& name) const
         {
@@ -124,7 +131,7 @@ private:
     //------------------------------------------------------------------------------
 
     void push_json_indent(unsigned int indent);
-    void push_json_measurements(NjmonMeasurementVector& measurements, unsigned int indent);
+    void push_json_measurements(CMonitorMeasurementVector& measurements, unsigned int indent);
     void push_json_object_start(const std::string& str, unsigned int indent);
     void push_json_object_end(bool last, unsigned int indent);
     void push_current_sections_to_json(bool is_header);
@@ -138,7 +145,7 @@ private:
     static void get_quoted_tag_value(std::string& out, const char* value);
 
     std::string generate_influxdb_line(
-        NjmonMeasurementVector& measurements, const std::string& meas_name, const std::string& ts_nsec);
+        CMonitorMeasurementVector& measurements, const std::string& meas_name, const std::string& ts_nsec);
 
     void push_current_sections_to_influxdb(bool is_header);
 
@@ -147,8 +154,8 @@ private:
 
 private:
     // Structured measurements generated so far for last sample:
-    std::vector<NjmonOutputSection> m_current_sections;
-    NjmonMeasurementVector* m_current_meas_list = nullptr;
+    std::vector<CMonitorOutputSection> m_current_sections;
+    CMonitorMeasurementVector* m_current_meas_list = nullptr;
 
     // InfluxDB internals
     influx_client_t* m_influxdb_client_conn = nullptr;
@@ -167,4 +174,4 @@ private:
     unsigned int m_hex = 0;
 };
 
-extern NjmonOutputFrontend g_output;
+extern CMonitorOutputFrontend g_output;

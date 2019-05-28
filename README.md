@@ -29,7 +29,7 @@ Table of contents of this README:
 - [How to use](#section-id-100)
   - [Step 1: collect stats](#section-id-102)
   - [Step 2: plot stats collected as JSON](#section-id-120)
-  - [Example of HMTL results](#section-id-132)
+  - [Example of HTML results](#section-id-132)
   - [Connecting with InfluxDB and Grafana](#section-id-159)
 - [Project History](#section-id-185)
 
@@ -161,7 +161,7 @@ Note that to save space/bandwidth you can also gzip the JSON file and pass it gz
 
 <div id='section-id-132'/>
 
-### Example of HMTL results
+### Example of HTML results
 
 Example of resulting output files:
 
