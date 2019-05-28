@@ -20,20 +20,20 @@ This project supports only **Linux x86_64 architectures**.
 
 Table of contents of this README:
 
-- [Features](#section-id-22)
-- [Yet-Another-Monitoring-Project?](#section-id-39)
-- [How to install](#section-id-63)
-  - [RPM](#section-id-65)
-  - [Ubuntu](#section-id-76)
-  - [Docker](#section-id-86)
-- [How to collect stats](#section-id-98)
-- [How to plot stats collected as JSON](#section-id-116)
-- [Connecting with InfluxDB and Grafana](#section-id-150)
-- [Project History](#section-id-176)
+- [Features](#section-id-24)
+- [Yet-Another-Monitoring-Project?](#section-id-41)
+- [How to install](#section-id-65)
+  - [RPM](#section-id-67)
+  - [Ubuntu](#section-id-78)
+  - [Docker](#section-id-88)
+- [How to use](#section-id-100)
+  - [Step 1: collect stats](#section-id-102)
+  - [Step 2: plot stats collected as JSON](#section-id-120)
+  - [Example of HMTL results](#section-id-132)
+  - [Connecting with InfluxDB and Grafana](#section-id-159)
+- [Project History](#section-id-185)
 
-
-
-<div id='section-id-22'/>
+<div id='section-id-24'/>
 
 ## Features
 
@@ -52,7 +52,7 @@ Moreover the project allows you to easily post-process collected data and produc
 to visualize all the performance data easily using [Google Charts](https://developers.google.com/chart/).
 
 
-<div id='section-id-39'/>
+<div id='section-id-41'/>
 
 ## Yet-Another-Monitoring-Project?
 
@@ -78,11 +78,11 @@ perfect for **ephemeral** containers (e.g. containers used for DevOps automatic 
   are required to visualize it later!
 
 
-<div id='section-id-63'/>
+<div id='section-id-65'/>
 
 ## How to install
 
-<div id='section-id-65'/>
+<div id='section-id-67'/>
 
 ### RPM
 
@@ -95,7 +95,7 @@ yum copr enable -y f18m/cmonitor
 yum install -y cmonitor
 ```
 
-<div id='section-id-76'/>
+<div id='section-id-78'/>
 
 ### Ubuntu
 
@@ -107,7 +107,7 @@ add-apt-repository ppa:francesco-montorsi/ppa
 apt-get install cmonitor
 ```
 
-<div id='section-id-86'/>
+<div id='section-id-88'/>
 
 ### Docker
 
@@ -121,9 +121,13 @@ which downloads the Docker image for this project from [Docker Hub](https://hub.
 and runs the stats collector saving data in JSON format inside your /root folder.
 
 
-<div id='section-id-98'/>
+<div id='section-id-100'/>
 
-## How to collect stats
+## How to use
+
+<div id='section-id-102'/>
+
+### Step 1: collect stats
 
 The RPM installs a single utility, `cmonitor_collector` inside your container; launch it like that:
 
@@ -141,16 +145,23 @@ Whenever you want you can either:
   see below for practical examples.
 
 
-<div id='section-id-116'/>
+<div id='section-id-120'/>
 
-## How to plot stats collected as JSON
+### Step 2: plot stats collected as JSON
 
 To plot the JSON containing the collected statistics, simply launch the `cmonitor_chart` utility installed together
-with the RPM/Debian package:
+with the RPM/Debian package, with the JSON collected from `cmonitor_collector`:
 
 ```
-cmonitor_chart /path/to/json-stats.json
+cmonitor_chart /path/to/json-stats.json  <optional HTML output filename>
 ```
+
+Note that to save space/bandwidth you can also gzip the JSON file and pass it gzipped directly to `cmonitor_chart`.
+
+
+<div id='section-id-132'/>
+
+### Example of HMTL results
 
 Example of resulting output files:
 
@@ -177,9 +188,9 @@ A longer example of collected statistics (results in a larger file, may take som
    graphs are present;
 
 
-<div id='section-id-150'/>
+<div id='section-id-159'/>
 
-## Connecting with InfluxDB and Grafana
+### Connecting with InfluxDB and Grafana
 
 The `cmonitor_collector` can be connected to an [InfluxDB](https://www.influxdata.com/) deployment to store collected data (this can happen
 in parallel to the JSON default storage). This can be done by simply providing the IP and port of the InfluxDB instance when launching
@@ -205,7 +216,7 @@ make -C examples regen_grafana_screenshots
 which uses Docker files to deploy a temporary setup and fill the InfluxDB with 10minutes of data collected from the baremetal.
 
 
-<div id='section-id-176'/>
+<div id='section-id-185'/>
 
 ## Project History
 
