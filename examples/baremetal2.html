@@ -3,18 +3,21 @@
 <head>
   <title>Monitoring data for hostname modcentos7-build3</title>
   <style>
-     html,body {height:85%;}
-     h3 {margin: 0px;}
-     ul {margin: 0 0 0 0;padding-left: 20px;}
+     html,body { height:85%;}
+     body { background-color: #eaeaea;}
+     h3 { margin: 0px;}
+     ul { margin: 0 0 0 0;padding-left: 20px;}
      button { margin-bottom: 3px; }
-     #hostnameSpan { background-color: white; color: red; padding: 4px; }
-     #chart_master {width:100%; height:85%;}
-     #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
-     #bottom_div h3 {font-size: medium;}
-     #bottom_div li {font-size: smaller;}
-     #bottom_table_val {font-family: monospace;}
+     #hostname_span { background-color: white; color: red; padding: 4px; }
      #button_table { width:100%; border-collapse: collapse; }
-     #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
+     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
+     #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
+     #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
+     #chart_master_inner_p { font-size: x-large; }
+     #bottom_div { float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
+     #bottom_div h3 { font-size: medium;}
+     #bottom_div li { font-size: smaller;}
+     #bottom_table_val { font-family: monospace;}
   </style>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
@@ -63,7 +66,7 @@ function draw_graph1() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph1, options_graph1);
 }
 
@@ -84,7 +87,7 @@ function draw_graph2() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph2, options_graph2);
 }
 
@@ -105,7 +108,7 @@ function draw_graph3() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph3, options_graph3);
 }
 
@@ -126,7 +129,7 @@ function draw_graph4() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph4, options_graph4);
 }
 
@@ -147,7 +150,7 @@ function draw_graph5() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph5, options_graph5);
 }
 
@@ -168,7 +171,7 @@ function draw_graph6() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph6, options_graph6);
 }
 
@@ -189,7 +192,7 @@ function draw_graph7() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph7, options_graph7);
 }
 
@@ -210,7 +213,7 @@ function draw_graph8() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph8, options_graph8);
 }
 
@@ -231,7 +234,7 @@ function draw_graph9() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph9, options_graph9);
 }
 
@@ -252,7 +255,7 @@ function draw_graph10() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph10, options_graph10);
 }
 
@@ -273,7 +276,7 @@ function draw_graph11() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph11, options_graph11);
 }
 
@@ -294,7 +297,7 @@ function draw_graph12() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph12, options_graph12);
 }
 
@@ -315,7 +318,7 @@ function draw_graph13() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph13, options_graph13);
 }
 
@@ -336,7 +339,7 @@ function draw_graph14() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph14, options_graph14);
 }
 
@@ -357,7 +360,7 @@ function draw_graph15() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph15, options_graph15);
 }
 
@@ -378,7 +381,7 @@ function draw_graph16() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph16, options_graph16);
 }
 
@@ -399,7 +402,7 @@ function draw_graph17() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph17, options_graph17);
 }
 
@@ -420,7 +423,7 @@ function draw_graph18() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph18, options_graph18);
 }
 
@@ -441,7 +444,7 @@ function draw_graph19() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph19, options_graph19);
 }
 
@@ -462,7 +465,7 @@ function draw_graph20() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph20, options_graph20);
 }
 
@@ -483,7 +486,7 @@ function draw_graph21() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph21, options_graph21);
 }
 
@@ -504,7 +507,7 @@ function draw_graph22() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph22, options_graph22);
 }
 
@@ -525,7 +528,7 @@ function draw_graph23() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph23, options_graph23);
 }
 
@@ -546,7 +549,7 @@ function draw_graph24() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph24, options_graph24);
 }
 
@@ -567,7 +570,7 @@ function draw_graph25() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph25, options_graph25);
 }
 
@@ -588,7 +591,7 @@ function draw_graph26() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph26, options_graph26);
 }
 
@@ -609,7 +612,7 @@ function draw_graph27() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph27, options_graph27);
 }
 
@@ -630,7 +633,7 @@ function draw_graph28() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph28, options_graph28);
 }
 
@@ -651,7 +654,7 @@ function draw_graph29() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph29, options_graph29);
 }
 
@@ -672,7 +675,7 @@ function draw_graph30() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph30, options_graph30);
 }
 
@@ -693,7 +696,7 @@ function draw_graph31() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph31, options_graph31);
 }
 
@@ -714,7 +717,7 @@ function draw_graph32() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph32, options_graph32);
 }
 
@@ -735,7 +738,7 @@ function draw_graph33() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph33, options_graph33);
 }
 
@@ -756,7 +759,7 @@ function draw_graph34() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph34, options_graph34);
 }
 
@@ -777,7 +780,7 @@ function draw_graph35() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph35, options_graph35);
 }
 
@@ -798,7 +801,7 @@ function draw_graph36() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph36, options_graph36);
 }
 
@@ -819,7 +822,7 @@ function draw_graph37() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph37, options_graph37);
 }
 
@@ -840,7 +843,7 @@ function draw_graph38() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph38, options_graph38);
 }
 
@@ -861,7 +864,7 @@ function draw_graph39() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph39, options_graph39);
 }
 
@@ -882,7 +885,7 @@ function draw_graph40() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph40, options_graph40);
 }
 
@@ -903,7 +906,7 @@ function draw_graph41() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph41, options_graph41);
 }
 
@@ -924,7 +927,7 @@ function draw_graph42() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph42, options_graph42);
 }
 
@@ -945,7 +948,7 @@ function draw_graph43() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph43, options_graph43);
 }
 
@@ -966,7 +969,7 @@ function draw_graph44() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph44, options_graph44);
 }
 
@@ -987,7 +990,7 @@ function draw_graph45() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph45, options_graph45);
 }
 
@@ -1008,7 +1011,7 @@ function draw_graph46() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph46, options_graph46);
 }
 
@@ -1029,7 +1032,7 @@ function draw_graph47() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph47, options_graph47);
 }
 
@@ -1050,7 +1053,7 @@ function draw_graph48() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph48, options_graph48);
 }
 
@@ -1071,7 +1074,7 @@ function draw_graph49() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph49, options_graph49);
 }
 
@@ -1092,7 +1095,7 @@ function draw_graph50() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph50, options_graph50);
 }
 
@@ -1113,7 +1116,7 @@ function draw_graph51() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph51, options_graph51);
 }
 
@@ -1134,7 +1137,7 @@ function draw_graph52() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph52, options_graph52);
 }
 
@@ -1155,7 +1158,7 @@ function draw_graph53() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph53, options_graph53);
 }
 
@@ -1176,7 +1179,7 @@ function draw_graph54() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph54, options_graph54);
 }
 
@@ -1197,7 +1200,7 @@ function draw_graph55() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph55, options_graph55);
 }
 
@@ -1218,7 +1221,7 @@ function draw_graph56() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph56, options_graph56);
 }
 
@@ -1239,7 +1242,7 @@ function draw_graph57() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph57, options_graph57);
   reset_combo_boxes();
 }
@@ -1261,7 +1264,7 @@ function draw_graph58() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph58, options_graph58);
 }
 
@@ -1282,7 +1285,7 @@ function draw_graph59() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph59, options_graph59);
 }
 
@@ -1303,7 +1306,7 @@ function draw_graph60() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph60, options_graph60);
 }
 
@@ -1324,7 +1327,7 @@ function draw_graph61() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph61, options_graph61);
 }
 
@@ -1345,7 +1348,7 @@ function draw_graph62() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph62, options_graph62);
 }
 
@@ -1366,7 +1369,7 @@ function draw_graph63() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph63, options_graph63);
 }
 
@@ -1387,7 +1390,7 @@ function draw_graph64() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph64, options_graph64);
 }
 
@@ -1408,7 +1411,7 @@ function draw_graph65() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph65, options_graph65);
 }
 
@@ -1429,7 +1432,7 @@ function draw_graph66() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph66, options_graph66);
 }
 
@@ -1450,7 +1453,7 @@ function draw_graph67() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph67, options_graph67);
 }
 
@@ -1471,7 +1474,7 @@ function draw_graph68() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph68, options_graph68);
 }
 
@@ -1492,7 +1495,7 @@ function draw_graph69() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph69, options_graph69);
 }
 
@@ -1513,7 +1516,7 @@ function draw_graph70() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph70, options_graph70);
 }
 
@@ -1534,7 +1537,7 @@ function draw_graph71() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph71, options_graph71);
 }
 
@@ -1555,7 +1558,7 @@ function draw_graph72() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph72, options_graph72);
 }
 
@@ -1576,7 +1579,7 @@ function draw_graph73() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph73, options_graph73);
 }
 
@@ -1597,7 +1600,7 @@ function draw_graph74() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph74, options_graph74);
 }
 
@@ -1618,7 +1621,7 @@ function draw_graph75() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph75, options_graph75);
 }
 
@@ -1639,7 +1642,7 @@ function draw_graph76() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph76, options_graph76);
 }
 
@@ -1660,7 +1663,7 @@ function draw_graph77() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph77, options_graph77);
 }
 
@@ -1681,7 +1684,7 @@ function draw_graph78() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph78, options_graph78);
 }
 
@@ -1702,7 +1705,7 @@ function draw_graph79() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph79, options_graph79);
 }
 
@@ -1723,7 +1726,7 @@ function draw_graph80() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph80, options_graph80);
 }
 
@@ -1744,7 +1747,7 @@ function draw_graph81() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph81, options_graph81);
 }
 
@@ -1765,7 +1768,7 @@ function draw_graph82() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph82, options_graph82);
 }
 
@@ -1786,7 +1789,7 @@ function draw_graph83() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph83, options_graph83);
 }
 
@@ -1807,7 +1810,7 @@ function draw_graph84() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph84, options_graph84);
 }
 
@@ -1828,7 +1831,7 @@ function draw_graph85() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph85, options_graph85);
 }
 
@@ -1849,7 +1852,7 @@ function draw_graph86() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph86, options_graph86);
 }
 
@@ -1870,7 +1873,7 @@ function draw_graph87() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph87, options_graph87);
 }
 
@@ -1891,7 +1894,7 @@ function draw_graph88() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph88, options_graph88);
 }
 
@@ -1912,7 +1915,7 @@ function draw_graph89() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph89, options_graph89);
 }
 
@@ -1933,7 +1936,7 @@ function draw_graph90() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph90, options_graph90);
 }
 
@@ -1954,7 +1957,7 @@ function draw_graph91() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph91, options_graph91);
 }
 
@@ -1975,7 +1978,7 @@ function draw_graph92() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph92, options_graph92);
 }
 
@@ -1996,7 +1999,7 @@ function draw_graph93() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph93, options_graph93);
 }
 
@@ -2017,7 +2020,7 @@ function draw_graph94() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph94, options_graph94);
 }
 
@@ -2038,7 +2041,7 @@ function draw_graph95() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph95, options_graph95);
 }
 
@@ -2059,7 +2062,7 @@ function draw_graph96() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph96, options_graph96);
 }
 
@@ -2080,7 +2083,7 @@ function draw_graph97() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph97, options_graph97);
 }
 
@@ -2101,7 +2104,7 @@ function draw_graph98() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph98, options_graph98);
 }
 
@@ -2122,7 +2125,7 @@ function draw_graph99() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph99, options_graph99);
 }
 
@@ -2143,7 +2146,7 @@ function draw_graph100() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph100, options_graph100);
 }
 
@@ -2164,7 +2167,7 @@ function draw_graph101() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph101, options_graph101);
 }
 
@@ -2185,7 +2188,7 @@ function draw_graph102() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph102, options_graph102);
 }
 
@@ -2206,7 +2209,7 @@ function draw_graph103() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph103, options_graph103);
 }
 
@@ -2227,7 +2230,7 @@ function draw_graph104() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph104, options_graph104);
 }
 
@@ -2248,7 +2251,7 @@ function draw_graph105() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph105, options_graph105);
 }
 
@@ -2269,7 +2272,7 @@ function draw_graph106() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph106, options_graph106);
 }
 
@@ -2290,7 +2293,7 @@ function draw_graph107() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph107, options_graph107);
 }
 
@@ -2311,7 +2314,7 @@ function draw_graph108() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph108, options_graph108);
 }
 
@@ -2332,7 +2335,7 @@ function draw_graph109() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph109, options_graph109);
 }
 
@@ -2353,7 +2356,7 @@ function draw_graph110() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph110, options_graph110);
 }
 
@@ -2374,7 +2377,7 @@ function draw_graph111() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph111, options_graph111);
 }
 
@@ -2395,7 +2398,7 @@ function draw_graph112() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph112, options_graph112);
 }
 
@@ -2416,7 +2419,7 @@ function draw_graph113() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph113, options_graph113);
 }
 
@@ -2437,7 +2440,7 @@ function draw_graph114() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph114, options_graph114);
   reset_combo_boxes();
 }
@@ -2459,7 +2462,7 @@ function draw_graph115() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph115, options_graph115);
   reset_combo_boxes();
 }
@@ -2489,7 +2492,7 @@ function draw_graph116() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph116, options_graph116);
   reset_combo_boxes();
 }
@@ -2511,7 +2514,7 @@ function draw_graph117() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph117, options_graph117);
   reset_combo_boxes();
 }
@@ -2533,7 +2536,7 @@ function draw_graph118() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph118, options_graph118);
   reset_combo_boxes();
 }
@@ -2555,7 +2558,7 @@ function draw_graph119() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph119, options_graph119);
   reset_combo_boxes();
 }
@@ -2577,7 +2580,7 @@ function draw_graph120() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph120, options_graph120);
   reset_combo_boxes();
 }
@@ -2757,12 +2760,12 @@ function show_config_window() {
 
   </script>
 </head>
-<body bgcolor="#EEEEFF">
-  <h1>Monitoring data for hostname: <span id="hostnameSpan">modcentos7-build3</span></h1>
+<body>
+  <h1>Monitoring data collected from host <span id="hostname_span">modcentos7-build3</span></h1>
   <div id="button_div">
   <table id="button_table">
   <tr>
-    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td>
+    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (None)</td>
     <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
   </tr>
   <tr>
@@ -2900,7 +2903,7 @@ function show_config_window() {
   </table>
   </div>
   <p></p>
-  <div id="chart_master"></div>
+  <div id="chart_master_div"><div id="chart_master_inner_div"><p id="chart_master_inner_p">...click on a button above to show a graph...</p></div></div>
   <div id="bottom_div">
     <h3>Monitoring Summary</h3>
     <table>

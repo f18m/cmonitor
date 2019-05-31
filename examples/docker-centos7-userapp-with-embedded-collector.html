@@ -3,18 +3,21 @@
 <head>
   <title>Monitoring data for hostname docker-centos7-userapp-with-embedded-collector</title>
   <style>
-     html,body {height:85%;}
-     h3 {margin: 0px;}
-     ul {margin: 0 0 0 0;padding-left: 20px;}
+     html,body { height:85%;}
+     body { background-color: #eaeaea;}
+     h3 { margin: 0px;}
+     ul { margin: 0 0 0 0;padding-left: 20px;}
      button { margin-bottom: 3px; }
-     #hostnameSpan { background-color: white; color: red; padding: 4px; }
-     #chart_master {width:100%; height:85%;}
-     #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
-     #bottom_div h3 {font-size: medium;}
-     #bottom_div li {font-size: smaller;}
-     #bottom_table_val {font-family: monospace;}
+     #hostname_span { background-color: white; color: red; padding: 4px; }
      #button_table { width:100%; border-collapse: collapse; }
-     #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
+     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
+     #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
+     #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
+     #chart_master_inner_p { font-size: x-large; }
+     #bottom_div { float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
+     #bottom_div h3 { font-size: medium;}
+     #bottom_div li { font-size: smaller;}
+     #bottom_table_val { font-family: monospace;}
   </style>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
@@ -63,7 +66,7 @@ function draw_graph1() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph1, options_graph1);
 }
 
@@ -84,7 +87,7 @@ function draw_graph2() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph2, options_graph2);
 }
 
@@ -105,7 +108,7 @@ function draw_graph3() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph3, options_graph3);
   reset_combo_boxes();
 }
@@ -127,7 +130,7 @@ function draw_graph4() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph4, options_graph4);
 }
 
@@ -148,7 +151,7 @@ function draw_graph5() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph5, options_graph5);
 }
 
@@ -169,7 +172,7 @@ function draw_graph6() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph6, options_graph6);
   reset_combo_boxes();
 }
@@ -191,7 +194,7 @@ function draw_graph7() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph7, options_graph7);
   reset_combo_boxes();
 }
@@ -221,7 +224,7 @@ function draw_graph8() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph8, options_graph8);
   reset_combo_boxes();
 }
@@ -243,7 +246,7 @@ function draw_graph9() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph9, options_graph9);
   reset_combo_boxes();
 }
@@ -265,7 +268,7 @@ function draw_graph10() {
 
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph10, options_graph10);
   reset_combo_boxes();
 }
@@ -437,12 +440,12 @@ function show_config_window() {
 
   </script>
 </head>
-<body bgcolor="#EEEEFF">
-  <h1>Monitoring data for hostname: <span id="hostnameSpan">docker-centos7-userapp-with-embedded-collector</span></h1>
+<body>
+  <h1>Monitoring data collected from host <span id="hostname_span">docker-centos7-userapp-with-embedded-collector</span></h1>
   <div id="button_div">
   <table id="button_table">
   <tr>
-    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td>
+    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (None)</td>
     <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
   </tr>
   <tr>
@@ -470,7 +473,7 @@ function show_config_window() {
   </table>
   </div>
   <p></p>
-  <div id="chart_master"></div>
+  <div id="chart_master_div"><div id="chart_master_inner_div"><p id="chart_master_inner_p">...click on a button above to show a graph...</p></div></div>
   <div id="bottom_div">
     <h3>Monitoring Summary</h3>
     <table>
