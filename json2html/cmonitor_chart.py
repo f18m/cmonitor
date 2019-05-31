@@ -28,6 +28,13 @@ JS_INDENT_SIZE = 2
 
 
 # =======================================================================================================
+# GLOBALs
+# =======================================================================================================
+
+g_num_generated_charts = 1
+g_next_graph_need_stacking = 0
+
+# =======================================================================================================
 # GoogleChartsTable
 # This is the table of X;Y1;Y2;...;YN data points for a GoogleCharts graph
 # =======================================================================================================
@@ -154,7 +161,7 @@ class GoogleChartsGraph:
         
     def genGoogleChartJSDrawFunction(self):
         ''' After the JavaScript line graph data is output, the data is terminated and the graph options set'''
-        global next_graph_need_stacking
+        global g_next_graph_need_stacking
         
         def __internalWriteAxis(series_indexes, target_axis_index):
             ret = ""
@@ -198,10 +205,10 @@ class GoogleChartsGraph:
         ret_string += '  explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },\n'
         
         # graph stacking
-        next_graph_need_stacking = self.stack_state
-        if next_graph_need_stacking:
+        g_next_graph_need_stacking = self.stack_state
+        if g_next_graph_need_stacking:
             ret_string += '  isStacked:  1\n'
-            next_graph_need_stacking = 0
+            g_next_graph_need_stacking = 0
         else:
             ret_string += '  isStacked:  0\n'
             
@@ -209,7 +216,7 @@ class GoogleChartsGraph:
         ret_string += '\n'
         ret_string += 'if (g_chart && g_chart.clearChart)\n'
         ret_string += '  g_chart.clearChart();\n'
-        ret_string += 'g_chart = new google.visualization.AreaChart(document.getElementById("chart_master"));\n'
+        ret_string += 'g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));\n'
         ret_string += 'g_chart.draw(data_%s, options_%s);\n' % (self.js_name, self.js_name)
         return ret_string
     
@@ -217,12 +224,12 @@ class GoogleChartsGraph:
 #         global g_graphs
 #         
 #         # declare JS variables:
-#         nchart_start_js_bubble_graph(web, column_names)
+#         startHtmlHead_bubble_graph(web, column_names)
 #         nchart_write_js_graph_data(web, data)
-#         nchart_end_js_bubble_graph(web, title)
+#         endHtmlHead_bubble_graph(web, title)
         
     def toGoogleChartJS(self):
-        global next_graph_need_stacking
+        global g_next_graph_need_stacking
         
         # generate the JS
         js_code_inner = self.data_table.toGoogleChartTable(self.js_name)
@@ -240,198 +247,212 @@ class GoogleChartsGraph:
         return js_code
         
 
-# =======================================================================================================
-# GLOBALs
-# =======================================================================================================
-
-g_graphs = []  # global list of GoogleChartsGraph class instances
-g_num_generated_charts = 1
-
 
 # =======================================================================================================
-# nchart_* routines to actually produce HTML+JavaScript
+# HtmlOutputPage 
+# This is able to produce a self-contained HTML page with embedded JavaScript to draw performance charts 
 # =======================================================================================================
 
-def nchart_start_js(file, title):
-    ''' Write the head of the HTML webpage and start the JS section '''
-    file.write('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
-    file.write('<html xmlns="http://www.w3.org/1999/xhtml">' + '\n')
-    file.write('<head>' + '\n')
-    file.write('  <title>' + title + '</title>\n')
-    file.write('  <style>\n')
-    file.write('     html,body {height:85%;}\n')
-    file.write('     h3 {margin: 0px;}\n')
-    file.write('     ul {margin: 0 0 0 0;padding-left: 20px;}\n')
-    file.write('     button { margin-bottom: 3px; }\n')
-    file.write('     #hostnameSpan { background-color: white; color: red; padding: 4px; }\n')
-    file.write('     #chart_master {width:100%; height:85%;}\n')
-    file.write('     #bottom_div {float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
-    file.write('     #bottom_div h3 {font-size: medium;}\n')
-    file.write('     #bottom_div li {font-size: smaller;}\n')
-    file.write('     #bottom_table_val {font-family: monospace;}\n')
-    file.write('     #button_table { width:100%; border-collapse: collapse; }\n')
-    file.write('     #button_table_col {border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
-    file.write('  </style>\n')
-    file.write('  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>\n')
-    file.write('  <script type="text/javascript" src="https://www.google.com/jsapi"></script>\n')
-    file.write('  <script type="text/javascript">\n')
-    file.write('/* Load GoogleCharts: */\n')
-    file.write('google.load("visualization", "1.1", {packages:["corechart"]});\n')
-    file.write('google.setOnLoadCallback(setup_button_click_handlers);\n')
-    file.write('\n')
-    file.write('/* The global chart object: */\n')
-    file.write('var g_chart = null;\n')
-    file.write('\n')
-    file.write('/* The global window showing the configuration of all collected data: */\n')
-    file.write('var g_configWindow = null;\n')
-    file.write('\n')
-    file.write('/* Utility function used with combobox controls: */\n')
-    file.write('function call_function_named(func_name) {\n')
-    file.write('  eval(func_name + "()");\n')
-    file.write('}\n')
-    file.write('\n')
-    file.write('/* Utility function used to clear main graph: */\n')
-    file.write('function clear_chart() {\n')
-    file.write('  if (g_chart && g_chart.clearChart)\n')
-    file.write('    g_chart.clearChart();\n')
-    file.write('}\n')
-    file.write('\n')
-    file.write('/* Utility function used to reset combobox controls: */\n')
-    file.write('function reset_combo_boxes() {\n')
-    file.write('  document.getElementById("select_cpu_combobox1").value = "clear_chart";\n')
-    file.write('  document.getElementById("select_cpu_combobox2").value = "clear_chart";\n')
-    file.write('}\n')
-    file.write('\n')
-    # at this point we will generate all helper JS functions
+class HtmlOutputPage:
 
+    def __init__(self, outfile, title):
+        self.title = title
+        self.outfile = outfile
+        self.file = open(outfile, "w")  # Open the output file
+        self.graphs = []
 
-def nchart_end_js(file, config):
-    ''' Finish the JS portion and HTML head tag '''
-    
-    global g_graphs
-    
-    # add all event listeners for button clicks:
-    file.write('function setup_button_click_handlers() {\n')
-    for num, graph in enumerate(g_graphs, start=1):
-        if not graph.button_label.startswith('CPU'):
-            file.write('  document.getElementById("btn_draw_%s").addEventListener("click", draw_%s);\n' % (graph.js_name, graph.js_name))
-    file.write('  document.getElementById("btn_show_config").addEventListener("click", show_config_window);\n')
-    file.write('}\n')
-    
-    file.write(config)
-    file.write('  </script>\n')
-    file.write('</head>\n')
-    
-    
-# def nchart_start_js_bubble_graph(file, columnnames):
-#     ''' Before the graph data with datetime + multiple columns of data '''
-#     global g_num_generated_charts 
-#     file.write('  var data_' + str(g_num_generated_charts) + ' = google.visualization.arrayToDataTable([\n')
-#     file.write("[" + columnnames + "]\n")
-#     
-# def nchart_end_js_bubble_graph(file, graphtitle):
-#     ''' After the JavaScript bubble graph data is output, the data is terminated and the bubble graph options set'''
-#     global g_num_generated_charts
-#     file.write('  ]);\n')
-#     file.write('  var options_' + str(g_num_generated_charts) + ' = {\n')
-#     file.write('    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n')
-#     file.write('    title: "' + graphtitle + '",\n')
-#     file.write('    hAxis: { title:"CPU seconds in Total"},\n')
-#     file.write('    vAxis: { title:"Character I/O in Total"},\n')
-#     file.write('    sizeAxis: {maxSize: 200},\n')
-#     file.write('    bubble: {textStyle: {fontSize: 15}}\n')
-#     file.write('  };\n')
-#     file.write('  document.getElementById("draw_' + str(g_num_generated_charts) + '").addEventListener("click", function() {\n')
-#     file.write('  if (chart && chart.clearChart)\n')
-#     file.write('    chart.clearChart();\n')
-#     file.write('  chart = new google.visualization.BubbleChart(document.getElementById("chart_master"));\n')
-#     file.write('  chart.draw(data_' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
-#     file.write('  });\n')
-#     g_num_generated_charts += 1
-    
-
-def nchart_start_html_body(file, hostname):
-    global g_graphs
-    file.write('<body bgcolor="#EEEEFF">\n')
-    file.write('  <h1>Monitoring data for hostname: <span id="hostnameSpan">' + hostname + '</span></h1>\n')
-    file.write('  <div id="button_div">\n')
-    file.write('  <table id="button_table">\n')
-    
-    # Table header row
-    file.write('  <tr>\n')
-    file.write('    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b></td>\n')
-    file.write('    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>\n')
-    file.write('  </tr>\n')
-    
-    # Datarow
-    file.write('  <tr>\n')
-    file.write('  <td id="button_table_col">\n')
-    file.write('    <button id="btn_show_config"><b>Configuration</b></button><br/>\n')
-    file.write('  </td><td id="button_table_col">\n')
-
-    def write_buttons_for_graph_type(type):
-        # find all CPU graphs
-        cpu_graphs_combobox = []
-        for num, graph in enumerate(g_graphs, start=1):
-            if graph.type == type:
-                if graph.button_label.startswith('CPU'):
-                    cpu_graphs_combobox.append([ graph.button_label, graph.js_name ])
-                    
-        # generate the CPU select box:
-        if len(cpu_graphs_combobox)>0:
-            file.write('    <select id="select_cpu_combobox%s" onchange="call_function_named(this.value)">\n' % (str(type)))
-            file.write('      <option value="clear_chart">None</option>\n')
-            for entry in cpu_graphs_combobox:
-                button_label = entry[0]
-                js_name = entry[1]
-                file.write('      <option value="draw_%s">%s</option>\n' % (js_name, button_label))
-            file.write('    </select>\n')
-
-        # find in all graphs registered so far all those related to the CGROUP
-        for num, graph in enumerate(g_graphs, start=1):
-            if graph.type == type:
-                if graph.button_label.startswith('CPU'):
-                    continue # skip - already drawn via <select>
-                elif graph.button_label.endswith('CPUs'):
-                    colour = 'red'
-                elif graph.button_label.startswith('Memory'):
-                    colour = 'darkorange'
-                elif graph.button_label.startswith('Network'):
-                    colour = 'darkblue'
-                elif graph.button_label.startswith('Disk'):
-                    colour = 'darkgreen'
-                else:
-                    colour = 'black'
-                file.write('    <button id="btn_draw_' + graph.js_name + '" style="color:' + colour + '"><b>' + graph.button_label + '</b></button>\n')
-
-    write_buttons_for_graph_type(GRAPH_TYPE_CGROUP)
-    file.write('      </td><td id="button_table_col">\n')
-    write_buttons_for_graph_type(GRAPH_TYPE_BAREMETAL)
+    def appendGoogleChart(self, chart):
+        assert isinstance(chart, GoogleChartsGraph)
+        self.graphs.append(chart)
         
-    file.write('  </td></tr>\n')
-    file.write('  </table>\n')
-    file.write('  </div>\n')
-    file.write('  <p></p>\n')
-    file.write('  <div id="chart_master"></div>\n')
-
+    def startHtmlHead(self):
+        ''' Write the head of the HTML webpage and start the JS section '''
+        self.file.write('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
+        self.file.write('<html xmlns="http://www.w3.org/1999/xhtml">' + '\n')
+        self.file.write('<head>' + '\n')
+        self.file.write('  <title>' + self.title + '</title>\n')
+        self.file.write('  <style>\n')
+        self.file.write('     html,body { height:85%;}\n')
+        self.file.write('     body { background-color: #eaeaea;}\n')
+        self.file.write('     h3 { margin: 0px;}\n')
+        self.file.write('     ul { margin: 0 0 0 0;padding-left: 20px;}\n')
+        self.file.write('     button { margin-bottom: 3px; }\n')
+        self.file.write('     #hostname_span { background-color: white; color: red; padding: 4px; }\n')
+        self.file.write('     #button_table { width:100%; border-collapse: collapse; }\n')
+        self.file.write('     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
+        self.file.write('     #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}\n')
+        self.file.write('     #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }\n')
+        self.file.write('     #chart_master_inner_p { font-size: x-large; }\n')
+        self.file.write('     #bottom_div { float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
+        self.file.write('     #bottom_div h3 { font-size: medium;}\n')
+        self.file.write('     #bottom_div li { font-size: smaller;}\n')
+        self.file.write('     #bottom_table_val { font-family: monospace;}\n')
+        self.file.write('  </style>\n')
+        self.file.write('  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>\n')
+        self.file.write('  <script type="text/javascript" src="https://www.google.com/jsapi"></script>\n')
+        self.file.write('  <script type="text/javascript">\n')
+        self.file.write('/* Load GoogleCharts: */\n')
+        self.file.write('google.load("visualization", "1.1", {packages:["corechart"]});\n')
+        self.file.write('google.setOnLoadCallback(setup_button_click_handlers);\n')
+        self.file.write('\n')
+        self.file.write('/* The global chart object: */\n')
+        self.file.write('var g_chart = null;\n')
+        self.file.write('\n')
+        self.file.write('/* The global window showing the configuration of all collected data: */\n')
+        self.file.write('var g_configWindow = null;\n')
+        self.file.write('\n')
+        self.file.write('/* Utility function used with combobox controls: */\n')
+        self.file.write('function call_function_named(func_name) {\n')
+        self.file.write('  eval(func_name + "()");\n')
+        self.file.write('}\n')
+        self.file.write('\n')
+        self.file.write('/* Utility function used to clear main graph: */\n')
+        self.file.write('function clear_chart() {\n')
+        self.file.write('  if (g_chart && g_chart.clearChart)\n')
+        self.file.write('    g_chart.clearChart();\n')
+        self.file.write('}\n')
+        self.file.write('\n')
+        self.file.write('/* Utility function used to reset combobox controls: */\n')
+        self.file.write('function reset_combo_boxes() {\n')
+        self.file.write('  document.getElementById("select_cpu_combobox1").value = "clear_chart";\n')
+        self.file.write('  document.getElementById("select_cpu_combobox2").value = "clear_chart";\n')
+        self.file.write('}\n')
+        self.file.write('\n')
+        # at this point we will generate all helper JS functions
     
-def nchart_append_html_table(file, name, table_entries):
-    file.write('  <div id="bottom_div">\n')
-    file.write('    <h3>' + name + '</h3>\n')
-    file.write('    <table>\n')
-    file.write('    <tr><td><ul>\n')
-    for i, entry in enumerate(table_entries, start=1):
-        file.write("      <li>" + entry[0] + " <span id='bottom_table_val'>" + entry[1]+ "</span></li>\n")
-        if (i % 4) == 0:
-            file.write("      </ul></td><td><ul>\n")
-    file.write('    </ul></td></tr>\n')
-    file.write('    </table>\n')
-    file.write('  </div>\n')
-
-
-def nchart_end_html_body(file):
-    file.write('</body>\n')
-    file.write('</html>\n')
+    
+    def endHtmlHead(self, config):
+        ''' Finish the JS portion and HTML head tag '''
+        
+        # convert into JS all the charts that belong to this HTML document:
+        for num, graph in enumerate(self.graphs, start=1):
+            self.file.write(graph.toGoogleChartJS())
+        
+        # add all event listeners for button clicks:
+        self.file.write('function setup_button_click_handlers() {\n')
+        for num, graph in enumerate(self.graphs, start=1):
+            if not graph.button_label.startswith('CPU'):
+                self.file.write('  document.getElementById("btn_draw_%s").addEventListener("click", draw_%s);\n' % (graph.js_name, graph.js_name))
+        self.file.write('  document.getElementById("btn_show_config").addEventListener("click", show_config_window);\n')
+        self.file.write('}\n')
+        
+        self.file.write(config)
+        self.file.write('  </script>\n')
+        self.file.write('</head>\n')
+        
+        
+    # def startHtmlHead_bubble_graph(file, columnnames):
+    #     ''' Before the graph data with datetime + multiple columns of data '''
+    #     global g_num_generated_charts 
+    #     self.file.write('  var data_' + str(g_num_generated_charts) + ' = google.visualization.arrayToDataTable([\n')
+    #     self.file.write("[" + columnnames + "]\n")
+    #     
+    # def endHtmlHead_bubble_graph(file, graphtitle):
+    #     ''' After the JavaScript bubble graph data is output, the data is terminated and the bubble graph options set'''
+    #     global g_num_generated_charts
+    #     self.file.write('  ]);\n')
+    #     self.file.write('  var options_' + str(g_num_generated_charts) + ' = {\n')
+    #     self.file.write('    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n')
+    #     self.file.write('    title: "' + graphtitle + '",\n')
+    #     self.file.write('    hAxis: { title:"CPU seconds in Total"},\n')
+    #     self.file.write('    vAxis: { title:"Character I/O in Total"},\n')
+    #     self.file.write('    sizeAxis: {maxSize: 200},\n')
+    #     self.file.write('    bubble: {textStyle: {fontSize: 15}}\n')
+    #     self.file.write('  };\n')
+    #     self.file.write('  document.getElementById("draw_' + str(g_num_generated_charts) + '").addEventListener("click", function() {\n')
+    #     self.file.write('  if (chart && chart.clearChart)\n')
+    #     self.file.write('    chart.clearChart();\n')
+    #     self.file.write('  chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));\n')
+    #     self.file.write('  chart.draw(data_' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
+    #     self.file.write('  });\n')
+    #     g_num_generated_charts += 1
+        
+    
+    def startHtmlBody(self, cgroupName, hostname):
+        self.file.write('<body>\n')
+        self.file.write('  <h1>Monitoring data collected from host <span id="hostname_span">' + hostname + '</span></h1>\n')
+        self.file.write('  <div id="button_div">\n')
+        self.file.write('  <table id="button_table">\n')
+        
+        # Table header row
+        self.file.write('  <tr>\n')
+        self.file.write('    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (%s)</td>\n' % cgroupName)
+        self.file.write('    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>\n')
+        self.file.write('  </tr>\n')
+        
+        # Datarow
+        self.file.write('  <tr>\n')
+        self.file.write('  <td id="button_table_col">\n')
+        self.file.write('    <button id="btn_show_config"><b>Configuration</b></button><br/>\n')
+        self.file.write('  </td><td id="button_table_col">\n')
+    
+        def write_buttons_for_graph_type(type):
+            # find all CPU graphs
+            cpu_graphs_combobox = []
+            for num, graph in enumerate(self.graphs, start=1):
+                if graph.type == type:
+                    if graph.button_label.startswith('CPU'):
+                        cpu_graphs_combobox.append([ graph.button_label, graph.js_name ])
+                        
+            # generate the CPU select box:
+            if len(cpu_graphs_combobox)>0:
+                self.file.write('    <select id="select_cpu_combobox%s" onchange="call_function_named(this.value)">\n' % (str(type)))
+                self.file.write('      <option value="clear_chart">None</option>\n')
+                for entry in cpu_graphs_combobox:
+                    button_label = entry[0]
+                    js_name = entry[1]
+                    self.file.write('      <option value="draw_%s">%s</option>\n' % (js_name, button_label))
+                self.file.write('    </select>\n')
+    
+            # find in all graphs registered so far all those related to the CGROUP
+            for num, graph in enumerate(self.graphs, start=1):
+                if graph.type == type:
+                    if graph.button_label.startswith('CPU'):
+                        continue # skip - already drawn via <select>
+                    elif graph.button_label.endswith('CPUs'):
+                        colour = 'red'
+                    elif graph.button_label.startswith('Memory'):
+                        colour = 'darkorange'
+                    elif graph.button_label.startswith('Network'):
+                        colour = 'darkblue'
+                    elif graph.button_label.startswith('Disk'):
+                        colour = 'darkgreen'
+                    else:
+                        colour = 'black'
+                    self.file.write('    <button id="btn_draw_' + graph.js_name + '" style="color:' + colour + '"><b>' + graph.button_label + '</b></button>\n')
+    
+        write_buttons_for_graph_type(GRAPH_TYPE_CGROUP)
+        self.file.write('      </td><td id="button_table_col">\n')
+        write_buttons_for_graph_type(GRAPH_TYPE_BAREMETAL)
+            
+        self.file.write('  </td></tr>\n')
+        self.file.write('  </table>\n')
+        self.file.write('  </div>\n')
+        self.file.write('  <p></p>\n')
+        
+        # finally generate the element where the main chart is going to be drawn:
+        self.file.write('  <div id="chart_master_div"><div id="chart_master_inner_div"><p id="chart_master_inner_p">...click on a button above to show a graph...</p></div></div>\n')
+    
+        
+    def appendHtmlTable(self, name, table_entries):
+        self.file.write('  <div id="bottom_div">\n')
+        self.file.write('    <h3>' + name + '</h3>\n')
+        self.file.write('    <table>\n')
+        self.file.write('    <tr><td><ul>\n')
+        for i, entry in enumerate(table_entries, start=1):
+            self.file.write("      <li>" + entry[0] + " <span id='bottom_table_val'>" + entry[1]+ "</span></li>\n")
+            if (i % 4) == 0:
+                self.file.write("      </ul></td><td><ul>\n")
+        self.file.write('    </ul></td></tr>\n')
+        self.file.write('    </table>\n')
+        self.file.write('  </div>\n')
+    
+    
+    def endHtmlBody(self):
+        self.file.write('<p>NOTE: to zoom use left-click and drag; to reset view use right-click.</p>\n')
+        self.file.write('</body>\n')
+        self.file.write('</html>\n')
+        self.file.close()
 
 
 
@@ -616,11 +637,11 @@ def generate_config_js(jheader):
 def generate_disks_io(web, jdata, hostname):
     # if network traffic data was not collected, just return:
     if 'disks' not in jdata[0]:
-        return
+        return web
     
     all_disks = jdata[0]["disks"].keys()
     if len(all_disks) == 0:
-        return
+        return web
     
     diskcols = ['Timestamp']
     for device in all_disks:
@@ -653,39 +674,37 @@ def generate_disks_io(web, jdata, hostname):
             row.append(-s["disks"][device]["wkb"]/divider)
         disk_table.addRow(row)
 
-    g = GoogleChartsGraph(button_label='Disk I/O', 
+    web.appendGoogleChart(GoogleChartsGraph(button_label='Disk I/O', 
                           graph_type=GRAPH_TYPE_BAREMETAL,
                           graph_title="Disk I/O (from baremetal stats)",
                           y_axis_title="MB",
-                          data=disk_table)
-    web.write(g.toGoogleChartJS())
-    g_graphs.append(g)    # register this graph into globals
+                          data=disk_table))
+    return web
 
 # def generate_filesystems(web, jdata):
-#     global g_graphs
+#     global self.graphs
 #     fsstr = ""
 #     for fs in jdata[0]["filesystems"].keys():
 #         fsstr = fsstr + "'" + fs + "',"
 #     fsstr = fsstr[:-1]
-#     nchart_start_js_line_graph(web, fsstr)
+#     startHtmlHead_line_graph(web, fsstr)
 #     for i, s in enumerate(jdata):
 #         web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
 #         for fs in s["filesystems"].keys():
 #             web.write(", %.1f" % (s["filesystems"][fs]["fs_full_percent"]))
 #         web.write("]\n")
-#     g = GoogleChartsGraph( 'File Systems Used percent')
-#     g_graphs.append("File Systems")
+#     web.appendGoogleChart(GoogleChartsGraph( 'File Systems Used percent')
 #     return web
 
 
 def generate_network_traffic(web, jdata, hostname):
     # if network traffic data was not collected, just return:
     if 'network_interfaces' not in jdata[0]:
-        return
+        return web
     
     all_netdevices = jdata[0]["network_interfaces"].keys()
     if len(all_netdevices) == 0:
-        return
+        return web
     
     netcols = ['Timestamp']
     for device in all_netdevices:
@@ -719,15 +738,13 @@ def generate_network_traffic(web, jdata, hostname):
                 row.append(0)
         net_table.addRow(row)
 
-    g = GoogleChartsGraph(
+    web.appendGoogleChart(GoogleChartsGraph(
             graph_title='Network Traffic in MB/s for ' + hostname + " (from baremetal stats)",
             button_label='Network Traffic (MB/s)',
             y_axis_title="MB/s",
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=False,
-            data=net_table)
-    web.write(g.toGoogleChartJS())
-    g_graphs.append(g)    # register this graph into globals
+            data=net_table))
     
             
     # PPS
@@ -748,23 +765,19 @@ def generate_network_traffic(web, jdata, hostname):
                 row.append(0)
         net_table.addRow(row)
 
-    g = GoogleChartsGraph(
+    web.appendGoogleChart(GoogleChartsGraph(
             graph_title='Network Traffic in PPS for ' + hostname + " (from baremetal stats)",
             button_label='Network Traffic (PPS)',
             y_axis_title="PPS",
             graph_type=GRAPH_TYPE_BAREMETAL,
             stack_state=False,
-            data=net_table)
-    web.write(g.toGoogleChartJS())
-    g_graphs.append(g)    # register this graph into globals
-    
+            data=net_table))
     return web
-
 
 def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
     # if baremetal CPU data was not collected, just return:
     if 'stat' not in jdata[0]:
-        return
+        return web
 
     # prepare empty tables
     baremetal_cpu_stats = {}
@@ -805,31 +818,27 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
     
     # Produce the javascript:
     for c in logical_cpus_indexes:
-        g = GoogleChartsGraph(
+        web.appendGoogleChart(GoogleChartsGraph(
                 data=baremetal_cpu_stats[c],  # Data
                 graph_title='Logical CPU ' + str(c) + " (from baremetal stats)",
                 button_label="CPU" + str(c),
                 y_axis_title="Time (%)",
                 graph_type=GRAPH_TYPE_BAREMETAL,
-                stack_state=True)
-        web.write(g.toGoogleChartJS())
-        g_graphs.append(g)    # register this graph into globals
+                stack_state=True))
 
     # Also produce the "all CPUs" graph
-    g = GoogleChartsGraph(
+    web.appendGoogleChart(GoogleChartsGraph(
             data=all_cpus_table,  # Data
             graph_title="All logical CPUs allowed in cmonitor_collector CGroup (from baremetal stats)",
             button_label="All CPUs",
             y_axis_title="Time (%)",
             graph_type=GRAPH_TYPE_BAREMETAL,
-            stack_state=False)
-    web.write(g.toGoogleChartJS())
-    g_graphs.append(g)    # register this graph into globals
-    
+            stack_state=False))
+    return web
 
 def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
     if 'cgroup_cpuacct_stats' not in jdata[0]:
-        return  # cgroup mode not enabled at collection time!
+        return web  # cgroup mode not enabled at collection time!
         
     # prepare empty tables
     cpu_stats_table = {}
@@ -866,26 +875,23 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
 
     # Produce 1 graph for each CPU:
     for c in logical_cpus_indexes:
-        g = GoogleChartsGraph(
+        web.appendGoogleChart(GoogleChartsGraph(
                 data=cpu_stats_table[c],  # Data
                 graph_title='Logical CPU ' + str(c) + " (from CGroup stats)",
                 button_label="CPU" + str(c),
                 y_axis_title="Time (%)",
                 graph_type=GRAPH_TYPE_CGROUP,
-                stack_state=True)
-        web.write(g.toGoogleChartJS())
-        g_graphs.append(g)    # register this graph into globals
+                stack_state=True))
 
     # Also produce the "all CPUs" graph
-    g = GoogleChartsGraph(
+    web.appendGoogleChart(GoogleChartsGraph(
             data=all_cpus_table,  # Data
             graph_title="All logical CPUs assigned to cmonitor_collector CGroup (from CGroup stats)",
             button_label="All CPUs",
             y_axis_title="Time (%)",
             graph_type=GRAPH_TYPE_CGROUP,
-            stack_state=False)
-    web.write(g.toGoogleChartJS())
-    g_graphs.append(g)    # register this graph into globals
+            stack_state=False))
+    return web
 
 
 def choose_byte_divider(mem_total_bytes):
@@ -904,7 +910,7 @@ def choose_byte_divider(mem_total_bytes):
 def generate_baremetal_memory(web, jdata, hostname):
     # if baremetal memory data was not collected, just return:
     if 'proc_meminfo' not in jdata[0]:
-        return
+        return web
     
     #
     # MAIN LOOP
@@ -951,21 +957,20 @@ def generate_baremetal_memory(web, jdata, hostname):
             ])
 
     # Produce the javascript:
-    g = GoogleChartsGraph(
+    web.appendGoogleChart(GoogleChartsGraph(
             data=baremetal_memory_stats,  # Data
             graph_title='Memory usage in ' + unit + " (from baremetal stats)",
             button_label="Memory Usage",
             y_axis_title=unit,
             graph_type=GRAPH_TYPE_BAREMETAL,
-            stack_state=True)
-    web.write(g.toGoogleChartJS())
-    g_graphs.append(g)    # register this graph into globals
+            stack_state=True))
+    return web
 
 
 def generate_cgroup_memory(web, jheader, jdata, hostname):
     # if cgroup data was not collected, just return:
     if 'cgroup_memory_stats' not in jdata[0]:
-        return
+        return web
     
     #
     # MAIN LOOP
@@ -995,16 +1000,16 @@ def generate_cgroup_memory(web, jheader, jdata, hostname):
             ])
 
     # Produce the javascript:
-    g = GoogleChartsGraph(
+    web.appendGoogleChart(GoogleChartsGraph(
             data=cgroup_memory_stats,  # Data
             graph_title='Memory used by cmonitor_collector CGroup in ' + unit +  " (from CGroup stats)",
             button_label="Memory Usage",
             y_axis_title=[unit, "Alloc Failures"],
             graph_type=GRAPH_TYPE_CGROUP,
             stack_state=False,
-            series_for_2nd_yaxis=[2]) # put "failcnt" on 2nd y axis
-    web.write(g.toGoogleChartJS())
-    g_graphs.append(g)    # register this graph into globals
+            series_for_2nd_yaxis=[2])) # put "failcnt" on 2nd y axis
+    return web
+
 
 def generate_load_avg(web, jheader, jdata, hostname):
     #
@@ -1045,15 +1050,54 @@ def generate_load_avg(web, jheader, jdata, hostname):
             ])
 
     # Produce the javascript:
-    g = GoogleChartsGraph(
+    web.appendGoogleChart(GoogleChartsGraph(
             data=load_avg_stats,  # Data
             graph_title='Average Load ' +  " (from baremetal stats)",
             button_label="Average Load",
             y_axis_title="Load (%)",
             graph_type=GRAPH_TYPE_BAREMETAL,
-            stack_state=False)
-    web.write(g.toGoogleChartJS())
-    g_graphs.append(g)    # register this graph into globals
+            stack_state=False))
+    return web
+
+def generate_monitoring_summary(jheader, jdata):
+    jdata_first_sample = jdata[0]
+    monitoring_summary = [
+        ( "Version:", '<a href="https://github.com/f18m/cmonitor">cmonitor</a> ' + jheader["cmonitor"]["version"] ),
+        ( "User:", jheader["cmonitor"]["username"] ),
+        ( "Collected:", jheader["cmonitor"]["collecting"] ),
+        ( "Started sampling at:", jdata_first_sample["timestamp"]["datetime"] + " (Local)" ),
+        ( "Started sampling at:", jdata_first_sample["timestamp"]["UTC"] + " (UTC)" ),
+        ( "Samples:", str(len(jdata)) ),
+        ( "Sampling Interval (s):", str(jheader["cmonitor"]["sample_interval_seconds"]) ),
+        ( "Total time sampled (hh:mm:ss):", str(datetime.timedelta(seconds = jheader["cmonitor"]["sample_interval_seconds"]*len(jdata))) )
+    ]
+    return monitoring_summary
+
+def generate_monitored_summary(jheader, jdata, logical_cpus_indexes):
+    jdata_first_sample = jdata[0]
+    
+    # NOTE: unfortunately some useful information like:
+    #        - RAM memory model/speed
+    #        - Disk model/speed
+    #        - NIC model/speed
+    #       will not be available from inside a container, which is where cmonitor_collector usually runs...
+    #       so we mostly show CPU stats:
+    all_disks = []
+    if "disks" in jdata_first_sample:
+        all_disks = jdata_first_sample["disks"].keys()
+    all_netdevices = []
+    if "network_interfaces" in jdata_first_sample :
+        all_netdevices = jdata_first_sample["network_interfaces"].keys()
+    monitored_summary = [
+        ( "Hostname:", jheader["identity"]["hostname"] ),
+        ( "CPU:", jheader["lscpu"]["model_name"] ),
+        ( "BogoMIPS:", jheader["lscpu"]["bogomips"] ),
+        ( "OS:", jheader["os_release"]["pretty_name"] ),
+        ( "Monitored CPUs:", str(len(logical_cpus_indexes)) ),
+        ( "Monitored Network Devices:", str(len(all_netdevices)) ),
+        ( "Monitored Disks:", str(len(all_disks)) ),
+    ]
+    return monitored_summary
 
 
 
@@ -1090,9 +1134,7 @@ def main_process_file(infile, outfile):
         text = text[:-2] + "\n ]\n}\n"
     
     # Convert the text to json and extract the stats
-    entry = []
     entry = json.loads(text)  # convert text to JSON
-    
     try:
         jheader = entry["header"]
         jdata = entry["samples"]  # removes outer parts so we have a list of snapshot dictionaries
@@ -1100,17 +1142,12 @@ def main_process_file(infile, outfile):
         print("Unexpected JSON format. Aborting.")
         sys.exit(1)
     
-    # - - - - - Start nchart functions
-    next_graph_need_stacking = 0
-    
-    # These are flags used as function arguments
-    stacked = 1
-    unstacked = 0
-    
     # initialise some useful content
     hostname = jheader['identity']['hostname'] 
-
     jdata_first_sample = jdata[0]
+    print("Found %d data samples" % len(jdata))
+
+    # detect num of CPUs:
     logical_cpus_indexes = []
     for key in jdata_first_sample['stat']:
         if key.startswith('cpu') and key != 'cpu_total':
@@ -1118,78 +1155,42 @@ def main_process_file(infile, outfile):
             # print("%s %s" %(key, cpuIdx))
             logical_cpus_indexes.append(cpuIdx) 
     print("Found %d CPUs in input file: %s" % (len(logical_cpus_indexes), ', '.join(str(x) for x in logical_cpus_indexes)))
-    print("Found %d data samples" % len(jdata))
     
-    # ----- MAIN SCRIPT CREAT WEB FILE -
     print("Opening output file %s" % outfile)
-    web = open(outfile, "w")  # Open the output file
-    nchart_start_js(web, 'Monitoring data for hostname ' + hostname)
+    web = HtmlOutputPage(outfile, 'Monitoring data for hostname ' + hostname)
+
+    # HTML HEAD
     
-    # JAVASCRIPT GRAPHS
-    generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname)
-    generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname)
-    generate_baremetal_memory(web, jdata, hostname)
-    generate_cgroup_memory(web, jheader, jdata, hostname)
-    generate_network_traffic(web, jdata, hostname)
-    generate_disks_io(web, jdata, hostname)
-    generate_load_avg(web, jheader, jdata, hostname)
+    web.startHtmlHead()
+    web = generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname)
+    web = generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname)
+    web = generate_baremetal_memory(web, jdata, hostname)
+    web = generate_cgroup_memory(web, jheader, jdata, hostname)
+    web = generate_network_traffic(web, jdata, hostname)
+    web = generate_disks_io(web, jdata, hostname)
+    web = generate_load_avg(web, jheader, jdata, hostname)
+    web.endHtmlHead(generate_config_js(jheader))
+    
     print("All data samples parsed correctly")
 
-    # if process_data_found:
-    #    bubbleit(web, topprocs_title, topprocs,  'Top Processes Summary' + details, "TopSum")
-    #    g = GoogleChartsGraph( top_header, top_data,  'Top Procs by CPU time' + details, "TopProcs",unstacked)
-  
-    # generate_filesystems(web, jdata)
     
-    monitoring_summary = [
-        ( "Version:", '<a href="https://github.com/f18m/cmonitor">cmonitor</a> ' + jheader["cmonitor"]["version"] ),
-        ( "User:", jheader["cmonitor"]["username"] ),
-        ( "Collected:", jheader["cmonitor"]["collecting"] ),
-        ( "Started sampling at:", jdata_first_sample["timestamp"]["datetime"] + " (Local)" ),
-        ( "Started sampling at:", jdata_first_sample["timestamp"]["UTC"] + " (UTC)" ),
-        ( "Samples:", str(len(jdata)) ),
-        ( "Sampling Interval (s):", str(jheader["cmonitor"]["sample_interval_seconds"]) ),
-        ( "Total time sampled (hh:mm:ss):", str(datetime.timedelta(seconds = jheader["cmonitor"]["sample_interval_seconds"]*len(jdata))) )
-    ]
+    # HTML BODY
     
-    # NOTE: unfortunately some useful information like:
-    #        - RAM memory model/speed
-    #        - Disk model/speed
-    #        - NIC model/speed
-    #       will not be available from inside a container, which is where cmonitor_collector usually runs...
-    #       so we mostly show CPU stats:
-    all_disks = []
-    if "disks" in jdata_first_sample:
-        all_disks = jdata_first_sample["disks"].keys()
-    all_netdevices = []
-    if "network_interfaces" in jdata_first_sample :
-        all_netdevices = jdata_first_sample["network_interfaces"].keys()
-    monitored_summary = [
-        ( "Hostname:", jheader["identity"]["hostname"] ),
-        ( "CPU:", jheader["lscpu"]["model_name"] ),
-        ( "BogoMIPS:", jheader["lscpu"]["bogomips"] ),
-        ( "OS:", jheader["os_release"]["pretty_name"] ),
-        ( "Monitored CPUs:", str(len(logical_cpus_indexes)) ),
-        ( "Monitored Network Devices:", str(len(all_netdevices)) ),
-        ( "Monitored Disks:", str(len(all_disks)) ),
-    ]
-    
-    nchart_end_js(web, generate_config_js(jheader))
-    
-    # HTML
-    nchart_start_html_body(web, hostname)
-    nchart_append_html_table(web, "Monitoring Summary", monitoring_summary)
-    nchart_append_html_table(web, "Monitored System Summary", monitored_summary)
-    web.write('<p>NOTE: to zoom use left-click and drag; to reset view use right-click.</p>\n')
-    nchart_end_html_body(web)
+    if 'cgroup_config' in jheader and 'name' in jheader['cgroup_config']:
+        cgroupName = jheader['cgroup_config']['name']
+    else:
+        cgroupName = 'None'
+    web.startHtmlBody(cgroupName, hostname)
+    web.appendHtmlTable("Monitoring Summary", generate_monitoring_summary(jheader, jdata))
+    web.appendHtmlTable("Monitored System Summary", generate_monitored_summary(jheader, jdata, logical_cpus_indexes))
+    web.endHtmlBody()
 
     print("Completed processing")
-    web.close()
+
 
 # =======================================================================================================
 # MAIN
 # =======================================================================================================
-
 
 if __name__ == '__main__':
     cmd = sys.argv[0]
