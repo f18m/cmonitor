@@ -3,21 +3,21 @@
 <head>
   <title>Monitoring data for hostname modcentos7-build3</title>
   <style>
-     html,body { height:85%;}
-     body { background-color: #eaeaea;}
-     h3 { margin: 0px;}
-     ul { margin: 0 0 0 0;padding-left: 20px;}
+     html,body { height:85%; }
+     body { background-color: #eaeaea; }
+     h3 { margin: 0px; }
+     ul { margin: 0 0 0 0;padding-left: 20px; }
      button { margin-bottom: 3px; }
      #hostname_span { background-color: white; color: red; padding: 4px; }
      #button_table { width:100%; border-collapse: collapse; }
-     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
+     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
      #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
      #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
      #chart_master_inner_p { font-size: x-large; }
-     #bottom_div { float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
-     #bottom_div h3 { font-size: medium;}
-     #bottom_div li { font-size: smaller;}
-     #bottom_table_val { font-family: monospace;}
+     #bottom_div { float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #bottom_div h3 { font-size: medium; }
+     #bottom_div li { font-size: smaller; }
+     #bottom_table_val { font-family: monospace; }
   </style>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
@@ -29,8 +29,24 @@ google.setOnLoadCallback(setup_button_click_handlers);
 /* The global chart object: */
 var g_chart = null;
 
+/* Currently selected data & options: */
+var g_current_data = null;
+var g_current_options = null;
+
 /* The global window showing the configuration of all collected data: */
 var g_configWindow = null;
+
+/* Create a trigger for window resize that will redraw current chart */
+var g_window_resize_timer = null;
+window.addEventListener('resize', function(e){
+  if (g_window_resize_timer) 
+    clearTimeout(g_window_resize_timer);
+
+  g_window_resize_timer = setTimeout(function() {
+    if (g_current_data && g_current_options)
+      g_chart.draw(g_current_data, g_current_options);
+  }, 500);
+});
 
 /* Utility function used with combobox controls: */
 function call_function_named(func_name) {
@@ -68,6 +84,8 @@ function draw_graph1() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph1, options_graph1);
+  g_current_data = data_graph1;
+  g_current_options = options_graph1;
 }
 
 function draw_graph2() {
@@ -89,6 +107,8 @@ function draw_graph2() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph2, options_graph2);
+  g_current_data = data_graph2;
+  g_current_options = options_graph2;
 }
 
 function draw_graph3() {
@@ -110,6 +130,8 @@ function draw_graph3() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph3, options_graph3);
+  g_current_data = data_graph3;
+  g_current_options = options_graph3;
 }
 
 function draw_graph4() {
@@ -131,6 +153,8 @@ function draw_graph4() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph4, options_graph4);
+  g_current_data = data_graph4;
+  g_current_options = options_graph4;
 }
 
 function draw_graph5() {
@@ -152,6 +176,8 @@ function draw_graph5() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph5, options_graph5);
+  g_current_data = data_graph5;
+  g_current_options = options_graph5;
 }
 
 function draw_graph6() {
@@ -173,6 +199,8 @@ function draw_graph6() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph6, options_graph6);
+  g_current_data = data_graph6;
+  g_current_options = options_graph6;
 }
 
 function draw_graph7() {
@@ -194,6 +222,8 @@ function draw_graph7() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph7, options_graph7);
+  g_current_data = data_graph7;
+  g_current_options = options_graph7;
 }
 
 function draw_graph8() {
@@ -215,6 +245,8 @@ function draw_graph8() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph8, options_graph8);
+  g_current_data = data_graph8;
+  g_current_options = options_graph8;
 }
 
 function draw_graph9() {
@@ -236,6 +268,8 @@ function draw_graph9() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph9, options_graph9);
+  g_current_data = data_graph9;
+  g_current_options = options_graph9;
 }
 
 function draw_graph10() {
@@ -257,6 +291,8 @@ function draw_graph10() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph10, options_graph10);
+  g_current_data = data_graph10;
+  g_current_options = options_graph10;
 }
 
 function draw_graph11() {
@@ -278,6 +314,8 @@ function draw_graph11() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph11, options_graph11);
+  g_current_data = data_graph11;
+  g_current_options = options_graph11;
 }
 
 function draw_graph12() {
@@ -299,6 +337,8 @@ function draw_graph12() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph12, options_graph12);
+  g_current_data = data_graph12;
+  g_current_options = options_graph12;
 }
 
 function draw_graph13() {
@@ -320,6 +360,8 @@ function draw_graph13() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph13, options_graph13);
+  g_current_data = data_graph13;
+  g_current_options = options_graph13;
 }
 
 function draw_graph14() {
@@ -341,6 +383,8 @@ function draw_graph14() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph14, options_graph14);
+  g_current_data = data_graph14;
+  g_current_options = options_graph14;
 }
 
 function draw_graph15() {
@@ -362,6 +406,8 @@ function draw_graph15() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph15, options_graph15);
+  g_current_data = data_graph15;
+  g_current_options = options_graph15;
 }
 
 function draw_graph16() {
@@ -383,6 +429,8 @@ function draw_graph16() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph16, options_graph16);
+  g_current_data = data_graph16;
+  g_current_options = options_graph16;
 }
 
 function draw_graph17() {
@@ -404,6 +452,8 @@ function draw_graph17() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph17, options_graph17);
+  g_current_data = data_graph17;
+  g_current_options = options_graph17;
 }
 
 function draw_graph18() {
@@ -425,6 +475,8 @@ function draw_graph18() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph18, options_graph18);
+  g_current_data = data_graph18;
+  g_current_options = options_graph18;
 }
 
 function draw_graph19() {
@@ -446,6 +498,8 @@ function draw_graph19() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph19, options_graph19);
+  g_current_data = data_graph19;
+  g_current_options = options_graph19;
 }
 
 function draw_graph20() {
@@ -467,6 +521,8 @@ function draw_graph20() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph20, options_graph20);
+  g_current_data = data_graph20;
+  g_current_options = options_graph20;
 }
 
 function draw_graph21() {
@@ -488,6 +544,8 @@ function draw_graph21() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph21, options_graph21);
+  g_current_data = data_graph21;
+  g_current_options = options_graph21;
 }
 
 function draw_graph22() {
@@ -509,6 +567,8 @@ function draw_graph22() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph22, options_graph22);
+  g_current_data = data_graph22;
+  g_current_options = options_graph22;
 }
 
 function draw_graph23() {
@@ -530,6 +590,8 @@ function draw_graph23() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph23, options_graph23);
+  g_current_data = data_graph23;
+  g_current_options = options_graph23;
 }
 
 function draw_graph24() {
@@ -551,6 +613,8 @@ function draw_graph24() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph24, options_graph24);
+  g_current_data = data_graph24;
+  g_current_options = options_graph24;
 }
 
 function draw_graph25() {
@@ -572,6 +636,8 @@ function draw_graph25() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph25, options_graph25);
+  g_current_data = data_graph25;
+  g_current_options = options_graph25;
 }
 
 function draw_graph26() {
@@ -593,6 +659,8 @@ function draw_graph26() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph26, options_graph26);
+  g_current_data = data_graph26;
+  g_current_options = options_graph26;
 }
 
 function draw_graph27() {
@@ -614,6 +682,8 @@ function draw_graph27() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph27, options_graph27);
+  g_current_data = data_graph27;
+  g_current_options = options_graph27;
 }
 
 function draw_graph28() {
@@ -635,6 +705,8 @@ function draw_graph28() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph28, options_graph28);
+  g_current_data = data_graph28;
+  g_current_options = options_graph28;
 }
 
 function draw_graph29() {
@@ -656,6 +728,8 @@ function draw_graph29() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph29, options_graph29);
+  g_current_data = data_graph29;
+  g_current_options = options_graph29;
 }
 
 function draw_graph30() {
@@ -677,6 +751,8 @@ function draw_graph30() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph30, options_graph30);
+  g_current_data = data_graph30;
+  g_current_options = options_graph30;
 }
 
 function draw_graph31() {
@@ -698,6 +774,8 @@ function draw_graph31() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph31, options_graph31);
+  g_current_data = data_graph31;
+  g_current_options = options_graph31;
 }
 
 function draw_graph32() {
@@ -719,6 +797,8 @@ function draw_graph32() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph32, options_graph32);
+  g_current_data = data_graph32;
+  g_current_options = options_graph32;
 }
 
 function draw_graph33() {
@@ -740,6 +820,8 @@ function draw_graph33() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph33, options_graph33);
+  g_current_data = data_graph33;
+  g_current_options = options_graph33;
 }
 
 function draw_graph34() {
@@ -761,6 +843,8 @@ function draw_graph34() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph34, options_graph34);
+  g_current_data = data_graph34;
+  g_current_options = options_graph34;
 }
 
 function draw_graph35() {
@@ -782,6 +866,8 @@ function draw_graph35() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph35, options_graph35);
+  g_current_data = data_graph35;
+  g_current_options = options_graph35;
 }
 
 function draw_graph36() {
@@ -803,6 +889,8 @@ function draw_graph36() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph36, options_graph36);
+  g_current_data = data_graph36;
+  g_current_options = options_graph36;
 }
 
 function draw_graph37() {
@@ -824,6 +912,8 @@ function draw_graph37() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph37, options_graph37);
+  g_current_data = data_graph37;
+  g_current_options = options_graph37;
 }
 
 function draw_graph38() {
@@ -845,6 +935,8 @@ function draw_graph38() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph38, options_graph38);
+  g_current_data = data_graph38;
+  g_current_options = options_graph38;
 }
 
 function draw_graph39() {
@@ -866,6 +958,8 @@ function draw_graph39() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph39, options_graph39);
+  g_current_data = data_graph39;
+  g_current_options = options_graph39;
 }
 
 function draw_graph40() {
@@ -887,6 +981,8 @@ function draw_graph40() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph40, options_graph40);
+  g_current_data = data_graph40;
+  g_current_options = options_graph40;
 }
 
 function draw_graph41() {
@@ -908,6 +1004,8 @@ function draw_graph41() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph41, options_graph41);
+  g_current_data = data_graph41;
+  g_current_options = options_graph41;
 }
 
 function draw_graph42() {
@@ -929,6 +1027,8 @@ function draw_graph42() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph42, options_graph42);
+  g_current_data = data_graph42;
+  g_current_options = options_graph42;
 }
 
 function draw_graph43() {
@@ -950,6 +1050,8 @@ function draw_graph43() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph43, options_graph43);
+  g_current_data = data_graph43;
+  g_current_options = options_graph43;
 }
 
 function draw_graph44() {
@@ -971,6 +1073,8 @@ function draw_graph44() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph44, options_graph44);
+  g_current_data = data_graph44;
+  g_current_options = options_graph44;
 }
 
 function draw_graph45() {
@@ -992,6 +1096,8 @@ function draw_graph45() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph45, options_graph45);
+  g_current_data = data_graph45;
+  g_current_options = options_graph45;
 }
 
 function draw_graph46() {
@@ -1013,6 +1119,8 @@ function draw_graph46() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph46, options_graph46);
+  g_current_data = data_graph46;
+  g_current_options = options_graph46;
 }
 
 function draw_graph47() {
@@ -1034,6 +1142,8 @@ function draw_graph47() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph47, options_graph47);
+  g_current_data = data_graph47;
+  g_current_options = options_graph47;
 }
 
 function draw_graph48() {
@@ -1055,6 +1165,8 @@ function draw_graph48() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph48, options_graph48);
+  g_current_data = data_graph48;
+  g_current_options = options_graph48;
 }
 
 function draw_graph49() {
@@ -1076,6 +1188,8 @@ function draw_graph49() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph49, options_graph49);
+  g_current_data = data_graph49;
+  g_current_options = options_graph49;
 }
 
 function draw_graph50() {
@@ -1097,6 +1211,8 @@ function draw_graph50() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph50, options_graph50);
+  g_current_data = data_graph50;
+  g_current_options = options_graph50;
 }
 
 function draw_graph51() {
@@ -1118,6 +1234,8 @@ function draw_graph51() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph51, options_graph51);
+  g_current_data = data_graph51;
+  g_current_options = options_graph51;
 }
 
 function draw_graph52() {
@@ -1139,6 +1257,8 @@ function draw_graph52() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph52, options_graph52);
+  g_current_data = data_graph52;
+  g_current_options = options_graph52;
 }
 
 function draw_graph53() {
@@ -1160,6 +1280,8 @@ function draw_graph53() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph53, options_graph53);
+  g_current_data = data_graph53;
+  g_current_options = options_graph53;
 }
 
 function draw_graph54() {
@@ -1181,6 +1303,8 @@ function draw_graph54() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph54, options_graph54);
+  g_current_data = data_graph54;
+  g_current_options = options_graph54;
 }
 
 function draw_graph55() {
@@ -1202,6 +1326,8 @@ function draw_graph55() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph55, options_graph55);
+  g_current_data = data_graph55;
+  g_current_options = options_graph55;
 }
 
 function draw_graph56() {
@@ -1223,6 +1349,8 @@ function draw_graph56() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph56, options_graph56);
+  g_current_data = data_graph56;
+  g_current_options = options_graph56;
 }
 
 function draw_graph57() {
@@ -1244,6 +1372,8 @@ function draw_graph57() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph57, options_graph57);
+  g_current_data = data_graph57;
+  g_current_options = options_graph57;
   reset_combo_boxes();
 }
 
@@ -1266,6 +1396,8 @@ function draw_graph58() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph58, options_graph58);
+  g_current_data = data_graph58;
+  g_current_options = options_graph58;
 }
 
 function draw_graph59() {
@@ -1287,6 +1419,8 @@ function draw_graph59() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph59, options_graph59);
+  g_current_data = data_graph59;
+  g_current_options = options_graph59;
 }
 
 function draw_graph60() {
@@ -1308,6 +1442,8 @@ function draw_graph60() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph60, options_graph60);
+  g_current_data = data_graph60;
+  g_current_options = options_graph60;
 }
 
 function draw_graph61() {
@@ -1329,6 +1465,8 @@ function draw_graph61() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph61, options_graph61);
+  g_current_data = data_graph61;
+  g_current_options = options_graph61;
 }
 
 function draw_graph62() {
@@ -1350,6 +1488,8 @@ function draw_graph62() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph62, options_graph62);
+  g_current_data = data_graph62;
+  g_current_options = options_graph62;
 }
 
 function draw_graph63() {
@@ -1371,6 +1511,8 @@ function draw_graph63() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph63, options_graph63);
+  g_current_data = data_graph63;
+  g_current_options = options_graph63;
 }
 
 function draw_graph64() {
@@ -1392,6 +1534,8 @@ function draw_graph64() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph64, options_graph64);
+  g_current_data = data_graph64;
+  g_current_options = options_graph64;
 }
 
 function draw_graph65() {
@@ -1413,6 +1557,8 @@ function draw_graph65() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph65, options_graph65);
+  g_current_data = data_graph65;
+  g_current_options = options_graph65;
 }
 
 function draw_graph66() {
@@ -1434,6 +1580,8 @@ function draw_graph66() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph66, options_graph66);
+  g_current_data = data_graph66;
+  g_current_options = options_graph66;
 }
 
 function draw_graph67() {
@@ -1455,6 +1603,8 @@ function draw_graph67() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph67, options_graph67);
+  g_current_data = data_graph67;
+  g_current_options = options_graph67;
 }
 
 function draw_graph68() {
@@ -1476,6 +1626,8 @@ function draw_graph68() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph68, options_graph68);
+  g_current_data = data_graph68;
+  g_current_options = options_graph68;
 }
 
 function draw_graph69() {
@@ -1497,6 +1649,8 @@ function draw_graph69() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph69, options_graph69);
+  g_current_data = data_graph69;
+  g_current_options = options_graph69;
 }
 
 function draw_graph70() {
@@ -1518,6 +1672,8 @@ function draw_graph70() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph70, options_graph70);
+  g_current_data = data_graph70;
+  g_current_options = options_graph70;
 }
 
 function draw_graph71() {
@@ -1539,6 +1695,8 @@ function draw_graph71() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph71, options_graph71);
+  g_current_data = data_graph71;
+  g_current_options = options_graph71;
 }
 
 function draw_graph72() {
@@ -1560,6 +1718,8 @@ function draw_graph72() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph72, options_graph72);
+  g_current_data = data_graph72;
+  g_current_options = options_graph72;
 }
 
 function draw_graph73() {
@@ -1581,6 +1741,8 @@ function draw_graph73() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph73, options_graph73);
+  g_current_data = data_graph73;
+  g_current_options = options_graph73;
 }
 
 function draw_graph74() {
@@ -1602,6 +1764,8 @@ function draw_graph74() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph74, options_graph74);
+  g_current_data = data_graph74;
+  g_current_options = options_graph74;
 }
 
 function draw_graph75() {
@@ -1623,6 +1787,8 @@ function draw_graph75() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph75, options_graph75);
+  g_current_data = data_graph75;
+  g_current_options = options_graph75;
 }
 
 function draw_graph76() {
@@ -1644,6 +1810,8 @@ function draw_graph76() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph76, options_graph76);
+  g_current_data = data_graph76;
+  g_current_options = options_graph76;
 }
 
 function draw_graph77() {
@@ -1665,6 +1833,8 @@ function draw_graph77() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph77, options_graph77);
+  g_current_data = data_graph77;
+  g_current_options = options_graph77;
 }
 
 function draw_graph78() {
@@ -1686,6 +1856,8 @@ function draw_graph78() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph78, options_graph78);
+  g_current_data = data_graph78;
+  g_current_options = options_graph78;
 }
 
 function draw_graph79() {
@@ -1707,6 +1879,8 @@ function draw_graph79() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph79, options_graph79);
+  g_current_data = data_graph79;
+  g_current_options = options_graph79;
 }
 
 function draw_graph80() {
@@ -1728,6 +1902,8 @@ function draw_graph80() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph80, options_graph80);
+  g_current_data = data_graph80;
+  g_current_options = options_graph80;
 }
 
 function draw_graph81() {
@@ -1749,6 +1925,8 @@ function draw_graph81() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph81, options_graph81);
+  g_current_data = data_graph81;
+  g_current_options = options_graph81;
 }
 
 function draw_graph82() {
@@ -1770,6 +1948,8 @@ function draw_graph82() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph82, options_graph82);
+  g_current_data = data_graph82;
+  g_current_options = options_graph82;
 }
 
 function draw_graph83() {
@@ -1791,6 +1971,8 @@ function draw_graph83() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph83, options_graph83);
+  g_current_data = data_graph83;
+  g_current_options = options_graph83;
 }
 
 function draw_graph84() {
@@ -1812,6 +1994,8 @@ function draw_graph84() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph84, options_graph84);
+  g_current_data = data_graph84;
+  g_current_options = options_graph84;
 }
 
 function draw_graph85() {
@@ -1833,6 +2017,8 @@ function draw_graph85() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph85, options_graph85);
+  g_current_data = data_graph85;
+  g_current_options = options_graph85;
 }
 
 function draw_graph86() {
@@ -1854,6 +2040,8 @@ function draw_graph86() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph86, options_graph86);
+  g_current_data = data_graph86;
+  g_current_options = options_graph86;
 }
 
 function draw_graph87() {
@@ -1875,6 +2063,8 @@ function draw_graph87() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph87, options_graph87);
+  g_current_data = data_graph87;
+  g_current_options = options_graph87;
 }
 
 function draw_graph88() {
@@ -1896,6 +2086,8 @@ function draw_graph88() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph88, options_graph88);
+  g_current_data = data_graph88;
+  g_current_options = options_graph88;
 }
 
 function draw_graph89() {
@@ -1917,6 +2109,8 @@ function draw_graph89() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph89, options_graph89);
+  g_current_data = data_graph89;
+  g_current_options = options_graph89;
 }
 
 function draw_graph90() {
@@ -1938,6 +2132,8 @@ function draw_graph90() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph90, options_graph90);
+  g_current_data = data_graph90;
+  g_current_options = options_graph90;
 }
 
 function draw_graph91() {
@@ -1959,6 +2155,8 @@ function draw_graph91() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph91, options_graph91);
+  g_current_data = data_graph91;
+  g_current_options = options_graph91;
 }
 
 function draw_graph92() {
@@ -1980,6 +2178,8 @@ function draw_graph92() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph92, options_graph92);
+  g_current_data = data_graph92;
+  g_current_options = options_graph92;
 }
 
 function draw_graph93() {
@@ -2001,6 +2201,8 @@ function draw_graph93() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph93, options_graph93);
+  g_current_data = data_graph93;
+  g_current_options = options_graph93;
 }
 
 function draw_graph94() {
@@ -2022,6 +2224,8 @@ function draw_graph94() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph94, options_graph94);
+  g_current_data = data_graph94;
+  g_current_options = options_graph94;
 }
 
 function draw_graph95() {
@@ -2043,6 +2247,8 @@ function draw_graph95() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph95, options_graph95);
+  g_current_data = data_graph95;
+  g_current_options = options_graph95;
 }
 
 function draw_graph96() {
@@ -2064,6 +2270,8 @@ function draw_graph96() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph96, options_graph96);
+  g_current_data = data_graph96;
+  g_current_options = options_graph96;
 }
 
 function draw_graph97() {
@@ -2085,6 +2293,8 @@ function draw_graph97() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph97, options_graph97);
+  g_current_data = data_graph97;
+  g_current_options = options_graph97;
 }
 
 function draw_graph98() {
@@ -2106,6 +2316,8 @@ function draw_graph98() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph98, options_graph98);
+  g_current_data = data_graph98;
+  g_current_options = options_graph98;
 }
 
 function draw_graph99() {
@@ -2127,6 +2339,8 @@ function draw_graph99() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph99, options_graph99);
+  g_current_data = data_graph99;
+  g_current_options = options_graph99;
 }
 
 function draw_graph100() {
@@ -2148,6 +2362,8 @@ function draw_graph100() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph100, options_graph100);
+  g_current_data = data_graph100;
+  g_current_options = options_graph100;
 }
 
 function draw_graph101() {
@@ -2169,6 +2385,8 @@ function draw_graph101() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph101, options_graph101);
+  g_current_data = data_graph101;
+  g_current_options = options_graph101;
 }
 
 function draw_graph102() {
@@ -2190,6 +2408,8 @@ function draw_graph102() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph102, options_graph102);
+  g_current_data = data_graph102;
+  g_current_options = options_graph102;
 }
 
 function draw_graph103() {
@@ -2211,6 +2431,8 @@ function draw_graph103() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph103, options_graph103);
+  g_current_data = data_graph103;
+  g_current_options = options_graph103;
 }
 
 function draw_graph104() {
@@ -2232,6 +2454,8 @@ function draw_graph104() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph104, options_graph104);
+  g_current_data = data_graph104;
+  g_current_options = options_graph104;
 }
 
 function draw_graph105() {
@@ -2253,6 +2477,8 @@ function draw_graph105() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph105, options_graph105);
+  g_current_data = data_graph105;
+  g_current_options = options_graph105;
 }
 
 function draw_graph106() {
@@ -2274,6 +2500,8 @@ function draw_graph106() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph106, options_graph106);
+  g_current_data = data_graph106;
+  g_current_options = options_graph106;
 }
 
 function draw_graph107() {
@@ -2295,6 +2523,8 @@ function draw_graph107() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph107, options_graph107);
+  g_current_data = data_graph107;
+  g_current_options = options_graph107;
 }
 
 function draw_graph108() {
@@ -2316,6 +2546,8 @@ function draw_graph108() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph108, options_graph108);
+  g_current_data = data_graph108;
+  g_current_options = options_graph108;
 }
 
 function draw_graph109() {
@@ -2337,6 +2569,8 @@ function draw_graph109() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph109, options_graph109);
+  g_current_data = data_graph109;
+  g_current_options = options_graph109;
 }
 
 function draw_graph110() {
@@ -2358,6 +2592,8 @@ function draw_graph110() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph110, options_graph110);
+  g_current_data = data_graph110;
+  g_current_options = options_graph110;
 }
 
 function draw_graph111() {
@@ -2379,6 +2615,8 @@ function draw_graph111() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph111, options_graph111);
+  g_current_data = data_graph111;
+  g_current_options = options_graph111;
 }
 
 function draw_graph112() {
@@ -2400,6 +2638,8 @@ function draw_graph112() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph112, options_graph112);
+  g_current_data = data_graph112;
+  g_current_options = options_graph112;
 }
 
 function draw_graph113() {
@@ -2421,6 +2661,8 @@ function draw_graph113() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph113, options_graph113);
+  g_current_data = data_graph113;
+  g_current_options = options_graph113;
 }
 
 function draw_graph114() {
@@ -2442,6 +2684,8 @@ function draw_graph114() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph114, options_graph114);
+  g_current_data = data_graph114;
+  g_current_options = options_graph114;
   reset_combo_boxes();
 }
 
@@ -2464,6 +2708,8 @@ function draw_graph115() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph115, options_graph115);
+  g_current_data = data_graph115;
+  g_current_options = options_graph115;
   reset_combo_boxes();
 }
 
@@ -2494,6 +2740,8 @@ function draw_graph116() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph116, options_graph116);
+  g_current_data = data_graph116;
+  g_current_options = options_graph116;
   reset_combo_boxes();
 }
 
@@ -2516,6 +2764,8 @@ function draw_graph117() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph117, options_graph117);
+  g_current_data = data_graph117;
+  g_current_options = options_graph117;
   reset_combo_boxes();
 }
 
@@ -2538,6 +2788,8 @@ function draw_graph118() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph118, options_graph118);
+  g_current_data = data_graph118;
+  g_current_options = options_graph118;
   reset_combo_boxes();
 }
 
@@ -2560,6 +2812,8 @@ function draw_graph119() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph119, options_graph119);
+  g_current_data = data_graph119;
+  g_current_options = options_graph119;
   reset_combo_boxes();
 }
 
@@ -2582,6 +2836,8 @@ function draw_graph120() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph120, options_graph120);
+  g_current_data = data_graph120;
+  g_current_options = options_graph120;
   reset_combo_boxes();
 }
 
@@ -2909,15 +3165,12 @@ function show_config_window() {
     <table>
     <tr><td><ul>
       <li>Version: <span id='bottom_table_val'><a href="https://github.com/f18m/cmonitor">cmonitor</a> 22-7</span></li>
-      <li>User: <span id='bottom_table_val'>root</span></li>
       <li>Collected: <span id='bottom_table_val'>cgroups,cpu,disk,memory,network</span></li>
-      <li>Started sampling at: <span id='bottom_table_val'>2019-05-04T01:15:25 (Local)</span></li>
-      </ul></td><td><ul>
       <li>Started sampling at: <span id='bottom_table_val'>2019-05-03T23:15:25 (UTC)</span></li>
       <li>Samples: <span id='bottom_table_val'>577</span></li>
+      </ul></td><td><ul>
       <li>Sampling Interval (s): <span id='bottom_table_val'>60</span></li>
       <li>Total time sampled (hh:mm:ss): <span id='bottom_table_val'>9:37:00</span></li>
-      </ul></td><td><ul>
     </ul></td></tr>
     </table>
   </div>
@@ -2926,13 +3179,13 @@ function show_config_window() {
     <table>
     <tr><td><ul>
       <li>Hostname: <span id='bottom_table_val'>modcentos7-build3</span></li>
+      <li>OS: <span id='bottom_table_val'>CentOS Linux 7 (Core)</span></li>
       <li>CPU: <span id='bottom_table_val'>Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz</span></li>
       <li>BogoMIPS: <span id='bottom_table_val'>4799.91</span></li>
-      <li>OS: <span id='bottom_table_val'>CentOS Linux 7 (Core)</span></li>
       </ul></td><td><ul>
       <li>Monitored CPUs: <span id='bottom_table_val'>56</span></li>
-      <li>Monitored Network Devices: <span id='bottom_table_val'>6</span></li>
       <li>Monitored Disks: <span id='bottom_table_val'>3</span></li>
+      <li>Monitored Network Devices: <span id='bottom_table_val'>6</span></li>
     </ul></td></tr>
     </table>
   </div>

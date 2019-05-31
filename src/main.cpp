@@ -80,6 +80,7 @@ struct option g_long_opts[] = {
     { "allow-multiple-instances", no_argument, 0, 'k' }, // force newline
     { "foreground", no_argument, 0, 'F' }, // force newline
     { "collect", required_argument, 0, 'C' }, // force newline
+    { "deep-collect", no_argument, 0, 'e' }, // force newline
 
     // Remote data collection options
     { "remote-ip", required_argument, 0, 'i' }, // force newline
@@ -121,19 +122,23 @@ struct option_extended {
         "  cgroups: activates cgroup-mode\n" // force newline
         "  all: the combination of all previous stats (this is the default)\n"
         "Note that a comma-separated list of above stats can be provided." },
+    { "Data sampling options", &g_long_opts[7],
+        "Collect all available details about the stats families enabled by --collect.\n"
+        "By default, for each family, only the stats that are used by the 'cmonitor_chart' companion utility\n"
+        "are collected. With this option a more detailed but larger JSON / InfluxDB data stream is produced." },
 
     // Remote data collection options
-    { "Remote data collection options", &g_long_opts[7],
+    { "Remote data collection options", &g_long_opts[8],
         "IP address or hostname of the InfluxDB instance to send measurements to (database 'cmonitor' will be used)." },
-    { "Remote data collection options", &g_long_opts[8], "Port used by InfluxDB." },
-    { "Remote data collection options", &g_long_opts[9],
+    { "Remote data collection options", &g_long_opts[9], "Port used by InfluxDB." },
+    { "Remote data collection options", &g_long_opts[10],
         "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET)." },
 
     // help
-    { "Other options", &g_long_opts[10], "Show version and exit" }, // force newline
-    { "Other options", &g_long_opts[11],
+    { "Other options", &g_long_opts[11], "Show version and exit" }, // force newline
+    { "Other options", &g_long_opts[12],
         "Enable debug mode; automatically activates --foreground mode" }, // force newline
-    { "Other options", &g_long_opts[12], "Show this help" },
+    { "Other options", &g_long_opts[13], "Show this help" },
 
     { NULL, NULL, NULL }
 };
@@ -415,6 +420,9 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
                     g_cfg.m_nCollectFlags |= k;
                 }
             } break;
+            case 'e':
+                g_cfg.m_nOutputFields = PF_ALL;
+                break;
             case 'F':
                 g_cfg.m_bForeground = true;
                 break;
@@ -613,9 +621,9 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 
     // init incremental stats (don't write yet anything!)
     bool bCollectCGroupInfo = g_cfg.m_nCollectFlags & PK_CGROUPS;
-    proc_stat(0, bCollectCGroupInfo, false /* do not emit JSON data */);
-    proc_diskstats(0, false /* do not emit JSON data */);
-    proc_net_dev(0, false /* do not emit JSON data */);
+    proc_stat(0, bCollectCGroupInfo, PF_NONE /* do not emit JSON data */);
+    proc_diskstats(0, PF_NONE /* do not emit JSON data */);
+    proc_net_dev(0, PF_NONE /* do not emit JSON data */);
     if (bCollectCGroupInfo) {
         cgroup_init();
         cgroup_proc_cpuacct(0, false /* do not emit JSON */);
@@ -642,6 +650,22 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     else
         sleep(60); /* if a long time between snapshot do a quick one now so we have one in the bank */
 
+    std::set<std::string> charted_stats_from_meminfo;
+    if (g_cfg.m_nOutputFields == PF_USED_BY_CHART_SCRIPT_ONLY) {
+        charted_stats_from_meminfo.insert("MemTotal");
+        charted_stats_from_meminfo.insert("MemFree");
+        charted_stats_from_meminfo.insert("Cached");
+    }
+    // else: leave empty
+
+    std::set<std::string> charted_stats_from_cgroup_memory;
+    if (g_cfg.m_nOutputFields == PF_USED_BY_CHART_SCRIPT_ONLY) {
+        charted_stats_from_cgroup_memory.insert("total_cache");
+        charted_stats_from_cgroup_memory.insert("total_rss");
+        charted_stats_from_cgroup_memory.insert("failcnt");
+    }
+    // else: leave empty
+
     // start actual data samples:
     g_output.psample_array_start();
     for (unsigned int loop = 0; g_cfg.m_nSamples == 0 || loop < g_cfg.m_nSamples; loop++) {
@@ -664,29 +688,30 @@ int CMonitorCollectorApp::run(int argc, char** argv)
             if (bCollectCGroupInfo) {
                 // do not list all CPU informations when cgroup mode is ON: don't put information
                 // for CPUs outside current cgroup!
-                proc_stat(elapsed, true /* cgroup */, true /* emit JSON */);
+                proc_stat(elapsed, true /* cgroup */, g_cfg.m_nOutputFields /* emit JSON */);
                 cgroup_proc_cpuacct(elapsed, true /* emit JSON */);
             } else {
                 // list all CPUs
-                proc_stat(elapsed, false /* cgroup */, true /* emit JSON */);
+                proc_stat(elapsed, false /* cgroup */, g_cfg.m_nOutputFields /* emit JSON */);
             }
         }
 
         if (g_cfg.m_nCollectFlags & PK_MEMORY) {
-            read_data_number("meminfo");
-            read_data_number("vmstat");
+            read_data_number("meminfo", charted_stats_from_meminfo);
+            if (g_cfg.m_nOutputFields == PF_ALL)
+                read_data_number("vmstat", std::set<std::string>());
             if (g_cfg.m_nCollectFlags & PK_CGROUPS) {
                 // collect memory stats for current cgroup:
-                cgroup_proc_memory();
+                cgroup_proc_memory(charted_stats_from_cgroup_memory);
             }
         }
 
         if (g_cfg.m_nCollectFlags & PK_NETWORK) {
-            proc_net_dev(elapsed, true /* emit JSON */);
+            proc_net_dev(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
         }
 
         if (g_cfg.m_nCollectFlags & PK_DISK) {
-            proc_diskstats(elapsed, true /* emit JSON */);
+            proc_diskstats(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
             // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
 

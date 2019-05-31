@@ -20,6 +20,7 @@
 
 #include "cmonitor.h"
 #include <arpa/inet.h>
+#include <assert.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
@@ -43,19 +44,19 @@
 #include <time.h>
 #include <unistd.h>
 
-#define ADD_LABEL(ch) label[labelch++] = ch
-#define ADD_NUM(ch) numstr[numstrch++] = ch
-#define MAX_LOGICAL_CPU 256
-#define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed / ((float)(max_cpuno + 1.0)))
-#define DELTA_LOGICAL(stat) ((float)(stat - logical_cpu[cpuno].stat) / (float)elapsed)
+#define MAX_LOGICAL_CPU (256)
+#define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpuno + 1.0)))
+#define DELTA_LOGICAL(stat) ((float)(stat - logical_cpu[cpuno].stat) / (float)elapsed_sec)
 
 /*
-read files in format
+Reads files in one of the 3 formats supported below:
+
 name number
 name: number
 name: number kB
+
 */
-void CMonitorCollectorApp::read_data_number(const char* statname)
+void CMonitorCollectorApp::read_data_number(const char* statname, const std::set<std::string>& allowedStatsNames)
 {
     FILE* fp = 0;
     char line[1024];
@@ -87,7 +88,10 @@ void CMonitorCollectorApp::read_data_number(const char* statname)
         }
         sscanf(line, "%s %s", label, number);
         // g_logger.LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr, atoll(numstr));
-        g_output.plong(label, atoll(number));
+
+        if (allowedStatsNames.empty() /* all stats must be put in output */
+            || allowedStatsNames.find(label) != allowedStatsNames.end())
+            g_output.plong(label, atoll(number));
     }
     g_output.psection_end();
     (void)fclose(fp);
@@ -96,7 +100,7 @@ void CMonitorCollectorApp::read_data_number(const char* statname)
 /*
 read /proc/stat and unpick
 */
-void CMonitorCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bool print)
+void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedCpus, OutputFields output_opts)
 {
     long long user;
     long long nice;
@@ -139,7 +143,7 @@ void CMonitorCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus,
     char label[512];
 
     DEBUGLOG_FUNCTION_START();
-    g_logger.LogDebug("proc_stat(%.4f, %d) max_cpuno=%d\n", elapsed, print, max_cpuno);
+    g_logger.LogDebug("proc_stat(%.4f) max_cpuno=%d\n", elapsed_sec, max_cpuno);
     if (fp == 0) {
         if ((fp = fopen("/proc/stat", "r")) == NULL) {
             g_logger.LogError("failed to open file /proc/stat");
@@ -149,7 +153,7 @@ void CMonitorCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus,
     } else
         rewind(fp);
 
-    if (print)
+    if (output_opts != PF_NONE)
         g_output.psection_start("stat");
     while (fgets(line, 1000, fp) != NULL) {
         // len = strlen(line);
@@ -161,20 +165,28 @@ void CMonitorCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus,
                     count = sscanf(&line[4], /* cpu USER */
                         "%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", &user, &nice, &sys, &idle, &iowait,
                         &hardirq, &softirq, &steal, &guest, &guestnice);
-                    if (print) {
+                    if (output_opts != PF_NONE) {
                         g_output.psubsection_start("cpu_total");
-                        g_output.pdouble("user", DELTA_TOTAL(user)); /* incrementing counter */
-                        g_output.pdouble("nice", DELTA_TOTAL(nice)); /* incrementing counter */
-                        g_output.pdouble("sys", DELTA_TOTAL(sys)); /* incrementing counter */
-                        g_output.pdouble("idle", DELTA_TOTAL(idle)); /* incrementing counter */
-                        /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n", total_cpu.idle,
-                         * idle, idle-total_cpu.idle); */
-                        g_output.pdouble("iowait", DELTA_TOTAL(iowait)); /* incrementing counter */
-                        g_output.pdouble("hardirq", DELTA_TOTAL(hardirq)); /* incrementing counter */
-                        g_output.pdouble("softirq", DELTA_TOTAL(softirq)); /* incrementing counter */
-                        g_output.pdouble("steal", DELTA_TOTAL(steal)); /* incrementing counter */
-                        g_output.pdouble("guest", DELTA_TOTAL(guest)); /* incrementing counter */
-                        g_output.pdouble("guestnice", DELTA_TOTAL(guestnice)); /* incrementing counter */
+                        switch (output_opts) {
+                        case PF_NONE:
+                            assert(0);
+                            break;
+                        case PF_ALL:
+                        case PF_USED_BY_CHART_SCRIPT_ONLY:
+                            g_output.pdouble("user", DELTA_TOTAL(user)); /* incrementing counter */
+                            g_output.pdouble("nice", DELTA_TOTAL(nice)); /* incrementing counter */
+                            g_output.pdouble("sys", DELTA_TOTAL(sys)); /* incrementing counter */
+                            g_output.pdouble("idle", DELTA_TOTAL(idle)); /* incrementing counter */
+                            /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n", total_cpu.idle,
+                             * idle, idle-total_cpu.idle); */
+                            g_output.pdouble("iowait", DELTA_TOTAL(iowait)); /* incrementing counter */
+                            g_output.pdouble("hardirq", DELTA_TOTAL(hardirq)); /* incrementing counter */
+                            g_output.pdouble("softirq", DELTA_TOTAL(softirq)); /* incrementing counter */
+                            g_output.pdouble("steal", DELTA_TOTAL(steal)); /* incrementing counter */
+                            g_output.pdouble("guest", DELTA_TOTAL(guest)); /* incrementing counter */
+                            g_output.pdouble("guestnice", DELTA_TOTAL(guestnice)); /* incrementing counter */
+                            break;
+                        }
                         g_output.psubsection_end();
                     }
                     total_cpu.user = user;
@@ -200,21 +212,30 @@ void CMonitorCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus,
                     continue;
                 if (onlyCgroupAllowedCpus && !cgroup_is_allowed_cpu(cpuno))
                     continue;
-                if (print) {
+                if (output_opts != PF_NONE) {
                     sprintf(label, "cpu%d", cpuno);
                     g_output.psubsection_start(label);
-                    g_output.pdouble("user", DELTA_LOGICAL(user)); /* counter */
-                    g_output.pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
-                    g_output.pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
-                    g_output.pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
-                    /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n", logical_cpu[cpuno].idle,
-                     * idle, idle-logical_cpu[cpuno].idle); */
-                    g_output.pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
-                    g_output.pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
-                    g_output.pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
-                    g_output.pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
-                    g_output.pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
-                    g_output.pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
+
+                    switch (output_opts) {
+                    case PF_NONE:
+                        assert(0);
+                        break;
+                    case PF_ALL:
+                    case PF_USED_BY_CHART_SCRIPT_ONLY:
+                        g_output.pdouble("user", DELTA_LOGICAL(user)); /* counter */
+                        g_output.pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
+                        g_output.pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
+                        g_output.pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
+                        /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n",
+                         * logical_cpu[cpuno].idle, idle, idle-logical_cpu[cpuno].idle); */
+                        g_output.pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
+                        g_output.pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
+                        g_output.pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
+                        g_output.pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
+                        g_output.pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
+                        g_output.pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
+                        break;
+                    }
                     g_output.psubsection_end();
                 }
                 logical_cpu[cpuno].user = user;
@@ -233,9 +254,9 @@ void CMonitorCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus,
             value = 0;
             count = sscanf(&line[5], "%lld", &value); /* counter */
             if (count == 1) {
-                if (print) {
+                if (output_opts != PF_NONE) {
                     g_output.psubsection_start("counters");
-                    g_output.pdouble("ctxt", ((double)(value - old_ctxt) / elapsed));
+                    g_output.pdouble("ctxt", ((double)(value - old_ctxt) / elapsed_sec));
                 }
                 old_ctxt = value;
             }
@@ -243,55 +264,68 @@ void CMonitorCollectorApp::proc_stat(double elapsed, bool onlyCgroupAllowedCpus,
         if (!strncmp(line, "btime", 5)) {
             value = 0;
             count = sscanf(&line[6], "%lld", &value); /* seconds since boot */
-            if (print)
+            if (output_opts != PF_NONE)
                 g_output.plong("btime", value);
         }
         if (!strncmp(line, "processes", 9)) {
             value = 0;
             count = sscanf(&line[10], "%lld", &value); /* counter  actually forks */
-            if (print)
-                g_output.pdouble("processes_forks", ((double)(value - old_processes) / elapsed));
+            if (output_opts != PF_NONE)
+                g_output.pdouble("processes_forks", ((double)(value - old_processes) / elapsed_sec));
             old_processes = value;
         }
         if (!strncmp(line, "procs_running", 13)) {
             value = 0;
             count = sscanf(&line[14], "%lld", &value);
-            if (print)
+            if (output_opts != PF_NONE)
                 g_output.plong("procs_running", value);
         }
         if (!strncmp(line, "procs_blocked", 13)) {
             value = 0;
             count = sscanf(&line[14], "%lld", &value);
-            if (print) {
+            if (output_opts != PF_NONE) {
                 g_output.plong("procs_blocked", value);
                 g_output.psubsection_end();
             }
         }
     }
-    if (print)
+    if (output_opts != PF_NONE)
         g_output.psection_end();
 }
 
-void CMonitorCollectorApp::proc_diskstats(double elapsed, int print)
+void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields output_opts)
 {
+    // please refer https://www.kernel.org/doc/Documentation/iostats.txt
+
     struct diskinfo {
         long dk_major;
         long dk_minor;
         char dk_name[128];
-        long long dk_reads;
-        long long dk_rmerge;
-        long long dk_rkb;
-        long long dk_rmsec;
-        long long dk_writes;
-        long long dk_wmerge;
-        long long dk_wkb;
-        long long dk_wmsec;
-        long long dk_inflight;
-        long long dk_time;
-        long long dk_backlog;
-        long long dk_xfers;
+
+        // reads
+        long long dk_reads; // Field 1: This is the total number of reads completed successfully.
+        long long dk_rmerge; // Field 2: Reads and writes which are adjacent to each other may be merged for efficiency.
+        long long
+            dk_rkb; // Field 3: This is the total number of Kbytes read successfully. [converted by us from sectors]
+        long long dk_rmsec; // Field 4: This is the total number of milliseconds spent by all reads
+
+        // writes
+        long long dk_writes; // Same as Field 1 but for writes
+        long long dk_wmerge; // Same as Field 2 but for writes
+        long long dk_wkb; // Same as Field 3 but for writes
+        long long dk_wmsec; // Same as Field 4 but for writes
+
+        // others
+        long long dk_inflight; // Field 9: number of I/Os currently in progress
+        long long dk_time; // Field 10: This field increases so long as field 9 is nonzero. (milliseconds) [converted in
+                           // percentage]
+        long long dk_backlog; // Field 11: weighted # of milliseconds spent doing I/Os
+
+        // computed by ourselves:
+        long long dk_xfers; // sum of number of read/write operations
         long long dk_bsize;
     };
+
     static struct diskinfo current;
     static struct diskinfo* previous;
     static long disks_found = 0, disks_sampled = 0;
@@ -364,7 +398,7 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed, int print)
     } else
         rewind(fp);
 
-    if (print)
+    if (output_opts != PF_NONE)
         g_output.psection_start("disks");
     while (fgets(buf, 1024, fp) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
@@ -373,10 +407,14 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed, int print)
 
         /* zero the data ready for reading */
         bzero(&current, sizeof(struct diskinfo));
+
+        // try to read all the 14 fields
         dk_stats = sscanf(&buf[0], "%ld %ld %s %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld",
-            &current.dk_major, &current.dk_minor, &current.dk_name[0], &current.dk_reads, &current.dk_rmerge,
-            &current.dk_rkb, &current.dk_rmsec, &current.dk_writes, &current.dk_wmerge, &current.dk_wkb,
-            &current.dk_wmsec, &current.dk_inflight, &current.dk_time, &current.dk_backlog);
+            &current.dk_major, &current.dk_minor, // force newline
+            &current.dk_name[0], // force newline
+            &current.dk_reads, &current.dk_rmerge, &current.dk_rkb, &current.dk_rmsec, // force newline
+            &current.dk_writes, &current.dk_wmerge, &current.dk_wkb, &current.dk_wmsec, // force newline
+            &current.dk_inflight, &current.dk_time, &current.dk_backlog);
 
         if (dk_stats == 7) {
             /* shuffle the data around due to missing columns for partitions */
@@ -388,7 +426,7 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed, int print)
         } else if (dk_stats != 14)
             g_logger.LogError("disk sscanf wanted 14 but returned=%d line=%s\n", dk_stats, buf);
 
-        current.dk_rkb /= 2; /* sectors = 512 bytes */
+        current.dk_rkb /= 2; /* convert from sectors to Kbyte, keeping in mind that 1 sector = 512 bytes = 1/2 Kbyte */
         current.dk_wkb /= 2;
         current.dk_xfers = current.dk_reads + current.dk_writes;
         if (current.dk_xfers == 0)
@@ -396,32 +434,45 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed, int print)
         else
             current.dk_bsize = ((current.dk_rkb + current.dk_wkb) / current.dk_xfers) * 1024;
 
-        current.dk_time /= 10.0; /* in milli-seconds to make it upto 100%, 1000/100 = 10 */
+        // f18m: not really sure this is correct... assumes that this field is updated 10 times per second
+        current.dk_time /= 10.0; /* in milli-seconds to make it up to 100%, 1000/100 = 10 */
 
         for (i = 0; i < disks_found; i++) {
             // g_logger.LogDebug("DEBUG disks new %s old %s\n", current.dk_name, previous[i].dk_name);
             if (!strcmp(current.dk_name, previous[i].dk_name)) {
 
-                if (print && !filtered_out) {
+                if (!filtered_out && output_opts != PF_NONE) {
                     g_output.psubsection_start(current.dk_name);
 
-                    g_output.pdouble("reads", (current.dk_reads - previous[i].dk_reads) / elapsed);
-                    // g_logger.LogDebug("DEBUG  reads: %lld %lld %.2f,\n", current.dk_reads, previous[i].dk_reads,
-                    // elapsed);
-                    g_output.pdouble("rmerge", (current.dk_rmerge - previous[i].dk_rmerge) / elapsed);
-                    g_output.pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed);
-                    g_output.pdouble("rmsec", (current.dk_rmsec - previous[i].dk_rmsec) / elapsed);
+                    switch (output_opts) {
+                    case PF_NONE:
+                        assert(0);
+                        break;
 
-                    g_output.pdouble("writes", (current.dk_writes - previous[i].dk_writes) / elapsed);
-                    g_output.pdouble("wmerge", (current.dk_wmerge - previous[i].dk_wmerge) / elapsed);
-                    g_output.pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed);
-                    g_output.pdouble("wmsec", (current.dk_wmsec - previous[i].dk_wmsec) / elapsed);
+                    case PF_ALL:
+                        g_output.pdouble("reads", (current.dk_reads - previous[i].dk_reads) / elapsed_sec);
+                        g_output.pdouble("rmerge", (current.dk_rmerge - previous[i].dk_rmerge) / elapsed_sec);
+                        g_output.pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed_sec);
+                        g_output.pdouble("rmsec", (current.dk_rmsec - previous[i].dk_rmsec) / elapsed_sec);
 
-                    g_output.plong("inflight", current.dk_inflight);
-                    g_output.pdouble("time", (current.dk_time - previous[i].dk_time) / elapsed);
-                    g_output.pdouble("backlog", (current.dk_backlog - previous[i].dk_backlog) / elapsed);
-                    g_output.pdouble("xfers", (current.dk_xfers - previous[i].dk_xfers) / elapsed);
-                    g_output.plong("bsize", current.dk_bsize);
+                        g_output.pdouble("writes", (current.dk_writes - previous[i].dk_writes) / elapsed_sec);
+                        g_output.pdouble("wmerge", (current.dk_wmerge - previous[i].dk_wmerge) / elapsed_sec);
+                        g_output.pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed_sec);
+                        g_output.pdouble("wmsec", (current.dk_wmsec - previous[i].dk_wmsec) / elapsed_sec);
+
+                        g_output.plong("inflight", current.dk_inflight);
+                        g_output.pdouble("time", (current.dk_time - previous[i].dk_time) / elapsed_sec);
+                        g_output.pdouble("backlog", (current.dk_backlog - previous[i].dk_backlog) / elapsed_sec);
+                        g_output.pdouble("xfers", (current.dk_xfers - previous[i].dk_xfers) / elapsed_sec);
+                        g_output.plong("bsize", current.dk_bsize);
+                        break;
+
+                    case PF_USED_BY_CHART_SCRIPT_ONLY:
+                        g_output.pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed_sec);
+                        g_output.pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed_sec);
+                        break;
+                    }
+
                     g_output.psubsection_end();
                 }
                 memcpy(&previous[i], &current, sizeof(struct diskinfo));
@@ -429,11 +480,11 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed, int print)
             }
         }
     }
-    if (print)
+    if (output_opts != PF_NONE)
         g_output.psection_end();
 }
 
-void CMonitorCollectorApp::proc_net_dev(double elapsed, int print)
+void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_opts)
 {
     struct netinfo {
         char if_name[128];
@@ -532,7 +583,7 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed, int print)
     if (fgets(buf, 1024, fp) == NULL)
         return; /* throw away the header line */
 
-    if (print)
+    if (output_opts != PF_NONE)
         g_output.psection_start("network_interfaces");
     while (fgets(buf, 1024, fp) != NULL) {
         strip_spaces(buf);
@@ -550,23 +601,39 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed, int print)
                 // g_logger.LogDebug("DEBUG: i=%ld current.if_name=%s, previous=%s interfaces=%ld\n", i,
                 // *current.if_name, previous[i].if_name, interfaces);
                 if (!strcmp(current.if_name, previous[i].if_name)) {
-                    if (print) {
+
+                    if (output_opts != PF_NONE) {
                         g_output.psubsection_start(current.if_name);
-                        g_output.pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed);
-                        g_output.pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed);
-                        g_output.pdouble("ierrs", (current.if_ierrs - previous[i].if_ierrs) / elapsed);
-                        g_output.pdouble("idrop", (current.if_idrop - previous[i].if_idrop) / elapsed);
-                        g_output.pdouble("ififo", (current.if_ififo - previous[i].if_ififo) / elapsed);
-                        g_output.pdouble("iframe", (current.if_iframe - previous[i].if_iframe) / elapsed);
+                        switch (output_opts) {
+                        case PF_NONE:
+                            assert(0);
+                            break;
 
-                        g_output.pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed);
-                        g_output.pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed);
-                        g_output.pdouble("oerrs", (current.if_oerrs - previous[i].if_oerrs) / elapsed);
-                        g_output.pdouble("odrop", (current.if_odrop - previous[i].if_odrop) / elapsed);
-                        g_output.pdouble("ofifo", (current.if_ofifo - previous[i].if_ofifo) / elapsed);
+                        case PF_ALL:
+                            g_output.pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed_sec);
+                            g_output.pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
+                            g_output.pdouble("ierrs", (current.if_ierrs - previous[i].if_ierrs) / elapsed_sec);
+                            g_output.pdouble("idrop", (current.if_idrop - previous[i].if_idrop) / elapsed_sec);
+                            g_output.pdouble("ififo", (current.if_ififo - previous[i].if_ififo) / elapsed_sec);
+                            g_output.pdouble("iframe", (current.if_iframe - previous[i].if_iframe) / elapsed_sec);
 
-                        g_output.pdouble("ocolls", (current.if_ocolls - previous[i].if_ocolls) / elapsed);
-                        g_output.pdouble("ocarrier", (current.if_ocarrier - previous[i].if_ocarrier) / elapsed);
+                            g_output.pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed_sec);
+                            g_output.pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
+                            g_output.pdouble("oerrs", (current.if_oerrs - previous[i].if_oerrs) / elapsed_sec);
+                            g_output.pdouble("odrop", (current.if_odrop - previous[i].if_odrop) / elapsed_sec);
+                            g_output.pdouble("ofifo", (current.if_ofifo - previous[i].if_ofifo) / elapsed_sec);
+
+                            g_output.pdouble("ocolls", (current.if_ocolls - previous[i].if_ocolls) / elapsed_sec);
+                            g_output.pdouble("ocarrier", (current.if_ocarrier - previous[i].if_ocarrier) / elapsed_sec);
+                            break;
+
+                        case PF_USED_BY_CHART_SCRIPT_ONLY:
+                            g_output.pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed_sec);
+                            g_output.pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed_sec);
+                            g_output.pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
+                            g_output.pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
+                            break;
+                        }
                         g_output.psubsection_end();
                     }
                     memcpy(&previous[i], &current, sizeof(struct netinfo));
@@ -575,7 +642,7 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed, int print)
             }
         }
     }
-    if (print)
+    if (output_opts != PF_NONE)
         g_output.psection_end();
 }
 

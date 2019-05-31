@@ -3,21 +3,21 @@
 <head>
   <title>Monitoring data for hostname docker-centos7-userapp-with-embedded-collector</title>
   <style>
-     html,body { height:85%;}
-     body { background-color: #eaeaea;}
-     h3 { margin: 0px;}
-     ul { margin: 0 0 0 0;padding-left: 20px;}
+     html,body { height:85%; }
+     body { background-color: #eaeaea; }
+     h3 { margin: 0px; }
+     ul { margin: 0 0 0 0;padding-left: 20px; }
      button { margin-bottom: 3px; }
      #hostname_span { background-color: white; color: red; padding: 4px; }
      #button_table { width:100%; border-collapse: collapse; }
-     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
+     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
      #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
      #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
      #chart_master_inner_p { font-size: x-large; }
-     #bottom_div { float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}
-     #bottom_div h3 { font-size: medium;}
-     #bottom_div li { font-size: smaller;}
-     #bottom_table_val { font-family: monospace;}
+     #bottom_div { float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #bottom_div h3 { font-size: medium; }
+     #bottom_div li { font-size: smaller; }
+     #bottom_table_val { font-family: monospace; }
   </style>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
@@ -29,8 +29,24 @@ google.setOnLoadCallback(setup_button_click_handlers);
 /* The global chart object: */
 var g_chart = null;
 
+/* Currently selected data & options: */
+var g_current_data = null;
+var g_current_options = null;
+
 /* The global window showing the configuration of all collected data: */
 var g_configWindow = null;
+
+/* Create a trigger for window resize that will redraw current chart */
+var g_window_resize_timer = null;
+window.addEventListener('resize', function(e){
+  if (g_window_resize_timer) 
+    clearTimeout(g_window_resize_timer);
+
+  g_window_resize_timer = setTimeout(function() {
+    if (g_current_data && g_current_options)
+      g_chart.draw(g_current_data, g_current_options);
+  }, 500);
+});
 
 /* Utility function used with combobox controls: */
 function call_function_named(func_name) {
@@ -68,6 +84,8 @@ function draw_graph1() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph1, options_graph1);
+  g_current_data = data_graph1;
+  g_current_options = options_graph1;
 }
 
 function draw_graph2() {
@@ -89,6 +107,8 @@ function draw_graph2() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph2, options_graph2);
+  g_current_data = data_graph2;
+  g_current_options = options_graph2;
 }
 
 function draw_graph3() {
@@ -110,6 +130,8 @@ function draw_graph3() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph3, options_graph3);
+  g_current_data = data_graph3;
+  g_current_options = options_graph3;
   reset_combo_boxes();
 }
 
@@ -132,6 +154,8 @@ function draw_graph4() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph4, options_graph4);
+  g_current_data = data_graph4;
+  g_current_options = options_graph4;
 }
 
 function draw_graph5() {
@@ -153,6 +177,8 @@ function draw_graph5() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph5, options_graph5);
+  g_current_data = data_graph5;
+  g_current_options = options_graph5;
 }
 
 function draw_graph6() {
@@ -174,6 +200,8 @@ function draw_graph6() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph6, options_graph6);
+  g_current_data = data_graph6;
+  g_current_options = options_graph6;
   reset_combo_boxes();
 }
 
@@ -196,6 +224,8 @@ function draw_graph7() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph7, options_graph7);
+  g_current_data = data_graph7;
+  g_current_options = options_graph7;
   reset_combo_boxes();
 }
 
@@ -226,6 +256,8 @@ function draw_graph8() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph8, options_graph8);
+  g_current_data = data_graph8;
+  g_current_options = options_graph8;
   reset_combo_boxes();
 }
 
@@ -248,6 +280,8 @@ function draw_graph9() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph9, options_graph9);
+  g_current_data = data_graph9;
+  g_current_options = options_graph9;
   reset_combo_boxes();
 }
 
@@ -270,6 +304,8 @@ function draw_graph10() {
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph10, options_graph10);
+  g_current_data = data_graph10;
+  g_current_options = options_graph10;
   reset_combo_boxes();
 }
 
@@ -479,15 +515,12 @@ function show_config_window() {
     <table>
     <tr><td><ul>
       <li>Version: <span id='bottom_table_val'><a href="https://github.com/f18m/cmonitor">cmonitor</a> 22-6</span></li>
-      <li>User: <span id='bottom_table_val'>root</span></li>
       <li>Collected: <span id='bottom_table_val'>cgroups,cpu,disk,memory,network</span></li>
-      <li>Started sampling at: <span id='bottom_table_val'>2019-05-13T18:09:23 (Local)</span></li>
-      </ul></td><td><ul>
       <li>Started sampling at: <span id='bottom_table_val'>2019-05-13T18:09:23 (UTC)</span></li>
       <li>Samples: <span id='bottom_table_val'>7</span></li>
+      </ul></td><td><ul>
       <li>Sampling Interval (s): <span id='bottom_table_val'>3</span></li>
       <li>Total time sampled (hh:mm:ss): <span id='bottom_table_val'>0:00:21</span></li>
-      </ul></td><td><ul>
     </ul></td></tr>
     </table>
   </div>
@@ -496,13 +529,13 @@ function show_config_window() {
     <table>
     <tr><td><ul>
       <li>Hostname: <span id='bottom_table_val'>docker-centos7-userapp-with-embedded-collector</span></li>
+      <li>OS: <span id='bottom_table_val'>CentOS Linux 7 (Core)</span></li>
       <li>CPU: <span id='bottom_table_val'>Intel(R) Core(TM) i5-4570 CPU @ 3.20GHz</span></li>
       <li>BogoMIPS: <span id='bottom_table_val'>6396.30</span></li>
-      <li>OS: <span id='bottom_table_val'>CentOS Linux 7 (Core)</span></li>
       </ul></td><td><ul>
       <li>Monitored CPUs: <span id='bottom_table_val'>2</span></li>
-      <li>Monitored Network Devices: <span id='bottom_table_val'>0</span></li>
       <li>Monitored Disks: <span id='bottom_table_val'>4</span></li>
+      <li>Monitored Network Devices: <span id='bottom_table_val'>0</span></li>
     </ul></td></tr>
     </table>
   </div>

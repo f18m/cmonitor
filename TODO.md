@@ -8,7 +8,6 @@
 
 - Add javascript buttons to toggle graphs for e.g. disks/networks/
 - Add 'blkio' cgroup data plotting
-- Put the "memory.failcnt" curve on a secondary Y axis
 
 ## TODO other
 

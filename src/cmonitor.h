@@ -1,11 +1,12 @@
 #pragma once
 
+#include "output_frontend.h"
 #include <array>
 #include <set>
 #include <string.h>
 #include <string>
+#include <unordered_map>
 #include <vector>
-#include "output_frontend.h"
 
 //------------------------------------------------------------------------------
 // Macros
@@ -15,7 +16,7 @@
     g_logger.LogDebug("%s() called at line %d of file %s\n", __func__, __LINE__, __FILE__);
 
 //------------------------------------------------------------------------------
-// Command-Line Globals
+// Constants
 //------------------------------------------------------------------------------
 
 enum PerformanceKpiFamily {
@@ -35,6 +36,16 @@ enum PerformanceKpiFamily {
 PerformanceKpiFamily string2PerformanceKpiFamily(const std::string&);
 std::string string2PerformanceKpiFamily(PerformanceKpiFamily k);
 
+enum OutputFields {
+    PF_NONE, // force newline
+    PF_ALL, // force newline
+    PF_USED_BY_CHART_SCRIPT_ONLY // force newline
+};
+
+//------------------------------------------------------------------------------
+// Command-Line Globals
+//------------------------------------------------------------------------------
+
 class CMonitorCollectorAppConfig {
 public:
     CMonitorCollectorAppConfig() {}
@@ -43,6 +54,7 @@ public:
     bool m_bAllowMultipleInstances = false; // --allow-multiple-instances
     bool m_bDebug = false; // --debug
     bool m_bForeground = false; // --foreground
+    OutputFields m_nOutputFields = PF_USED_BY_CHART_SCRIPT_ONLY;
 
     std::string m_strOutputDir; // --output-directory
     std::string m_strOutputFilenamePrefix; // --output-filename
@@ -98,7 +110,7 @@ private:
     std::string get_hostname();
     void get_timestamps(std::string& localTime, std::string& utcTime);
     void file_read_one_stat(const char* file, const char* name);
-    void read_data_number(const char* statname);
+    void read_data_number(const char* statname, const std::set<std::string>& allowedStatsNames);
     void psample_date_time(long loop);
     double get_timestamp_sec();
 
@@ -122,16 +134,16 @@ private:
     void cgroup_init();
     void cgroup_config();
     bool cgroup_is_allowed_cpu(int cpu);
-    void cgroup_proc_memory();
+    void cgroup_proc_memory(const std::set<std::string>& allowedStatsNames);
     void cgroup_proc_cpuacct(double elapsed_sec, bool print);
 
     //------------------------------------------------------------------------------
     // Functions to collect /proc stats
     //------------------------------------------------------------------------------
 
-    void proc_stat(double elapsed, bool onlyCgroupAllowedCpus, bool print);
-    void proc_diskstats(double elapsed, int print);
-    void proc_net_dev(double elapsed, int print);
+    void proc_stat(double elapsed, bool onlyCgroupAllowedCpus, OutputFields output_opts);
+    void proc_diskstats(double elapsed, OutputFields output_opts);
+    void proc_net_dev(double elapsed, OutputFields output_opts);
     void proc_loadavg();
     void proc_filesystems();
     void proc_uptime();

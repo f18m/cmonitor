@@ -266,7 +266,7 @@ bool CMonitorCollectorApp::cgroup_is_allowed_cpu(int cpu)
     return cgroup_cpus.find(cpu) != cgroup_cpus.end();
 }
 
-void CMonitorCollectorApp::cgroup_proc_memory()
+void CMonitorCollectorApp::cgroup_proc_memory(const std::set<std::string>& allowedStatsNames)
 {
     if (!m_bCGroupsFound)
         return;
@@ -310,7 +310,10 @@ void CMonitorCollectorApp::cgroup_proc_memory()
         }
         value = 0;
         sscanf(line, "%s %lu", label, &value);
-        g_output.plong(label, value);
+
+        if (allowedStatsNames.empty() /* all stats must be put in output */
+            || allowedStatsNames.find(label) != allowedStatsNames.end())
+            g_output.plong(label, value);
     }
 
     if (read_integer(cgroup_memory_kernel_path + "/memory.failcnt", value))

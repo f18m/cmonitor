@@ -218,6 +218,8 @@ class GoogleChartsGraph:
         ret_string += '  g_chart.clearChart();\n'
         ret_string += 'g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));\n'
         ret_string += 'g_chart.draw(data_%s, options_%s);\n' % (self.js_name, self.js_name)
+        ret_string += 'g_current_data = data_%s;\n' % (self.js_name)
+        ret_string += 'g_current_options = options_%s;\n' % (self.js_name)
         return ret_string
     
 #     def bubbleit(self,web, column_names, data, title, button_label, graph_type):
@@ -267,57 +269,76 @@ class HtmlOutputPage:
         
     def startHtmlHead(self):
         ''' Write the head of the HTML webpage and start the JS section '''
-        self.file.write('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
-        self.file.write('<html xmlns="http://www.w3.org/1999/xhtml">' + '\n')
-        self.file.write('<head>' + '\n')
-        self.file.write('  <title>' + self.title + '</title>\n')
-        self.file.write('  <style>\n')
-        self.file.write('     html,body { height:85%;}\n')
-        self.file.write('     body { background-color: #eaeaea;}\n')
-        self.file.write('     h3 { margin: 0px;}\n')
-        self.file.write('     ul { margin: 0 0 0 0;padding-left: 20px;}\n')
-        self.file.write('     button { margin-bottom: 3px; }\n')
-        self.file.write('     #hostname_span { background-color: white; color: red; padding: 4px; }\n')
-        self.file.write('     #button_table { width:100%; border-collapse: collapse; }\n')
-        self.file.write('     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
-        self.file.write('     #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}\n')
-        self.file.write('     #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }\n')
-        self.file.write('     #chart_master_inner_p { font-size: x-large; }\n')
-        self.file.write('     #bottom_div { float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px;}\n')
-        self.file.write('     #bottom_div h3 { font-size: medium;}\n')
-        self.file.write('     #bottom_div li { font-size: smaller;}\n')
-        self.file.write('     #bottom_table_val { font-family: monospace;}\n')
-        self.file.write('  </style>\n')
-        self.file.write('  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>\n')
-        self.file.write('  <script type="text/javascript" src="https://www.google.com/jsapi"></script>\n')
-        self.file.write('  <script type="text/javascript">\n')
-        self.file.write('/* Load GoogleCharts: */\n')
-        self.file.write('google.load("visualization", "1.1", {packages:["corechart"]});\n')
-        self.file.write('google.setOnLoadCallback(setup_button_click_handlers);\n')
-        self.file.write('\n')
-        self.file.write('/* The global chart object: */\n')
-        self.file.write('var g_chart = null;\n')
-        self.file.write('\n')
-        self.file.write('/* The global window showing the configuration of all collected data: */\n')
-        self.file.write('var g_configWindow = null;\n')
-        self.file.write('\n')
-        self.file.write('/* Utility function used with combobox controls: */\n')
-        self.file.write('function call_function_named(func_name) {\n')
-        self.file.write('  eval(func_name + "()");\n')
-        self.file.write('}\n')
-        self.file.write('\n')
-        self.file.write('/* Utility function used to clear main graph: */\n')
-        self.file.write('function clear_chart() {\n')
-        self.file.write('  if (g_chart && g_chart.clearChart)\n')
-        self.file.write('    g_chart.clearChart();\n')
-        self.file.write('}\n')
-        self.file.write('\n')
-        self.file.write('/* Utility function used to reset combobox controls: */\n')
-        self.file.write('function reset_combo_boxes() {\n')
-        self.file.write('  document.getElementById("select_cpu_combobox1").value = "clear_chart";\n')
-        self.file.write('  document.getElementById("select_cpu_combobox2").value = "clear_chart";\n')
-        self.file.write('}\n')
-        self.file.write('\n')
+        self.file.write('''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>{pageTitle}</title>'''.format(pageTitle=self.title))
+        
+        self.file.write('''
+  <style>
+     html,body { height:85%; }
+     body { background-color: #eaeaea; }
+     h3 { margin: 0px; }
+     ul { margin: 0 0 0 0;padding-left: 20px; }
+     button { margin-bottom: 3px; }
+     #hostname_span { background-color: white; color: red; padding: 4px; }
+     #button_table { width:100%; border-collapse: collapse; }
+     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
+     #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
+     #chart_master_inner_p { font-size: x-large; }
+     #bottom_div { float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #bottom_div h3 { font-size: medium; }
+     #bottom_div li { font-size: smaller; }
+     #bottom_table_val { font-family: monospace; }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript">
+/* Load GoogleCharts: */
+google.load("visualization", "1.1", {packages:["corechart"]});
+google.setOnLoadCallback(setup_button_click_handlers);
+
+/* The global chart object: */
+var g_chart = null;
+
+/* Currently selected data & options: */
+var g_current_data = null;
+var g_current_options = null;
+
+/* The global window showing the configuration of all collected data: */
+var g_configWindow = null;
+
+/* Create a trigger for window resize that will redraw current chart */
+var g_window_resize_timer = null;
+window.addEventListener('resize', function(e){
+  if (g_window_resize_timer) 
+    clearTimeout(g_window_resize_timer);
+
+  g_window_resize_timer = setTimeout(function() {
+    if (g_current_data && g_current_options)
+      g_chart.draw(g_current_data, g_current_options);
+  }, 500);
+});
+
+/* Utility function used with combobox controls: */
+function call_function_named(func_name) {
+  eval(func_name + "()");
+}
+
+/* Utility function used to clear main graph: */
+function clear_chart() {
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+}
+
+/* Utility function used to reset combobox controls: */
+function reset_combo_boxes() {
+  document.getElementById("select_cpu_combobox1").value = "clear_chart";
+  document.getElementById("select_cpu_combobox2").value = "clear_chart";
+}
+
+''')
         # at this point we will generate all helper JS functions
     
     
@@ -592,56 +613,16 @@ def generate_config_js(jheader):
 #     return (start_processes, end_processes, process_data_found)
 
 
-# def generate_top20_disks(jdata):
-#     tdisk = {}  # start with empty dictionary
-#     for sam in jdata:
-#             for disk in sam["disks"]:
-#                 entry = sam['disks'][disk]
-#                 bytes = entry['rkb'] + entry['wkb']
-#                 if bytes != 0:
-#                     # print("disk=%s total bytes=%.1f"%(disk,bytes))
-#                     try:  # update the current entry
-#                         tdisk[entry[disk]] += bytes
-#                     except:  # no current entry so add one
-#                         tdisk.update({disk: bytes})
-# 
-#     def sort_dkey(d):
-#             return tdisk[d]
-#     
-#     topdisks = []
-#     for i, disk in enumerate(sorted(tdisk, key=sort_dkey, reverse=True)):
-#         d = tdisk[disk]
-#         # print("disk=%s total bytes=%.1f"%(disk,bytes))
-#         topdisks.append(disk)
-#         if i >= 20:  # Only graph the top 20
-#             break
-#     # print(topdisks)
-#     
-#     td_header = ""
-#     for disk in topdisks:
-#         td_header += "'" + disk + "',"
-#     td_header = td_header[:-1]
-#     
-#     td_data = ""
-#     for sam in jdata:
-#         td_data += ",['Date(%s)'" % (googledate(sam['timestamp']['datetime']))
-#         for item in topdisks:
-#             bytes = sam['disks'][item]['rkb'] + sam['disks'][item]['wkb']
-#             td_data += ", %.1f" % (bytes)
-#         td_data += "]\n"
-#     # print(td_header)
-#     # print(td_data)
-#     return (tdisk, td_header, td_data)
-
-
 def generate_disks_io(web, jdata, hostname):
-    # if network traffic data was not collected, just return:
+    # if disk data was not collected, just return:
     if 'disks' not in jdata[0]:
         return web
     
     all_disks = jdata[0]["disks"].keys()
     if len(all_disks) == 0:
         return web
+    
+    # see https://www.kernel.org/doc/Documentation/iostats.txt
     
     diskcols = ['Timestamp']
     for device in all_disks:
@@ -718,7 +699,6 @@ def generate_network_traffic(web, jdata, hostname):
     # MAIN LOOP
     # Process JSON sample and fill the GoogleChartsTable() object
     #
-    
     
     # MB/sec
     
@@ -930,8 +910,9 @@ def generate_baremetal_memory(web, jdata, hostname):
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
+        meminfo_stats = s['proc_meminfo']
         
-        if meminfo_stat_to_bytes(s['proc_meminfo']['MemTotal']) != mem_total_bytes:
+        if meminfo_stat_to_bytes(meminfo_stats['MemTotal']) != mem_total_bytes:
             continue  # this is impossible AFAIK (hot swap of memory is not handled!!)
         
         #
@@ -946,8 +927,8 @@ def generate_baremetal_memory(web, jdata, hostname):
         #
         # see https://access.redhat.com/solutions/406773
         
-        mf = meminfo_stat_to_bytes(s['proc_meminfo']['MemFree'])
-        mc = meminfo_stat_to_bytes(s['proc_meminfo']['Cached'])
+        mf = meminfo_stat_to_bytes(meminfo_stats['MemFree'])
+        mc = meminfo_stat_to_bytes(meminfo_stats['Cached'])
         
         baremetal_memory_stats.addRow([
                 s['timestamp']['datetime'],
@@ -1063,9 +1044,9 @@ def generate_monitoring_summary(jheader, jdata):
     jdata_first_sample = jdata[0]
     monitoring_summary = [
         ( "Version:", '<a href="https://github.com/f18m/cmonitor">cmonitor</a> ' + jheader["cmonitor"]["version"] ),
-        ( "User:", jheader["cmonitor"]["username"] ),
+        #( "User:", jheader["cmonitor"]["username"] ),   # not really useful
         ( "Collected:", jheader["cmonitor"]["collecting"] ),
-        ( "Started sampling at:", jdata_first_sample["timestamp"]["datetime"] + " (Local)" ),
+        #( "Started sampling at:", jdata_first_sample["timestamp"]["datetime"] + " (Local)" ),   # not really useful
         ( "Started sampling at:", jdata_first_sample["timestamp"]["UTC"] + " (UTC)" ),
         ( "Samples:", str(len(jdata)) ),
         ( "Sampling Interval (s):", str(jheader["cmonitor"]["sample_interval_seconds"]) ),
@@ -1090,12 +1071,12 @@ def generate_monitored_summary(jheader, jdata, logical_cpus_indexes):
         all_netdevices = jdata_first_sample["network_interfaces"].keys()
     monitored_summary = [
         ( "Hostname:", jheader["identity"]["hostname"] ),
+        ( "OS:", jheader["os_release"]["pretty_name"] ),
         ( "CPU:", jheader["lscpu"]["model_name"] ),
         ( "BogoMIPS:", jheader["lscpu"]["bogomips"] ),
-        ( "OS:", jheader["os_release"]["pretty_name"] ),
         ( "Monitored CPUs:", str(len(logical_cpus_indexes)) ),
-        ( "Monitored Network Devices:", str(len(all_netdevices)) ),
         ( "Monitored Disks:", str(len(all_disks)) ),
+        ( "Monitored Network Devices:", str(len(all_netdevices)) ),
     ]
     return monitored_summary
 
