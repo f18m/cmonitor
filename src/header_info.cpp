@@ -189,7 +189,7 @@ void CMonitorCollectorApp::header_cmonitor_info(
     for (size_t j = 1; j < PK_MAX; j *= 2) {
         PerformanceKpiFamily k = (PerformanceKpiFamily)j;
         if (collect_flags & k) {
-            std::string str2 = string2PerformanceKpiFamily(k);
+            std::string str2 = performanceKpiFamily2string(k);
             if (!str2.empty())
                 str += str2 + ",";
         }
@@ -205,6 +205,9 @@ void CMonitorCollectorApp::header_cmonitor_info(
     } else {
         g_output.pstring("username", "unknown");
     }
+
+    g_output.plong("pid", getpid());
+
     g_output.psection_end();
 }
 
@@ -243,10 +246,6 @@ void CMonitorCollectorApp::header_etc_os_release()
     g_output.psection_end();
 }
 
-long power_timebase = 0;
-long power_nominal_mhz = 0;
-int ispower = 0;
-
 void CMonitorCollectorApp::header_cpuinfo()
 {
     static FILE* fp = 0;
@@ -255,6 +254,9 @@ void CMonitorCollectorApp::header_cpuinfo()
     double value;
     int int_val;
     int processor;
+    long power_timebase = 0;
+    // long power_nominal_mhz = 0;
+    int ispower = 0;
 
     DEBUGLOG_FUNCTION_START();
     if (fp == 0) {
@@ -288,7 +290,7 @@ void CMonitorCollectorApp::header_cpuinfo()
             if (!strncmp("clock", buf, strlen("clock"))) { /* POWER ONLY */
                 sscanf(&buf[9], "%lf", &value);
                 g_output.pdouble("mhz_clock", value);
-                power_nominal_mhz = value; /* save for sys_device_system_cpu() */
+                // power_nominal_mhz = value; /* save for sys_device_system_cpu() */
                 ispower = 1;
             }
             if (!strncmp("vendor_id", buf, strlen("vendor_id"))) {

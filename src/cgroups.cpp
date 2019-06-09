@@ -20,9 +20,12 @@
  */
 
 #include "cmonitor.h"
+#include <assert.h>
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
+#include <map>
+#include <pwd.h>
 #include <set>
 #include <sstream>
 #include <string.h>
@@ -38,13 +41,221 @@
 
 #define MAX_LOGICAL_CPU (256)
 #define MIN_ELAPSED_SECS (0.1)
+#define PAGESIZE_BYTES (1024 * 4)
+
+/* CPU CLOCK TIME * USED MEMORY
+ *
+ *
+ * */
+#define PROCESS_SCORE_IGNORE_THRESHOLD (1000)
+
+typedef std::map<std::string /* controller type */, std::string /* path */> cgroup_paths_map_t;
 
 // ----------------------------------------------------------------------------------
 // C++ Helper functions
 // ----------------------------------------------------------------------------------
 
+/* Lookup the right process state string */
+const char* get_state(char n)
+{
+    static char duff[64];
+    switch (n) {
+    case 'R':
+        return "Running";
+    case 'S':
+        return "Sleeping-interruptible";
+    case 'D':
+        return "Waiting-uninterruptible";
+    case 'Z':
+        return "Zombie";
+    case 'T':
+        return "Stopped";
+    case 't':
+        return "Tracing";
+    case 'W':
+        return "Paging-or-Waking";
+    case 'X':
+        return "Dead";
+    case 'x':
+        return "dead";
+    case 'K':
+        return "Wakekill";
+    case 'P':
+        return "Parked";
+    default:
+        snprintf(duff, 64, "State=%d(%c)", n, n);
+        return duff;
+    }
+}
+
+uint64_t compute_proc_score(const procsinfo_t* current_stats, const procsinfo_t* prev_stats, double elapsed_secs)
+{
+    uint64_t cputime_clock_ticks = // force newline
+        (current_stats->pi_utime - prev_stats->pi_utime) + // force newline
+        (current_stats->pi_stime - prev_stats->pi_stime);
+
+    // give a score which is linear in both CPU time and virtual memory size:
+    return cputime_clock_ticks * current_stats->statm_size;
+}
+
+bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p)
+{
+    FILE* fp;
+    char filename[64];
+    char buf[1024 * 4];
+    int size = 0;
+    int ret = 0;
+    int count = 0;
+    int i;
+    struct stat statbuf;
+    struct passwd* pw;
+
+    // std::vector<procsinfo_t>& p = *m_pid_database_current;
+
+    /* the statistic directory for the process */
+    snprintf(filename, 64, "/proc/%d", pid);
+
+    if (stat(filename, &statbuf) != 0) {
+        g_logger.LogError("ERROR: failed to stat file %s", filename);
+        return false;
+    }
+    p->uid = statbuf.st_uid;
+    pw = getpwuid(statbuf.st_uid);
+    if (pw) {
+        strncpy(p->username, pw->pw_name, 63);
+        p->username[63] = 0;
+    }
+
+    /* the statistic file for the process */
+    snprintf(filename, 64, "/proc/%d/stat", pid);
+
+    if ((fp = fopen(filename, "r")) == NULL) {
+        g_logger.LogError("ERROR: failed to open file %s", filename);
+        return false;
+    }
+    size = fread(buf, 1, 1024 - 1, fp);
+    fclose(fp);
+    if (size == -1) {
+        g_logger.LogError(
+            "ERROR: procsinfo read returned = %d assuming process stopped pid=%d errno=%d\n", ret, pid, errno);
+        return false;
+    }
+    ret = sscanf(buf, "%d (%s)", &p->pi_pid, &p->pi_comm[0]);
+    if (ret != 2) {
+        g_logger.LogError("procsinfo sscanf returned = %d line=%s\n", ret, buf);
+        return false;
+    }
+    p->pi_comm[strlen(p->pi_comm) - 1] = 0;
+
+    /* now look for ") " as dumb Infiniband driver includes "()" */
+    for (count = 0; count < size; count++) {
+        if (buf[count] == ')' && buf[count + 1] == ' ')
+            break;
+    }
+    if (count == size) {
+        g_logger.LogError("procsinfo failed to find end of command buf=%s\n", buf);
+        return false;
+    }
+    count++;
+    count++;
+
+    // see http://man7.org/linux/man-pages/man5/proc.5.html
+    /* column 1 and 2 handled above */
+    long junk;
+    ret = sscanf(&buf[count],
+        "%c %d %d %d %d %d %lu %lu %lu %lu " /* from 3 to 13 */
+        "%lu %lu %lu %ld %ld %ld %ld %ld %ld %lu " /* from 14 to 23 */
+        "%lu %ld %lu %lu %lu %lu %lu %lu %lu %lu " /* from 24 to 33 */
+        "%lu %lu %lu %lu %lu %d %d %lu %lu %llu", /* from 34 to 42 */
+        &p->pi_state, /*3 numbers taken from "man proc" */
+        &p->pi_ppid, /*4*/
+        &p->pi_pgrp, /*5*/
+        &p->pi_session, /*6*/
+        &p->pi_tty_nr, /*7*/
+        &p->pi_tty_pgrp, /*8*/
+        &p->pi_flags, /*9*/
+        &p->pi_minflt, /*10*/
+        &p->pi_child_min_flt, /*11*/
+        &p->pi_majflt, /*12*/
+        &p->pi_child_maj_flt, /*13*/
+        &p->pi_utime, /*14*/
+        &p->pi_stime, /*15*/
+        &p->pi_child_utime, /*16*/
+        &p->pi_child_stime, /*18*/
+        &p->pi_priority, /*19*/
+        &p->pi_nice, /*20*/
+        &p->pi_num_threads, /*21*/
+        &junk, /*22*/
+        &p->pi_start_time, /*23*/
+        &p->pi_vsize, /*24*/
+        &p->pi_rss, /*25*/
+        &p->pi_rsslimit, /*26*/
+        &p->pi_start_code, /*27*/
+        &p->pi_end_code, /*28*/
+        &p->pi_start_stack, /*29*/
+        &p->pi_esp, /*29*/
+        &p->pi_eip, /*30*/
+        &p->pi_signal_pending, /*31*/
+        &p->pi_signal_blocked, /*32*/
+        &p->pi_signal_ignore, /*33*/
+        &p->pi_signal_catch, /*34*/
+        &p->pi_wchan, /*35*/
+        &p->pi_swap_pages, /*36*/
+        &p->pi_child_swap_pages, /*37*/
+        &p->pi_signal_exit, /*38*/
+        &p->pi_last_cpu, /*39*/
+        &p->pi_realtime_priority, /*40*/
+        &p->pi_sched_policy, /*41*/
+        &p->pi_delayacct_blkio_ticks /*42*/
+    );
+    if (ret != 40) {
+        g_logger.LogError("procsinfo2 sscanf wanted 40 returned = %d pid=%d line=%s\n", ret, pid, buf);
+        return false;
+    }
+
+    snprintf(filename, 64, "/proc/%d/statm", pid);
+    if ((fp = fopen(filename, "r")) == NULL) {
+        g_logger.LogError("failed to open file %s", filename);
+        return false;
+    }
+    size = fread(buf, 1, 1024 * 4 - 1, fp);
+    fclose(fp); /* close it even if the read failed, the file could have been removed
+                between open & read i.e. the device driver does not behave like a file */
+    if (size == -1) {
+        g_logger.LogError("failed to read file %s", filename);
+        return false;
+    }
+
+    ret = sscanf(&buf[0], "%lu %lu %lu %lu %lu %lu %lu", &p->statm_size, &p->statm_resident, &p->statm_share,
+        &p->statm_trs, &p->statm_lrs, &p->statm_drs, &p->statm_dt);
+    if (ret != 7) {
+        g_logger.LogError("sscanf wanted 7 returned = %d line=%s\n", ret, buf);
+        return false;
+    }
+    /*if (uid == (uid_t)0)*/ {
+        p->read_io = 0;
+        p->write_io = 0;
+        sprintf(filename, "/proc/%d/io", pid);
+        if ((fp = fopen(filename, "r")) != NULL) {
+            for (i = 0; i < 6; i++) {
+                if (fgets(buf, 1024, fp) == NULL) {
+                    break;
+                }
+                if (strncmp("read_bytes:", buf, 11) == 0)
+                    sscanf(&buf[12], "%lld", &p->read_io);
+                if (strncmp("write_bytes:", buf, 12) == 0)
+                    sscanf(&buf[13], "%lld", &p->write_io);
+            }
+        }
+
+        if (fp != NULL)
+            fclose(fp);
+    }
+    return true;
+}
+
 /* static */
-bool get_cgroup_name_for_pid(std::string& cgroup_nameOUT)
+bool get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT)
 {
     /*
      *
@@ -52,7 +263,23 @@ bool get_cgroup_name_for_pid(std::string& cgroup_nameOUT)
      *   See http://man7.org/linux/man-pages/man7/cgroups.7.html, look for "/proc/[pid]/cgroup (since Linux 2.6.24)"
      *   Each line is composed by:
      *                     hierarchy-ID:controller-list:cgroup-path
-     *   and the "controller-list"="name=systemd" seems to be always the indicative name of the whole cgroup
+     *   and the "controller-list"="name=systemd" seems to be always the indicative name of the whole cgroup.
+     *   Example contents on a baremetal process:
+     *
+     *   	$ cat /proc/self/cgroup
+                        12:pids:/user.slice/user-0.slice/session-5.scope
+                        11:cpuset:/
+                        10:perf_event:/
+                        9:devices:/user.slice
+                        8:memory:/user/root/0
+                        7:hugetlb:/
+                        6:blkio:/user.slice
+                        5:cpu,cpuacct:/user.slice
+                        4:freezer:/user/root/0
+                        3:rdma:/
+                        2:net_cls,net_prio:/
+                        1:name=systemd:/user.slice/user-0.slice/session-5.scope
+                        0::/user.slice/user-0.slice/session-5.scope
      */
     std::ifstream inputf("/proc/self/cgroup");
     if (!inputf.is_open())
@@ -68,18 +295,14 @@ bool get_cgroup_name_for_pid(std::string& cgroup_nameOUT)
         std::string controller_list = tuple[1];
         std::string path = tuple[2];
 
-        if (controller_list == "name=systemd") {
-            // this indicates the name of the cgroup
-            cgroup_nameOUT = path;
-            return true;
-        }
+        cgroup_pathsOUT[controller_list] = path;
     }
 
-    return false; // cgroup name not found
+    return !cgroup_pathsOUT.empty();
 }
 
 /* static */
-bool get_cgroup_path_for_pid(const std::string& cgroup_type, std::string& cgroup_pathOUT)
+bool get_cgroup_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std::string& cgroup_pathOUT)
 {
     /*
      *
@@ -181,36 +404,64 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
 // CMonitorCollectorApp - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
 
-// GLOBALS: paths of cgroups for this process:
-
-std::string cgroup_systemd_name;
-std::string cgroup_memory_kernel_path;
-std::string cgroup_cpuacct_kernel_path;
-std::string cgroup_cpuset_kernel_path;
-
-// GLOBALS: limits read from the cgroups that apply to this process:
-
-uint64_t cgroup_memory_limit_bytes = 0;
-std::set<int> cgroup_cpus;
-
-// FUNCTIONS
-
 void CMonitorCollectorApp::cgroup_init()
 {
     m_bCGroupsFound = false;
 
-    if (!get_cgroup_path_for_pid("memory", cgroup_memory_kernel_path)) {
-        g_logger.LogDebug("Could not find the 'memory' cgroup path. CGroup mode disabled.\n");
+    // ABSOLUTE PATH PREFIXES
+
+    if (!get_cgroup_abs_path_prefix_for_this_pid("memory", cgroup_memory_kernel_path)) {
+        g_logger.LogDebug("Could not find the 'memory' cgroup path prefix. CGroup mode disabled.\n");
         return;
     }
-    if (!get_cgroup_path_for_pid("cpu,cpuacct", cgroup_cpuacct_kernel_path)) {
-        if (!get_cgroup_path_for_pid("cpuacct,cpu", cgroup_cpuacct_kernel_path)) {
-            g_logger.LogDebug("Could not find the 'cpuacct' cgroup path. CGroup mode disabled.\n");
+
+    std::string cpuacct_controller_name = "cpu,cpuacct";
+    if (!get_cgroup_abs_path_prefix_for_this_pid(cpuacct_controller_name, cgroup_cpuacct_kernel_path)) {
+
+        // on some Linux distributions, the name of the cgroup has the "cpu" and "cpuacct" names inverted..
+        // retry inverting the order:
+        cpuacct_controller_name = "cpuacct,cpu";
+
+        if (!get_cgroup_abs_path_prefix_for_this_pid(cpuacct_controller_name, cgroup_cpuacct_kernel_path)) {
+            g_logger.LogDebug("Could not find the 'cpuacct' cgroup path prefix. CGroup mode disabled.\n");
             return;
         }
     }
-    if (!get_cgroup_path_for_pid("cpuset", cgroup_cpuset_kernel_path)) {
-        g_logger.LogDebug("Could not find the 'cpuset' cgroup path. CGroup mode disabled.\n");
+    if (!get_cgroup_abs_path_prefix_for_this_pid("cpuset", cgroup_cpuset_kernel_path)) {
+        g_logger.LogDebug("Could not find the 'cpuset' cgroup path prefix. CGroup mode disabled.\n");
+        return;
+    }
+
+    // ACTUAL CGROUP PATHS
+
+    cgroup_paths_map_t cgroup_paths;
+    if (!get_cgroup_paths_for_this_pid(cgroup_paths)) {
+        g_logger.LogDebug("Could not get the cgroup paths. CGroup mode disabled.\n");
+        return;
+    }
+
+    // now create the full cgroup names by adding the cgroup path to the prefixes:
+    cgroup_memory_kernel_path += "/" + cgroup_paths["memory"];
+    cgroup_cpuacct_kernel_path += "/" + cgroup_paths[cpuacct_controller_name];
+    cgroup_cpuset_kernel_path += "/" + cgroup_paths["cpuset"];
+
+    // CGROUP CHECKS
+    // now if we got the right paths, we should be able to find our pid in all these cgroups:
+
+    pid_t ourPid = getpid();
+
+    if (!search_integer(cgroup_memory_kernel_path + "/tasks", uint64_t(ourPid))) {
+        g_logger.LogDebug("Could not find our PID in the 'memory' cgroup. CGroup mode disabled.\n");
+        return;
+    }
+
+    if (!search_integer(cgroup_cpuacct_kernel_path + "/tasks", uint64_t(ourPid))) {
+        g_logger.LogDebug("Could not find our PID in the 'cpuacct' cgroup. CGroup mode disabled.\n");
+        return;
+    }
+
+    if (!search_integer(cgroup_cpuset_kernel_path + "/tasks", uint64_t(ourPid))) {
+        g_logger.LogDebug("Could not find our PID in the 'cpuset' cgroup. CGroup mode disabled.\n");
         return;
     }
 
@@ -227,10 +478,7 @@ void CMonitorCollectorApp::cgroup_init()
         return;
     }
 
-    if (!get_cgroup_name_for_pid(cgroup_systemd_name)) {
-        g_logger.LogDebug("Could not get the cgroup name. CGroup mode disabled.\n");
-        return;
-    }
+    cgroup_systemd_name = cgroup_paths["name=systemd"];
 
     // cpuset and memory cgroups found:
     m_bCGroupsFound = true;
@@ -452,4 +700,157 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         if (print)
             g_output.psection_end();
     }
+}
+
+bool CMonitorCollectorApp::cgroup_collect_pids(std::vector<pid_t>& pids)
+{
+    std::string path = cgroup_cpuacct_kernel_path + "/tasks";
+    g_logger.LogDebug("Trying to read tasks for my cgroup from %s.\n", path.c_str());
+    if (!file_exists(path.c_str()))
+        return false;
+
+    std::ifstream inputf(path);
+    if (!inputf.is_open())
+        return false; // cannot read the cgroup information!
+
+    DEBUGLOG_FUNCTION_START();
+
+    std::string line;
+    while (std::getline(inputf, line)) {
+        uint64_t pid;
+        if (string2int(line, pid))
+            pids.push_back((pid_t)pid);
+    }
+
+    return true;
+}
+
+void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
+{
+    char str[256];
+
+    if (!m_bCGroupsFound)
+        return;
+
+    // swap databases
+    m_pid_database_current_index = !m_pid_database_current_index;
+    std::map<pid_t, procsinfo_t>& currDB = m_pid_databases[m_pid_database_current_index];
+    std::map<pid_t, procsinfo_t>& prevDB = m_pid_databases[!m_pid_database_current_index];
+
+    // collect all PIDs for current cgroup
+    std::vector<pid_t> all_pids;
+    if (!cgroup_collect_pids(all_pids))
+        return;
+
+    // get new fresh processes data and update current database:
+    currDB.clear();
+    for (size_t i = 0; i < all_pids.size(); i++) {
+        procsinfo_t procData;
+        memset(&procData, 0, sizeof(procData));
+        cgroup_proc_procsinfo(all_pids[i], &procData);
+
+        currDB.insert(std::make_pair(all_pids[i], procData));
+    }
+
+    if (!print)
+        return;
+
+    // Sort the processes by their "score" by inserting them into an ordered map
+    assert(m_topper.empty());
+    for (const auto& current_entry : currDB) {
+        const procsinfo_t* pcurrent = &current_entry.second;
+        const procsinfo_t* pprev = &prevDB[current_entry.first /* pid */];
+
+        uint64_t score = compute_proc_score(pcurrent, pprev, elapsed_sec);
+        proc_topper_t newEntry = { .current = pcurrent, .prev = pprev };
+        m_topper.insert(std::make_pair(score, newEntry));
+    }
+
+    g_logger.LogDebug("Tracking %zu processes; min/max score found: %lu/%lu", all_pids.size(), m_topper.begin()->first,
+        m_topper.rbegin()->first);
+
+    // Now output all data for each process, starting from the minimal score PROCESS_SCORE_IGNORE_THRESHOLD
+    double ticks = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
+    size_t nProcsOverThreshold = 0;
+    g_output.psection_start("cgroup_tasks");
+    for (auto entry = m_topper.lower_bound(PROCESS_SCORE_IGNORE_THRESHOLD); entry != m_topper.end(); entry++) {
+        uint64_t score = (*entry).first;
+        const procsinfo_t* p = (*entry).second.current;
+        const procsinfo_t* q = (*entry).second.prev;
+
+#define CURRENT(member) (p->member)
+#define PREVIOUS(member) (q->member)
+#define TIMEDELTA(member) (CURRENT(member) - PREVIOUS(member))
+#define COUNTDELTA(member) ((PREVIOUS(member) > CURRENT(member)) ? 0 : (CURRENT(member) - PREVIOUS(member)))
+
+        sprintf(str, "process_%ld", (long)CURRENT(pi_pid));
+        g_output.psubsection_start(str);
+        g_output.plong("cmon_score", score);
+
+        /* Note to self: the directory owners /proc/PID is the process owner = worth adding */
+        g_output.plong("pid", CURRENT(pi_pid));
+
+        /* Full command line can be found /proc/PID/cmdline with zeros in it! */
+        g_output.pstring("cmd", CURRENT(pi_comm));
+        g_output.plong("ppid", CURRENT(pi_ppid));
+        g_output.plong("pgrp", CURRENT(pi_pgrp));
+        g_output.plong("priority", CURRENT(pi_priority));
+        g_output.plong("nice", CURRENT(pi_nice));
+        g_output.plong("session", CURRENT(pi_session));
+        g_output.plong("tty_nr", CURRENT(pi_tty_nr));
+        // g_output.phex("flags", CURRENT(pi_flags));
+        g_output.pstring("state", get_state(CURRENT(pi_state)));
+        g_output.plong("threads", CURRENT(pi_num_threads));
+        g_output.pdouble("cpu_percent", (TIMEDELTA(pi_utime) + TIMEDELTA(pi_stime)) / elapsed_sec);
+        g_output.pdouble("cpu_usr", TIMEDELTA(pi_utime) / elapsed_sec);
+        g_output.pdouble("cpu_sys", TIMEDELTA(pi_stime) / elapsed_sec);
+        g_output.pdouble("cpu_usr_total_secs", CURRENT(pi_utime) / ticks);
+        g_output.pdouble("cpu_sys_total_secs", CURRENT(pi_stime) / ticks);
+        g_output.plong("statm_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
+        g_output.plong("statm_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
+        g_output.plong("statm_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
+        g_output.plong("statm_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
+        g_output.plong("statm_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
+        g_output.pdouble("minorfault", COUNTDELTA(pi_minflt) / elapsed_sec);
+        g_output.pdouble("majorfault", COUNTDELTA(pi_majflt) / elapsed_sec);
+        g_output.pdouble("starttime_secs", (double)(CURRENT(pi_start_time)) / ticks);
+        g_output.plong("virtual_size_kb", (long long)(CURRENT(pi_vsize) / 1024));
+        g_output.plong("rss_pages", CURRENT(pi_rss));
+        g_output.plong("rss_limit", CURRENT(pi_rsslimit));
+#ifdef PROCESS_DEBUGING_ADDRESSES_SIGNALS
+        /* NOT INCLUDED AS THEY ARE FOR DEBUGGING AND NOT PERFORMANCE TUNING */
+        g_output.phex("start_code", CURRENT(pi_start_code));
+        g_output.phex("end_code", CURRENT(pi_end_code));
+        g_output.phex("start_stack", CURRENT(pi_start_stack));
+        g_output.phex("esp_stack_pointer", CURRENT(pi_esp));
+        g_output.phex("eip_instruction_pointer", CURRENT(pi_eip));
+        g_output.phex("signal_pending", CURRENT(pi_signal_pending));
+        g_output.phex("signal_blocked", CURRENT(pi_signal_blocked));
+        g_output.phex("signal_ignore", CURRENT(pi_signal_ignore));
+        g_output.phex("signal_catch", CURRENT(pi_signal_catch));
+        g_output.phex("signal_exit", CURRENT(pi_signal_exit));
+        g_output.phex("wchan", CURRENT(pi_wchan));
+        /* NOT INCLUDED AS THEY ARE FOR DEBUGGING AND NOT PERFORMANCE TUNING */
+#endif
+#if 0 // not really useful
+        g_output.plong("swap_pages", CURRENT(pi_swap_pages));
+        g_output.plong("child_swap_pages", CURRENT(pi_child_swap_pages));
+#endif
+        g_output.plong("last_cpu", CURRENT(pi_last_cpu));
+#if 0 // not really useful
+        g_output.plong("realtime_priority", CURRENT(pi_realtime_priority));
+        g_output.plong("sched_policy", CURRENT(pi_sched_policy));
+        g_output.pdouble("delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
+#endif
+        g_output.plong("uid", CURRENT(uid));
+        if (strlen(CURRENT(username)) > 0)
+            g_output.pstring("username", CURRENT(username));
+        g_output.psubsection_end();
+
+        nProcsOverThreshold++;
+    }
+    g_output.psection_end();
+
+    g_logger.LogDebug("%zu processes found over score threshold", nProcsOverThreshold);
+    m_topper.clear();
 }

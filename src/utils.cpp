@@ -229,12 +229,29 @@ bool parse_string_with_multiple_ranges(const std::string& data, std::set<int>& r
     return true;
 }
 
+bool search_integer(std::string filePath, uint64_t valueToSearch)
+{
+    FILE* stream = fopen(filePath.c_str(), "r");
+    if (!stream)
+        return false; // file does not exist or not readable
+
+    uint64_t value;
+    while (fscanf(stream, "%lu", &value) == 1) {
+        if (value == valueToSearch)
+            return true; // found!
+    }
+    fclose(stream);
+
+    return false; // not found
+}
+
 bool read_integer(std::string filePath, uint64_t& value)
 {
     FILE* stream = fopen(filePath.c_str(), "r");
     if (!stream)
         return false; // file does not exist or not readable
 
+    // read a single integer from the file
     value = 0;
     bool bRet = fscanf(stream, "%lu", &value) == 1;
     fclose(stream);

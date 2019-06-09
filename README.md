@@ -32,6 +32,7 @@ Table of contents of this README:
   - [Example of HTML results](#section-id-132)
   - [Connecting with InfluxDB and Grafana](#section-id-159)
 - [Project History](#section-id-185)
+- [License](#section-id-186)
 
 <div id='section-id-24'/>
 
@@ -234,3 +235,9 @@ This fork supports only Linux x86_64 architectures; support for AIX/PowerPC (pre
 
 - Original project: [http://nmon.sourceforge.net](http://nmon.sourceforge.net)
 - Other forks: [https://github.com/axibase/nmon](https://github.com/axibase/nmon)
+
+<div id='section-id-186'/>
+
+## License
+
+Just like the [original project](http://nmon.sourceforge.net), this project is licensed under [GNU GPL 2.0](LICENSE).

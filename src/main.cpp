@@ -119,6 +119,7 @@ struct option_extended {
         "  memory: collect memory stats from /proc/meminfo, /proc/vmstat  [cgroup-mode: also 'memory']\n"
         "  disk: collect disk stats from /proc/diskstats                  [cgroup'mode: also 'blkio']\n"
         "  network: collect network stats from /proc/net/dev\n"
+        "  processes: collect processes stats from /proc/net/dev\n"
         "  cgroups: activates cgroup-mode\n" // force newline
         "  all: the combination of all previous stats (this is the default)\n"
         "Note that a comma-separated list of above stats can be provided." },
@@ -151,6 +152,7 @@ void interrupt(int signum)
 {
     switch (signum) {
     case SIGTERM:
+    case SIGINT:
         g_bExiting = true;
         break;
     case SIGUSR1:
@@ -177,13 +179,15 @@ PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
         return PK_MEMORY;
     if (to_lower(str) == "network")
         return PK_NETWORK;
+    if (to_lower(str) == "processes")
+        return PK_PROCESSES;
     if (to_lower(str) == "all")
         return PK_ALL;
 
     return PK_INVALID;
 }
 
-std::string string2PerformanceKpiFamily(PerformanceKpiFamily k)
+std::string performanceKpiFamily2string(PerformanceKpiFamily k)
 {
     switch (k) {
     case PK_CGROUPS:
@@ -196,6 +200,8 @@ std::string string2PerformanceKpiFamily(PerformanceKpiFamily k)
         return "memory";
     case PK_NETWORK:
         return "network";
+    case PK_PROCESSES:
+        return "processes";
 
     default:
         return "";
@@ -627,6 +633,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     if (bCollectCGroupInfo) {
         cgroup_init();
         cgroup_proc_cpuacct(0, false /* do not emit JSON */);
+        cgroup_proc_tasks(0, false /* do not emit JSON */);
     }
 
     double current_time = get_timestamp_sec();
@@ -667,6 +674,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     // else: leave empty
 
     // start actual data samples:
+    g_logger.LogDebug("Starting sampling of performance data; collect flags=%lu", g_cfg.m_nCollectFlags);
     g_output.psample_array_start();
     for (unsigned int loop = 0; g_cfg.m_nSamples == 0 || loop < g_cfg.m_nSamples; loop++) {
         if (loop != 0)
@@ -715,6 +723,10 @@ int CMonitorCollectorApp::run(int argc, char** argv)
             // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
 
+        if (g_cfg.m_nCollectFlags & PK_PROCESSES) {
+            cgroup_proc_tasks(elapsed, true);
+        }
+
         g_output.push_current_sample();
 
         if (g_bExiting)
@@ -725,6 +737,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     g_output.psample_array_end();
     fflush(NULL);
 
+    g_logger.LogDebug("Exiting gracefully with return code 0");
     return 0;
 }
 
@@ -743,6 +756,7 @@ int main(int argc, char** argv)
     g_app.parse_args(argc, argv);
 
     signal(SIGTERM, interrupt);
+    signal(SIGINT, interrupt);
     signal(SIGUSR1, interrupt);
     signal(SIGUSR2, interrupt);
 
