@@ -90,12 +90,14 @@ const char* get_state(char n)
 
 uint64_t compute_proc_score(const procsinfo_t* current_stats, const procsinfo_t* prev_stats, double elapsed_secs)
 {
+    static double ticks_per_sec = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
+
     uint64_t cputime_clock_ticks = // force newline
         (current_stats->pi_utime - prev_stats->pi_utime) + // force newline
         (current_stats->pi_stime - prev_stats->pi_stime);
 
     // give a score which is linear in both CPU time and virtual memory size:
-    return cputime_clock_ticks * current_stats->statm_size;
+    return (cputime_clock_ticks * ticks_per_sec) * current_stats->pi_vsize;
 }
 
 bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p)
@@ -110,15 +112,14 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p)
     struct stat statbuf;
     struct passwd* pw;
 
-    // std::vector<procsinfo_t>& p = *m_pid_database_current;
-
     /* the statistic directory for the process */
     snprintf(filename, 64, "/proc/%d", pid);
-
     if (stat(filename, &statbuf) != 0) {
         g_logger.LogError("ERROR: failed to stat file %s", filename);
         return false;
     }
+
+    // by looking at the owner of the directory we know which user is running it:
     p->uid = statbuf.st_uid;
     pw = getpwuid(statbuf.st_uid);
     if (pw) {
@@ -126,125 +127,156 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p)
         p->username[63] = 0;
     }
 
-    /* the statistic file for the process */
-    snprintf(filename, 64, "/proc/%d/stat", pid);
+    { /* the statistic file for the process */
+        snprintf(filename, 64, "/proc/%d/stat", pid);
+        if ((fp = fopen(filename, "r")) == NULL) {
+            g_logger.LogError("ERROR: failed to open file %s", filename);
+            return false;
+        }
 
-    if ((fp = fopen(filename, "r")) == NULL) {
-        g_logger.LogError("ERROR: failed to open file %s", filename);
-        return false;
-    }
-    size = fread(buf, 1, 1024 - 1, fp);
-    fclose(fp);
-    if (size == -1) {
-        g_logger.LogError(
-            "ERROR: procsinfo read returned = %d assuming process stopped pid=%d errno=%d\n", ret, pid, errno);
-        return false;
-    }
-    ret = sscanf(buf, "%d (%s)", &p->pi_pid, &p->pi_comm[0]);
-    if (ret != 2) {
-        g_logger.LogError("procsinfo sscanf returned = %d line=%s\n", ret, buf);
-        return false;
-    }
-    p->pi_comm[strlen(p->pi_comm) - 1] = 0;
+        size = fread(buf, 1, 1024 - 1, fp);
+        fclose(fp);
+        if (size == -1) {
+            g_logger.LogError(
+                "ERROR: procsinfo read returned = %d assuming process stopped pid=%d errno=%d\n", ret, pid, errno);
+            return false;
+        }
+        ret = sscanf(buf, "%d (%s)", &p->pi_pid, &p->pi_comm[0]);
+        if (ret != 2) {
+            g_logger.LogError("procsinfo sscanf returned = %d line=%s\n", ret, buf);
+            return false;
+        }
+        p->pi_comm[strlen(p->pi_comm) - 1] = 0;
 
-    /* now look for ") " as dumb Infiniband driver includes "()" */
-    for (count = 0; count < size; count++) {
-        if (buf[count] == ')' && buf[count + 1] == ' ')
-            break;
-    }
-    if (count == size) {
-        g_logger.LogError("procsinfo failed to find end of command buf=%s\n", buf);
-        return false;
-    }
-    count++;
-    count++;
+        /* now look for ") " as dumb Infiniband driver includes "()" */
+        for (count = 0; count < size; count++)
+            if (buf[count] == ')' && buf[count + 1] == ' ')
+                break;
+        if (count == size) {
+            g_logger.LogError("procsinfo failed to find end of command buf=%s\n", buf);
+            return false;
+        }
+        count++;
+        count++;
 
-    // see http://man7.org/linux/man-pages/man5/proc.5.html
-    /* column 1 and 2 handled above */
-    long junk;
-    ret = sscanf(&buf[count],
-        "%c %d %d %d %d %d %lu %lu %lu %lu " /* from 3 to 13 */
-        "%lu %lu %lu %ld %ld %ld %ld %ld %ld %lu " /* from 14 to 23 */
-        "%lu %ld %lu %lu %lu %lu %lu %lu %lu %lu " /* from 24 to 33 */
-        "%lu %lu %lu %lu %lu %d %d %lu %lu %llu", /* from 34 to 42 */
-        &p->pi_state, /*3 numbers taken from "man proc" */
-        &p->pi_ppid, /*4*/
-        &p->pi_pgrp, /*5*/
-        &p->pi_session, /*6*/
-        &p->pi_tty_nr, /*7*/
-        &p->pi_tty_pgrp, /*8*/
-        &p->pi_flags, /*9*/
-        &p->pi_minflt, /*10*/
-        &p->pi_child_min_flt, /*11*/
-        &p->pi_majflt, /*12*/
-        &p->pi_child_maj_flt, /*13*/
-        &p->pi_utime, /*14*/
-        &p->pi_stime, /*15*/
-        &p->pi_child_utime, /*16*/
-        &p->pi_child_stime, /*18*/
-        &p->pi_priority, /*19*/
-        &p->pi_nice, /*20*/
-        &p->pi_num_threads, /*21*/
-        &junk, /*22*/
-        &p->pi_start_time, /*23*/
-        &p->pi_vsize, /*24*/
-        &p->pi_rss, /*25*/
-        &p->pi_rsslimit, /*26*/
-        &p->pi_start_code, /*27*/
-        &p->pi_end_code, /*28*/
-        &p->pi_start_stack, /*29*/
-        &p->pi_esp, /*29*/
-        &p->pi_eip, /*30*/
-        &p->pi_signal_pending, /*31*/
-        &p->pi_signal_blocked, /*32*/
-        &p->pi_signal_ignore, /*33*/
-        &p->pi_signal_catch, /*34*/
-        &p->pi_wchan, /*35*/
-        &p->pi_swap_pages, /*36*/
-        &p->pi_child_swap_pages, /*37*/
-        &p->pi_signal_exit, /*38*/
-        &p->pi_last_cpu, /*39*/
-        &p->pi_realtime_priority, /*40*/
-        &p->pi_sched_policy, /*41*/
-        &p->pi_delayacct_blkio_ticks /*42*/
-    );
-    if (ret != 40) {
-        g_logger.LogError("procsinfo2 sscanf wanted 40 returned = %d pid=%d line=%s\n", ret, pid, buf);
-        return false;
-    }
-
-    snprintf(filename, 64, "/proc/%d/statm", pid);
-    if ((fp = fopen(filename, "r")) == NULL) {
-        g_logger.LogError("failed to open file %s", filename);
-        return false;
-    }
-    size = fread(buf, 1, 1024 * 4 - 1, fp);
-    fclose(fp); /* close it even if the read failed, the file could have been removed
-                between open & read i.e. the device driver does not behave like a file */
-    if (size == -1) {
-        g_logger.LogError("failed to read file %s", filename);
-        return false;
+        // see http://man7.org/linux/man-pages/man5/proc.5.html
+        /* column 1 and 2 handled above */
+        long junk;
+        ret = sscanf(&buf[count],
+            "%c %d %d %d %d %d %lu %lu %lu %lu " /* from 3 to 13 */
+            "%lu %lu %lu %ld %ld %ld %ld %ld %ld %lu " /* from 14 to 23 */
+            "%lu %ld %lu %lu %lu %lu %lu %lu %lu %lu " /* from 24 to 33 */
+            "%lu %lu %lu %lu %lu %d %d %lu %lu %llu", /* from 34 to 42 */
+            &p->pi_state, /*3 numbers taken from "man proc" */
+            &p->pi_ppid, /*4*/
+            &p->pi_pgrp, /*5*/
+            &p->pi_session, /*6*/
+            &p->pi_tty_nr, /*7*/
+            &p->pi_tty_pgrp, /*8*/
+            &p->pi_flags, /*9*/
+            &p->pi_minflt, /*10*/
+            &p->pi_child_min_flt, /*11*/
+            &p->pi_majflt, /*12*/
+            &p->pi_child_maj_flt, /*13*/
+            &p->pi_utime, /*14*/
+            &p->pi_stime, /*15*/
+            &p->pi_child_utime, /*16*/
+            &p->pi_child_stime, /*18*/
+            &p->pi_priority, /*19*/
+            &p->pi_nice, /*20*/
+            &p->pi_num_threads, /*21*/
+            &junk, /*22*/
+            &p->pi_start_time, /*23*/
+            &p->pi_vsize, /*24*/
+            &p->pi_rss, /*25*/
+            &p->pi_rsslimit, /*26*/
+            &p->pi_start_code, /*27*/
+            &p->pi_end_code, /*28*/
+            &p->pi_start_stack, /*29*/
+            &p->pi_esp, /*29*/
+            &p->pi_eip, /*30*/
+            &p->pi_signal_pending, /*31*/
+            &p->pi_signal_blocked, /*32*/
+            &p->pi_signal_ignore, /*33*/
+            &p->pi_signal_catch, /*34*/
+            &p->pi_wchan, /*35*/
+            &p->pi_swap_pages, /*36*/
+            &p->pi_child_swap_pages, /*37*/
+            &p->pi_signal_exit, /*38*/
+            &p->pi_last_cpu, /*39*/
+            &p->pi_realtime_priority, /*40*/
+            &p->pi_sched_policy, /*41*/
+            &p->pi_delayacct_blkio_ticks /*42*/
+        );
+        if (ret != 40) {
+            g_logger.LogError("procsinfo2 sscanf wanted 40 returned = %d pid=%d line=%s\n", ret, pid, buf);
+            return false;
+        }
     }
 
-    ret = sscanf(&buf[0], "%lu %lu %lu %lu %lu %lu %lu", &p->statm_size, &p->statm_resident, &p->statm_share,
-        &p->statm_trs, &p->statm_lrs, &p->statm_drs, &p->statm_dt);
-    if (ret != 7) {
-        g_logger.LogError("sscanf wanted 7 returned = %d line=%s\n", ret, buf);
-        return false;
+#if PROCESS_STATS_INCLUDE_STATM
+    { /* the statm file for the process */
+
+        snprintf(filename, 64, "/proc/%d/statm", pid);
+        if ((fp = fopen(filename, "r")) == NULL) {
+            g_logger.LogError("failed to open file %s", filename);
+            return false;
+        }
+        size = fread(buf, 1, 1024 * 4 - 1, fp);
+        fclose(fp); /* close it even if the read failed, the file could have been removed
+                    between open & read i.e. the device driver does not behave like a file */
+        if (size == -1) {
+            g_logger.LogError("failed to read file %s", filename);
+            return false;
+        }
+
+        ret = sscanf(&buf[0], "%lu %lu %lu %lu %lu %lu %lu", // force newline
+            &p->statm_size, &p->statm_resident, &p->statm_share, &p->statm_trs, &p->statm_lrs, &p->statm_drs,
+            &p->statm_dt);
+        if (ret != 7) {
+            g_logger.LogError("sscanf wanted 7 returned = %d line=%s\n", ret, buf);
+            return false;
+        }
     }
-    /*if (uid == (uid_t)0)*/ {
-        p->read_io = 0;
-        p->write_io = 0;
+#endif
+
+    { /* the status file for the process */
+
+        snprintf(filename, 64, "/proc/%d/status", pid);
+        if ((fp = fopen(filename, "r")) == NULL) {
+            g_logger.LogError("failed to open file %s", filename);
+            return false;
+        }
+        for (i = 0;; i++) {
+            if (fgets(buf, 1024, fp) == NULL) {
+                break;
+            }
+            if (strncmp("Tgid:", buf, 5) == 0) {
+                // this info is only available from the /status file apparently and not from /stat
+                sscanf(&buf[6], "%d", &p->pi_tgid);
+            }
+        }
+        fclose(fp);
+    }
+
+    /*if (uid == (uid_t)0)*/
+    { /* the io file for the process */
+        p->io_read_bytes = 0;
+        p->io_write_bytes = 0;
         sprintf(filename, "/proc/%d/io", pid);
         if ((fp = fopen(filename, "r")) != NULL) {
             for (i = 0; i < 6; i++) {
                 if (fgets(buf, 1024, fp) == NULL) {
                     break;
                 }
+                if (strncmp("rchar:", buf, 6) == 0)
+                    sscanf(&buf[7], "%lld", &p->io_rchar);
+                if (strncmp("wchar:", buf, 6) == 0)
+                    sscanf(&buf[7], "%lld", &p->io_wchar);
                 if (strncmp("read_bytes:", buf, 11) == 0)
-                    sscanf(&buf[12], "%lld", &p->read_io);
+                    sscanf(&buf[12], "%lld", &p->io_read_bytes);
                 if (strncmp("write_bytes:", buf, 12) == 0)
-                    sscanf(&buf[13], "%lld", &p->write_io);
+                    sscanf(&buf[13], "%lld", &p->io_write_bytes);
             }
         }
 
@@ -749,7 +781,11 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
         memset(&procData, 0, sizeof(procData));
         cgroup_proc_procsinfo(all_pids[i], &procData);
 
-        currDB.insert(std::make_pair(all_pids[i], procData));
+        // FIXME: allow to process threads
+        if (procData.pi_pid == procData.pi_tgid)
+            currDB.insert(std::make_pair(all_pids[i], procData));
+        // else
+        // g_logger.LogDebug("Found thread %d %d", procData.pi_pid, procData.pi_tgid);
     }
 
     if (!print)
@@ -759,6 +795,8 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
     assert(m_topper.empty());
     for (const auto& current_entry : currDB) {
         const procsinfo_t* pcurrent = &current_entry.second;
+
+        // find the previous stats for this PID:
         const procsinfo_t* pprev = &prevDB[current_entry.first /* pid */];
 
         uint64_t score = compute_proc_score(pcurrent, pprev, elapsed_sec);
@@ -766,11 +804,14 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
         m_topper.insert(std::make_pair(score, newEntry));
     }
 
-    g_logger.LogDebug("Tracking %zu processes; min/max score found: %lu/%lu", all_pids.size(), m_topper.begin()->first,
-        m_topper.rbegin()->first);
+    if (m_topper.empty())
+        return;
+
+    g_logger.LogDebug("Tracking %zu/%zu processes/threads; min/max score found: %lu/%lu", // force newline
+        currDB.size(), all_pids.size(), m_topper.begin()->first, m_topper.rbegin()->first);
 
     // Now output all data for each process, starting from the minimal score PROCESS_SCORE_IGNORE_THRESHOLD
-    double ticks = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
+    static double ticks = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
     size_t nProcsOverThreshold = 0;
     g_output.psection_start("cgroup_tasks");
     for (auto entry = m_topper.lower_bound(PROCESS_SCORE_IGNORE_THRESHOLD); entry != m_topper.end(); entry++) {
@@ -787,11 +828,12 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
         g_output.psubsection_start(str);
         g_output.plong("cmon_score", score);
 
-        /* Note to self: the directory owners /proc/PID is the process owner = worth adding */
-        g_output.plong("pid", CURRENT(pi_pid));
-
-        /* Full command line can be found /proc/PID/cmdline with zeros in it! */
-        g_output.pstring("cmd", CURRENT(pi_comm));
+        /*
+         * Process fields
+         */
+        g_output.pstring("cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
+        g_output.plong(
+            "pid", CURRENT(pi_pid)); // Note to self: the directory owners /proc/PID is the process owner = worth adding
         g_output.plong("ppid", CURRENT(pi_ppid));
         g_output.plong("pgrp", CURRENT(pi_pgrp));
         g_output.plong("priority", CURRENT(pi_priority));
@@ -801,22 +843,48 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
         // g_output.phex("flags", CURRENT(pi_flags));
         g_output.pstring("state", get_state(CURRENT(pi_state)));
         g_output.plong("threads", CURRENT(pi_num_threads));
-        g_output.pdouble("cpu_percent", (TIMEDELTA(pi_utime) + TIMEDELTA(pi_stime)) / elapsed_sec);
+        g_output.pdouble("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks);
+        g_output.plong("uid", CURRENT(uid));
+        if (strlen(CURRENT(username)) > 0)
+            g_output.pstring("username", CURRENT(username));
+
+        /*
+         * CPU fields
+         * NOTE: all CPU fields specify amount of time, measured in units of USER_HZ
+                 (1/100ths of a second on most architectures); this means that if the
+                 _delta_ CPU value reported is 60 in mode X, then that mode took 60% of the CPU!
+                 IOW there is no need to do any math to produce a percentage, just taking
+                 the delta of the absolute, monotonic-increasing value and divide by the time
+        */
+        g_output.pdouble("cpu_tot", (TIMEDELTA(pi_utime) + TIMEDELTA(pi_stime)) / elapsed_sec);
         g_output.pdouble("cpu_usr", TIMEDELTA(pi_utime) / elapsed_sec);
         g_output.pdouble("cpu_sys", TIMEDELTA(pi_stime) / elapsed_sec);
+
+        // provide also the total, monotonically-increasing CPU time:
+        // this is used by chart script to produce the "top of the topper" chart
         g_output.pdouble("cpu_usr_total_secs", CURRENT(pi_utime) / ticks);
         g_output.pdouble("cpu_sys_total_secs", CURRENT(pi_stime) / ticks);
-        g_output.plong("statm_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
-        g_output.plong("statm_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
-        g_output.plong("statm_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
-        g_output.plong("statm_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
-        g_output.plong("statm_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
-        g_output.pdouble("minorfault", COUNTDELTA(pi_minflt) / elapsed_sec);
-        g_output.pdouble("majorfault", COUNTDELTA(pi_majflt) / elapsed_sec);
-        g_output.pdouble("starttime_secs", (double)(CURRENT(pi_start_time)) / ticks);
-        g_output.plong("virtual_size_kb", (long long)(CURRENT(pi_vsize) / 1024));
-        g_output.plong("rss_pages", CURRENT(pi_rss));
-        g_output.plong("rss_limit", CURRENT(pi_rsslimit));
+        g_output.plong("cpu_last", CURRENT(pi_last_cpu));
+
+        /*
+         * Memory fields
+         */
+#if PROCESS_STATS_INCLUDE_STATM // not really useful
+        g_output.plong("mem_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
+        g_output.plong("mem_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
+        g_output.plong("mem_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
+        g_output.plong("mem_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
+        g_output.plong("mem_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
+#endif
+        g_output.pdouble("mem_minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec);
+        g_output.pdouble("mem_major_fault", COUNTDELTA(pi_majflt) / elapsed_sec);
+        g_output.plong("mem_vsize_bytes", CURRENT(pi_vsize));
+        g_output.plong("mem_rss_pages", CURRENT(pi_rss));
+        g_output.plong("mem_rss_limit", CURRENT(pi_rsslimit));
+
+        /*
+         * Signal fields
+         */
 #ifdef PROCESS_DEBUGING_ADDRESSES_SIGNALS
         /* NOT INCLUDED AS THEY ARE FOR DEBUGGING AND NOT PERFORMANCE TUNING */
         g_output.phex("start_code", CURRENT(pi_start_code));
@@ -836,17 +904,26 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
         g_output.plong("swap_pages", CURRENT(pi_swap_pages));
         g_output.plong("child_swap_pages", CURRENT(pi_child_swap_pages));
 #endif
-        g_output.plong("last_cpu", CURRENT(pi_last_cpu));
 #if 0 // not really useful
         g_output.plong("realtime_priority", CURRENT(pi_realtime_priority));
         g_output.plong("sched_policy", CURRENT(pi_sched_policy));
-        g_output.pdouble("delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
 #endif
-        g_output.plong("uid", CURRENT(uid));
-        if (strlen(CURRENT(username)) > 0)
-            g_output.pstring("username", CURRENT(username));
-        g_output.psubsection_end();
 
+        /*
+         * I/O fields
+         */
+        g_output.pdouble("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
+        g_output.pdouble("io_rchar", TIMEDELTA(io_rchar) / elapsed_sec);
+        g_output.pdouble("io_wchar", TIMEDELTA(io_wchar) / elapsed_sec);
+        g_output.pdouble("io_read_bytes", TIMEDELTA(io_read_bytes) / elapsed_sec);
+        g_output.pdouble("io_write_bytes", TIMEDELTA(io_write_bytes) / elapsed_sec);
+
+        // provide also the total, monotonically-increasing I/O time:
+        // this is used by chart script to produce the "top of the topper" chart
+        g_output.pdouble("io_total_read", CURRENT(io_rchar));
+        g_output.pdouble("io_total_write", CURRENT(io_wchar));
+
+        g_output.psubsection_end();
         nProcsOverThreshold++;
     }
     g_output.psection_end();

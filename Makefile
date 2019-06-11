@@ -20,7 +20,7 @@ TAGVERSION:=$(shell git describe --long --tags)
 #  1) examples/docker*/Dockerfile  -> rpm_version string
 #  2) debian/changelog             -> to release a new Ubuntu package
 #
-RPM_VERSION:=1.2
+RPM_VERSION:=1.3
 NUM_COMMITS_SINCE_TAG=$(shell git rev-list $(RPM_VERSION)..HEAD --count)
 #RPM_RELEASE:=$(subst v$(RPM_VERSION)-,,$(TAGVERSION))
 #RPM_RELEASE:=$(subst -,_,$(RPM_RELEASE))

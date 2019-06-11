@@ -61,8 +61,8 @@ function clear_chart() {
 
 /* Utility function used to reset combobox controls: */
 function reset_combo_boxes() {
-  document.getElementById("select_cpu_combobox1").value = "clear_chart";
-  document.getElementById("select_cpu_combobox2").value = "clear_chart";
+  document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
+  document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
 }
 
 function draw_graph1() {
@@ -2752,7 +2752,7 @@ function draw_graph117() {
   var data_graph117 = google.visualization.arrayToDataTable(inflated_data_graph117);
   var options_graph117 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Network Traffic in MB/s for modcentos7-build3 (from baremetal stats)",
+    title: "Network Traffic in MB/s (from baremetal stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "MB/s", gridlines: { color: "lightgrey", count: 11 } },
@@ -2776,7 +2776,7 @@ function draw_graph118() {
   var data_graph118 = google.visualization.arrayToDataTable(inflated_data_graph118);
   var options_graph118 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Network Traffic in PPS for modcentos7-build3 (from baremetal stats)",
+    title: "Network Traffic in PPS (from baremetal stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "PPS", gridlines: { color: "lightgrey", count: 11 } },
@@ -3028,7 +3028,7 @@ function show_config_window() {
   <td id="button_table_col">
     <button id="btn_show_config"><b>Configuration</b></button><br/>
   </td><td id="button_table_col">
-    <select id="select_cpu_combobox2" onchange="call_function_named(this.value)">
+    <select id="select_combobox_cgroup_cpus" onchange="call_function_named(this.value)">
       <option value="clear_chart">None</option>
       <option value="draw_graph58">CPU0</option>
       <option value="draw_graph59">CPU1</option>
@@ -3090,7 +3090,7 @@ function show_config_window() {
     <button id="btn_draw_graph114" style="color:red"><b>All CPUs</b></button>
     <button id="btn_draw_graph116" style="color:darkorange"><b>Memory Usage</b></button>
       </td><td id="button_table_col">
-    <select id="select_cpu_combobox1" onchange="call_function_named(this.value)">
+    <select id="select_combobox_baremetal_cpus" onchange="call_function_named(this.value)">
       <option value="clear_chart">None</option>
       <option value="draw_graph1">CPU0</option>
       <option value="draw_graph2">CPU1</option>

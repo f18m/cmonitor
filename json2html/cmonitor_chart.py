@@ -20,8 +20,11 @@ import textwrap
 # CONSTANTS
 # =======================================================================================================
 
-GRAPH_TYPE_BAREMETAL = 1
-GRAPH_TYPE_CGROUP = 2
+GRAPH_SOURCE_DATA_BAREMETAL = 1
+GRAPH_SOURCE_DATA_CGROUP = 2
+
+GRAPH_TYPE_AREA_CHART = 1
+GRAPH_TYPE_BUBBLE_CHART = 2
 
 SAVE_DEFLATED_JS_DATATABLES = True
 JS_INDENT_SIZE = 2
@@ -35,11 +38,13 @@ g_num_generated_charts = 1
 g_next_graph_need_stacking = 0
 
 # =======================================================================================================
-# GoogleChartsTable
-# This is the table of X;Y1;Y2;...;YN data points for a GoogleCharts graph
+# GoogleChartsTimeSeries
+# This is the table of 
+#    t;Y1;Y2;...;YN 
+# data points for a GoogleCharts graph that is representing the evolution of N quantities over time
 # =======================================================================================================
     
-class GoogleChartsTable(object):
+class GoogleChartsTimeSeries(object):
 
     def __init__(self, column_names):
         self.column_names = column_names  # must be a LIST of strings
@@ -128,6 +133,83 @@ class GoogleChartsTable(object):
         ret_string += "var data_%s = google.visualization.arrayToDataTable(inflated_data_%s);\n" % (graphName, graphName)
         return ret_string
 
+# =======================================================================================================
+# GoogleChartsGenericTable
+# This is the NxM table of 
+#    Y1_1;Y2_1;...;YN_1
+#    ...
+#    Y1_M;Y2_M;...;YN_M
+# data points for a GoogleCharts graph for M different objects characterized by N features
+# =======================================================================================================
+    
+class GoogleChartsGenericTable(object):
+
+    def __init__(self, column_names):
+        self.column_names = column_names  # must be a LIST of strings
+        self.rows = []  # list of lists with values
+
+    def addRow(self, row_data_list):
+        assert(len(row_data_list) == len(self.column_names))
+        self.rows.append(row_data_list)
+
+    def getRow(self, index):
+        return self.rows[index]
+    
+    def getListColumnNames(self):
+        return self.column_names
+    
+    def getNumDataSeries(self):
+        # assuming first column is the timestamp, the number of "data series"
+        # present in this table is all remaining columns
+        return len(self.column_names)-1
+    
+    def writeTo(self, file):
+        for r in self.rows:
+            file.write(','.join(r))
+
+    def toJSONForJS(self):
+        ret = '[[' # start 2D JSON array
+       
+        # convert all other columns:
+        for colName in self.column_names:
+            ret += '"' + colName + '",'
+        ret = ret[:-1]
+        
+        # separe first line; start conversion of actual table data:
+        ret += '],'
+        
+        data = json.dumps(self.rows, separators=(',', ':'))
+        data = data[1:]
+
+        return ret + data
+    
+    def toDeflatedJSONBase64Encoded(self):
+        ''' Returns this table in JSON format (for JS), deflated using zlib, and represented as a Base64-encoded ASCII string '''
+        json_string = self.toJSONForJS()
+        json_compressed_bytearray = zlib.compress(json_string.encode(), 9)
+        
+        ret = str(binascii.b2a_base64(json_compressed_bytearray))
+        return ret[1:]
+
+    def toGoogleChartTable(self, graphName):
+        ''' Writes in the given file the JavaScript GoogleCharts object representing this table '''
+        ret_string = ""
+        if SAVE_DEFLATED_JS_DATATABLES:
+            # to reduce the HTML size save the deflated, serialized JSON of the 2D JS array:
+            ret_string += "var deflated_data_base64_%s = %s;\n" % (graphName, self.toDeflatedJSONBase64Encoded())
+            
+            # then convert it base64 -> JS binary string
+            ret_string += "var deflated_data_binary_%s = window.atob(deflated_data_base64_%s);\n" % (graphName, graphName)
+            
+            # now inflate it in the browser using "pako" library (https://github.com/nodeca/pako)
+            ret_string += "var inflated_data_%s = JSON.parse(pako.inflate(deflated_data_binary_%s, { to: 'string' }));\n" % (graphName, graphName)
+        else:
+            ret_string += "var inflated_data_%s = %s;\n" % (graphName, self.toJSONForJS())
+        
+        # finally create the GoogleCharts table from it:
+        ret_string += "var data_%s = google.visualization.arrayToDataTable(inflated_data_%s);\n" % (graphName, graphName)
+        return ret_string
+    
 
 # =======================================================================================================
 # GoogleChartsGraph
@@ -137,15 +219,23 @@ class GoogleChartsTable(object):
 class GoogleChartsGraph:
 
     def __init__(self, 
-                 button_label="", 
-                 graph_type=GRAPH_TYPE_BAREMETAL, 
+                 button_label="",
+                 combobox_label="",
+                 combobox_entry="",
+                 graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
+                 graph_type=GRAPH_TYPE_AREA_CHART,
                  graph_title="", 
                  stack_state=False, 
                  y_axis_title="", 
                  series_for_2nd_yaxis=[],
                  data=[]):
         self.button_label = button_label
-        self.type = graph_type  # one of GRAPH_TYPE_BAREMETAL or GRAPH_TYPE_CGROUP
+        self.combobox_label = combobox_label
+        assert((len(self.button_label)==0 and len(self.combobox_label)>0) or
+               (len(self.button_label)>0 and len(self.combobox_label)==0))
+        self.combobox_entry = combobox_entry
+        self.source_data = graph_source  # one of GRAPH_TYPE_BAREMETAL or GRAPH_TYPE_CGROUP
+        self.graph_type = graph_type
         self.graph_title = graph_title
         self.stack_state = stack_state
         self.y_axis_title = y_axis_title
@@ -159,7 +249,7 @@ class GoogleChartsGraph:
         g_num_generated_charts += 1
 
         
-    def genGoogleChartJSDrawFunction(self):
+    def genGoogleChartJS_AreaChart(self):
         ''' After the JavaScript line graph data is output, the data is terminated and the graph options set'''
         global g_next_graph_need_stacking
         
@@ -174,7 +264,7 @@ class GoogleChartsGraph:
                     ret += '\n'
             return ret
         
-        ret_string = ""
+        ret_string = ''
         ret_string += 'var options_%s = {\n' % (self.js_name)
         ret_string += '  chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n'
         ret_string += '  title: "%s",\n' % (self.graph_title)
@@ -222,25 +312,43 @@ class GoogleChartsGraph:
         ret_string += 'g_current_options = options_%s;\n' % (self.js_name)
         return ret_string
     
-#     def bubbleit(self,web, column_names, data, title, button_label, graph_type):
-#         global g_graphs
-#         
-#         # declare JS variables:
-#         startHtmlHead_bubble_graph(web, column_names)
-#         nchart_write_js_graph_data(web, data)
-#         endHtmlHead_bubble_graph(web, title)
+    def genGoogleChartJS_BubbleChart(self):
+        assert(len(self.y_axis_title) == 2)
+        ret_string = ''
+        ret_string += 'var options_%s = {\n' % (self.js_name)
+        ret_string += '  explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },\n'
+        ret_string += '  chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },\n'
+        ret_string += '  title: "%s",\n' % (self.graph_title)
+        ret_string += '  hAxis: { title:"%s" },\n' % str(self.y_axis_title[0])
+        ret_string += '  vAxis: { title:"%s" },\n' % str(self.y_axis_title[1])
+        ret_string += '  sizeAxis: { maxSize: 200 },\n'
+        ret_string += '  bubble: { textStyle: {fontSize: 15} }\n'
+        ret_string += '};\n'  # end of "options_%s" variable
+        ret_string += '\n'
+        ret_string += 'if (g_chart && g_chart.clearChart)\n'
+        ret_string += '  g_chart.clearChart();\n'
+        ret_string += 'g_chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));\n'
+        ret_string += 'g_chart.draw(data_%s, options_%s);\n' % (self.js_name, self.js_name)
+        ret_string += 'g_current_data = data_%s;\n' % (self.js_name)
+        ret_string += 'g_current_options = options_%s;\n' % (self.js_name)
+        return ret_string
         
     def toGoogleChartJS(self):
         global g_next_graph_need_stacking
         
         # generate the JS
         js_code_inner = self.data_table.toGoogleChartTable(self.js_name)
-        js_code_inner += self.genGoogleChartJSDrawFunction()
+        
+        if self.graph_type==GRAPH_TYPE_AREA_CHART:
+            js_code_inner += self.genGoogleChartJS_AreaChart()
+        else:
+            js_code_inner += self.genGoogleChartJS_BubbleChart()
 
         js_code = 'function draw_%s() {\n' % (self.js_name)
         js_code += textwrap.indent(js_code_inner, ' ' * JS_INDENT_SIZE)
 
-        if not self.button_label.startswith('CPU'):
+        if len(self.button_label)>0:
+            # this will be activated by a button that should reset all comboboxes of the graph
             js_code += '  reset_combo_boxes();\n'
         
         js_code += '}\n' # end of draw_%s function
@@ -334,8 +442,8 @@ function clear_chart() {
 
 /* Utility function used to reset combobox controls: */
 function reset_combo_boxes() {
-  document.getElementById("select_cpu_combobox1").value = "clear_chart";
-  document.getElementById("select_cpu_combobox2").value = "clear_chart";
+  document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
+  document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
 }
 
 ''')
@@ -352,8 +460,11 @@ function reset_combo_boxes() {
         # add all event listeners for button clicks:
         self.file.write('function setup_button_click_handlers() {\n')
         for num, graph in enumerate(self.graphs, start=1):
-            if not graph.button_label.startswith('CPU'):
+            if len(graph.combobox_label)==0:
                 self.file.write('  document.getElementById("btn_draw_%s").addEventListener("click", draw_%s);\n' % (graph.js_name, graph.js_name))
+            else:
+                # this will be selected from a combobox, no need to hook into a button
+                pass
         self.file.write('  document.getElementById("btn_show_config").addEventListener("click", show_config_window);\n')
         self.file.write('}\n')
         
@@ -361,32 +472,6 @@ function reset_combo_boxes() {
         self.file.write('  </script>\n')
         self.file.write('</head>\n')
         
-        
-    # def startHtmlHead_bubble_graph(file, columnnames):
-    #     ''' Before the graph data with datetime + multiple columns of data '''
-    #     global g_num_generated_charts 
-    #     self.file.write('  var data_' + str(g_num_generated_charts) + ' = google.visualization.arrayToDataTable([\n')
-    #     self.file.write("[" + columnnames + "]\n")
-    #     
-    # def endHtmlHead_bubble_graph(file, graphtitle):
-    #     ''' After the JavaScript bubble graph data is output, the data is terminated and the bubble graph options set'''
-    #     global g_num_generated_charts
-    #     self.file.write('  ]);\n')
-    #     self.file.write('  var options_' + str(g_num_generated_charts) + ' = {\n')
-    #     self.file.write('    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n')
-    #     self.file.write('    title: "' + graphtitle + '",\n')
-    #     self.file.write('    hAxis: { title:"CPU seconds in Total"},\n')
-    #     self.file.write('    vAxis: { title:"Character I/O in Total"},\n')
-    #     self.file.write('    sizeAxis: {maxSize: 200},\n')
-    #     self.file.write('    bubble: {textStyle: {fontSize: 15}}\n')
-    #     self.file.write('  };\n')
-    #     self.file.write('  document.getElementById("draw_' + str(g_num_generated_charts) + '").addEventListener("click", function() {\n')
-    #     self.file.write('  if (chart && chart.clearChart)\n')
-    #     self.file.write('    chart.clearChart();\n')
-    #     self.file.write('  chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));\n')
-    #     self.file.write('  chart.draw(data_' + str(g_num_generated_charts) + ', options_' + str(g_num_generated_charts) + ');\n')
-    #     self.file.write('  });\n')
-    #     g_num_generated_charts += 1
         
     
     def startHtmlBody(self, cgroupName, hostname):
@@ -407,30 +492,36 @@ function reset_combo_boxes() {
         self.file.write('    <button id="btn_show_config"><b>Configuration</b></button><br/>\n')
         self.file.write('  </td><td id="button_table_col">\n')
     
-        def write_buttons_for_graph_type(type):
-            # find all CPU graphs
-            cpu_graphs_combobox = []
+        def write_buttons_for_graph_type(source_data):
+            # find all graphs that will be activated through a combobox
+            graphs_combobox = {}
             for num, graph in enumerate(self.graphs, start=1):
-                if graph.type == type:
-                    if graph.button_label.startswith('CPU'):
-                        cpu_graphs_combobox.append([ graph.button_label, graph.js_name ])
+                if graph.source_data == source_data and len(graph.combobox_label)>0:
+                    if graph.combobox_label not in graphs_combobox:
+                        # add new dict entry as empty list
+                        graphs_combobox[graph.combobox_label] = []
+                        
+                    # add to the existing dict entry a new graph:
+                    graphs_combobox[graph.combobox_label].append([ graph.combobox_entry, graph.js_name ])
                         
             # generate the CPU select box:
-            if len(cpu_graphs_combobox)>0:
-                self.file.write('    <select id="select_cpu_combobox%s" onchange="call_function_named(this.value)">\n' % (str(type)))
-                self.file.write('      <option value="clear_chart">None</option>\n')
-                for entry in cpu_graphs_combobox:
-                    button_label = entry[0]
-                    js_name = entry[1]
-                    self.file.write('      <option value="draw_%s">%s</option>\n' % (js_name, button_label))
-                self.file.write('    </select>\n')
+            if len(graphs_combobox)>0:
+                for combobox_label in graphs_combobox.keys():
+                    graph_list = graphs_combobox[combobox_label]
+                    self.file.write('    <select id="select_combobox_%s" onchange="call_function_named(this.value)">\n' % (combobox_label))
+                    self.file.write('      <option value="clear_chart">None</option>\n')
+                    for entry in graph_list:
+                        button_label = entry[0]
+                        js_name = entry[1]
+                        self.file.write('      <option value="draw_%s">%s</option>\n' % (js_name, button_label))
+                    self.file.write('    </select>\n')
     
             # find in all graphs registered so far all those related to the CGROUP
             for num, graph in enumerate(self.graphs, start=1):
-                if graph.type == type:
-                    if graph.button_label.startswith('CPU'):
+                if graph.source_data == source_data:
+                    if len(graph.combobox_label)>0:
                         continue # skip - already drawn via <select>
-                    elif graph.button_label.endswith('CPUs'):
+                    elif 'CPU' in graph.button_label:
                         colour = 'red'
                     elif graph.button_label.startswith('Memory'):
                         colour = 'darkorange'
@@ -442,9 +533,9 @@ function reset_combo_boxes() {
                         colour = 'black'
                     self.file.write('    <button id="btn_draw_' + graph.js_name + '" style="color:' + colour + '"><b>' + graph.button_label + '</b></button>\n')
     
-        write_buttons_for_graph_type(GRAPH_TYPE_CGROUP)
+        write_buttons_for_graph_type(GRAPH_SOURCE_DATA_CGROUP)
         self.file.write('      </td><td id="button_table_col">\n')
-        write_buttons_for_graph_type(GRAPH_TYPE_BAREMETAL)
+        write_buttons_for_graph_type(GRAPH_SOURCE_DATA_BAREMETAL)
             
         self.file.write('  </td></tr>\n')
         self.file.write('  </table>\n')
@@ -475,6 +566,19 @@ function reset_combo_boxes() {
         self.file.write('</html>\n')
         self.file.close()
 
+
+
+def choose_byte_divider(mem_total_bytes):
+    divider = 1
+    unit = 'Bytes'
+    if mem_total_bytes > 9E9:
+        divider = 1E9
+        unit = 'GB'
+    elif mem_total_bytes > 9E6:
+        divider = 1E6
+        unit = 'MB'
+    #print("%d -> %s, %d" % (mem_total_bytes,unit, divider))
+    return (divider, unit)
 
 
 # =======================================================================================================
@@ -545,75 +649,88 @@ def generate_config_js(jheader):
     config_str += '");\n}\n\n'
     return config_str
 
-
-# def generate_top20_procs(jdata):
-#     # - - - Top 20 Processes
-#     # Check if there are process stats in this .json file as they are optional
-#     start_processes = "unknown"
-#     end_processes = "unknown"
-#     try:
-#         start_processes = len(jdata[0]["processes"])
-#         end_processes = len(jdata[-1]["processes"])
-#         process_data_found = True
-#     except:
-#         process_data_found = False
+def generate_topN_procs(web, jdata, numProcsToShow=20):
+    # if process data was not collected, just return:
+    if 'cgroup_tasks' not in jdata[0]:
+        return web
+    
+    top = {}  # start with empty dictionary
+    max_mem_bytes = 0
+    max_io_bytes = 0
+    for sample in jdata:
+        for process in sample['cgroup_tasks']:
+            
+            # parse data from JSON
+            entry = sample['cgroup_tasks'][process]
+            cmd = entry['cmd']
+            cputime = entry['cpu_usr_total_secs'] + entry['cpu_sys_total_secs']
+            iobytes = entry['io_total_read'] + entry['io_total_write']
+            membytes = entry['mem_vsize_bytes']
+            thepid = entry['pid']
+            
+            # keep track of maxs:
+            max_mem_bytes = max(membytes,max_mem_bytes)
+            max_io_bytes = max(iobytes,max_io_bytes)
+            
+            if cputime > 0:
+                try:  # update the current entry
+                    top[cmd]["cpu"] = cputime
+                    top[cmd]["io"] = iobytes
+                    top[cmd]["mem"] = membytes
+                    top[cmd]["pid"] = thepid
+                except:  # no current entry so add one
+                    top.update({cmd: { "cpu": cputime,
+                                       "io": iobytes,
+                                       "mem": membytes,
+                                       "pid": thepid} })
+    
+    def sort_key(d):
+        return top[d]['cpu']*top[cmd]['mem']
+    
+    mem_divider, mem_unit = choose_byte_divider(max_mem_bytes)
+    io_divider, io_unit = choose_byte_divider(max_io_bytes)
+    top_sorted_list = sorted(top, key=sort_key, reverse=True)
+    tops = []
+    
+    topprocs = GoogleChartsGenericTable(['Command', 'CPU time', 'I/O ' + io_unit, 'Command', 'Memory ' + mem_unit])
+    for i, cmd in enumerate(top_sorted_list):
+        p = top[cmd]
+        print("Processing data for CPU-top-scorer process [%s - %d]" % (cmd, p['pid']))
+        topprocs.addRow([cmd, p['cpu'], p['io']/io_divider, cmd + ' ' + str(p['pid']), p['mem']/mem_divider])
+        tops.append(cmd)
+        if i >= numProcsToShow:
+            break
+        
+    web.appendGoogleChart(GoogleChartsGraph(
+                          button_label='CPU/Memory/Disk By Process',
+                          graph_source=GRAPH_SOURCE_DATA_CGROUP,
+                          graph_type=GRAPH_TYPE_BUBBLE_CHART,
+                          graph_title="CPU/Disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
+                          y_axis_title=["CPU time","I/O " + io_unit],
+                          data=topprocs))
+    return web
+#     top_header = ""
+#     for proc in tops:
+#         top_header += "'" + proc + "',"
+#     top_header = top_header[:-1]
 #     
-#     if process_data_found:
-#         top = {}  # start with empty dictionary
-#         for sam in jdata:
-#             for process in sam["processes"]:
-#                 entry = sam['processes'][process]
-#                 if entry['ucpu_time'] != 0.0 and entry['scpu_time'] != 0.0:
-#                     # print("%20s pid=%d ucpu=%0.3f scpu=%0.3f mem=%0.3f io=%0.3f"%(entry['name'],entry['pid'],
-#                     #        entry['ucpu_time'],entry['scpu_time'],
-#                     #        entry['real_mem_data']+entry['real_mem_text'],
-#                     #        entry['inBytes']+entry['outBytes']))
-#                     try:  # update the current entry
-#                         top[entry['name']]["cpu"] += entry['ucpu_time'] + entry['scpu_time']
-#                         top[entry['name']]["io"] += entry['inBytes'] + entry['inBytes']
-#                         top[entry['name']]["mem"] += entry['real_mem_data'] + entry['real_mem_text']
-#                     except:  # no current entry so add one
-#                         top.update({entry['name']: { "cpu": entry['ucpu_time'] + entry['scpu_time'],
-#                                   "io": entry['inBytes'] + entry['outBytes'],
-#                                   "mem": entry['real_mem_data'] + entry['real_mem_text']} })
-# 
-#         def sort_key(d):
-#             return top[d]['cpu']
-#     
-#         topprocs = ""
-#         tops = []
-#         for i, proc in enumerate(sorted(top, key=sort_key, reverse=True)):
-#             p = top[proc]
-#             # print("%20s cpu=%0.3f io=%0.3f mem=%0.3f"%(proc, p['cpu'],p['io'],p['mem']))
-#             topprocs += ",['%s',%.1f,%.1f,'%s',%.1f]\n" % (proc, p['cpu'], p['io'], proc, p['mem'])
-#             tops.append(proc)
-#             if i >= 20:  # Only graph the top 20
-#                 break
-#     
-#         topprocs_title = "'Command', 'CPU seconds', 'CharIO', 'Type', 'Memory KB'"
-#     
-#         top_header = ""
-#         for proc in tops:
-#             top_header += "'" + proc + "',"
-#         top_header = top_header[:-1]
-#     
-#         top_data = ""
-#         for sam in jdata:
-#             top_data += ",['Date(%s)'" % (googledate(sam['timestamp']['datetime']))
-#             for item in tops:
-#                 bytes = 0
-#                 for proc in sam['processes']:
-#                     p = sam['processes'][proc]
-#                     if p['name'] == item:
-#                         bytes += p['ucpu_time'] + p['scpu_time']
-#                 top_data += ", %.1f" % (bytes)
-#             top_data += "]\n"
-#         # print(top_header)
+#     top_data = ""
+#     for sam in jdata:
+#         top_data += ",['Date(%s)'" % (googledate(sam['timestamp']['datetime']))
+#         for item in tops:
+#             bytes = 0
+#             for proc in sam['processes']:
+#                 p = sam['processes'][proc]
+#                 if p['name'] == item:
+#                     bytes += p['ucpu_time'] + p['scpu_time']
+#             top_data += ", %.1f" % (bytes)
+#         top_data += "]\n"
+#     # print(top_header)
 #         # print(top_data)
 #     return (start_processes, end_processes, process_data_found)
 
 
-def generate_disks_io(web, jdata, hostname):
+def generate_disks_io(web, jdata):
     # if disk data was not collected, just return:
     if 'disks' not in jdata[0]:
         return web
@@ -637,10 +754,10 @@ def generate_disks_io(web, jdata, hostname):
     
     #
     # MAIN LOOP
-    # Process JSON sample and fill the GoogleChartsTable() object
+    # Process JSON sample and fill the GoogleChartsTimeSeries() object
     #
     
-    disk_table = GoogleChartsTable(diskcols)
+    disk_table = GoogleChartsTimeSeries(diskcols)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
@@ -656,7 +773,7 @@ def generate_disks_io(web, jdata, hostname):
         disk_table.addRow(row)
 
     web.appendGoogleChart(GoogleChartsGraph(button_label='Disk I/O', 
-                          graph_type=GRAPH_TYPE_BAREMETAL,
+                          graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
                           graph_title="Disk I/O (from baremetal stats)",
                           y_axis_title="MB",
                           data=disk_table))
@@ -678,7 +795,7 @@ def generate_disks_io(web, jdata, hostname):
 #     return web
 
 
-def generate_network_traffic(web, jdata, hostname):
+def generate_network_traffic(web, jdata):
     # if network traffic data was not collected, just return:
     if 'network_interfaces' not in jdata[0]:
         return web
@@ -697,12 +814,12 @@ def generate_network_traffic(web, jdata, hostname):
 
     #
     # MAIN LOOP
-    # Process JSON sample and fill the GoogleChartsTable() object
+    # Process JSON sample and fill the GoogleChartsTimeSeries() object
     #
     
     # MB/sec
     
-    net_table = GoogleChartsTable(netcols)
+    net_table = GoogleChartsTimeSeries(netcols)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
@@ -719,17 +836,17 @@ def generate_network_traffic(web, jdata, hostname):
         net_table.addRow(row)
 
     web.appendGoogleChart(GoogleChartsGraph(
-            graph_title='Network Traffic in MB/s for ' + hostname + " (from baremetal stats)",
+            graph_title='Network Traffic in MB/s (from baremetal stats)',
             button_label='Network Traffic (MB/s)',
             y_axis_title="MB/s",
-            graph_type=GRAPH_TYPE_BAREMETAL,
+            graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
             stack_state=False,
             data=net_table))
     
             
     # PPS
     
-    net_table = GoogleChartsTable(netcols)
+    net_table = GoogleChartsTimeSeries(netcols)
     for i, s in enumerate(jdata):
         if i == 0:
             continue
@@ -746,15 +863,15 @@ def generate_network_traffic(web, jdata, hostname):
         net_table.addRow(row)
 
     web.appendGoogleChart(GoogleChartsGraph(
-            graph_title='Network Traffic in PPS for ' + hostname + " (from baremetal stats)",
+            graph_title='Network Traffic in PPS (from baremetal stats)',
             button_label='Network Traffic (PPS)',
             y_axis_title="PPS",
-            graph_type=GRAPH_TYPE_BAREMETAL,
+            graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
             stack_state=False,
             data=net_table))
     return web
 
-def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
+def generate_baremetal_cpus(web, jdata, logical_cpus_indexes):
     # if baremetal CPU data was not collected, just return:
     if 'stat' not in jdata[0]:
         return web
@@ -762,13 +879,13 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
     # prepare empty tables
     baremetal_cpu_stats = {}
     for c in logical_cpus_indexes:
-        baremetal_cpu_stats[c] = GoogleChartsTable(['Timestamp', 'User', 'Nice', 'System', 'Idle', 'I/O wait', 'Hard IRQ', 'Soft IRQ', 'Steal'])
+        baremetal_cpu_stats[c] = GoogleChartsTimeSeries(['Timestamp', 'User', 'Nice', 'System', 'Idle', 'I/O wait', 'Hard IRQ', 'Soft IRQ', 'Steal'])
         
-    all_cpus_table = GoogleChartsTable(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
+    all_cpus_table = GoogleChartsTimeSeries(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
     
     #
     # MAIN LOOP
-    # Process JSON sample and fill the GoogleChartsTable() object
+    # Process JSON sample and fill the GoogleChartsTimeSeries() object
     #
 
     for i, s in enumerate(jdata):
@@ -801,9 +918,10 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
         web.appendGoogleChart(GoogleChartsGraph(
                 data=baremetal_cpu_stats[c],  # Data
                 graph_title='Logical CPU ' + str(c) + " (from baremetal stats)",
-                button_label="CPU" + str(c),
+                combobox_label="baremetal_cpus",
+                combobox_entry="CPU" + str(c),
                 y_axis_title="Time (%)",
-                graph_type=GRAPH_TYPE_BAREMETAL,
+                graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
                 stack_state=True))
 
     # Also produce the "all CPUs" graph
@@ -812,24 +930,24 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname):
             graph_title="All logical CPUs allowed in cmonitor_collector CGroup (from baremetal stats)",
             button_label="All CPUs",
             y_axis_title="Time (%)",
-            graph_type=GRAPH_TYPE_BAREMETAL,
+            graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
             stack_state=False))
     return web
 
-def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
+def generate_cgroup_cpus(web, jdata, logical_cpus_indexes):
     if 'cgroup_cpuacct_stats' not in jdata[0]:
         return web  # cgroup mode not enabled at collection time!
         
     # prepare empty tables
     cpu_stats_table = {}
     for c in logical_cpus_indexes:
-        cpu_stats_table[c] = GoogleChartsTable(['Timestamp', 'User', 'System'])
+        cpu_stats_table[c] = GoogleChartsTimeSeries(['Timestamp', 'User', 'System'])
         
-    all_cpus_table = GoogleChartsTable(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
+    all_cpus_table = GoogleChartsTimeSeries(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
         
     #
     # MAIN LOOP
-    # Process JSON sample and fill the GoogleChartsTable() object
+    # Process JSON sample and fill the GoogleChartsTimeSeries() object
     #
 
     for i, s in enumerate(jdata):
@@ -858,9 +976,10 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
         web.appendGoogleChart(GoogleChartsGraph(
                 data=cpu_stats_table[c],  # Data
                 graph_title='Logical CPU ' + str(c) + " (from CGroup stats)",
-                button_label="CPU" + str(c),
+                combobox_label="cgroup_cpus",
+                combobox_entry="CPU" + str(c),
                 y_axis_title="Time (%)",
-                graph_type=GRAPH_TYPE_CGROUP,
+                graph_source=GRAPH_SOURCE_DATA_CGROUP,
                 stack_state=True))
 
     # Also produce the "all CPUs" graph
@@ -869,25 +988,11 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname):
             graph_title="All logical CPUs assigned to cmonitor_collector CGroup (from CGroup stats)",
             button_label="All CPUs",
             y_axis_title="Time (%)",
-            graph_type=GRAPH_TYPE_CGROUP,
+            graph_source=GRAPH_SOURCE_DATA_CGROUP,
             stack_state=False))
     return web
 
-
-def choose_byte_divider(mem_total_bytes):
-    divider = 1
-    unit = 'Bytes'
-    if mem_total_bytes > 9E9:
-        divider = 1E9
-        unit = 'GB'
-    elif mem_total_bytes > 9E6:
-        divider = 1E6
-        unit = 'MB'
-    #print("%d -> %s, %d" % (mem_total_bytes,unit, divider))
-    return (divider, unit)
-
-
-def generate_baremetal_memory(web, jdata, hostname):
+def generate_baremetal_memory(web, jdata):
     # if baremetal memory data was not collected, just return:
     if 'proc_meminfo' not in jdata[0]:
         return web
@@ -904,7 +1009,7 @@ def generate_baremetal_memory(web, jdata, hostname):
         return value * 1000
 
     mem_total_bytes = meminfo_stat_to_bytes(jdata[0]['proc_meminfo']['MemTotal'])
-    baremetal_memory_stats = GoogleChartsTable(['Timestamp', 'Used', 'Cached (DiskRead)', 'Free'])
+    baremetal_memory_stats = GoogleChartsTimeSeries(['Timestamp', 'Used', 'Cached (DiskRead)', 'Free'])
     divider, unit = choose_byte_divider(mem_total_bytes)
 
     for i, s in enumerate(jdata):
@@ -943,12 +1048,12 @@ def generate_baremetal_memory(web, jdata, hostname):
             graph_title='Memory usage in ' + unit + " (from baremetal stats)",
             button_label="Memory Usage",
             y_axis_title=unit,
-            graph_type=GRAPH_TYPE_BAREMETAL,
+            graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
             stack_state=True))
     return web
 
 
-def generate_cgroup_memory(web, jheader, jdata, hostname):
+def generate_cgroup_memory(web, jheader, jdata):
     # if cgroup data was not collected, just return:
     if 'cgroup_memory_stats' not in jdata[0]:
         return web
@@ -963,7 +1068,7 @@ def generate_cgroup_memory(web, jheader, jdata, hostname):
     else:
         mem_total_bytes = jdata[0]['cgroup_memory_stats']['total_cache'] + \
                           jdata[0]['cgroup_memory_stats']['total_rss'] 
-    cgroup_memory_stats = GoogleChartsTable(['Timestamp', 'Used', 'Cached (DiskRead)', 'Alloc Failures'])
+    cgroup_memory_stats = GoogleChartsTimeSeries(['Timestamp', 'Used', 'Cached (DiskRead)', 'Alloc Failures'])
     divider, unit = choose_byte_divider(mem_total_bytes)
     
     for i, s in enumerate(jdata):
@@ -986,13 +1091,13 @@ def generate_cgroup_memory(web, jheader, jdata, hostname):
             graph_title='Memory used by cmonitor_collector CGroup in ' + unit +  " (from CGroup stats)",
             button_label="Memory Usage",
             y_axis_title=[unit, "Alloc Failures"],
-            graph_type=GRAPH_TYPE_CGROUP,
+            graph_source=GRAPH_SOURCE_DATA_CGROUP,
             stack_state=False,
             series_for_2nd_yaxis=[2])) # put "failcnt" on 2nd y axis
     return web
 
 
-def generate_load_avg(web, jheader, jdata, hostname):
+def generate_load_avg(web, jheader, jdata):
     #
     # MAIN LOOP
     # Process JSON sample and build Google Chart-compatible Javascript variable
@@ -1001,7 +1106,7 @@ def generate_load_avg(web, jheader, jdata, hostname):
      
     num_baremetal_cpus = int(jheader["lscpu"]["cpus"])
      
-    load_avg_stats = GoogleChartsTable(['Timestamp', 'LoadAvg (1min)', 'LoadAvg (5min)', 'LoadAvg (15min)'])
+    load_avg_stats = GoogleChartsTimeSeries(['Timestamp', 'LoadAvg (1min)', 'LoadAvg (5min)', 'LoadAvg (15min)'])
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
@@ -1036,7 +1141,7 @@ def generate_load_avg(web, jheader, jdata, hostname):
             graph_title='Average Load ' +  " (from baremetal stats)",
             button_label="Average Load",
             y_axis_title="Load (%)",
-            graph_type=GRAPH_TYPE_BAREMETAL,
+            graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
             stack_state=False))
     return web
 
@@ -1143,13 +1248,14 @@ def main_process_file(infile, outfile):
     # HTML HEAD
     
     web.startHtmlHead()
-    web = generate_baremetal_cpus(web, jdata, logical_cpus_indexes, hostname)
-    web = generate_cgroup_cpus(web, jdata, logical_cpus_indexes, hostname)
-    web = generate_baremetal_memory(web, jdata, hostname)
-    web = generate_cgroup_memory(web, jheader, jdata, hostname)
-    web = generate_network_traffic(web, jdata, hostname)
-    web = generate_disks_io(web, jdata, hostname)
-    web = generate_load_avg(web, jheader, jdata, hostname)
+    web = generate_baremetal_cpus(web, jdata, logical_cpus_indexes)
+    web = generate_cgroup_cpus(web, jdata, logical_cpus_indexes)
+    web = generate_baremetal_memory(web, jdata)
+    web = generate_cgroup_memory(web, jheader, jdata)
+    web = generate_network_traffic(web, jdata)
+    web = generate_disks_io(web, jdata)
+    web = generate_load_avg(web, jheader, jdata)
+    web = generate_topN_procs(web, jdata)
     web.endHtmlHead(generate_config_js(jheader))
     
     print("All data samples parsed correctly")

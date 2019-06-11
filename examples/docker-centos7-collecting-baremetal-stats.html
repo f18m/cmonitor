@@ -61,8 +61,8 @@ function clear_chart() {
 
 /* Utility function used to reset combobox controls: */
 function reset_combo_boxes() {
-  document.getElementById("select_cpu_combobox1").value = "clear_chart";
-  document.getElementById("select_cpu_combobox2").value = "clear_chart";
+  document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
+  document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
 }
 
 function draw_graph1() {
@@ -415,7 +415,7 @@ function show_config_window() {
     <button id="btn_show_config"><b>Configuration</b></button><br/>
   </td><td id="button_table_col">
       </td><td id="button_table_col">
-    <select id="select_cpu_combobox1" onchange="call_function_named(this.value)">
+    <select id="select_combobox_baremetal_cpus" onchange="call_function_named(this.value)">
       <option value="clear_chart">None</option>
       <option value="draw_graph1">CPU0</option>
       <option value="draw_graph2">CPU1</option>

@@ -16,6 +16,8 @@
 #define DEBUGLOG_FUNCTION_START()                                                                                      \
     g_logger.LogDebug("%s() called at line %d of file %s\n", __func__, __LINE__, __FILE__);
 
+#define PROCESS_STATS_INCLUDE_STATM 0
+
 //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
@@ -48,6 +50,27 @@ enum OutputFields {
 // Types
 //------------------------------------------------------------------------------
 
+/*
+ * Structure to store CPU usage specs as reported by Linux kernel
+ * NOTE: all fields specify amount of time, measured in units of USER_HZ
+         (1/100ths of a second on most architectures); this means that if the
+         _delta_ CPU value reported is 60 in mode X, then that mode took 60% of the CPU!
+         IOW there is no need to do any math to produce a percentage, just taking
+         the delta of the absolute, monotonic-increasing value and divide by the time
+*/
+typedef struct cpu_specs_s {
+    long long user;
+    long long nice;
+    long long sys;
+    long long idle;
+    long long iowait;
+    long long hardirq;
+    long long softirq;
+    long long steal;
+    long long guest;
+    long long guestnice;
+} cpu_specs_t;
+
 typedef struct procsinfo_s {
     /* Process owner */
     uid_t uid;
@@ -57,6 +80,7 @@ typedef struct procsinfo_s {
     char pi_comm[64]; // The filename of the executable
     char pi_state;
     int pi_ppid; // The PID of the parent of this process.
+    int pi_tgid; // The Thread group ID of this process
     int pi_pgrp; // The process group ID of the process
     int pi_session; // The session ID of the process.
     int pi_tty_nr; //  The controlling terminal of the process
@@ -97,6 +121,7 @@ typedef struct procsinfo_s {
     unsigned long pi_realtime_priority;
     unsigned long pi_sched_policy;
     unsigned long long pi_delayacct_blkio_ticks;
+#if PROCESS_STATS_INCLUDE_STATM
     /* Process stats for memory */
     unsigned long statm_size; /* total program size, measured in pages */
     unsigned long statm_resident; /* resident set size, measured in pages */
@@ -105,10 +130,17 @@ typedef struct procsinfo_s {
     unsigned long statm_drs; /* data/stack */
     unsigned long statm_lrs; /* library */
     unsigned long statm_dt; /* dirty pages */
-
+#endif
     /* Process stats for disks */
-    unsigned long long read_io; /* storage read bytes */
-    unsigned long long write_io; /* storage write bytes */
+    unsigned long long io_rchar; // includes things such as terminal I/O and is
+                                 // unaffected by whether or not actual physical disk I/O
+                                 // was required (the read might have been satisfied from pagecache).
+    unsigned long long io_wchar; // The number of bytes which this task has caused, or
+                                 // shall cause to be written to disk
+    unsigned long long io_read_bytes; // Attempt to count the number of bytes which this process
+                                      // really did cause to be fetched from the storage layer.
+    unsigned long long io_write_bytes; // Attempt to count the number of bytes which this process
+                                       // caused to be sent to the storage layer.
 } procsinfo_t;
 
 typedef struct proc_topper_s {
@@ -218,6 +250,11 @@ private:
     //------------------------------------------------------------------------------
 
     void proc_stat(double elapsed, bool onlyCgroupAllowedCpus, OutputFields output_opts);
+    void proc_stat_cpu_total(const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu,
+        int max_cpu_count); // utility of proc_stat()
+    int proc_stat_cpu_index(const char* cpu_data, double elapsed_sec, OutputFields output_opts,
+        cpu_specs_t* logical_cpu, bool onlyCgroupAllowedCpus);
+
     void proc_diskstats(double elapsed, OutputFields output_opts);
     void proc_net_dev(double elapsed, OutputFields output_opts);
     void proc_loadavg();

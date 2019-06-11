@@ -45,7 +45,7 @@
 #include <unistd.h>
 
 #define MAX_LOGICAL_CPU (256)
-#define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpuno + 1.0)))
+#define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpu_count + 1.0)))
 #define DELTA_LOGICAL(stat) ((float)(stat - logical_cpu[cpuno].stat) / (float)elapsed_sec)
 
 /*
@@ -97,10 +97,8 @@ void CMonitorCollectorApp::read_data_number(const char* statname, const std::set
     (void)fclose(fp);
 }
 
-/*
-read /proc/stat and unpick
-*/
-void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedCpus, OutputFields output_opts)
+void CMonitorCollectorApp::proc_stat_cpu_total(
+    const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu, int max_cpu_count)
 {
     long long user;
     long long nice;
@@ -112,38 +110,142 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
     long long steal;
     long long guest;
     long long guestnice;
-    // int cpu_total;
-    int count;
+
+    // see http://man7.org/linux/man-pages/man5/proc.5.html
+    // Look for "/proc/stat"
+
+    int count = sscanf(cpu_data, /* cpu USER */
+        "%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", // force newline
+        &user, &nice, &sys, &idle, &iowait, &hardirq, &softirq, &steal, &guest, &guestnice);
+    if (count != 10)
+        return;
+
+    if (output_opts != PF_NONE) {
+        g_output.psubsection_start("cpu_total");
+        switch (output_opts) {
+        case PF_NONE:
+            assert(0);
+            break;
+        case PF_ALL:
+        case PF_USED_BY_CHART_SCRIPT_ONLY:
+            g_output.pdouble("user", DELTA_TOTAL(user)); /* incrementing counter */
+            g_output.pdouble("nice", DELTA_TOTAL(nice)); /* incrementing counter */
+            g_output.pdouble("sys", DELTA_TOTAL(sys)); /* incrementing counter */
+            g_output.pdouble("idle", DELTA_TOTAL(idle)); /* incrementing counter */
+            /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n", total_cpu.idle,
+             * idle, idle-total_cpu.idle); */
+            g_output.pdouble("iowait", DELTA_TOTAL(iowait)); /* incrementing counter */
+            g_output.pdouble("hardirq", DELTA_TOTAL(hardirq)); /* incrementing counter */
+            g_output.pdouble("softirq", DELTA_TOTAL(softirq)); /* incrementing counter */
+            g_output.pdouble("steal", DELTA_TOTAL(steal)); /* incrementing counter */
+            g_output.pdouble("guest", DELTA_TOTAL(guest)); /* incrementing counter */
+            g_output.pdouble("guestnice", DELTA_TOTAL(guestnice)); /* incrementing counter */
+            break;
+        }
+        g_output.psubsection_end();
+    }
+    total_cpu.user = user;
+    total_cpu.nice = nice;
+    total_cpu.sys = sys;
+    total_cpu.idle = idle;
+    total_cpu.iowait = iowait;
+    total_cpu.hardirq = hardirq;
+    total_cpu.softirq = softirq;
+    total_cpu.steal = steal;
+    total_cpu.guest = guest;
+    total_cpu.guestnice = guestnice;
+}
+
+int CMonitorCollectorApp::proc_stat_cpu_index(const char* cpu_data, double elapsed_sec, OutputFields output_opts,
+    cpu_specs_t* logical_cpu, bool onlyCgroupAllowedCpus)
+{
+    long long user;
+    long long nice;
+    long long sys;
+    long long idle;
+    long long iowait;
+    long long hardirq;
+    long long softirq;
+    long long steal;
+    long long guest;
+    long long guestnice;
     int cpuno;
+
+    // see http://man7.org/linux/man-pages/man5/proc.5.html
+    // Look for "/proc/stat"
+
+    int count = sscanf(cpu_data, /* cpuNNN USER*/
+        "%d %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", // force newline
+        &cpuno, &user, &nice, &sys, &idle, &iowait, &hardirq, &softirq, &steal, &guest, &guestnice);
+    if (count != 11)
+        return -1;
+
+    if (cpuno >= MAX_LOGICAL_CPU)
+        return -1;
+    if (onlyCgroupAllowedCpus && !cgroup_is_allowed_cpu(cpuno))
+        return -1;
+
+    if (output_opts != PF_NONE) {
+        char label[512];
+        sprintf(label, "cpu%d", cpuno);
+        g_output.psubsection_start(label);
+
+        switch (output_opts) {
+        case PF_NONE:
+            assert(0);
+            break;
+        case PF_ALL:
+        case PF_USED_BY_CHART_SCRIPT_ONLY:
+            g_output.pdouble("user", DELTA_LOGICAL(user)); /* counter */
+            g_output.pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
+            g_output.pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
+            g_output.pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
+            /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n",
+             * logical_cpu[cpuno].idle, idle, idle-logical_cpu[cpuno].idle); */
+            g_output.pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
+            g_output.pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
+            g_output.pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
+            g_output.pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
+            g_output.pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
+            g_output.pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
+            break;
+        }
+        g_output.psubsection_end();
+    }
+    logical_cpu[cpuno].user = user;
+    logical_cpu[cpuno].nice = nice;
+    logical_cpu[cpuno].sys = sys;
+    logical_cpu[cpuno].idle = idle;
+    logical_cpu[cpuno].iowait = iowait;
+    logical_cpu[cpuno].hardirq = hardirq;
+    logical_cpu[cpuno].softirq = softirq;
+    logical_cpu[cpuno].steal = steal;
+    logical_cpu[cpuno].guest = guest;
+    logical_cpu[cpuno].guestnice = guestnice;
+
+    return cpuno;
+}
+
+/*
+read /proc/stat and unpick
+*/
+void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedCpus, OutputFields output_opts)
+{
+    int count;
     long long value;
 
     /* Static data */
     static FILE* fp = 0;
     static char line[8192];
-    static int max_cpuno;
-
-    /* structure to recall previous values */
-    struct utilisation {
-        long long user;
-        long long nice;
-        long long sys;
-        long long idle;
-        long long iowait;
-        long long hardirq;
-        long long softirq;
-        long long steal;
-        long long guest;
-        long long guestnice;
-    };
+    static int max_cpu_count;
 
     static long long old_ctxt;
     static long long old_processes;
-    static struct utilisation total_cpu;
-    static struct utilisation logical_cpu[MAX_LOGICAL_CPU];
-    char label[512];
+    static cpu_specs_t total_cpu;
+    static cpu_specs_t logical_cpu[MAX_LOGICAL_CPU];
 
     DEBUGLOG_FUNCTION_START();
-    g_logger.LogDebug("proc_stat(%.4f) max_cpuno=%d\n", elapsed_sec, max_cpuno);
+    g_logger.LogDebug("proc_stat(%.4f) max_cpu_count=%d\n", elapsed_sec, max_cpu_count);
     if (fp == 0) {
         if ((fp = fopen("/proc/stat", "r")) == NULL) {
             g_logger.LogError("failed to open file /proc/stat");
@@ -155,99 +257,18 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
 
     if (output_opts != PF_NONE)
         g_output.psection_start("stat");
-    while (fgets(line, 1000, fp) != NULL) {
-        // len = strlen(line);
 
+    while (fgets(line, 1000, fp) != NULL) {
         if (!strncmp(line, "cpu", 3)) {
             if (!strncmp(line, "cpu ", 4)) {
                 if (!onlyCgroupAllowedCpus) {
-                    // cpu_total = 1;
-                    count = sscanf(&line[4], /* cpu USER */
-                        "%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", &user, &nice, &sys, &idle, &iowait,
-                        &hardirq, &softirq, &steal, &guest, &guestnice);
-                    if (output_opts != PF_NONE) {
-                        g_output.psubsection_start("cpu_total");
-                        switch (output_opts) {
-                        case PF_NONE:
-                            assert(0);
-                            break;
-                        case PF_ALL:
-                        case PF_USED_BY_CHART_SCRIPT_ONLY:
-                            g_output.pdouble("user", DELTA_TOTAL(user)); /* incrementing counter */
-                            g_output.pdouble("nice", DELTA_TOTAL(nice)); /* incrementing counter */
-                            g_output.pdouble("sys", DELTA_TOTAL(sys)); /* incrementing counter */
-                            g_output.pdouble("idle", DELTA_TOTAL(idle)); /* incrementing counter */
-                            /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n", total_cpu.idle,
-                             * idle, idle-total_cpu.idle); */
-                            g_output.pdouble("iowait", DELTA_TOTAL(iowait)); /* incrementing counter */
-                            g_output.pdouble("hardirq", DELTA_TOTAL(hardirq)); /* incrementing counter */
-                            g_output.pdouble("softirq", DELTA_TOTAL(softirq)); /* incrementing counter */
-                            g_output.pdouble("steal", DELTA_TOTAL(steal)); /* incrementing counter */
-                            g_output.pdouble("guest", DELTA_TOTAL(guest)); /* incrementing counter */
-                            g_output.pdouble("guestnice", DELTA_TOTAL(guestnice)); /* incrementing counter */
-                            break;
-                        }
-                        g_output.psubsection_end();
-                    }
-                    total_cpu.user = user;
-                    total_cpu.nice = nice;
-                    total_cpu.sys = sys;
-                    total_cpu.idle = idle;
-                    total_cpu.iowait = iowait;
-                    total_cpu.hardirq = hardirq;
-                    total_cpu.softirq = softirq;
-                    total_cpu.steal = steal;
-                    total_cpu.guest = guest;
-                    total_cpu.guestnice = guestnice;
+                    proc_stat_cpu_total(&line[4], elapsed_sec, output_opts, total_cpu, max_cpu_count);
                 } // else: do not report the TOTAL cpus if cgroup-mode is on: we report only the stats of CPUs in
                   // current cgroup
             } else {
-                // cpu_total = 0;
-                count = sscanf(&line[3], /* cpuNNN USER*/
-                    "%d %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", &cpuno, &user, &nice, &sys, &idle, &iowait,
-                    &hardirq, &softirq, &steal, &guest, &guestnice);
-                if (cpuno > max_cpuno)
-                    max_cpuno = cpuno;
-                if (cpuno >= MAX_LOGICAL_CPU)
-                    continue;
-                if (onlyCgroupAllowedCpus && !cgroup_is_allowed_cpu(cpuno))
-                    continue;
-                if (output_opts != PF_NONE) {
-                    sprintf(label, "cpu%d", cpuno);
-                    g_output.psubsection_start(label);
-
-                    switch (output_opts) {
-                    case PF_NONE:
-                        assert(0);
-                        break;
-                    case PF_ALL:
-                    case PF_USED_BY_CHART_SCRIPT_ONLY:
-                        g_output.pdouble("user", DELTA_LOGICAL(user)); /* counter */
-                        g_output.pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
-                        g_output.pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
-                        g_output.pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
-                        /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n",
-                         * logical_cpu[cpuno].idle, idle, idle-logical_cpu[cpuno].idle); */
-                        g_output.pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
-                        g_output.pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
-                        g_output.pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
-                        g_output.pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
-                        g_output.pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
-                        g_output.pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
-                        break;
-                    }
-                    g_output.psubsection_end();
-                }
-                logical_cpu[cpuno].user = user;
-                logical_cpu[cpuno].nice = nice;
-                logical_cpu[cpuno].sys = sys;
-                logical_cpu[cpuno].idle = idle;
-                logical_cpu[cpuno].iowait = iowait;
-                logical_cpu[cpuno].hardirq = hardirq;
-                logical_cpu[cpuno].softirq = softirq;
-                logical_cpu[cpuno].steal = steal;
-                logical_cpu[cpuno].guest = guest;
-                logical_cpu[cpuno].guestnice = guestnice;
+                int cpuno = proc_stat_cpu_index(&line[3], elapsed_sec, output_opts, logical_cpu, onlyCgroupAllowedCpus);
+                if (cpuno > max_cpu_count)
+                    max_cpu_count = cpuno;
             }
         }
         if (!strncmp(line, "ctxt", 4)) {
