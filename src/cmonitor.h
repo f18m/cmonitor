@@ -216,7 +216,7 @@ private:
     std::string get_hostname();
     void get_timestamps(std::string& localTime, std::string& utcTime);
     void file_read_one_stat(const char* file, const char* name);
-    void read_data_number(const char* statname, const std::set<std::string>& allowedStatsNames);
+    void proc_read_numeric_stats_from(const char* statname, const std::set<std::string>& allowedStatsNames);
     void psample_date_time(long loop);
     double get_timestamp_sec();
 
@@ -232,6 +232,7 @@ private:
     void header_version();
     void header_lscpu();
     void header_lshw();
+    void header_meminfo();
 
     //------------------------------------------------------------------------------
     // CGroup functions

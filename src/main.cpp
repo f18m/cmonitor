@@ -648,6 +648,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         cgroup_config(); // needs to run _BEFORE_ lscpu() and proc_cpuinfo()
     header_lscpu();
     header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
+    header_meminfo();
     header_lshw();
     g_output.push_header();
 
@@ -705,9 +706,9 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         }
 
         if (g_cfg.m_nCollectFlags & PK_MEMORY) {
-            read_data_number("meminfo", charted_stats_from_meminfo);
+            proc_read_numeric_stats_from("meminfo", charted_stats_from_meminfo);
             if (g_cfg.m_nOutputFields == PF_ALL)
-                read_data_number("vmstat", std::set<std::string>());
+                proc_read_numeric_stats_from("vmstat", std::set<std::string>());
             if (g_cfg.m_nCollectFlags & PK_CGROUPS) {
                 // collect memory stats for current cgroup:
                 cgroup_proc_memory(charted_stats_from_cgroup_memory);

@@ -56,7 +56,8 @@ name: number
 name: number kB
 
 */
-void CMonitorCollectorApp::read_data_number(const char* statname, const std::set<std::string>& allowedStatsNames)
+void CMonitorCollectorApp::proc_read_numeric_stats_from(
+    const char* statname, const std::set<std::string>& allowedStatsNames)
 {
     FILE* fp = 0;
     char line[1024];
@@ -76,22 +77,33 @@ void CMonitorCollectorApp::read_data_number(const char* statname, const std::set
     g_output.psection_start(label);
     while (fgets(line, 1000, fp) != NULL) {
         len = strlen(line);
+        bool is_kb = false;
         for (i = 0; i < len; i++) {
+
+            // escape characters that we don't like in JSON output:
             if (line[i] == '(')
                 line[i] = '_';
             if (line[i] == ')')
                 line[i] = ' ';
             if (line[i] == ':')
                 line[i] = ' ';
-            if (line[i] == '\n')
+            if (line[i] == '\n') {
                 line[i] = 0;
+                if (i > 3 && line[i - 2] == 'k' && line[i - 1] == 'B')
+                    is_kb = true;
+            }
         }
         sscanf(line, "%s %s", label, number);
         // g_logger.LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr, atoll(numstr));
 
         if (allowedStatsNames.empty() /* all stats must be put in output */
-            || allowedStatsNames.find(label) != allowedStatsNames.end())
-            g_output.plong(label, atoll(number));
+            || allowedStatsNames.find(label) != allowedStatsNames.end()) {
+            long long num = atoll(number);
+            if (is_kb)
+                num *= 1000;
+
+            g_output.plong(label, num);
+        }
     }
     g_output.psection_end();
     (void)fclose(fp);

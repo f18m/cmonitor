@@ -43,17 +43,30 @@
 #define MIN_ELAPSED_SECS (0.1)
 #define PAGESIZE_BYTES (1024 * 4)
 
-/* CPU CLOCK TIME * USED MEMORY
- *
- *
- * */
-#define PROCESS_SCORE_IGNORE_THRESHOLD (1000)
+/* Put a threshold on the CPU percentage basically:
+ */
+//#define PROCESS_SCORE_IGNORE_THRESHOLD (1000)
+#define PROCESS_SCORE_IGNORE_THRESHOLD (1)
 
 typedef std::map<std::string /* controller type */, std::string /* path */> cgroup_paths_map_t;
 
 // ----------------------------------------------------------------------------------
 // C++ Helper functions
 // ----------------------------------------------------------------------------------
+
+uint64_t compute_proc_score(const procsinfo_t* current_stats, const procsinfo_t* prev_stats, double elapsed_secs)
+{
+    static double ticks_per_sec = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
+
+    uint64_t cputime_clock_ticks = // force newline
+        (current_stats->pi_utime - prev_stats->pi_utime) + // force newline
+        (current_stats->pi_stime - prev_stats->pi_stime);
+
+    // give a score which is linear in both CPU time and virtual memory size:
+    // return (cputime_clock_ticks * ticks_per_sec) * current_stats->pi_vsize;
+
+    return cputime_clock_ticks * ticks_per_sec;
+}
 
 /* Lookup the right process state string */
 const char* get_state(char n)
@@ -86,18 +99,6 @@ const char* get_state(char n)
         snprintf(duff, 64, "State=%d(%c)", n, n);
         return duff;
     }
-}
-
-uint64_t compute_proc_score(const procsinfo_t* current_stats, const procsinfo_t* prev_stats, double elapsed_secs)
-{
-    static double ticks_per_sec = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
-
-    uint64_t cputime_clock_ticks = // force newline
-        (current_stats->pi_utime - prev_stats->pi_utime) + // force newline
-        (current_stats->pi_stime - prev_stats->pi_stime);
-
-    // give a score which is linear in both CPU time and virtual memory size:
-    return (cputime_clock_ticks * ticks_per_sec) * current_stats->pi_vsize;
 }
 
 bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p)
@@ -159,15 +160,15 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p)
         count++;
         count++;
 
-        // see http://man7.org/linux/man-pages/man5/proc.5.html
-        /* column 1 and 2 handled above */
+        // see http://man7.org/linux/man-pages/man5/proc.5.html, search for /proc/[pid]/stat
+        /* column 1 and 2 are handled above */
         long junk;
         ret = sscanf(&buf[count],
             "%c %d %d %d %d %d %lu %lu %lu %lu " /* from 3 to 13 */
             "%lu %lu %lu %ld %ld %ld %ld %ld %ld %lu " /* from 14 to 23 */
             "%lu %ld %lu %lu %lu %lu %lu %lu %lu %lu " /* from 24 to 33 */
             "%lu %lu %lu %lu %lu %d %d %lu %lu %llu", /* from 34 to 42 */
-            &p->pi_state, /*3 numbers taken from "man proc" */
+            &p->pi_state, /*3 - these numbers are taken from "man proc" */
             &p->pi_ppid, /*4*/
             &p->pi_pgrp, /*5*/
             &p->pi_session, /*6*/
@@ -181,18 +182,18 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p)
             &p->pi_utime, /*14*/
             &p->pi_stime, /*15*/
             &p->pi_child_utime, /*16*/
-            &p->pi_child_stime, /*18*/
-            &p->pi_priority, /*19*/
-            &p->pi_nice, /*20*/
-            &p->pi_num_threads, /*21*/
-            &junk, /*22*/
-            &p->pi_start_time, /*23*/
-            &p->pi_vsize, /*24*/
-            &p->pi_rss, /*25*/
-            &p->pi_rsslimit, /*26*/
-            &p->pi_start_code, /*27*/
-            &p->pi_end_code, /*28*/
-            &p->pi_start_stack, /*29*/
+            &p->pi_child_stime, /*17*/
+            &p->pi_priority, /*18*/
+            &p->pi_nice, /*19*/
+            &p->pi_num_threads, /*20*/
+            &junk, /*21*/
+            &p->pi_start_time, /*22*/
+            &p->pi_vsize, /*23*/
+            &p->pi_rss, /*24*/
+            &p->pi_rsslimit, /*25*/
+            &p->pi_start_code, /*26*/
+            &p->pi_end_code, /*27*/
+            &p->pi_start_stack, /*28*/
             &p->pi_esp, /*29*/
             &p->pi_eip, /*30*/
             &p->pi_signal_pending, /*31*/
@@ -824,7 +825,7 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
 #define TIMEDELTA(member) (CURRENT(member) - PREVIOUS(member))
 #define COUNTDELTA(member) ((PREVIOUS(member) > CURRENT(member)) ? 0 : (CURRENT(member) - PREVIOUS(member)))
 
-        sprintf(str, "process_%ld", (long)CURRENT(pi_pid));
+        sprintf(str, "pid_%ld", (long)CURRENT(pi_pid));
         g_output.psubsection_start(str);
         g_output.plong("cmon_score", score);
 
@@ -832,8 +833,7 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
          * Process fields
          */
         g_output.pstring("cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
-        g_output.plong(
-            "pid", CURRENT(pi_pid)); // Note to self: the directory owners /proc/PID is the process owner = worth adding
+        g_output.plong("pid", CURRENT(pi_pid));
         g_output.plong("ppid", CURRENT(pi_ppid));
         g_output.plong("pgrp", CURRENT(pi_pgrp));
         g_output.plong("priority", CURRENT(pi_priority));
@@ -878,8 +878,8 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
 #endif
         g_output.pdouble("mem_minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec);
         g_output.pdouble("mem_major_fault", COUNTDELTA(pi_majflt) / elapsed_sec);
-        g_output.plong("mem_vsize_bytes", CURRENT(pi_vsize));
-        g_output.plong("mem_rss_pages", CURRENT(pi_rss));
+        g_output.plong("mem_virtual_bytes", CURRENT(pi_vsize));
+        g_output.plong("mem_rss_bytes", CURRENT(pi_rss) * PAGESIZE_BYTES);
         g_output.plong("mem_rss_limit", CURRENT(pi_rsslimit));
 
         /*
@@ -913,15 +913,15 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
          * I/O fields
          */
         g_output.pdouble("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
-        g_output.pdouble("io_rchar", TIMEDELTA(io_rchar) / elapsed_sec);
-        g_output.pdouble("io_wchar", TIMEDELTA(io_wchar) / elapsed_sec);
-        g_output.pdouble("io_read_bytes", TIMEDELTA(io_read_bytes) / elapsed_sec);
-        g_output.pdouble("io_write_bytes", TIMEDELTA(io_write_bytes) / elapsed_sec);
+        g_output.plong("io_rchar", TIMEDELTA(io_rchar) / elapsed_sec);
+        g_output.plong("io_wchar", TIMEDELTA(io_wchar) / elapsed_sec);
+        g_output.plong("io_read_bytes", TIMEDELTA(io_read_bytes) / elapsed_sec);
+        g_output.plong("io_write_bytes", TIMEDELTA(io_write_bytes) / elapsed_sec);
 
         // provide also the total, monotonically-increasing I/O time:
         // this is used by chart script to produce the "top of the topper" chart
-        g_output.pdouble("io_total_read", CURRENT(io_rchar));
-        g_output.pdouble("io_total_write", CURRENT(io_wchar));
+        g_output.plong("io_total_read", CURRENT(io_rchar));
+        g_output.plong("io_total_write", CURRENT(io_wchar));
 
         g_output.psubsection_end();
         nProcsOverThreshold++;

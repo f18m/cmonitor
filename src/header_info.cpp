@@ -358,6 +358,15 @@ void CMonitorCollectorApp::header_cpuinfo()
     }
 }
 
+void CMonitorCollectorApp::header_meminfo()
+{
+    std::set<std::string> static_memory_stats; // that never change at runtime
+    static_memory_stats.insert("MemTotal");
+    static_memory_stats.insert("HugePages_Total");
+    static_memory_stats.insert("Hugepagesize");
+    proc_read_numeric_stats_from("meminfo", static_memory_stats);
+}
+
 void CMonitorCollectorApp::header_version()
 {
     static FILE* fp = 0;

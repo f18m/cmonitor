@@ -617,6 +617,10 @@ def generate_config_js(jheader):
         if jheader['cmonitor']['sample_num'] == 0:
             jheader['cmonitor']['sample_num'] = "Infinite"
           
+    if 'proc_meminfo' in jheader:
+        jheader['proc_meminfo']['MemTotal'] = sizeof_fmt(int(jheader['proc_meminfo']['MemTotal']))
+        jheader['proc_meminfo']['Hugepagesize'] = sizeof_fmt(int(jheader['proc_meminfo']['Hugepagesize']))
+
     config_str = ""
     config_str += '\nfunction show_config_window() {\n'
     config_str += '    if (g_configWindow) g_configWindow.close();\n'
@@ -639,6 +643,8 @@ def generate_config_js(jheader):
     if 'cgroup_config' in jheader:
         config_str += configdump("cgroup_config", "Linux Control Group (CGroup) Configuration")
     config_str += configdump("lscpu", "CPU Overview")
+    if 'proc_meminfo' in jheader:
+        config_str += configdump("proc_meminfo", "Memory Overview")
     #config_str += configdump("cpuinfo", "CPU Core Details")
     config_str += '      </table>\\\n'
     config_str += '      <h2>Monitoring Summary</h2>\\\n'
@@ -649,12 +655,14 @@ def generate_config_js(jheader):
     config_str += '");\n}\n\n'
     return config_str
 
-def generate_topN_procs(web, jdata, numProcsToShow=20):
+def generate_topN_procs(web, header, jdata, numProcsToShow=20):
     # if process data was not collected, just return:
     if 'cgroup_tasks' not in jdata[0]:
         return web
     
-    top = {}  # start with empty dictionary
+    # build a dictionary containing cumulative metrics for CPU/IO/MEM data for each process
+    # along all collected samples
+    process_dict = {}
     max_mem_bytes = 0
     max_io_bytes = 0
     for sample in jdata:
@@ -665,7 +673,7 @@ def generate_topN_procs(web, jdata, numProcsToShow=20):
             cmd = entry['cmd']
             cputime = entry['cpu_usr_total_secs'] + entry['cpu_sys_total_secs']
             iobytes = entry['io_total_read'] + entry['io_total_write']
-            membytes = entry['mem_vsize_bytes']
+            membytes = entry['mem_rss_bytes']    # take RSS, more realistic/useful compared to the "mem_virtual_bytes"
             thepid = entry['pid']
             
             # keep track of maxs:
@@ -674,60 +682,106 @@ def generate_topN_procs(web, jdata, numProcsToShow=20):
             
             if cputime > 0:
                 try:  # update the current entry
-                    top[cmd]["cpu"] = cputime
-                    top[cmd]["io"] = iobytes
-                    top[cmd]["mem"] = membytes
-                    top[cmd]["pid"] = thepid
+                    process_dict[thepid]['cpu'] = cputime
+                    process_dict[thepid]['io'] = iobytes
+                    process_dict[thepid]['mem'] = membytes
+                    process_dict[thepid]['cmd'] = cmd
                 except:  # no current entry so add one
-                    top.update({cmd: { "cpu": cputime,
-                                       "io": iobytes,
-                                       "mem": membytes,
-                                       "pid": thepid} })
+                    process_dict.update({thepid: { 'cpu': cputime,
+                                                   'io': iobytes,
+                                                   'mem': membytes,
+                                                   'cmd': cmd} })
     
+    # now sort all collected processes by the amount of CPU*memory used:
+    # NOTE: sorted() will return just the sorted list of KEYs = PIDs
     def sort_key(d):
-        return top[d]['cpu']*top[cmd]['mem']
+        #return process_dict[d]['cpu'] * process_dict[d]['mem']
+        return process_dict[d]['cpu']
+    topN_process_pids_list = sorted(process_dict, key=sort_key, reverse=True)
+    
+    # truncate to first N:
+    topN_process_pids_list = topN_process_pids_list[0:numProcsToShow]
     
     mem_divider, mem_unit = choose_byte_divider(max_mem_bytes)
     io_divider, io_unit = choose_byte_divider(max_io_bytes)
-    top_sorted_list = sorted(top, key=sort_key, reverse=True)
-    tops = []
     
-    topprocs = GoogleChartsGenericTable(['Command', 'CPU time', 'I/O ' + io_unit, 'Command', 'Memory ' + mem_unit])
-    for i, cmd in enumerate(top_sorted_list):
-        p = top[cmd]
-        print("Processing data for CPU-top-scorer process [%s - %d]" % (cmd, p['pid']))
-        topprocs.addRow([cmd, p['cpu'], p['io']/io_divider, cmd + ' ' + str(p['pid']), p['mem']/mem_divider])
-        tops.append(cmd)
-        if i >= numProcsToShow:
-            break
+    def get_nice_cmd(pid):
+        return '%s (%d)' % (process_dict[pid]['cmd'], pid)
+
+    # now select the N top processes and put their data in a GoogleChart table:
+    topN_process_table = GoogleChartsGenericTable(['Command', 'CPU time', 'I/O ' + io_unit, 'Command', 'Memory ' + mem_unit])
+    for i, pid in enumerate(topN_process_pids_list):
+        p = process_dict[pid]
+        nicecmd = get_nice_cmd(pid)
         
+        print("Processing data for %d-th CPU-top-scorer process [%s]" % (i+1, nicecmd))
+        topN_process_table.addRow([p['cmd'], p['cpu'], p['io']/io_divider, nicecmd, p['mem']/mem_divider])
+    
+    # generate the bubble chart graph:
     web.appendGoogleChart(GoogleChartsGraph(
-                          button_label='CPU/Memory/Disk By Process',
+                          button_label='CPU/Memory/Disk Bubbles',
                           graph_source=GRAPH_SOURCE_DATA_CGROUP,
                           graph_type=GRAPH_TYPE_BUBBLE_CHART,
                           graph_title="CPU/Disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
                           y_axis_title=["CPU time","I/O " + io_unit],
-                          data=topprocs))
+                          data=topN_process_table))
+
+    # now that first pass is done, adjust units for IO & memory
+    mem_divider, mem_unit = choose_byte_divider(header['proc_meminfo']['MemTotal'])
+    
+    # now generate instead a table of CPU/IO/MEMORY usage over time per process:
+    process_table = {}
+    for key in [ 'cpu', 'io', 'mem' ]:
+        process_table[key] = GoogleChartsTimeSeries(['Timestamp'] + [get_nice_cmd(pid) for pid in topN_process_pids_list])
+    for sample in jdata:
+        row = {}
+        for key in [ 'cpu', 'io', 'mem' ]:
+            row[key] = [ sample['timestamp']['datetime'] ]
+            
+        for top_process_pid in topN_process_pids_list:
+            #print(top_process_pid)
+            json_key = 'pid_%s' % top_process_pid
+            if json_key in sample['cgroup_tasks']:
+                top_proc_sample = sample['cgroup_tasks'][json_key]
+                row['cpu'].append(top_proc_sample['cpu_tot'])
+                row['io'].append(top_proc_sample['io_rchar'] + top_proc_sample['io_wchar'])
+                row['mem'].append(top_proc_sample['mem_rss_bytes'] / mem_divider)
+                
+                # keep track of maxs:
+                max_mem_bytes = max(membytes,max_mem_bytes)
+                max_io_bytes = max(iobytes,max_io_bytes)
+            else:
+                # probably this process was born later or dead earlier than this timestamp
+                row['cpu'].append(0)
+                row['io'].append(0)
+                row['mem'].append(0)
+            
+        for key in [ 'cpu', 'io', 'mem' ]:
+            process_table[key].addRow(row[key])
+
+    # produce the 3 graphs "by process":
+    web.appendGoogleChart(GoogleChartsGraph(
+            data=process_table['cpu'],
+            graph_title="CPU usage by process (from cgroup stats)",
+            button_label="CPU by Process",
+            y_axis_title="CPU (%)",
+            graph_source=GRAPH_SOURCE_DATA_CGROUP,
+            stack_state=False))
+    web.appendGoogleChart(GoogleChartsGraph(
+            data=process_table['io'],
+            graph_title="IO usage by process (from cgroup stats)",
+            button_label="IO by Process",
+            y_axis_title="IO Read+Write (Bytes Per Sec)",
+            graph_source=GRAPH_SOURCE_DATA_CGROUP,
+            stack_state=False))
+    web.appendGoogleChart(GoogleChartsGraph(
+            data=process_table['mem'],
+            graph_title="Memory usage by process (from cgroup stats)",
+            button_label="Memory by Process",
+            y_axis_title="RSS Memory (%s)" % mem_unit,
+            graph_source=GRAPH_SOURCE_DATA_CGROUP,
+            stack_state=False))
     return web
-#     top_header = ""
-#     for proc in tops:
-#         top_header += "'" + proc + "',"
-#     top_header = top_header[:-1]
-#     
-#     top_data = ""
-#     for sam in jdata:
-#         top_data += ",['Date(%s)'" % (googledate(sam['timestamp']['datetime']))
-#         for item in tops:
-#             bytes = 0
-#             for proc in sam['processes']:
-#                 p = sam['processes'][proc]
-#                 if p['name'] == item:
-#                     bytes += p['ucpu_time'] + p['scpu_time']
-#             top_data += ", %.1f" % (bytes)
-#         top_data += "]\n"
-#     # print(top_header)
-#         # print(top_data)
-#     return (start_processes, end_processes, process_data_found)
 
 
 def generate_disks_io(web, jdata):
@@ -1003,12 +1057,7 @@ def generate_baremetal_memory(web, jdata):
     # See https://developers.google.com/chart/interactive/docs/reference
     #
     
-    def meminfo_stat_to_bytes(value):
-        # NOTE: all values collected are in kB
-        #print("meminfo_stat_to_bytes: " + str(value))
-        return value * 1000
-
-    mem_total_bytes = meminfo_stat_to_bytes(jdata[0]['proc_meminfo']['MemTotal'])
+    mem_total_bytes = jdata[0]['proc_meminfo']['MemTotal']
     baremetal_memory_stats = GoogleChartsTimeSeries(['Timestamp', 'Used', 'Cached (DiskRead)', 'Free'])
     divider, unit = choose_byte_divider(mem_total_bytes)
 
@@ -1017,7 +1066,7 @@ def generate_baremetal_memory(web, jdata):
             continue  # skip first sample
         meminfo_stats = s['proc_meminfo']
         
-        if meminfo_stat_to_bytes(meminfo_stats['MemTotal']) != mem_total_bytes:
+        if meminfo_stats['MemTotal'] != mem_total_bytes:
             continue  # this is impossible AFAIK (hot swap of memory is not handled!!)
         
         #
@@ -1032,8 +1081,8 @@ def generate_baremetal_memory(web, jdata):
         #
         # see https://access.redhat.com/solutions/406773
         
-        mf = meminfo_stat_to_bytes(meminfo_stats['MemFree'])
-        mc = meminfo_stat_to_bytes(meminfo_stats['Cached'])
+        mf = meminfo_stats['MemFree']
+        mc = meminfo_stats['Cached']
         
         baremetal_memory_stats.addRow([
                 s['timestamp']['datetime'],
@@ -1255,7 +1304,7 @@ def main_process_file(infile, outfile):
     web = generate_network_traffic(web, jdata)
     web = generate_disks_io(web, jdata)
     web = generate_load_avg(web, jheader, jdata)
-    web = generate_topN_procs(web, jdata)
+    web = generate_topN_procs(web, jheader, jdata)
     web.endHtmlHead(generate_config_js(jheader))
     
     print("All data samples parsed correctly")
