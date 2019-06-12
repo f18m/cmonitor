@@ -722,7 +722,7 @@ def generate_topN_procs(web, header, jdata, numProcsToShow=20):
                           button_label='CPU/Memory/Disk Bubbles',
                           graph_source=GRAPH_SOURCE_DATA_CGROUP,
                           graph_type=GRAPH_TYPE_BUBBLE_CHART,
-                          graph_title="CPU/Disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
+                          graph_title="Top %d processes CPU/Disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)" % numProcsToShow,
                           y_axis_title=["CPU time","I/O " + io_unit],
                           data=topN_process_table))
 
@@ -752,9 +752,9 @@ def generate_topN_procs(web, header, jdata, numProcsToShow=20):
                 max_io_bytes = max(iobytes,max_io_bytes)
             else:
                 # probably this process was born later or dead earlier than this timestamp
-                row['cpu'].append(0)
-                row['io'].append(0)
-                row['mem'].append(0)
+                row['cpu'].append(-1)
+                row['io'].append(-1)
+                row['mem'].append(-1)
             
         for key in [ 'cpu', 'io', 'mem' ]:
             process_table[key].addRow(row[key])
@@ -762,21 +762,21 @@ def generate_topN_procs(web, header, jdata, numProcsToShow=20):
     # produce the 3 graphs "by process":
     web.appendGoogleChart(GoogleChartsGraph(
             data=process_table['cpu'],
-            graph_title="CPU usage by process (from cgroup stats)",
+            graph_title="Top %d processes CPU usage by process (from cgroup stats)" % numProcsToShow,
             button_label="CPU by Process",
             y_axis_title="CPU (%)",
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
             stack_state=False))
     web.appendGoogleChart(GoogleChartsGraph(
             data=process_table['io'],
-            graph_title="IO usage by process (from cgroup stats)",
+            graph_title="Top %d processes IO usage by process (from cgroup stats)" % numProcsToShow,
             button_label="IO by Process",
             y_axis_title="IO Read+Write (Bytes Per Sec)",
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
             stack_state=False))
     web.appendGoogleChart(GoogleChartsGraph(
             data=process_table['mem'],
-            graph_title="Memory usage by process (from cgroup stats)",
+            graph_title="Top %d processes memory usage by process (from cgroup stats)" % numProcsToShow,
             button_label="Memory by Process",
             y_axis_title="RSS Memory (%s)" % mem_unit,
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
