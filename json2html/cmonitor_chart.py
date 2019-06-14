@@ -493,6 +493,8 @@ function reset_combo_boxes() {
         self.file.write('  </td><td id="button_table_col">\n')
     
         def write_buttons_for_graph_type(source_data):
+            nwritten_controls = 0
+            
             # find all graphs that will be activated through a combobox
             graphs_combobox = {}
             for num, graph in enumerate(self.graphs, start=1):
@@ -515,6 +517,7 @@ function reset_combo_boxes() {
                         js_name = entry[1]
                         self.file.write('      <option value="draw_%s">%s</option>\n' % (js_name, button_label))
                     self.file.write('    </select>\n')
+                    nwritten_controls+=1
     
             # find in all graphs registered so far all those related to the CGROUP
             for num, graph in enumerate(self.graphs, start=1):
@@ -532,6 +535,10 @@ function reset_combo_boxes() {
                     else:
                         colour = 'black'
                     self.file.write('    <button id="btn_draw_' + graph.js_name + '" style="color:' + colour + '"><b>' + graph.button_label + '</b></button>\n')
+                    nwritten_controls+=1
+                    
+            if nwritten_controls==0:
+                self.file.write('N/A')
     
         write_buttons_for_graph_type(GRAPH_SOURCE_DATA_CGROUP)
         self.file.write('      </td><td id="button_table_col">\n')
