@@ -2696,10 +2696,10 @@ function draw_graph115() {
   var data_graph115 = google.visualization.arrayToDataTable(inflated_data_graph115);
   var options_graph115 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Memory usage in GB (from baremetal stats), STACKED graph",
+    title: "Memory usage in MB (from baremetal stats), STACKED graph",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "GB", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "MB", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };

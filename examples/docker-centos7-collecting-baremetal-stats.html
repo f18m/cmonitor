@@ -188,10 +188,10 @@ function draw_graph6() {
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
   var options_graph6 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Memory usage in GB (from baremetal stats), STACKED graph",
+    title: "Memory usage in MB (from baremetal stats), STACKED graph",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "GB", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "MB", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
@@ -414,7 +414,7 @@ function show_config_window() {
   <td id="button_table_col">
     <button id="btn_show_config"><b>Configuration</b></button><br/>
   </td><td id="button_table_col">
-      </td><td id="button_table_col">
+N/A      </td><td id="button_table_col">
     <select id="select_combobox_baremetal_cpus" onchange="call_function_named(this.value)">
       <option value="clear_chart">None</option>
       <option value="draw_graph1">CPU0</option>

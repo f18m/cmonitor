@@ -1,5 +1,6 @@
 ## TODO collector-side
 
+- Add --num-samples=until-cgroup-alive option
 - Add 'blkio' cgroup data collection
 - Add process thread monitoring
 - Add support for UDP data tx to InfluxDB

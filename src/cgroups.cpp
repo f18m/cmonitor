@@ -101,7 +101,7 @@ const char* get_state(char n)
     }
 }
 
-bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p)
+bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p, OutputFields output_opts)
 {
     FILE* fp;
     char filename[64];
@@ -215,8 +215,7 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p)
         }
     }
 
-#if PROCESS_STATS_INCLUDE_STATM
-    { /* the statm file for the process */
+    if (output_opts == PF_ALL) { /* the statm file for the process */
 
         snprintf(filename, 64, "/proc/%d/statm", pid);
         if ((fp = fopen(filename, "r")) == NULL) {
@@ -239,7 +238,6 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p)
             return false;
         }
     }
-#endif
 
     { /* the status file for the process */
 
@@ -440,87 +438,142 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
 void CMonitorCollectorApp::cgroup_init()
 {
     m_bCGroupsFound = false;
+    m_cgroup_systemd_name = "N/A";
 
     // ABSOLUTE PATH PREFIXES
 
-    if (!get_cgroup_abs_path_prefix_for_this_pid("memory", cgroup_memory_kernel_path)) {
+    if (!get_cgroup_abs_path_prefix_for_this_pid("memory", m_cgroup_memory_kernel_path)) {
         g_logger.LogDebug("Could not find the 'memory' cgroup path prefix. CGroup mode disabled.\n");
         return;
     }
 
     std::string cpuacct_controller_name = "cpu,cpuacct";
-    if (!get_cgroup_abs_path_prefix_for_this_pid(cpuacct_controller_name, cgroup_cpuacct_kernel_path)) {
+    if (!get_cgroup_abs_path_prefix_for_this_pid(cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
 
         // on some Linux distributions, the name of the cgroup has the "cpu" and "cpuacct" names inverted..
         // retry inverting the order:
         cpuacct_controller_name = "cpuacct,cpu";
 
-        if (!get_cgroup_abs_path_prefix_for_this_pid(cpuacct_controller_name, cgroup_cpuacct_kernel_path)) {
+        if (!get_cgroup_abs_path_prefix_for_this_pid(cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
             g_logger.LogDebug("Could not find the 'cpuacct' cgroup path prefix. CGroup mode disabled.\n");
             return;
         }
     }
-    if (!get_cgroup_abs_path_prefix_for_this_pid("cpuset", cgroup_cpuset_kernel_path)) {
+    if (!get_cgroup_abs_path_prefix_for_this_pid("cpuset", m_cgroup_cpuset_kernel_path)) {
         g_logger.LogDebug("Could not find the 'cpuset' cgroup path prefix. CGroup mode disabled.\n");
         return;
     }
 
     // ACTUAL CGROUP PATHS
 
-    cgroup_paths_map_t cgroup_paths;
-    if (!get_cgroup_paths_for_this_pid(cgroup_paths)) {
-        g_logger.LogDebug("Could not get the cgroup paths. CGroup mode disabled.\n");
-        return;
+    if (g_cfg.m_strCGroupName.empty() || g_cfg.m_strCGroupName == "self") {
+
+        // assume the user wants to monitor the same cgroup where cmonitor_collector is running:
+
+        g_logger.LogDebug("No cgroup name provided. Trying to autodetect my own cgroup.");
+
+        cgroup_paths_map_t cgroup_paths;
+        if (!get_cgroup_paths_for_this_pid(cgroup_paths)) {
+            g_logger.LogDebug("Could not get the cgroup paths. CGroup mode disabled.\n");
+            return;
+        }
+
+        g_logger.LogDebug("Found cpuset cgroup mounted at %s\n", m_cgroup_cpuset_kernel_path.c_str());
+        g_logger.LogDebug("Found cpuacct cgroup mounted at %s\n", m_cgroup_cpuacct_kernel_path.c_str());
+        g_logger.LogDebug("Found memory cgroup mounted at %s\n", m_cgroup_memory_kernel_path.c_str());
+
+        // NOTE: in case we're inside Docker or LXC we should be able to find ourselves inside the
+        //       paths composed only by the ABS PREFIXES
+        if (cgroup_init_check_for_our_pid()) {
+            m_cgroup_systemd_name = cgroup_paths["name=systemd"];
+        } else {
+            // try to adjust the full cgroup paths by adding the cgroup paths read from /proc/self/cgroup
+            // to the absolute prefixes: this is typically necessary when running outside Docker/LXC but
+            // just inside systemd:
+            m_cgroup_memory_kernel_path += "/" + cgroup_paths["memory"];
+            m_cgroup_cpuacct_kernel_path += "/" + cgroup_paths[cpuacct_controller_name];
+            m_cgroup_cpuset_kernel_path += "/" + cgroup_paths["cpuset"];
+            g_logger.LogDebug("Adjusting cpuset cgroup path to %s\n", m_cgroup_cpuset_kernel_path.c_str());
+            g_logger.LogDebug("Adjusting cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
+            g_logger.LogDebug("Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
+            if (cgroup_init_check_for_our_pid())
+                m_cgroup_systemd_name = cgroup_paths["name=systemd"];
+        }
+    } else {
+        // verify the provided cgroup name is actually existing on disk:
+        g_logger.LogDebug("Cgroup name [%s] provided. Trying to detect the paths for the actual cgroups to monitor.",
+            m_cgroup_memory_kernel_path.c_str());
+        m_cgroup_memory_kernel_path += "/" + g_cfg.m_strCGroupName;
+        m_cgroup_cpuacct_kernel_path += "/" + g_cfg.m_strCGroupName;
+        m_cgroup_cpuset_kernel_path += "/" + g_cfg.m_strCGroupName;
+        if (!file_or_dir_exists(m_cgroup_memory_kernel_path.c_str())) {
+            g_logger.LogError("Cannot find the cgroup directory corresponding to the provided cgroup name: directory "
+                              "[%s] does not exist. CGroup mode disabled.\n",
+                m_cgroup_memory_kernel_path.c_str());
+            return;
+        }
+
+        m_cgroup_systemd_name = g_cfg.m_strCGroupName;
     }
 
-    // now create the full cgroup names by adding the cgroup path to the prefixes:
-    cgroup_memory_kernel_path += "/" + cgroup_paths["memory"];
-    cgroup_cpuacct_kernel_path += "/" + cgroup_paths[cpuacct_controller_name];
-    cgroup_cpuset_kernel_path += "/" + cgroup_paths["cpuset"];
+    // READ LIMITS IMPOSED BY CGROUPS
 
-    // CGROUP CHECKS
-    // now if we got the right paths, we should be able to find our pid in all these cgroups:
-
-    pid_t ourPid = getpid();
-
-    if (!search_integer(cgroup_memory_kernel_path + "/tasks", uint64_t(ourPid))) {
-        g_logger.LogDebug("Could not find our PID in the 'memory' cgroup. CGroup mode disabled.\n");
-        return;
-    }
-
-    if (!search_integer(cgroup_cpuacct_kernel_path + "/tasks", uint64_t(ourPid))) {
-        g_logger.LogDebug("Could not find our PID in the 'cpuacct' cgroup. CGroup mode disabled.\n");
-        return;
-    }
-
-    if (!search_integer(cgroup_cpuset_kernel_path + "/tasks", uint64_t(ourPid))) {
-        g_logger.LogDebug("Could not find our PID in the 'cpuset' cgroup. CGroup mode disabled.\n");
-        return;
-    }
-
-    if (!read_integer(cgroup_memory_kernel_path + "/memory.limit_in_bytes", cgroup_memory_limit_bytes)) {
+    if (!read_integer(m_cgroup_memory_kernel_path + "/memory.limit_in_bytes", m_cgroup_memory_limit_bytes)) {
         g_logger.LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
-    if (!read_from_system_cpu_for_current_cgroup(cgroup_cpuset_kernel_path, cgroup_cpus)) {
+    if (!read_from_system_cpu_for_current_cgroup(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
         g_logger.LogDebug("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
         return;
     }
-    if (cgroup_memory_limit_bytes == 0) {
+    if (m_cgroup_memory_limit_bytes == 0) {
         g_logger.LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
 
-    cgroup_systemd_name = cgroup_paths["name=systemd"];
-
     // cpuset and memory cgroups found:
     m_bCGroupsFound = true;
-    g_logger.LogDebug("CGroup name is %s\n", cgroup_systemd_name.c_str());
+    g_logger.LogDebug("CGroup monitoring successfully enabled. CGroup name is %s\n", m_cgroup_systemd_name.c_str());
     g_logger.LogDebug("Found cpuset cgroup limiting to CPUs: %s, mounted at %s\n",
-        stl_container2string(cgroup_cpus, ",").c_str(), cgroup_cpuset_kernel_path.c_str());
-    g_logger.LogDebug("Found cpuacct cgroup mounted at %s\n", cgroup_cpuacct_kernel_path.c_str());
-    g_logger.LogDebug("Found memory cgroup limiting to Bytes: %lu, mounted at %s\n", cgroup_memory_limit_bytes,
-        cgroup_memory_kernel_path.c_str());
+        stl_container2string(m_cgroup_cpus, ",").c_str(), m_cgroup_cpuset_kernel_path.c_str());
+    g_logger.LogDebug("Found cpuacct cgroup mounted at %s\n", m_cgroup_cpuacct_kernel_path.c_str());
+    g_logger.LogDebug("Found memory cgroup limiting to Bytes: %lu, mounted at %s\n", m_cgroup_memory_limit_bytes,
+        m_cgroup_memory_kernel_path.c_str());
+}
+
+bool CMonitorCollectorApp::cgroup_init_check_for_our_pid()
+{
+    // CGROUP CHECKS
+    // now if we got the right paths, we should be able to find our pid in all these cgroups
+    // NOTE: depending on the container technology (Docker, LXC or LXD) or on the absence of containers
+    //       but presence of cgroups (like those of e.g. systemd) we may have a masquerated PID
+    //       (e.g. PID '8' inside a Docker container while the real PID is 2348 on baremetal)
+
+    pid_t ourPid = getpid();
+    bool found = true;
+
+    if (search_integer(m_cgroup_memory_kernel_path + "/tasks", uint64_t(ourPid)))
+        g_logger.LogDebug("Successfully found our PID %d in the 'memory' cgroup.\n", ourPid);
+    else {
+        g_logger.LogDebug("Could not find our PID %d in the 'memory' cgroup.\n", ourPid);
+        found = false;
+    }
+
+    if (search_integer(m_cgroup_cpuacct_kernel_path + "/tasks", uint64_t(ourPid)))
+        g_logger.LogDebug("Successfully found our PID %d in the 'cpuacct' cgroup.\n", ourPid);
+    else {
+        g_logger.LogDebug("Could not find our PID %d in the 'cpuacct' cgroup.\n", ourPid);
+        found = false;
+    }
+
+    if (search_integer(m_cgroup_cpuset_kernel_path + "/tasks", uint64_t(ourPid)))
+        g_logger.LogDebug("Successfully found our PID %d in the 'cpuset' cgroup.\n", ourPid);
+    else {
+        g_logger.LogDebug("Could not find our PID %d in the 'cpuset' cgroup.\n", ourPid);
+        found = false;
+    }
+
+    return found;
 }
 
 void CMonitorCollectorApp::cgroup_config()
@@ -529,14 +582,14 @@ void CMonitorCollectorApp::cgroup_config()
         return;
 
     g_output.psection_start("cgroup_config");
-    g_output.pstring("name", cgroup_systemd_name.c_str());
-    g_output.pstring("memory_path", &cgroup_memory_kernel_path[0]);
-    g_output.pstring("cpuacct_path", &cgroup_cpuacct_kernel_path[0]);
-    g_output.pstring("cpuset_path", &cgroup_cpuset_kernel_path[0]);
+    g_output.pstring("name", m_cgroup_systemd_name.c_str());
+    g_output.pstring("memory_path", &m_cgroup_memory_kernel_path[0]);
+    g_output.pstring("cpuacct_path", &m_cgroup_cpuacct_kernel_path[0]);
+    g_output.pstring("cpuset_path", &m_cgroup_cpuset_kernel_path[0]);
 
-    std::string tmp = stl_container2string(cgroup_cpus, ",");
+    std::string tmp = stl_container2string(m_cgroup_cpus, ",");
     g_output.pstring("cpus", &tmp[0]);
-    g_output.plong("memory_limit_bytes", cgroup_memory_limit_bytes);
+    g_output.plong("memory_limit_bytes", m_cgroup_memory_limit_bytes);
     g_output.psection_end();
 }
 
@@ -544,7 +597,7 @@ bool CMonitorCollectorApp::cgroup_is_allowed_cpu(int cpu)
 {
     if (!m_bCGroupsFound)
         return true; // allowed
-    return cgroup_cpus.find(cpu) != cgroup_cpus.end();
+    return m_cgroup_cpus.find(cpu) != m_cgroup_cpus.end();
 }
 
 void CMonitorCollectorApp::cgroup_proc_memory(const std::set<std::string>& allowedStatsNames)
@@ -565,7 +618,7 @@ void CMonitorCollectorApp::cgroup_proc_memory(const std::set<std::string>& allow
     char label[512];
 
     if (fp == 0) {
-        std::string path = cgroup_memory_kernel_path + "/memory.stat";
+        std::string path = m_cgroup_memory_kernel_path + "/memory.stat";
         if ((fp = fopen(path.c_str(), "r")) == NULL) {
             fp = 0;
             return;
@@ -597,7 +650,7 @@ void CMonitorCollectorApp::cgroup_proc_memory(const std::set<std::string>& allow
             g_output.plong(label, value);
     }
 
-    if (read_integer(cgroup_memory_kernel_path + "/memory.failcnt", value))
+    if (read_integer(m_cgroup_memory_kernel_path + "/memory.failcnt", value))
         g_output.plong("failcnt", value);
 
     g_output.psection_end();
@@ -632,8 +685,8 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
     // non-static data:
     char label[512];
 
-    std::string path = cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
-    if (file_exists(path.c_str())) {
+    std::string path = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
+    if (file_or_dir_exists(path.c_str())) {
 
         // this system supports per-cpu system/user stats:
 
@@ -642,7 +695,7 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
             return;
 
         std::vector<uint64_t> counter_nsec_user_mode;
-        if (!read_cpuacct_line(cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_user", counter_nsec_user_mode))
+        if (!read_cpuacct_line(m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_user", counter_nsec_user_mode))
             return;
 
         if (counter_nsec_sys_mode.size() != counter_nsec_user_mode.size())
@@ -701,7 +754,7 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         // just get the per-cpu total:
 
         std::vector<uint64_t> counter_nsec_user_mode;
-        if (!read_cpuacct_line(cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu", counter_nsec_user_mode))
+        if (!read_cpuacct_line(m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu", counter_nsec_user_mode))
             return;
         if (counter_nsec_user_mode.empty())
             return;
@@ -737,9 +790,9 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 
 bool CMonitorCollectorApp::cgroup_collect_pids(std::vector<pid_t>& pids)
 {
-    std::string path = cgroup_cpuacct_kernel_path + "/tasks";
+    std::string path = m_cgroup_cpuacct_kernel_path + "/tasks";
     g_logger.LogDebug("Trying to read tasks for my cgroup from %s.\n", path.c_str());
-    if (!file_exists(path.c_str()))
+    if (!file_or_dir_exists(path.c_str()))
         return false;
 
     std::ifstream inputf(path);
@@ -758,7 +811,7 @@ bool CMonitorCollectorApp::cgroup_collect_pids(std::vector<pid_t>& pids)
     return true;
 }
 
-void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
+void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts)
 {
     char str[256];
 
@@ -780,7 +833,7 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
     for (size_t i = 0; i < all_pids.size(); i++) {
         procsinfo_t procData;
         memset(&procData, 0, sizeof(procData));
-        cgroup_proc_procsinfo(all_pids[i], &procData);
+        cgroup_proc_procsinfo(all_pids[i], &procData, output_opts);
 
         // FIXME: allow to process threads
         if (procData.pi_pid == procData.pi_tgid)
@@ -789,7 +842,7 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
         // g_logger.LogDebug("Found thread %d %d", procData.pi_pid, procData.pi_tgid);
     }
 
-    if (!print)
+    if (output_opts == PF_NONE)
         return;
 
     // Sort the processes by their "score" by inserting them into an ordered map
@@ -869,13 +922,13 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
         /*
          * Memory fields
          */
-#if PROCESS_STATS_INCLUDE_STATM // not really useful
-        g_output.plong("mem_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
-        g_output.plong("mem_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
-        g_output.plong("mem_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
-        g_output.plong("mem_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
-        g_output.plong("mem_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
-#endif
+        if (output_opts == PF_ALL) {
+            g_output.plong("mem_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
+            g_output.plong("mem_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
+            g_output.plong("mem_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
+            g_output.plong("mem_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
+            g_output.plong("mem_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
+        }
         g_output.pdouble("mem_minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec);
         g_output.pdouble("mem_major_fault", COUNTDELTA(pi_majflt) / elapsed_sec);
         g_output.plong("mem_virtual_bytes", CURRENT(pi_vsize));
@@ -885,7 +938,7 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
         /*
          * Signal fields
          */
-#ifdef PROCESS_DEBUGING_ADDRESSES_SIGNALS
+#if PROCESS_DEBUGGING_ADDRESSES_SIGNALS
         /* NOT INCLUDED AS THEY ARE FOR DEBUGGING AND NOT PERFORMANCE TUNING */
         g_output.phex("start_code", CURRENT(pi_start_code));
         g_output.phex("end_code", CURRENT(pi_end_code));
@@ -900,14 +953,12 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, bool print)
         g_output.phex("wchan", CURRENT(pi_wchan));
         /* NOT INCLUDED AS THEY ARE FOR DEBUGGING AND NOT PERFORMANCE TUNING */
 #endif
-#if 0 // not really useful
-        g_output.plong("swap_pages", CURRENT(pi_swap_pages));
-        g_output.plong("child_swap_pages", CURRENT(pi_child_swap_pages));
-#endif
-#if 0 // not really useful
-        g_output.plong("realtime_priority", CURRENT(pi_realtime_priority));
-        g_output.plong("sched_policy", CURRENT(pi_sched_policy));
-#endif
+        if (output_opts == PF_ALL) {
+            g_output.plong("swap_pages", CURRENT(pi_swap_pages));
+            g_output.plong("child_swap_pages", CURRENT(pi_child_swap_pages));
+            g_output.plong("realtime_priority", CURRENT(pi_realtime_priority));
+            g_output.plong("sched_policy", CURRENT(pi_sched_policy));
+        }
 
         /*
          * I/O fields

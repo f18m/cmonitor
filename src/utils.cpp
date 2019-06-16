@@ -123,7 +123,7 @@ bool string2int(const std::string& str, uint64_t& result)
     return true;
 }
 
-bool file_exists(const char* filename)
+bool file_or_dir_exists(const char* filename)
 {
     struct stat buffer;
     int exist = stat(filename, &buffer);
@@ -232,13 +232,20 @@ bool parse_string_with_multiple_ranges(const std::string& data, std::set<int>& r
 bool search_integer(std::string filePath, uint64_t valueToSearch)
 {
     FILE* stream = fopen(filePath.c_str(), "r");
-    if (!stream)
+    if (!stream) {
+        g_logger.LogDebug("Cannot open file [%s]", filePath.c_str());
         return false; // file does not exist or not readable
+    }
 
+#define MAX_LINE_LEN 1024
+    char line[MAX_LINE_LEN];
     uint64_t value;
-    while (fscanf(stream, "%lu", &value) == 1) {
-        if (value == valueToSearch)
-            return true; // found!
+    while (fgets(line, MAX_LINE_LEN, stream) != NULL) {
+        // g_logger.LogDebug("Searching for %d into [%s]", valueToSearch, line);
+        if (sscanf(line, "%lu", &value) == 1) {
+            if (value == valueToSearch)
+                return true; // found!
+        }
     }
     fclose(stream);
 
@@ -248,8 +255,10 @@ bool search_integer(std::string filePath, uint64_t valueToSearch)
 bool read_integer(std::string filePath, uint64_t& value)
 {
     FILE* stream = fopen(filePath.c_str(), "r");
-    if (!stream)
+    if (!stream) {
+        g_logger.LogDebug("Cannot open file [%s]", filePath.c_str());
         return false; // file does not exist or not readable
+    }
 
     // read a single integer from the file
     value = 0;

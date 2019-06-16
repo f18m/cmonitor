@@ -7,7 +7,8 @@ EXAMPLE_JSON_FILES=\
 	baremetal2.json.gz \
 	docker-centos7-collecting-baremetal-stats.json.gz \
 	docker-centos7-userapp-with-embedded-collector.json.gz \
-	docker-ubuntu1804-userapp-with-embedded-collector.json.gz
+	docker-ubuntu1804-userapp-with-embedded-collector.json.gz \
+	docker-userapp.json.gz
 
 all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
@@ -30,12 +31,18 @@ regen_baremetal1:
 	@echo "Launching load simulator to have some CPu at 100% and so on..."
 	./example-load.sh &
 	@echo "Regenerating example JSON... this will take about 3*60secs."
-	@../src/cmonitor_collector --sampling-interval=3 --num-samples=60 --foreground --output-filename baremetal1
+	@../src/cmonitor_collector --sampling-interval=10 --num-samples=60 --foreground --output-filename baremetal1 --debug
 	@jq -e . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED !!!" ; exit 10 )
+
+#
+# NOTE: baremetal2 is a real-world example and thus cannot be regenerated just like others
+#
 
 
 #
 # docker examples:
+#  - dockerized cmonitor monitoring the baremetal
+#  - dockerized cmonitor embedded inside a docker container
 #
 
 regen_docker_examples:
@@ -46,6 +53,25 @@ regen_docker_examples:
 		sleep 10 ; \
 	done
 
+attach_running_docker:
+	docker exec -i -t ubuntu1804-cmonitor-example /bin/bash
+
+
+# docker example:
+#  - monitoring of a docker container from the baremetal
+
+regen_docker_userapp:
+	cd docker-userapp-to-monitor && make
+	sleep 3
+	@echo "Now running cmonitor_collector on the baremetal to monitor the 'userapp' container:"
+	# NOTE: we know that docker creates a cgroup always named docker/container-ID
+	../src/cmonitor_collector \
+		--sampling-interval=10 \
+		--num-samples=60 \
+		--foreground \
+		--output-filename=docker-userapp.json \
+		--cgroup-name=docker/$$(docker ps --no-trunc -aqf name=userapp)
+	gzip -f docker-userapp.json
 
 #
 # INFLUXDB & GRAFANA example:

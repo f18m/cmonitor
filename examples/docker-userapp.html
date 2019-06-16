@@ -1,0 +1,734 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Monitoring data for hostname francesco-workstation</title>
+  <style>
+     html,body { height:85%; }
+     body { background-color: #eaeaea; }
+     h3 { margin: 0px; }
+     ul { margin: 0 0 0 0;padding-left: 20px; }
+     button { margin-bottom: 3px; }
+     #hostname_span { background-color: white; color: red; padding: 4px; }
+     #button_table { width:100%; border-collapse: collapse; }
+     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
+     #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
+     #chart_master_inner_p { font-size: x-large; }
+     #bottom_div { float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #bottom_div h3 { font-size: medium; }
+     #bottom_div li { font-size: smaller; }
+     #bottom_table_val { font-family: monospace; }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript">
+/* Load GoogleCharts: */
+google.load("visualization", "1.1", {packages:["corechart"]});
+google.setOnLoadCallback(setup_button_click_handlers);
+
+/* The global chart object: */
+var g_chart = null;
+
+/* Currently selected data & options: */
+var g_current_data = null;
+var g_current_options = null;
+
+/* The global window showing the configuration of all collected data: */
+var g_configWindow = null;
+
+/* Create a trigger for window resize that will redraw current chart */
+var g_window_resize_timer = null;
+window.addEventListener('resize', function(e){
+  if (g_window_resize_timer) 
+    clearTimeout(g_window_resize_timer);
+
+  g_window_resize_timer = setTimeout(function() {
+    if (g_current_data && g_current_options)
+      g_chart.draw(g_current_data, g_current_options);
+  }, 500);
+});
+
+/* Utility function used with combobox controls: */
+function call_function_named(func_name) {
+  eval(func_name + "()");
+}
+
+/* Utility function used to clear main graph: */
+function clear_chart() {
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+}
+
+/* Utility function used to reset combobox controls: */
+function reset_combo_boxes() {
+  document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
+  document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
+}
+
+function draw_graph1() {
+  var deflated_data_base64_graph1 = 'eNqdV01vEzEQ/SsoJ5CsxR5/c+ZALyBAnKoeAg1SpSIQjYQqxH/nzdjrOEC8Foe2m+367cy8N28m19c/d8fHb4fdi93t/ng43n057NTufv/xcI9bL9dbv9Tuw8PhO/71+u4TP/H+8eF4+IKLq9t7/nz1/M2TH/u7Iy5f7b/fPrl695af+vr5uF4eD/v73Y26FtCnpE1WQZmotCKrXHq2UzEuNpPSi8ZPVESLzwmXpt6Sv5cQPCN4u+js5XG3OPxvyUAgXAsQg9BlEKckirCYbOVpg1caAkZWeSH8LhB6BGEYIxmEvmaCe1Yw8HsGgSQTWlKNgrgWGQh4xCG2tF0OpyyD2IQwojxuAeJ8AUFaLZchiLBCBqmvIB4HnVsCQqOECH2FCSMYocaEJdbQLR73Hh89c2xbQoOqeKHG8ptjpRc4ERioje2K4kcYwo03UEOogVg+zeIgjWymAhF6cOosm4A0gO/xJ28LzRd6PFfQVaWBMi1sJSnyJju+9oxuaiXG0RIBhK/nshFuLOtzpZiUiyizZ7GdNO8ugwTVtBYqN6Qs8xu4rKfWyyMM4YaCKLTTGjc0WsIjy1ArpUcwwk5AUdJaWL4nNcrVTjYKGwo5KaOSvfMEAMQZZkJhJnNBagy2c7ENSkKhJGdo488T26ejqodz7t9nZk+b9d1nL58+LtUHZ7aSRUUJFuKqXrxpF7H2hltqrQmvp+IW8JDVz4YMxMKAd6LjqiY2Mo7A5E6SQxAhIqGtXGg9jTRCSn/W5t8ISchwoUXBpgWJs50SzflNOlHyH4ykOkwSUna1mo4bO6G4ZDvvHaYhjFBx29XynBUbxWz1cyClKcD9SQQkBhM60xwi+Kou0ywis2nqUk5qYdjLIFkogU+Hpi5SgfcOx5N+dV4z8rtcKHG6eRWmPQ9XkajpstEjkMIMNFXFwU4FI+YBB4L0TElyYSay6dtmsugSlpbRwvIESGmW3DSCg8oGhBBkQk4gCDPk2tDxEj9K4njGuzYrR1PR6sLNqYBOWApcZ8fdGyemPFDKJMEG2STPth1gAYkKyWFTKFYXfiI1GCbZlMQMT7Xt0gJE+HFRtoP1nZ59yE9ZCBBczcbV3uOdFCvquUEPEynrV2oIXL6Y0IeTCKbYWLc0epWxUsuE3d7NcV4YgXOuToGNUkXWW29jaYQgZNjFtWgzexhNuSCOCw2yG512EQx4naYRhAZZv2PrVoyGcFYEGiEIDaFbqRK7ISU7FwKtznXyucjfM+Lfg/4SgKlC8F0VYqzfVMx2a1GhwfBAS22z4QF5NhHdCKE0RLdIOaZSp9kcild17YfzmAjzVSxDvVsB8NWCm8HMidmWBavb0aGkIF+IpjKwlQXqFnTsCdiRkp9LwVYWbNeQjhFKO51tBjc3vwFgoUjT\n';
+  var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
+  var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
+  var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
+  var options_graph1 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 0 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph1, options_graph1);
+  g_current_data = data_graph1;
+  g_current_options = options_graph1;
+}
+
+function draw_graph2() {
+  var deflated_data_base64_graph2 = 'eNqNV02PJDUM/SurPrFSVFTsfDic98BcQIA4jfbQMI000qxAuy2hFeK/8+ykMmmhSecwM901lVe233u26/Hxn9P161+X03enp/P1cn3+dDm508v5t8sLLn04Lv3rTr9+uXzGv354/l3v+OXrl+vlEz48PL3o94dvf3z39/n5io/fnz8/vXv4+Se9688/rsfH6+X8cvroHg30G9p9ccn57HZH7IK8P+HvVoq4fdtd2MgF3lJJjvIWSrar+5b071sgUUF83KSUBpJxbYslOiJgSQOht0GCU4wQ8Uh7lOONHafN46sPCK80DD/D8BaInpIGgkB42zWQiECObMIMhBSEC54ZGwhK4pFcrJHISiSsIAk3NZCACnqPEIpWe+8g+wzEyMkIV2r2Hun43bLzIznTSIycWOOv6XhcNhDa1yKJRk7OOMQtENSaQXBx2X7f5Tc2bmTjzg2EE63K5AFyxBFnINTKSi0ZqEslplmAm9wjmSZTuQmoSGjZWEWUWQ3vwOAZhlHDYkY5qoqvonItXX93AjFqckT43LJhV8xFnoCxkEwyZkraBg5ou3n47LBxktTuvnMiKG7ResSW2lRfqVIScEpy1wY6CEGzCRqVFQxu2pDehaBbMpbhFllpIKlSglPctcFqY6UkmvHu6itVRnBob7nDNi5kCCuq8WRF6dkoQeuKzZ+sPwUY6dZwYYZhzLBHCXKvCPRlIBHayPdFmptbCJGEHolPZlivSS2INDe3oHW1JkSIxPJIteUvNKHcuaFWV9Uo75YHfEsrUs/NLjgVD98GzSRZf/T6je6XVmovS8PdWRsQaQvZ6H4c0l3DvX8AIaGe2WUL6a5GpLnG23yrBcnqGtaqaj9bGHfSbfM6vL2OO6628StKk9bJIsKnJhKVOauPWHeAQzx3Yjl6WW63q0zqbADBS/kU1/pyHutaR0MbnXfJKZWconYbaPBrDbFUWkSFSd1gvcC8gmCcBDKn9naYbBcah0ucYYTWUkPrZNqFOBnkjThoBmKEpAJhczd/sREJ76cF7/PuWv/IfT5RHbOiQ25lrwOGEZLBpbRcWAMQq8fr1OcZRDULbirHiElaU20m3g/dYwpSzZL7M3V1gIlVbOhjtFYQYwaTIHcQ7wRLq80+ursrA6HuyqGvQfsG3cOsIoNO3zYs+0rKsB4EVxCGhCWN47xvhThS1mqKrlR+iIBmCHWuDIW3ENhU4ldCMC7GoSyugAoZD/sZQH1tQe26y0h7epI4IPAMoa7FQxkRgoqUBqNPQiCjATvwaxXBDLb8spYCNRpib96agsAdZSxCmCFQC2Evr9ZCCEVkNQfjgYe9GURiLx6lOD1faej3Jt1EWXhNiVQ5kGElwnDGe9eqDLi+M/bHm4ik0JoKuY2K28djxbpx0vTxRsD4AoTy6Zb4v/J9/A8kHUw0\n';
+  var deflated_data_binary_graph2 = window.atob(deflated_data_base64_graph2);
+  var inflated_data_graph2 = JSON.parse(pako.inflate(deflated_data_binary_graph2, { to: 'string' }));
+  var data_graph2 = google.visualization.arrayToDataTable(inflated_data_graph2);
+  var options_graph2 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 1 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph2, options_graph2);
+  g_current_data = data_graph2;
+  g_current_options = options_graph2;
+}
+
+function draw_graph3() {
+  var deflated_data_base64_graph3 = 'eNqNVruO20AM/BdVCUAstE+SaZMPSJPKcHFBXAS4ACmuCYL8e4Zc+SwdjrDVCJBnuORwyPXp9Hd5+fP7snxafjy9XF5+/rostDw/fb8849OX66d/tHz++m1d/JWXM538tw9lzUqDMtNKpVKTjwuxpKJZbw/1gS89InUjSUlZEaCmpvw+spEDR+r76EKjJomiN8pO6oCU9fXJ1HrSmFSMNBSk9VCHVVYjUjVSr0hv3E5akTUjTshyyXpLVTOJJpYRIV2nVhLrIO5pjWJ212kUhOwmVz1UHnFcJ4Qd2qwLOCRCli0PVSZmI0RIV2QIkJW4ARlm7CqgfBiHxgpCGNNV6BmSDiN0Le8jx1ShwVaNlPGKcF45LMo4W3MawhHSK+ecmhT3tPQI6ZWrpiq6N1BjdGNEpLaRRE0DiTQYU4MJhBKhj5k2nE5V1xiYrxHt7GyaRciyk1WqmStCugYMKwkSwemRs3lbG4wOlL1aGMAap3xdG7UNS6S3ACm05dHNhfLQOMhNECUubxKLOC6N2Ci7PSD3bg+MiFU3+72BUxsYmJA1vQLJGF/hKmkPJNi3tYZB3OustiqC0VRXr9q8iamXY2De9h+W8TTdeldn3exk1TczCR8ujohUt9YXE7rGvtYpEy6IY8XDtmM/fGpRhL7t52zL1EfpXlV1nZqZ1Yb5QTQEumZ1YKNAaIwyS4S8mkuOMzLvm4jkQjUbLCzjjqs1RLpQxdrMu7YVyqYd672mIIILlW2FY510HBmUkl0dK+S4G+1e14iSt+AdLsQrx8FdJ0v68DDZfg/Du045I3fxPOR+wXlKls26+8OwBkosdJ4yMUhWcX3kpEKvB6H4huASAV2msk4kWyER0mXKZlGPiW7t2x6x5q6CTJisR5Off3DQbgx74gg1rzQ09uA1sv8OcneP1DolWs1CyOzYe40401TFnLg/gvTRQ6eIbjay1ajn839lAXOH\n';
+  var deflated_data_binary_graph3 = window.atob(deflated_data_base64_graph3);
+  var inflated_data_graph3 = JSON.parse(pako.inflate(deflated_data_binary_graph3, { to: 'string' }));
+  var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
+  var options_graph3 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "All logical CPUs allowed in cmonitor_collector CGroup (from baremetal stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph3, options_graph3);
+  g_current_data = data_graph3;
+  g_current_options = options_graph3;
+  reset_combo_boxes();
+}
+
+function draw_graph4() {
+  var deflated_data_base64_graph4 = 'eNqN1L9qI0EMx/F32eoCgxiNpPmT+t4gXGVS5LgtAgmExI0J9+6RNQ7HFf55OuP9oPXXmt3D4XM7nt727X7783Tcj8+v+5a2l6ff+4t/9fP7q79p+/Wxv/ulh9PHcX/dHtMhrv4omUeqiVvKqUjSfrelVin750z5GrMzU2fG15mmGGZkrSPFwRpproiVMzMhZjhNzkz8pwlS0clC0hQxu7A6ynVm0SlCBf1pNjs9oPaGWHRyodIMsei0Sk3gTSO0KkmFN41QUSoV7KDOUKOMhtUZ6v+aFqTmPo2awWHR2Qdxh9OicwzSBgPswoYC1tK3QoeozU5nvcJhESpegKdFqDbCw6LTmu9zIBadPVMBqkemdny6+7/MYYjNfXY/t4xYZBY/HKqIzX1mqgXedL6IhHoBL4URoezXFaoIVfYNGGIz1Bk6uGOG1ka5V8T08hwrZhFajFiv31Ty3KifNEZoPp8+q8NZ0Vl976aIyWUFPOC06PTryNhNw2mB8IIpC0YWjC6Y21klLRBeMGXByILRBXM7S9IC4QXzX9bjFx7j8ic=\n';
+  var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
+  var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
+  var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
+  var options_graph4 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 0 (from CGroup stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph4, options_graph4);
+  g_current_data = data_graph4;
+  g_current_options = options_graph4;
+}
+
+function draw_graph5() {
+  var deflated_data_base64_graph5 = 'eNqNk8FqHTEMRf9lVi0YYUmWZWfdPyhdPbJI6SwKCZTmbULpv9dPngl0kfu8Ghgf5Dm6dy6XP9v17de+PWw/nq779efLvqXt+en7/jxefTlf/U3bt9f99zj6+vZ63V+2x3SJ00+Suaea2FNOoqm0z9t4EldLmfJHmN0wZmIDWEk3qgjl3BDFMcxJrCJMYhpTFojpDatCFWMh6kwFG4SoZRIGChaiXkjQ1uxd1JsiLETNx3IrwqYokzm8NETLMIB3hqdXamBWDc0+oMyI4iMBN0XYzNNIWkdYaPJoJCpRnZojqFLgtPDURl4+pjw81aijL/PpqZm6QEyOdfQO7zzjvINNz1Hviig72o2CarO1RtohxeeHuSBMjs1qcYSdcSpqWpuaI4KMOtTea+sNLK2HaL1VSBAVor1TU0NYiLYBoLX1KapOpUJs/p6NGAqceVbQW83pbJo4ovgYxtwRNgNVqo0RNgO18bfDaeE5zhFjdxlOCwgvMLLA6AJTFpj7WpIWEF5gZIHRBaYsMPe1NC0gvMD8p/X4D6v28bI=\n';
+  var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
+  var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
+  var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
+  var options_graph5 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 1 (from CGroup stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph5, options_graph5);
+  g_current_data = data_graph5;
+  g_current_options = options_graph5;
+}
+
+function draw_graph6() {
+  var deflated_data_base64_graph6 = 'eNqNlL+KFEEQh99lIoWm6PrfbaoPYGK0XHDiBsIJBpeI+O5W18wJguV1sOwy+1HTX9Wv63b7eTz/+H4/3h1fHp/vz1+/3Y92PD1+vj/Fow8vj3614/3HT/3ILzwe2i3/e0MdZ7OG3nojbjLeHs0NevwmBjStSF2kBKnYEAG1IKVlSQX10YSg91GBmKSD9PUMSK0iaZEa58OoiXHakuRFchyTmxFYDaY5MrBLcwSpffQibVLTDoSFkKY5M1C0ywWoaqae5uFjw5e5D67INEcCcm3q0XaryDRXA+dQx2h/+fZUNwE2bxJC5cvTnJeJrZCMoqKd4go9Cs7gOlYgXr0UWuNx5Qo8J66BxBkVaMyKTO8xAQetyljlzU7vOUHc1iBFypp6kVNWfXD5N+jthYu4hf+sTumneJAjWskdJpVkmnP4nBGes3x5motDlIyB/wdM8UgP22wat8IqML1HRGKuO1GNcaS2jLwRcdN5luAf7al5RqeKPAc+Iui4Ws7iFZnasaxEJC9wFctxDbzHGtCMZxW3cW03hhG/I+k+il7OVMcOXUazlTaqwFSPZWWm2QHWijzVg4ysR/N71c55qptDH5GiWJxWknJtAxkr94ClT5qTBuFr5lZknfs59DDGjCV5xZ13PCqOrIg4KzLFLXqjsvamDaxIvuaD01dp17JmikcT16di9FUG2waCGwxtMLzByAbzuha1DQQ3GNpgeIORDeZ1LW4bCG4wf2k9/AYPVwpR\n';
+  var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
+  var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
+  var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
+  var options_graph6 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "All logical CPUs assigned to cmonitor_collector CGroup (from CGroup stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph6, options_graph6);
+  g_current_data = data_graph6;
+  g_current_options = options_graph6;
+  reset_combo_boxes();
+}
+
+function draw_graph7() {
+  var deflated_data_base64_graph7 = 'eNqFz71Kw3AYhfFbkf9U4Qx5P9K0rhYvQHAKHaJ5wWIFsVlEvHeDILjIs57zW55x/GzLx1u1mzZPSy2n12pq5+mxzut0+J2+1B4uNa/X7fT0XPPV5nC6vNzXNF+v2917VTtq/PEb72yvrWxQJw/lbiW9QsN/ogeRQmAoHEWgSBSU0guBoXAUgSJRUMpWCAyFowgUiYJSBiEwFI4iUCQKStkJgaFwFIEiUVDKXggMhaMIFIkCUqITAkPhKAJFoqAUEwJD4SgCRaKgFBcCQ+EoAkWioJQQAkPxJ+X4DZPqygg=\n';
+  var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
+  var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
+  var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
+  var options_graph7 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Memory usage in GB (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "GB", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph7, options_graph7);
+  g_current_data = data_graph7;
+  g_current_options = options_graph7;
+  reset_combo_boxes();
+}
+
+function draw_graph8() {
+  var deflated_data_base64_graph8 = 'eNqVlc+KFEEMxl9lmZNCMaTyrxJv4uIDCJ6WPYw7DS6OKO56EPHdTU9XicxsDnUbar5fd/Llq/Td3e/d86/vy+7N7nh4Xp4fvy67sjsdPi2nOLodR3/K7uPTcoy/3h0ePi/Hm1e3j09fPiyH4+s4e3s6fXu4eX94PP38sTzt7svdmXyFUL1oqa1AQSpsIYa9VmPX+AHsVbA4slvGyMY0IVVemVKR2PllPZcudxC0TS5E0jJ53fQCZND1ZgaQ6bG3QObt3EJBMEfM9LTqcd/YuMYpwB5ZBOJB1Aw1w3jDNHoOp9z3aOgclGqVlJLL4sCqYyEAxaQjKYNh2/onchXM1N0vjUKGvrF4y/R4NT5yabmexvNRovJVz8BqlOl7pJqKS9dTU6qZXjZjzd3VVmNbbRULN2D0lyEtfRgN1pqCifnVSFeEphJn0EjWeoxF9xhUzFKIGS2Dhl2mTFs7Ev1QWlm3q0WWNnelGahk8uFWA+BtemJEFTL9CJQ4i3a9pe62clW9gqfVt39h0qa9HGVsYpkeL2+FCWLEUFvMHDJqRIpb1f4Wi3FLph9bigna1kVkRDl9vlxFsMXt0CSydm1SkJiVb8Ok/zZaTJuyGdi1SWpMUZjVCK1kFI208moo1+Bh3VjGsXDSdw2rwinb8mcmBmnrcjUKrwEnVfmwSlrftY5NLVXXq13jFHLM9OOyNa7c9XE3MdWPy8Yuo3ohzNaGjyXeGDBuZ0zCYX2RK1q2AH0sKAcGPUMExGc8JvryzSDoRkmN+xYz2xviOpAKkStqGVQvP8cBUBTLGYCX8wi9I6QvGKGCCG//dkMsqGQiAfAsIHNALbP6OgvgLECzAM8CkyZhmdXXWQBnAZoFeBaYNInKrL7OArlJ938BOVeD+g==\n';
+  var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
+  var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
+  var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
+  var options_graph8 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Memory used by cmonitor_collector CGroup in MB (from CGroup stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    series: {
+     0: {targetAxisIndex:0},
+     1: {targetAxisIndex:0},
+     2: {targetAxisIndex:1},
+    },
+    vAxes: {
+      0: { title: "MB" },
+      1: { title: "Alloc Failures" }
+    },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph8, options_graph8);
+  g_current_data = data_graph8;
+  g_current_options = options_graph8;
+  reset_combo_boxes();
+}
+
+function draw_graph9() {
+  var deflated_data_base64_graph9 = 'eNqlV8uOJDUQ/Jc+gai27HybM38xmsPC9mHFsrOC4YAQ/066Xl1VW85uRB9GHnd1VKYzIjP88vL35f2vr7fLj5ePH95v759+u12Gy+cPP98++9ZPy9Y/w+Xj2y+/3n7PP3z6cln/ub79+d4ef5t2P7/NG7cvX/GP+dFpPX7xOryMkN9BLnWQoeiQB8CB7PvLkFMeru3PdpFzIRHj4QrJSpV6/9jtmrmHyBFixlzzBqmB1xIB0rDDKwm11vb4cN2sR3RCFrbxuZzR3yPQwyxRkIpgOFwxeYASRQbnKJLQKkwxSuIxROlh4CE9KbXm+weWVE/3x3ilCtH9mzIfgGaqHsf66QUQMQCATGi4UqJSYVM3jo6Fn64YCInyHDAUM+2EycN5lJoEKy7gVSMmcVx1KWTaqo5YNUK5V90S8vz2w7mpisqcVymG3bTw6bNiRd3UeSmzh72rfu9FodCRrOVeEtXplT0U7jGeqNLCeKzT+hxEhigSL4NZI5wzlzaECwHDugKAQcsth+yQnppnlGKiu8bFyeVFz2lCDnVeFzVpmeuNrd7yLN6+nJB4bqKtoa7riYtYSHXRGBKr9kD31eVUrPKm58wF7uxPJPUEiL8haWOy4P0XeB6BhtQAqY0amph2vah/TPqAGWbGu5qWpBiRRJ8RPynwOoaAgdV6aBj1Xj8yWuqGrvGNyvvxhTLn6izezJBGOuefRgnH45wIS0NxUsmREeeI1qmxs2qm/MOhaQ8aOaE33LtZmbOUKKZI++Dt3EHqHFQXA0MrlX2SNu04wcLTocNAIJ7qM3bnZT3xTPyXq90hVKAe6HEiu0rt6OdGk3G2P+NL1UXO1Pr0plV16lQjOQPVrKtKXIhKPZSo2sAl66YLr0NX2FnQQzyoeDJTnj5tjoJ26QOa1CV9QWXuYQc0KALGuIboHtXqw9FdY02LgdFjs1p7Qq5JbJ1AlQMMzPHkLv91cjtgKGRSr00LK3vjilCgl5rHActUlKizO0gkX9esG5OV/c6AHgo9SEh115mgmaXwyKP+iz4jGBYNgbCcj3bv0eco5qbIZDkhv4j1PYdjhDrMMroMSZqnqdhDeWKCInrLxUUmXkSzHto316dNu5Rdu2T2ubDcNTzYKt0QY8G5yRl57qYmP2XXHHFfRbd6ZbHLm/XcFcY7LCQItQixFmtu00YSQFQMCEtqmbzNL7dJt7rFejDh+LSCbCcdWt0WdgPDHmG9EcNycn78YXbh1bYoNEk/UiDEDsgqbo0PNJ8AOWg0OPzvWcyIzIszZEdnezBE/K1hpzVDkcZpmYdhD+Ug3nyw4cczds+gZWP718nnBrm+vv4LHkf4PA==\n';
+  var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
+  var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
+  var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
+  var options_graph9 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Network Traffic in MB/s (from baremetal stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "MB/s", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph9, options_graph9);
+  g_current_data = data_graph9;
+  g_current_options = options_graph9;
+  reset_combo_boxes();
+}
+
+function draw_graph10() {
+  var deflated_data_base64_graph10 = 'eNqdlsFu2zAMht/Fpw1TDImULKnnvUXQQ7f6UCxrii47FMPefWacFWvmjwN2CRjFXyj9/Elrv/8xnF6e5uFmuL87zaeHr/MQhsPdp/mwLH38vfQzDPfHz1/m5/jh4XF4/bI7fj/Z48d19XC8LMyPT/rt8ugan3+4DfvzX76TmHqYQqohBtGQ2/shxDGGnX28BjKqBYWwso2lFcvbWA5XlFggQccUdjIKUYn2WCyYCJNtLI7dgkSYbm8y2yaVj4ZCNgsqYWU7m1i2RGcrgeRPFihRKGR2il3eCJn/zNZsj5EwFFIdIQsLKe7ZilttyDahkMWp2sRCngMhTChbtaATpm6zFcIyWcsr2/SXkNO5yZayFSsbYDU4R0tMoZCekSs5Us3IwtnU6dFEQlZ2ZHbmT3VmZO9O4VogJzdnbrV/NPdEmDhYIis39mR3rNzIkzpW00T4dDgnPawHZ5bgdO0kpVrDJU527cq3s7wSppQtOq7s7ErvrdjZlY5NNP7PnFwo9KR4LaCRJ6Vzv1gwlDKzSxbMvwRhtuJm224dTSilOMkSS1mduiWalJf2xmxKfVqscIs1eyfU92Ul7FrMvO744svtN4GK78tGFIiZTUyB6bVg4tQg8R7Vva0VwnwhM2HFMTMNL1W8mk+mSCWKXbk2OIJ4p5zWwt3+AvxfuEQ=\n';
+  var deflated_data_binary_graph10 = window.atob(deflated_data_base64_graph10);
+  var inflated_data_graph10 = JSON.parse(pako.inflate(deflated_data_binary_graph10, { to: 'string' }));
+  var data_graph10 = google.visualization.arrayToDataTable(inflated_data_graph10);
+  var options_graph10 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Network Traffic in PPS (from baremetal stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "PPS", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph10, options_graph10);
+  g_current_data = data_graph10;
+  g_current_options = options_graph10;
+  reset_combo_boxes();
+}
+
+function draw_graph11() {
+  var deflated_data_base64_graph11 = 'eNqVlz1vE0EQhv9KdBVIm9V87gcloqWhobBS2ImLSEFCwQ1C/HdmjZNgbk6aveLsu7Uezc4778x6t/u1nH5+Py4flof96Xh6/HZc0vK0Pxyf7NWnl1e/0/LjGW6+HPcPN58/Ln+fvj4/no6Xx4f9v4v2dLV4uFo8XC/eXy3evy3epd05gncE2FNJWBMk4iTt/ZIgQ7odt/MX6blQQ+b/3ttti6IuRRRrrVGKpDWEJddSCDkOQSeUkkvBWihOIScWyiqCEofwGqKUkYVxIhRxKdyY7GdhiqcQZ0Vu2KIUdRSSlpE6ygTEU6hm2w6j9stV4jhfqlqBK8UpjlbYcjUb6ARF3K1pBVCCyyVx3Eo0sMIZ5WzqQwuboiSfg7mBlhLHoMtRNHsB9B4HrTQbabklyMpAKnEQ+zvr5rJeZzIkbkTYc1NoMgFaawbtvDXrhkTtpcDDfqnJBbJmbFWpxjm4VU2qBRTjINoqp0KF4/VdPdOZda2SrFnHKf4IY+oAHKc4DdLUh1aIw6lpyR0+1kSI+UV5idOcTolmfgSZiclrkGYQxEoTsXjDTHKp3EmnW1tzp5p5hEReZ0B8CDR3vJ3bJFOZTnxPbi1oZygtDvHUq9msj1XjFPJjYWsnGKewG4sd8+h1LgHFcY56NOxPxQbTPM7vmTZXWgd5OxREs8awEhAVezuXWEEVnDajIdFv7HQ+uUyE5nfPoal5CWscxO7IGg3Uzj7haWyglZrWXiwz44mkhm1oJHVDss+hYbRcrbety2swLJY4wpdrbI44Xkno+e8SS4lD2INga1wmkiJbyaWZQsYNt43PxuFzCZMvktmrc5yxqdLYU41zaIvDJpTGOeyr3bhNBCMuBFVndqQuZBRvuGTYlyjcmQ2AbuEqa32bGzARkO8m+yfrFt7dH1FciGk=\n';
+  var deflated_data_binary_graph11 = window.atob(deflated_data_base64_graph11);
+  var inflated_data_graph11 = JSON.parse(pako.inflate(deflated_data_binary_graph11, { to: 'string' }));
+  var data_graph11 = google.visualization.arrayToDataTable(inflated_data_graph11);
+  var options_graph11 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Disk I/O (from baremetal stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "MB", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph11, options_graph11);
+  g_current_data = data_graph11;
+  g_current_options = options_graph11;
+  reset_combo_boxes();
+}
+
+function draw_graph12() {
+  var deflated_data_base64_graph12 = 'eNqdlt1qHDEMhV+lzFUKZrBlyT+9K/Syb7DkYkuWEkjaXiyFEPrutSVNZn9G3qZ7sbDDOZbm87G8u93rdHz5dZg+TQ/74+H4+HyY3PS0/3Z4ao++LI/+uOnrz/3D59/fP9yF58cfH6eTB3T5IMiTe7fjFe7Ah+qSC9l5B9FhaeoU5kx+/QRHOAM57N+Wk9hJMzkiFWdDjI61cQasJ59u9P6s7nCR0FehOvveHr3DCGykS09bxY+NkY2hV4yiNaUMkvpiXZtv8GB45K+AwA0nMUksHXgTC3ZTy8BQegqXtQabS0IMM5dp4bhymkYmhqkT26po+lB9VqumkUkiJ7Dx/OdOE4NsCL18tRW8pQyagk0WAx/8p09SlzRK3Jv5Fqhn4i11ZGYnaeoqL8zZT1YTWU4syFnr6yYzLVkAJb99MEdGUCOtVUytUCna/HUV0yiIJMvvMpIaaz0/pEurFujitFXamnDZYl40aKSd9lMxEIOmBDe7GxgFZFxTMNCiFqlGETARkM5Dv76KJa4y1DTEw9euOtPqejgGWtANtBCZ/SxZA2MHs+lE3ULvt+7TkZOGNYvxltG74RYNfEHpZKOgsV3RK9eyXv0j8RK3NdSDnlCnOU/lwR41KfOKxRj8VipiYF5R7s4qQ5AsKSOCntxTOsh92dOzGZkQkCwPZI/wpmVAEJb/IvbVEIPwCZx+vPEvo6kZUeCLBGH8hy4CcwmltxF0ZW9JmUvgkYr+rRlLDarOrGaxqY2qbT+qSO2GBQZeHO+ioUAYtCRkmEnsxRjPtjg6LXN2QnxrNc1cxVs+ocQwo5yTMJtFBFK/QyOqtnV0/xdtmJdy\n';
+  var deflated_data_binary_graph12 = window.atob(deflated_data_base64_graph12);
+  var inflated_data_graph12 = JSON.parse(pako.inflate(deflated_data_binary_graph12, { to: 'string' }));
+  var data_graph12 = google.visualization.arrayToDataTable(inflated_data_graph12);
+  var options_graph12 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Average Load  (from baremetal stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Load (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph12, options_graph12);
+  g_current_data = data_graph12;
+  g_current_options = options_graph12;
+  reset_combo_boxes();
+}
+
+function draw_graph13() {
+  var deflated_data_base64_graph13 = 'eNp107EKwjAQBuBXKZkUQkxylzS31kEcRBen4iDYwSEW2i6+vRVE9JrbSvpx/Lm/bVu17XO+Pm5Kq+3pXE333M2P+82x2jXvs+/bQ5f74Vk1z6kb1UW3apyGbhyVjiYlbY3Vn5NqRRHtWmlKYNHYf+uIWW9T2QZDnlkbgmRrYNaRlyxyixglCzxvdPi2OOfm1nML4KS5S4vC3dDEmmcgkiy/GkhxwVDg6/XCGqC03ijNRf45uATSXEReBVjRLmoLoi3URlLeQm1CFd7QIq9L5bmzXewsesnWfGfB//4WlxcsJvXV\n';
+  var deflated_data_binary_graph13 = window.atob(deflated_data_base64_graph13);
+  var inflated_data_graph13 = JSON.parse(pako.inflate(deflated_data_binary_graph13, { to: 'string' }));
+  var data_graph13 = google.visualization.arrayToDataTable(inflated_data_graph13);
+  var options_graph13 = {
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
+    title: "Top 20 processes CPU/Disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
+    hAxis: { title:"CPU time" },
+    vAxis: { title:"I/O GB" },
+    sizeAxis: { maxSize: 200 },
+    bubble: { textStyle: {fontSize: 15} }
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph13, options_graph13);
+  g_current_data = data_graph13;
+  g_current_options = options_graph13;
+  reset_combo_boxes();
+}
+
+function draw_graph14() {
+  var deflated_data_base64_graph14 = 'eNq1lstOwzAQRX8FZQWSiTwPv1jzF1UXRWSBVCREs0GIf8eNVIHTOmnTXqmbiZPja+d0nNXqu+m/PrrmqXnd9F3/9t41ptluXrptvvR8uPRjml3/2e12d/fJq31o/tVsY1Fb54qaEhe1qi9qT1rUIlTWWvJ8SuX46HnLfjT/qI5S5pFyPersKN9oPinzKJXrJ1+u13EeX5vVsJv3bCkZbygYa1iM7J99pMW/GldBXAfhqpnHSmo1+QVoAkXmP65Lbbb8hmwBZVYQF6OFMyAsgbi8nMup5RQm2GcrIdqGgXR+7lILF3IUrcD3Y/7SfTno4amNNfKyPfcYRTxIEX+NIpNcAXEVxJ3rGMptmmz3VXaoKOE4y+cm/zn7O8Isvq7GMIUu35YA0iOA9AggPcLiAyW3UYmT7HhJx8i9VE5ZWEMfqeE090s3MwUftesaH6NHBOkRQXpE0PdGuu4w4ZAP3lhDEygyg7inlHAy20KlaKETfAXlHtTwMb8KuS1bLORbI2MJxJ1UQ33r5w7YCbaAMiuIC+kYQgaEJRCXQVwBcRXExejABoQlEJdBXAFxFcTF6CAGhCUQ92od1r993nJp\n';
+  var deflated_data_binary_graph14 = window.atob(deflated_data_base64_graph14);
+  var inflated_data_graph14 = JSON.parse(pako.inflate(deflated_data_binary_graph14, { to: 'string' }));
+  var data_graph14 = google.visualization.arrayToDataTable(inflated_data_graph14);
+  var options_graph14 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Top 20 processes CPU usage by process (from cgroup stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "CPU (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph14, options_graph14);
+  g_current_data = data_graph14;
+  g_current_options = options_graph14;
+  reset_combo_boxes();
+}
+
+function draw_graph15() {
+  var deflated_data_base64_graph15 = 'eNq11sFKw0AQBuBXkT1VGGFmZ7LZePYtSg8VcxAqiM1FxHe3FopOdNNk2x9ymSz5dnb5s8l6/RGG99c+3Ien7dAPzy99oLDbPva7w62H061PCvvhrd/vb1ZdMr4Nv+rI2dXcNK6WLrraLLk6iblaVXxt3ktd58dHz3NMo/lHdVbfj/r1WMOj/kbzqe/HxK9fkl9vEw/jG1ofd3MVWTpKJC0xRSX9fvZOqq+SayC3gbhG51muUAXUbfxx+Yqsgto1kIsJQ0MgVkBurHd5gp2dBl7UrQ8DL3zZSuopCnzNrU2YJCRQEtIlSZh0FeQayD13MHAN2xbSwPNmKqHlLHD9FrSgKLSgKLSgKLTV3wieYvOSg4HnNpv/ZoGXwCUVE4UMikIGRSGDfhe6yz4SXFIF1G0Euf+lYX58S6qBuj1mga/LKkP+Fw6sgNzJLHA1q6B2DeRCDgYVArECciPIVZBrIBcTh0ggVkBuBLkKcg3kYuKgBGIF5F4ch80Xb9NdmA==\n';
+  var deflated_data_binary_graph15 = window.atob(deflated_data_base64_graph15);
+  var inflated_data_graph15 = JSON.parse(pako.inflate(deflated_data_binary_graph15, { to: 'string' }));
+  var data_graph15 = google.visualization.arrayToDataTable(inflated_data_graph15);
+  var options_graph15 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Top 20 processes IO usage by process (from cgroup stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "IO Read+Write (Bytes Per Sec)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph15, options_graph15);
+  g_current_data = data_graph15;
+  g_current_options = options_graph15;
+  reset_combo_boxes();
+}
+
+function draw_graph16() {
+  var deflated_data_base64_graph16 = 'eNq1lstOwzAQRX8FeVUkt/J4xo7Nmr+ouigiC6QiIZoNQvw7oaIqE+I8daVuJo8z18npxPv9p2k+3mrzYJ6PTd28vNbGmtPxqT61hx6vh76sOTfv9fl8t8lR3L35U3uXVO1CUDVlr2qRqOpIompm0rVoXsxZn+/c73zs9O/UiXUe1uuR4Dr5Ov1Y5xHS66eo1xt8e/5g95enufGOso2WKuusZ8s/925p8a/EFRA3QLhix7F5l9hJvXVhAZ5Asf2NOynfXD6DcguIi9EjWBCWQFy/nJt30g7UX41K/MlajEhZ4ms9xsxWkWf1ueqy6r9T5EeMNhGkTVyjzSCXQVwBccemyLhwQ/yqoMU0CXuuKrUpazLP9xIfo0sF0qUC6VIt/uh0NernpzlTZOjFlvD/NFks4nAfjC4JpEsC6ZJAe5S87mNze5slPIFiexC3T4tpg7v/qlIfAeW/aLJ2Y1Lis4PsTVosgbiDmsx4TCU+g3ILiAuZIkwWhCUQ14O4DOIKiIvRwVsQlkBcD+IyiCsgLkYHtiAsgbirdTh8A3VyhVY=\n';
+  var deflated_data_binary_graph16 = window.atob(deflated_data_base64_graph16);
+  var inflated_data_graph16 = JSON.parse(pako.inflate(deflated_data_binary_graph16, { to: 'string' }));
+  var data_graph16 = google.visualization.arrayToDataTable(inflated_data_graph16);
+  var options_graph16 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Top 20 processes memory usage by process (from cgroup stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "RSS Memory (GB)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph16, options_graph16);
+  g_current_data = data_graph16;
+  g_current_options = options_graph16;
+  reset_combo_boxes();
+}
+
+function setup_button_click_handlers() {
+  document.getElementById("btn_draw_graph3").addEventListener("click", draw_graph3);
+  document.getElementById("btn_draw_graph6").addEventListener("click", draw_graph6);
+  document.getElementById("btn_draw_graph7").addEventListener("click", draw_graph7);
+  document.getElementById("btn_draw_graph8").addEventListener("click", draw_graph8);
+  document.getElementById("btn_draw_graph9").addEventListener("click", draw_graph9);
+  document.getElementById("btn_draw_graph10").addEventListener("click", draw_graph10);
+  document.getElementById("btn_draw_graph11").addEventListener("click", draw_graph11);
+  document.getElementById("btn_draw_graph12").addEventListener("click", draw_graph12);
+  document.getElementById("btn_draw_graph13").addEventListener("click", draw_graph13);
+  document.getElementById("btn_draw_graph14").addEventListener("click", draw_graph14);
+  document.getElementById("btn_draw_graph15").addEventListener("click", draw_graph15);
+  document.getElementById("btn_draw_graph16").addEventListener("click", draw_graph16);
+  document.getElementById("btn_show_config").addEventListener("click", show_config_window);
+}
+
+function show_config_window() {
+    if (g_configWindow) g_configWindow.close();
+    g_configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");
+    g_configWindow.document.write("\
+    <html><head>\
+      <title>Configuration</title>\
+      <style>\
+        table { padding-left: 2ex; }\
+        #sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}\
+        #configkey {font-weight: bold;}\
+        #configval {font-family: monospace;}\
+      </style>\
+    </head><body>\
+      <h2>Monitored System Summary</h2>\
+      <table>\
+<tr><td colspan='2' id='sectioncol'>Server Identity</td></tr>\
+    <tr>\
+    <td id='configkey'>Hostname</td><td id='configval'>francesco-workstation</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Shorthostname</td><td id='configval'>francesco-workstation</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Lo ip4</td><td id='configval'>127.0.0.1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Enp3s0 ip4</td><td id='configval'>192.168.1.3</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Docker0 ip4</td><td id='configval'>172.17.0.1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Lo ip6</td><td id='configval'>::1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Enp3s0 ip6</td><td id='configval'>fe80::306e:439c:2e6:7b21</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Docker0 ip6</td><td id='configval'>fe80::42:feff:fed7:33f5</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Vethfd39a78 ip6</td><td id='configval'>fe80::84c3:23ff:fed9:1ddc</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>All ip addresses</td><td id='configval'>127.0.0.1,192.168.1.3,172.17.0.1,::1,fe80::306e:439c:2e6:7b21,fe80::42:feff:fed7:33f5,fe80::84c3:23ff:fed9:1ddc</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Serial-number</td><td id='configval'>System Serial Number</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Model</td><td id='configval'>All Series</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Vendor</td><td id='configval'>ASUS</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>Operating System Release</td></tr>\
+    <tr>\
+    <td id='configkey'>Name</td><td id='configval'>Ubuntu</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Version</td><td id='configval'>18.04.2 LTS (Bionic Beaver)</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Pretty name</td><td id='configval'>Ubuntu 18.04.2 LTS</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Version id</td><td id='configval'>18.04</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>Linux Kernel Version</td></tr>\
+    <tr>\
+    <td id='configkey'>Version</td><td id='configval'>Linux version 4.15.0-51-generic (buildd@lgw01-amd64-059) (gcc version 7.3.0 (Ubuntu 7.3.0-16ubuntu3)) #55-Ubuntu SMP Wed May 15 14:27:21 UTC 2019</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>Linux Control Group (CGroup) Configuration</td></tr>\
+    <tr>\
+    <td id='configkey'>Name</td><td id='configval'>docker/f6a06ca610542b98e4a5aaf075b2178abb2aaa7c80894dd577f1f766301ec4b0</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Memory path</td><td id='configval'>/sys/fs/cgroup/memory/docker/f6a06ca610542b98e4a5aaf075b2178abb2aaa7c80894dd577f1f766301ec4b0</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpuacct path</td><td id='configval'>/sys/fs/cgroup/cpu,cpuacct/docker/f6a06ca610542b98e4a5aaf075b2178abb2aaa7c80894dd577f1f766301ec4b0</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpuset path</td><td id='configval'>/sys/fs/cgroup/cpuset/docker/f6a06ca610542b98e4a5aaf075b2178abb2aaa7c80894dd577f1f766301ec4b0</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpus</td><td id='configval'>0, 1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Memory limit bytes</td><td id='configval'>100.0MiB</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Num allowed cpus</td><td id='configval'>2</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>CPU Overview</td></tr>\
+    <tr>\
+    <td id='configkey'>Architecture</td><td id='configval'>x86_64</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Byte order</td><td id='configval'>Little Endian</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpus</td><td id='configval'>4</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Online cpu list</td><td id='configval'>0-3</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Threads per core</td><td id='configval'>1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cores per socket</td><td id='configval'>4</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Sockets</td><td id='configval'>1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Numa nodes</td><td id='configval'>1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Vendor id</td><td id='configval'>GenuineIntel</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpu family</td><td id='configval'>6</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Model</td><td id='configval'>60</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Model name</td><td id='configval'>Intel(R) Core(TM) i5-4570 CPU @ 3.20GHz</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Stepping</td><td id='configval'>3</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpu mhz</td><td id='configval'>3593.369</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpu max mhz</td><td id='configval'>3600,0000</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpu min mhz</td><td id='configval'>800,0000</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Bogomips</td><td id='configval'>6396.38</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>Memory Overview</td></tr>\
+    <tr>\
+    <td id='configkey'>Memtotal</td><td id='configval'>15.2GiB</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Hugepages total</td><td id='configval'>0</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Hugepagesize</td><td id='configval'>2.0MiB</td>\
+    </tr>\
+      </table>\
+      <h2>Monitoring Summary</h2>\
+      <table>\
+<tr><td colspan='2' id='sectioncol'>Performance Stats Collector Configuration</td></tr>\
+    <tr>\
+    <td id='configkey'>Command</td><td id='configval'>../src/cmonitor_collector --sampling-interval=10 --num-samples=60 --foreground --output-filename=docker-userapp.json --cgroup-name=docker/f6a06ca610542b98e4a5aaf075b2178abb2aaa7c80894dd577f1f766301ec4b0</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Sample interval seconds</td><td id='configval'>10</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Sample num</td><td id='configval'>60</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Version</td><td id='configval'>1.3-3</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Collecting</td><td id='configval'>cgroups,cpu,disk,memory,network,processes</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Username</td><td id='configval'>root</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Userid</td><td id='configval'>0</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Pid</td><td id='configval'>8950</td>\
+    </tr>\
+      </table>\
+    </body></html>\
+");
+}
+
+  </script>
+</head>
+<body>
+  <h1>Monitoring data collected from host <span id="hostname_span">francesco-workstation</span></h1>
+  <div id="button_div">
+  <table id="button_table">
+  <tr>
+    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (docker/f6a06ca610542b98e4a5aaf075b2178abb2aaa7c80894dd577f1f766301ec4b0)</td>
+    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
+  </tr>
+  <tr>
+  <td id="button_table_col">
+    <button id="btn_show_config"><b>Configuration</b></button><br/>
+  </td><td id="button_table_col">
+    <select id="select_combobox_cgroup_cpus" onchange="call_function_named(this.value)">
+      <option value="clear_chart">None</option>
+      <option value="draw_graph4">CPU0</option>
+      <option value="draw_graph5">CPU1</option>
+    </select>
+    <button id="btn_draw_graph6" style="color:red"><b>All CPUs</b></button>
+    <button id="btn_draw_graph8" style="color:darkorange"><b>Memory Usage</b></button>
+    <button id="btn_draw_graph13" style="color:red"><b>CPU/Memory/Disk Bubbles</b></button>
+    <button id="btn_draw_graph14" style="color:red"><b>CPU by Process</b></button>
+    <button id="btn_draw_graph15" style="color:black"><b>IO by Process</b></button>
+    <button id="btn_draw_graph16" style="color:darkorange"><b>Memory by Process</b></button>
+      </td><td id="button_table_col">
+    <select id="select_combobox_baremetal_cpus" onchange="call_function_named(this.value)">
+      <option value="clear_chart">None</option>
+      <option value="draw_graph1">CPU0</option>
+      <option value="draw_graph2">CPU1</option>
+    </select>
+    <button id="btn_draw_graph3" style="color:red"><b>All CPUs</b></button>
+    <button id="btn_draw_graph7" style="color:darkorange"><b>Memory Usage</b></button>
+    <button id="btn_draw_graph9" style="color:darkblue"><b>Network Traffic (MB/s)</b></button>
+    <button id="btn_draw_graph10" style="color:darkblue"><b>Network Traffic (PPS)</b></button>
+    <button id="btn_draw_graph11" style="color:darkgreen"><b>Disk I/O</b></button>
+    <button id="btn_draw_graph12" style="color:black"><b>Average Load</b></button>
+  </td></tr>
+  </table>
+  </div>
+  <p></p>
+  <div id="chart_master_div"><div id="chart_master_inner_div"><p id="chart_master_inner_p">...click on a button above to show a graph...</p></div></div>
+  <div id="bottom_div">
+    <h3>Monitoring Summary</h3>
+    <table>
+    <tr><td><ul>
+      <li>Version: <span id='bottom_table_val'><a href="https://github.com/f18m/cmonitor">cmonitor</a> 1.3-3</span></li>
+      <li>Collected: <span id='bottom_table_val'>cgroups,cpu,disk,memory,network,processes</span></li>
+      <li>Started sampling at: <span id='bottom_table_val'>2019-06-16T22:23:38 (UTC)</span></li>
+      <li>Samples: <span id='bottom_table_val'>60</span></li>
+      </ul></td><td><ul>
+      <li>Sampling Interval (s): <span id='bottom_table_val'>10</span></li>
+      <li>Total time sampled (hh:mm:ss): <span id='bottom_table_val'>0:10:00</span></li>
+    </ul></td></tr>
+    </table>
+  </div>
+  <div id="bottom_div">
+    <h3>Monitored System Summary</h3>
+    <table>
+    <tr><td><ul>
+      <li>Hostname: <span id='bottom_table_val'>francesco-workstation</span></li>
+      <li>OS: <span id='bottom_table_val'>Ubuntu 18.04.2 LTS</span></li>
+      <li>CPU: <span id='bottom_table_val'>Intel(R) Core(TM) i5-4570 CPU @ 3.20GHz</span></li>
+      <li>BogoMIPS: <span id='bottom_table_val'>6396.38</span></li>
+      </ul></td><td><ul>
+      <li>Monitored CPUs: <span id='bottom_table_val'>2</span></li>
+      <li>Monitored Disks: <span id='bottom_table_val'>4</span></li>
+      <li>Monitored Network Devices: <span id='bottom_table_val'>3</span></li>
+    </ul></td></tr>
+    </table>
+  </div>
+<p>NOTE: to zoom use left-click and drag; to reset view use right-click.</p>
+</body>
+</html>

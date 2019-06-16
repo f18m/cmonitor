@@ -51,16 +51,19 @@ void CMonitorOutputFrontend::init_json_output_file(const std::string& filenamePr
         printf("Disabling JSON file generation (collected data will be available only via InfluxDB, if IP/port is "
                "provided)\n");
     } else {
+
+        std::string outFile(filenamePrefix);
+        if (filenamePrefix.size() > 5 && filenamePrefix.substr(filenamePrefix.size() - 5) != ".json")
+            outFile += ".json";
+
         // open output files
-        char filename[1024];
-        sprintf(filename, "%s.json", filenamePrefix.c_str());
-        if ((m_outputJson = fopen(filename, "w")) == 0) {
+        if ((m_outputJson = fopen(outFile.c_str(), "w")) == 0) {
             perror("opening file for stdout");
-            fprintf(stderr, "ERROR nmon filename=%s\n", filename);
+            fprintf(stderr, "ERROR nmon filename=%s\n", outFile.c_str());
             exit(13);
         }
 
-        printf("Opened output JSON file '%s'\n", filename);
+        printf("Opened output JSON file '%s'\n", outFile.c_str());
     }
 }
 

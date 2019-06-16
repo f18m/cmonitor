@@ -2,7 +2,7 @@
 
 # TODO: add some simulator for network activity!
 
-set -e
+#set -e  # in case cmonitor_collector is not running (e.g. "docker-ubuntu1804-userapp") this would kill this script
 set -u
 
 # Constants
@@ -24,8 +24,8 @@ enable_disk_stress=true
 
 cycle=1
 while (( cycle<num_cycles )); do
-    NJPID="$(pidof cmonitor_collector)"
-    echo "cmonitor_collector pid=$NJPID; running CPU/memory/disk load simulator cycle #$cycle..."
+    CMON_PID="$(pidof cmonitor_collector)"
+    echo "cmonitor_collector pid=$CMON_PID; running CPU/memory/disk load simulator cycle #$cycle..."
     if $enable_cpu_stress; then
         if $enable_memory_stress; then
             stress --cpu 1 --vm 1 --timeout $(( $RANDOM % 10 + 1 )) &

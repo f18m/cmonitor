@@ -1274,6 +1274,10 @@ def main_process_file(infile, outfile):
     ending = text[-3:-1]  # The last two character
     if ending == "},":  # the data capture is still running or halted
         text = text[:-2] + "\n ]\n}\n"
+    else:
+        ending = text[-5:]  # The last two character
+        if ending == "    }":
+            text += "\n  ]\n}\n"
     
     # Convert the text to json and extract the stats
     entry = json.loads(text)  # convert text to JSON

@@ -16,7 +16,7 @@
 #define DEBUGLOG_FUNCTION_START()                                                                                      \
     g_logger.LogDebug("%s() called at line %d of file %s\n", __func__, __LINE__, __FILE__);
 
-#define PROCESS_STATS_INCLUDE_STATM 0
+#define PROCESS_DEBUGGING_ADDRESSES_SIGNALS (0)
 
 //------------------------------------------------------------------------------
 // Constants
@@ -121,7 +121,6 @@ typedef struct procsinfo_s {
     unsigned long pi_realtime_priority;
     unsigned long pi_sched_policy;
     unsigned long long pi_delayacct_blkio_ticks;
-#if PROCESS_STATS_INCLUDE_STATM
     /* Process stats for memory */
     unsigned long statm_size; /* total program size, measured in pages */
     unsigned long statm_resident; /* resident set size, measured in pages */
@@ -130,7 +129,6 @@ typedef struct procsinfo_s {
     unsigned long statm_drs; /* data/stack */
     unsigned long statm_lrs; /* library */
     unsigned long statm_dt; /* dirty pages */
-#endif
     /* Process stats for disks */
     unsigned long long io_rchar; // includes things such as terminal I/O and is
                                  // unaffected by whether or not actual physical disk I/O
@@ -150,28 +148,33 @@ typedef struct proc_topper_s {
 
 //------------------------------------------------------------------------------
 // Command-Line Globals
+// (Configuration from command-line)
 //------------------------------------------------------------------------------
 
 class CMonitorCollectorAppConfig {
 public:
     CMonitorCollectorAppConfig() {}
 
-    // configuration from command-line:
+    // configuration for this process:
     bool m_bAllowMultipleInstances = false; // --allow-multiple-instances
     bool m_bDebug = false; // --debug
     bool m_bForeground = false; // --foreground
-    OutputFields m_nOutputFields = PF_USED_BY_CHART_SCRIPT_ONLY;
 
+    // local data saving opts
     std::string m_strOutputDir; // --output-directory
     std::string m_strOutputFilenamePrefix; // --output-filename
+
+    // remove streaming opts
     std::string m_strRemoteAddress; // --remote-ip
     std::string m_strRemoteSecret; // --remote-secret
-
-    unsigned int m_nSamples = 0; // --num-samples
-    unsigned int m_nSamplingInterval = 60; // --sampling-interval
     unsigned int m_nRemotePort = 0; // --remote-port
 
+    // data collecting options
+    unsigned int m_nSamples = 0; // --num-samples
+    unsigned int m_nSamplingInterval = 60; // --sampling-interval
     unsigned int m_nCollectFlags = PK_ALL; // --collect: a combination of PerformanceKpiFamily values
+    OutputFields m_nOutputFields = PF_USED_BY_CHART_SCRIPT_ONLY; // --deep-collect
+    std::string m_strCGroupName; // --cgroup-name
 };
 
 // app-wide config settings:
@@ -239,11 +242,12 @@ private:
     //------------------------------------------------------------------------------
 
     void cgroup_init();
+    bool cgroup_init_check_for_our_pid();
     void cgroup_config();
     bool cgroup_is_allowed_cpu(int cpu);
     void cgroup_proc_memory(const std::set<std::string>& allowedStatsNames);
     void cgroup_proc_cpuacct(double elapsed_sec, bool print);
-    void cgroup_proc_tasks(double elapsed_sec, bool print);
+    void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts);
     bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
     //------------------------------------------------------------------------------
@@ -263,32 +267,33 @@ private:
     void proc_uptime();
 
 private:
-    std::string m_strHostname;
-    std::string m_strShortHostname;
+    //------------------------------------------------------------------------------
+    // Misc globals
+    //------------------------------------------------------------------------------
+    std::string m_strHostname; // full hostname for this machine
+    std::string m_strShortHostname; // short hostname for this machine
 
     //------------------------------------------------------------------------------
     // CGroups variables
     //------------------------------------------------------------------------------
     bool m_bCGroupsFound = false;
 
-    // paths of cgroups for this process:
-    std::string cgroup_systemd_name;
-    std::string cgroup_memory_kernel_path;
-    std::string cgroup_cpuacct_kernel_path;
-    std::string cgroup_cpuset_kernel_path;
+    // paths of cgroups for the cgroup to monitor (either our own cgroup or another one):
+    std::string m_cgroup_systemd_name;
+    std::string m_cgroup_memory_kernel_path;
+    std::string m_cgroup_cpuacct_kernel_path;
+    std::string m_cgroup_cpuset_kernel_path;
 
     // limits read from the cgroups that apply to this process:
-    uint64_t cgroup_memory_limit_bytes = 0;
-    std::set<int> cgroup_cpus;
+    uint64_t m_cgroup_memory_limit_bytes = 0;
+    std::set<int> m_cgroup_cpus;
 
     //------------------------------------------------------------------------------
-    // PID cpu/disk tracking
+    // Process tracking
     //------------------------------------------------------------------------------
     std::map<pid_t, procsinfo_t> m_pid_databases[2];
     unsigned int m_pid_database_current_index = 0; // will be alternatively 0 and 1
     std::map<uint64_t /* process score */, proc_topper_t> m_topper;
-    // std::map<pid_t, procsinfo_t>* m_pid_database_previous = nullptr;
-    // std::map<pid_t, procsinfo_t>* m_pid_database_current = nullptr;
 };
 
 //------------------------------------------------------------------------------
@@ -301,7 +306,7 @@ std::string trim_string(const std::string& s);
 void strip_spaces(char* s);
 bool string2int(const std::string& str, int& result);
 bool string2int(const std::string& str, uint64_t& result);
-bool file_exists(const char* filename);
+bool file_or_dir_exists(const char* filename);
 template <typename T> std::string stl_container2string(const T& par, const std::string& delim);
 std::vector<std::string> split_string_in_array(const std::string& str, char splitter);
 bool parse_string_with_multiple_ranges(const std::string& data, std::vector<int>& result);

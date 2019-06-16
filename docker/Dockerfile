@@ -17,4 +17,9 @@ RUN yum install -y cmonitor-$rpm_version
 #  - do not collect "cgroups": in this way we just collect baremetal performance stats
 #  - for this example collect 3minutes of data (60 samples) and then stop
 #  - put resulting files in /perf folder which is actually a volume shared with the host (see docker run command)
-CMD /usr/bin/cmonitor_collector --foreground --sampling-interval=$sampling_interval --num-samples=$num_samples --collect=cpu,memory,disk,network --output-directory /perf
+CMD /usr/bin/cmonitor_collector \
+    --foreground \
+    --sampling-interval=$sampling_interval \
+    --num-samples=$num_samples \
+    --collect=cpu,memory,disk,network \
+    --output-directory /perf

@@ -75,14 +75,17 @@ struct option g_long_opts[] = {
     // Data sampling options
     { "sampling-interval", required_argument, 0, 's' }, // force newline
     { "num-samples", required_argument, 0, 'c' }, // force newline
-    { "output-directory", required_argument, 0, 'm' }, // force newline
-    { "output-filename", required_argument, 0, 'f' }, // force newline
     { "allow-multiple-instances", no_argument, 0, 'k' }, // force newline
     { "foreground", no_argument, 0, 'F' }, // force newline
     { "collect", required_argument, 0, 'C' }, // force newline
     { "deep-collect", no_argument, 0, 'e' }, // force newline
+    { "cgroup-name", required_argument, 0, 'g' }, // force newline
 
-    // Remote data collection options
+    // Options to save data locally
+    { "output-directory", required_argument, 0, 'm' }, // force newline
+    { "output-filename", required_argument, 0, 'f' }, // force newline
+
+    // Options to stream data remotely
     { "remote-ip", required_argument, 0, 'i' }, // force newline
     { "remote-port", required_argument, 0, 'p' }, // force newline
     { "remote-secret", required_argument, 0, 'X' }, // force newline
@@ -103,17 +106,9 @@ struct option_extended {
     { "Data sampling options", &g_long_opts[0], "Seconds between snapshots of data (default 60 seconds)." },
     { "Data sampling options", &g_long_opts[1], "Number of snapshots; special value 0 means forever (default is 0)." },
     { "Data sampling options", &g_long_opts[2],
-        "Program will write output files to provided directory (default cwd)." },
-    { "Data sampling options", &g_long_opts[3],
-        "Name the output files using provided prefix instead of defaulting to the filenames:\n"
-        "\thostname_<year><month><day>_<hour><minutes>.json  (for JSON data)\n"
-        "\thostname_<year><month><day>_<hour><minutes>.err   (for error log)\n"
-        "Use special prefix 'stdout' to indicate that you want the utility to write on stdout.\n"
-        "Use special prefix 'none' to indicate that you want to disable JSON genreation." },
-    { "Data sampling options", &g_long_opts[4],
         "Allow multiple instances of cmonitor_collector to run on this system." },
-    { "Data sampling options", &g_long_opts[5], "Stay in foreground." },
-    { "Data sampling options", &g_long_opts[6],
+    { "Data sampling options", &g_long_opts[3], "Stay in foreground." },
+    { "Data sampling options", &g_long_opts[4],
         "Collect specified list of performance stats. Available performance stats are:\n"
         "  cpu: collect per-core CPU stats from /proc/stat                [cgroup-mode: also 'cpuacct']\n"
         "  memory: collect memory stats from /proc/meminfo, /proc/vmstat  [cgroup-mode: also 'memory']\n"
@@ -123,23 +118,40 @@ struct option_extended {
         "  cgroups: activates cgroup-mode\n" // force newline
         "  all: the combination of all previous stats (this is the default)\n"
         "Note that a comma-separated list of above stats can be provided." },
-    { "Data sampling options", &g_long_opts[7],
+    { "Data sampling options", &g_long_opts[5],
         "Collect all available details about the stats families enabled by --collect.\n"
         "By default, for each family, only the stats that are used by the 'cmonitor_chart' companion utility\n"
         "are collected. With this option a more detailed but larger JSON / InfluxDB data stream is produced." },
+    { "Data sampling options", &g_long_opts[6],
+        "If cgroup sampling is active (--collect=cgroups), this option allows to provide explicitly the name of \n"
+        "the cgroup to monitor. If not provided or 'self' is provided, the statistics of the cgroups where \n"
+        "cmonitor_collector runs will be collected. Note that this option is mostly useful when running \n"
+        "cmonitor_collector directly on the baremetal since a process running inside a container cannot monitor"
+        "the performances of other containers.\n" },
 
-    // Remote data collection options
-    { "Remote data collection options", &g_long_opts[8],
-        "IP address or hostname of the InfluxDB instance to send measurements to (database 'cmonitor' will be used)." },
-    { "Remote data collection options", &g_long_opts[9], "Port used by InfluxDB." },
-    { "Remote data collection options", &g_long_opts[10],
-        "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET)." },
+    // Options to save data locally
+    { "Options to save data locally", &g_long_opts[7],
+        "Program will write output files to provided directory (default cwd)." },
+    { "Options to save data locally", &g_long_opts[8],
+        "Name the output files using provided prefix instead of defaulting to the filenames:\n"
+        "\thostname_<year><month><day>_<hour><minutes>.json  (for JSON data)\n"
+        "\thostname_<year><month><day>_<hour><minutes>.err   (for error log)\n"
+        "Use special prefix 'stdout' to indicate that you want the utility to write on stdout.\n"
+        "Use special prefix 'none' to indicate that you want to disable JSON genreation.\n" },
+
+    // Options to stream data remotely
+    { "Options to stream data remotely", &g_long_opts[9],
+        "IP address or hostname of the InfluxDB instance to send measurements to;\n"
+        "cmonitor_collector will use a database named 'cmonitor' to store them." },
+    { "Options to stream data remotely", &g_long_opts[10], "Port used by InfluxDB." },
+    { "Options to stream data remotely", &g_long_opts[11],
+        "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).\n" },
 
     // help
-    { "Other options", &g_long_opts[11], "Show version and exit" }, // force newline
-    { "Other options", &g_long_opts[12],
+    { "Other options", &g_long_opts[12], "Show version and exit" }, // force newline
+    { "Other options", &g_long_opts[13],
         "Enable debug mode; automatically activates --foreground mode" }, // force newline
-    { "Other options", &g_long_opts[13], "Show this help" },
+    { "Other options", &g_long_opts[14], "Show this help" },
 
     { NULL, NULL, NULL }
 };
@@ -224,11 +236,19 @@ void CMonitorLoggerUtils::init_error_output_file(const std::string& filenamePref
         // avoid opening an error file:
         m_outputErr = nullptr;
     } else {
+
+        m_strErrorFileName = filenamePrefix;
+        if (filenamePrefix.size() > 5 && filenamePrefix.substr(filenamePrefix.size() - 5) == ".json")
+            m_strErrorFileName = filenamePrefix.substr(0, filenamePrefix.size() - 5) + ".err";
+        else
+            m_strErrorFileName += ".err";
+
         // prepare output error file but don't open it yet
-        char filename[1024];
-        sprintf(filename, "%s.err", filenamePrefix.c_str());
-        m_strErrorFileName = filename;
         printf("Errors (if any) will be logged into the file '%s'\n", m_strErrorFileName.c_str());
+
+        // however if it already exists, remove it:
+        if (file_or_dir_exists(m_strErrorFileName.c_str()))
+            unlink(m_strErrorFileName.c_str());
     }
 
     fflush(NULL);
@@ -341,9 +361,8 @@ void CMonitorCollectorApp::print_help()
     std::cerr << "    5) Crontab entry for pumping data to an InfluxDB:" << std::endl;
     std::cerr << "\t* 0 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -i admin.acme.com -p 8086" << std::endl;
     std::cerr << "" << std::endl;
-    std::cerr
-        << "NOTE: this is the cgroup-aware fork of original njmon software (https://github.com/f18m/nmon-cgroup-aware)"
-        << std::endl;
+    std::cerr << "NOTE: this is the cgroup-aware fork of original njmon software (see https://github.com/f18m/cmonitor)"
+              << std::endl;
 
     exit(0);
 }
@@ -400,17 +419,6 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'c':
                 g_cfg.m_nSamples = atoi(optarg);
                 break;
-            case 'm':
-                g_cfg.m_strOutputDir = optarg;
-                break;
-            case 'f': {
-                g_cfg.m_strOutputFilenamePrefix = optarg;
-
-                // if the filename contains the JSON extension, remove it
-                size_t nchars = g_cfg.m_strOutputFilenamePrefix.size();
-                if (nchars > 4 && g_cfg.m_strOutputFilenamePrefix.substr(nchars - 4) == ".json")
-                    g_cfg.m_strOutputFilenamePrefix = g_cfg.m_strOutputFilenamePrefix.substr(0, nchars - 4);
-            } break;
             case 'k':
                 g_cfg.m_bAllowMultipleInstances = true;
                 break;
@@ -432,6 +440,22 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'F':
                 g_cfg.m_bForeground = true;
                 break;
+            case 'g':
+                g_cfg.m_strCGroupName = optarg;
+                break;
+
+                // Local data saving options
+            case 'm':
+                g_cfg.m_strOutputDir = optarg;
+                break;
+            case 'f': {
+                g_cfg.m_strOutputFilenamePrefix = optarg;
+
+                // if the filename contains the JSON extension, remove it
+                size_t nchars = g_cfg.m_strOutputFilenamePrefix.size();
+                if (nchars > 5 && g_cfg.m_strOutputFilenamePrefix.substr(nchars - 5) == ".json")
+                    g_cfg.m_strOutputFilenamePrefix = g_cfg.m_strOutputFilenamePrefix.substr(0, nchars - 5);
+            } break;
 
                 // Remote data collector options
             case 'i':
@@ -633,7 +657,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     if (bCollectCGroupInfo) {
         cgroup_init();
         cgroup_proc_cpuacct(0, false /* do not emit JSON */);
-        cgroup_proc_tasks(0, false /* do not emit JSON */);
+        cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */);
     }
 
     double current_time = get_timestamp_sec();
@@ -725,7 +749,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         }
 
         if (g_cfg.m_nCollectFlags & PK_PROCESSES) {
-            cgroup_proc_tasks(elapsed, true);
+            cgroup_proc_tasks(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
         }
 
         g_output.push_current_sample();
