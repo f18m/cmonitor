@@ -14,8 +14,7 @@ RPM_TARBALL_DIR:=/tmp/cmonitor/tarball
 
 # main versioning constants
 # IMPORTANT: other places where the version must be updated:
-#  1) examples/docker*/Dockerfile  -> rpm_version string
-#  2) debian/changelog             -> to release a new Ubuntu package
+#  - debian/changelog             -> to release a new Ubuntu package
 #
 RPM_VERSION:=1.3
 
@@ -25,12 +24,19 @@ ifeq ($(GIT_AVAIL),)
 # probably we're running in e.g. the Docker to build the musl-compatible binary:
 TAGVERSION:=detached
 NUM_COMMITS_SINCE_TAG=0
-RPM_RELEASE:=2
+RPM_RELEASE:=3
 else
 TAGVERSION:=$(shell git describe --long --tags)
 NUM_COMMITS_SINCE_TAG=$(shell git rev-list $(RPM_VERSION)..HEAD --count)
 RPM_RELEASE:=$(NUM_COMMITS_SINCE_TAG)
 endif
+
+ifeq ($(DOCKER_LATEST),1)
+DOCKER_TAG=latest
+else
+DOCKER_TAG=v$(RPM_VERSION)-$(RPM_RELEASE)
+endif
+
 
 $(info RPM version is $(RPM_VERSION), RPM release is $(RPM_RELEASE))
 
@@ -154,7 +160,7 @@ cmonitor_musl: # build cmonitor inside a Docker from Alpine distro, to build a c
 docker_image: cmonitor_musl
 	@cp -fv src/cmonitor_collector docker
 	docker build \
-		--tag f18m/cmonitor:v$(RPM_VERSION)-$(RPM_RELEASE) \
+		--tag f18m/cmonitor:$(DOCKER_TAG) \
 		--build-arg sampling_interval=3 \
 		--build-arg num_samples=0 \
 		docker
@@ -165,11 +171,13 @@ docker_run:
 		--rm \
 		--name=cmonitor-baremetal-collector \
 		-v /root:/perf \
-		f18m/cmonitor:v$(RPM_VERSION)-$(RPM_RELEASE)
+		f18m/cmonitor:$(DOCKER_TAG)
 
 docker_push:
 	# this requires write permission in the DockerHub repository:
-	@docker push f18m/cmonitor:v$(RPM_VERSION)-$(RPM_RELEASE)
+	# before this target you need to run:
+	#    docker login
+	@docker push f18m/cmonitor:$(DOCKER_TAG)
 
 .PHONY: all clean install examples \
 		srpm_tarball srpm rpm \

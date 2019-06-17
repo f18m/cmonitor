@@ -449,11 +449,11 @@ function clear_chart() {
         ''' Finish the JS portion and HTML head tag '''
         
         # convert into JS all the charts that belong to this HTML document:
-        combo_box_ctrls = []
+        combo_box_ctrls = set()
         for num, graph in enumerate(self.graphs, start=1):
             self.file.write(graph.toGoogleChartJS())
             if len(graph.combobox_label)>0:
-                combo_box_ctrls.append(graph.combobox_label)
+                combo_box_ctrls.add(graph.combobox_label)
         
         # add all event listeners for button clicks:
         self.file.write('function setup_button_click_handlers() {\n')

@@ -59,12 +59,6 @@ function clear_chart() {
     g_chart.clearChart();
 }
 
-/* Utility function used to reset combobox controls: */
-function reset_combo_boxes() {
-  document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
-  document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
-}
-
 function draw_graph1() {
   var deflated_data_base64_graph1 = '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\n';
   var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
@@ -86,6 +80,7 @@ function draw_graph1() {
   g_chart.draw(data_graph1, options_graph1);
   g_current_data = data_graph1;
   g_current_options = options_graph1;
+  reset_combo_boxes("baremetal_cpus");
 }
 
 function draw_graph2() {
@@ -109,6 +104,7 @@ function draw_graph2() {
   g_chart.draw(data_graph2, options_graph2);
   g_current_data = data_graph2;
   g_current_options = options_graph2;
+  reset_combo_boxes("baremetal_cpus");
 }
 
 function draw_graph3() {
@@ -132,7 +128,7 @@ function draw_graph3() {
   g_chart.draw(data_graph3, options_graph3);
   g_current_data = data_graph3;
   g_current_options = options_graph3;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph4() {
@@ -156,6 +152,7 @@ function draw_graph4() {
   g_chart.draw(data_graph4, options_graph4);
   g_current_data = data_graph4;
   g_current_options = options_graph4;
+  reset_combo_boxes("cgroup_cpus");
 }
 
 function draw_graph5() {
@@ -179,6 +176,7 @@ function draw_graph5() {
   g_chart.draw(data_graph5, options_graph5);
   g_current_data = data_graph5;
   g_current_options = options_graph5;
+  reset_combo_boxes("cgroup_cpus");
 }
 
 function draw_graph6() {
@@ -202,7 +200,7 @@ function draw_graph6() {
   g_chart.draw(data_graph6, options_graph6);
   g_current_data = data_graph6;
   g_current_options = options_graph6;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph7() {
@@ -226,7 +224,7 @@ function draw_graph7() {
   g_chart.draw(data_graph7, options_graph7);
   g_current_data = data_graph7;
   g_current_options = options_graph7;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph8() {
@@ -258,7 +256,7 @@ function draw_graph8() {
   g_chart.draw(data_graph8, options_graph8);
   g_current_data = data_graph8;
   g_current_options = options_graph8;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph9() {
@@ -282,7 +280,7 @@ function draw_graph9() {
   g_chart.draw(data_graph9, options_graph9);
   g_current_data = data_graph9;
   g_current_options = options_graph9;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph10() {
@@ -306,7 +304,7 @@ function draw_graph10() {
   g_chart.draw(data_graph10, options_graph10);
   g_current_data = data_graph10;
   g_current_options = options_graph10;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph11() {
@@ -330,7 +328,7 @@ function draw_graph11() {
   g_chart.draw(data_graph11, options_graph11);
   g_current_data = data_graph11;
   g_current_options = options_graph11;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph12() {
@@ -354,7 +352,7 @@ function draw_graph12() {
   g_chart.draw(data_graph12, options_graph12);
   g_current_data = data_graph12;
   g_current_options = options_graph12;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph13() {
@@ -378,7 +376,7 @@ function draw_graph13() {
   g_chart.draw(data_graph13, options_graph13);
   g_current_data = data_graph13;
   g_current_options = options_graph13;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph14() {
@@ -402,7 +400,7 @@ function draw_graph14() {
   g_chart.draw(data_graph14, options_graph14);
   g_current_data = data_graph14;
   g_current_options = options_graph14;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function setup_button_click_handlers() {
@@ -417,6 +415,14 @@ function setup_button_click_handlers() {
   document.getElementById("btn_draw_graph13").addEventListener("click", draw_graph13);
   document.getElementById("btn_draw_graph14").addEventListener("click", draw_graph14);
   document.getElementById("btn_show_config").addEventListener("click", show_config_window);
+}
+
+/* Utility function used to reset combobox controls: */
+function reset_combo_boxes(combobox_to_exclude_from_reset) {
+  if (combobox_to_exclude_from_reset != "cgroup_cpus")
+      document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
+  if (combobox_to_exclude_from_reset != "baremetal_cpus")
+      document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
 }
 
 function show_config_window() {

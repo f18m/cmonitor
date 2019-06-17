@@ -30,6 +30,10 @@ Table of contents of this README:
   - [Step 1: collect stats](#section-id-102)
   - [Step 2: plot stats collected as JSON](#section-id-120)
   - [Usage scenarios and HTML result examples](#section-id-132)
+    - [Monitoring the baremetal server (no containers)](#section-id-1321)
+    - [Monitoring the baremetal server from a Docker container](#section-id-1322)
+    - [Monitoring your Docker container embedding cmonitor inside it](#section-id-1323)
+    - [Monitoring your Docker container from the baremetal](#section-id-1324)
   - [Connecting with InfluxDB and Grafana](#section-id-159)
 - [Project History](#section-id-185)
 - [License](#section-id-186)
@@ -164,6 +168,8 @@ Note that to save space/bandwidth you can also gzip the JSON file and pass it gz
 
 ### Usage scenarios and HTML result examples
 
+<div id='section-id-1321'/>
+
 #### Monitoring the baremetal server (no containers)
 
 In this case you can simply install cmonitor as RPM or APT package following instructions in [How to install](#section-id-65)
@@ -178,6 +184,8 @@ Example results:
    This is a longer example of collected statistics (results in a larger file, may take some time to download)  generated with 9 hours of performance stats collected from a physical server running Centos7 and with 56 CPUs (!!); 
    the `cmonitor_collector` utility was running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
    graphs are present;
+
+<div id='section-id-1322'/>
 
 #### Monitoring the baremetal server from a Docker container
 
@@ -196,6 +204,9 @@ Example results:
 1) [docker_centos7_collecting_baremetal_stats](https://f18m.github.io/cmonitor/examples/docker-centos7-collecting-baremetal-stats.html): 
    example of graph generated with the performance stats collected from a physical server from inside a Docker container;
    in this case cgroup stat collection was explicitely disabled so that only baremetal performance graphs are present;
+   
+   
+<div id='section-id-1323'/>
    
 #### Monitoring your Docker container embedding cmonitor inside it
 
@@ -223,6 +234,8 @@ Example results:
    in this case both cgroup stats and baremetal performance graphs are present.
 2) [docker_centos7_userapp_with_embedded_collector](https://f18m.github.io/cmonitor/examples/docker-centos7-userapp-with-embedded-collector.html):
    same graph as example n. 2, but obtained from a Docker container running Centos 7 instead of Ubuntu as base image.
+   
+<div id='section-id-1324'/>
    
 #### Monitoring your Docker container from the baremetal
 

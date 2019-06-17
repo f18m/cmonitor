@@ -59,12 +59,6 @@ function clear_chart() {
     g_chart.clearChart();
 }
 
-/* Utility function used to reset combobox controls: */
-function reset_combo_boxes() {
-  document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
-  document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
-}
-
 function draw_graph1() {
   var deflated_data_base64_graph1 = 'eNqdV01vEzEQ/SsoJ5CsxR5/c+ZALyBAnKoeAg1SpSIQjYQqxH/nzdjrOEC8Foe2m+367cy8N28m19c/d8fHb4fdi93t/ng43n057NTufv/xcI9bL9dbv9Tuw8PhO/71+u4TP/H+8eF4+IKLq9t7/nz1/M2TH/u7Iy5f7b/fPrl695af+vr5uF4eD/v73Y26FtCnpE1WQZmotCKrXHq2UzEuNpPSi8ZPVESLzwmXpt6Sv5cQPCN4u+js5XG3OPxvyUAgXAsQg9BlEKckirCYbOVpg1caAkZWeSH8LhB6BGEYIxmEvmaCe1Yw8HsGgSQTWlKNgrgWGQh4xCG2tF0OpyyD2IQwojxuAeJ8AUFaLZchiLBCBqmvIB4HnVsCQqOECH2FCSMYocaEJdbQLR73Hh89c2xbQoOqeKHG8ptjpRc4ERioje2K4kcYwo03UEOogVg+zeIgjWymAhF6cOosm4A0gO/xJ28LzRd6PFfQVaWBMi1sJSnyJju+9oxuaiXG0RIBhK/nshFuLOtzpZiUiyizZ7GdNO8ugwTVtBYqN6Qs8xu4rKfWyyMM4YaCKLTTGjc0WsIjy1ArpUcwwk5AUdJaWL4nNcrVTjYKGwo5KaOSvfMEAMQZZkJhJnNBagy2c7ENSkKhJGdo488T26ejqodz7t9nZk+b9d1nL58+LtUHZ7aSRUUJFuKqXrxpF7H2hltqrQmvp+IW8JDVz4YMxMKAd6LjqiY2Mo7A5E6SQxAhIqGtXGg9jTRCSn/W5t8ISchwoUXBpgWJs50SzflNOlHyH4ykOkwSUna1mo4bO6G4ZDvvHaYhjFBx29XynBUbxWz1cyClKcD9SQQkBhM60xwi+Kou0ywis2nqUk5qYdjLIFkogU+Hpi5SgfcOx5N+dV4z8rtcKHG6eRWmPQ9XkajpstEjkMIMNFXFwU4FI+YBB4L0TElyYSay6dtmsugSlpbRwvIESGmW3DSCg8oGhBBkQk4gCDPk2tDxEj9K4njGuzYrR1PR6sLNqYBOWApcZ8fdGyemPFDKJMEG2STPth1gAYkKyWFTKFYXfiI1GCbZlMQMT7Xt0gJE+HFRtoP1nZ59yE9ZCBBczcbV3uOdFCvquUEPEynrV2oIXL6Y0IeTCKbYWLc0epWxUsuE3d7NcV4YgXOuToGNUkXWW29jaYQgZNjFtWgzexhNuSCOCw2yG512EQx4naYRhAZZv2PrVoyGcFYEGiEIDaFbqRK7ISU7FwKtznXyucjfM+Lfg/4SgKlC8F0VYqzfVMx2a1GhwfBAS22z4QF5NhHdCKE0RLdIOaZSp9kcild17YfzmAjzVSxDvVsB8NWCm8HMidmWBavb0aGkIF+IpjKwlQXqFnTsCdiRkp9LwVYWbNeQjhFKO51tBjc3vwFgoUjT\n';
   var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
@@ -86,6 +80,7 @@ function draw_graph1() {
   g_chart.draw(data_graph1, options_graph1);
   g_current_data = data_graph1;
   g_current_options = options_graph1;
+  reset_combo_boxes("baremetal_cpus");
 }
 
 function draw_graph2() {
@@ -109,6 +104,7 @@ function draw_graph2() {
   g_chart.draw(data_graph2, options_graph2);
   g_current_data = data_graph2;
   g_current_options = options_graph2;
+  reset_combo_boxes("baremetal_cpus");
 }
 
 function draw_graph3() {
@@ -132,7 +128,7 @@ function draw_graph3() {
   g_chart.draw(data_graph3, options_graph3);
   g_current_data = data_graph3;
   g_current_options = options_graph3;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph4() {
@@ -156,6 +152,7 @@ function draw_graph4() {
   g_chart.draw(data_graph4, options_graph4);
   g_current_data = data_graph4;
   g_current_options = options_graph4;
+  reset_combo_boxes("cgroup_cpus");
 }
 
 function draw_graph5() {
@@ -179,6 +176,7 @@ function draw_graph5() {
   g_chart.draw(data_graph5, options_graph5);
   g_current_data = data_graph5;
   g_current_options = options_graph5;
+  reset_combo_boxes("cgroup_cpus");
 }
 
 function draw_graph6() {
@@ -202,7 +200,7 @@ function draw_graph6() {
   g_chart.draw(data_graph6, options_graph6);
   g_current_data = data_graph6;
   g_current_options = options_graph6;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph7() {
@@ -226,7 +224,7 @@ function draw_graph7() {
   g_chart.draw(data_graph7, options_graph7);
   g_current_data = data_graph7;
   g_current_options = options_graph7;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph8() {
@@ -258,7 +256,7 @@ function draw_graph8() {
   g_chart.draw(data_graph8, options_graph8);
   g_current_data = data_graph8;
   g_current_options = options_graph8;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph9() {
@@ -282,7 +280,7 @@ function draw_graph9() {
   g_chart.draw(data_graph9, options_graph9);
   g_current_data = data_graph9;
   g_current_options = options_graph9;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph10() {
@@ -306,7 +304,7 @@ function draw_graph10() {
   g_chart.draw(data_graph10, options_graph10);
   g_current_data = data_graph10;
   g_current_options = options_graph10;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph11() {
@@ -330,7 +328,7 @@ function draw_graph11() {
   g_chart.draw(data_graph11, options_graph11);
   g_current_data = data_graph11;
   g_current_options = options_graph11;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph12() {
@@ -354,7 +352,7 @@ function draw_graph12() {
   g_chart.draw(data_graph12, options_graph12);
   g_current_data = data_graph12;
   g_current_options = options_graph12;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph13() {
@@ -378,7 +376,7 @@ function draw_graph13() {
   g_chart.draw(data_graph13, options_graph13);
   g_current_data = data_graph13;
   g_current_options = options_graph13;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph14() {
@@ -402,7 +400,7 @@ function draw_graph14() {
   g_chart.draw(data_graph14, options_graph14);
   g_current_data = data_graph14;
   g_current_options = options_graph14;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph15() {
@@ -426,7 +424,7 @@ function draw_graph15() {
   g_chart.draw(data_graph15, options_graph15);
   g_current_data = data_graph15;
   g_current_options = options_graph15;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph16() {
@@ -450,7 +448,7 @@ function draw_graph16() {
   g_chart.draw(data_graph16, options_graph16);
   g_current_data = data_graph16;
   g_current_options = options_graph16;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function setup_button_click_handlers() {
@@ -467,6 +465,14 @@ function setup_button_click_handlers() {
   document.getElementById("btn_draw_graph15").addEventListener("click", draw_graph15);
   document.getElementById("btn_draw_graph16").addEventListener("click", draw_graph16);
   document.getElementById("btn_show_config").addEventListener("click", show_config_window);
+}
+
+/* Utility function used to reset combobox controls: */
+function reset_combo_boxes(combobox_to_exclude_from_reset) {
+  if (combobox_to_exclude_from_reset != "cgroup_cpus")
+      document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
+  if (combobox_to_exclude_from_reset != "baremetal_cpus")
+      document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
 }
 
 function show_config_window() {

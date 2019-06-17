@@ -59,12 +59,6 @@ function clear_chart() {
     g_chart.clearChart();
 }
 
-/* Utility function used to reset combobox controls: */
-function reset_combo_boxes() {
-  document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
-  document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
-}
-
 function draw_graph1() {
   var deflated_data_base64_graph1 = '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\n';
   var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
@@ -86,6 +80,7 @@ function draw_graph1() {
   g_chart.draw(data_graph1, options_graph1);
   g_current_data = data_graph1;
   g_current_options = options_graph1;
+  reset_combo_boxes("baremetal_cpus");
 }
 
 function draw_graph2() {
@@ -109,6 +104,7 @@ function draw_graph2() {
   g_chart.draw(data_graph2, options_graph2);
   g_current_data = data_graph2;
   g_current_options = options_graph2;
+  reset_combo_boxes("baremetal_cpus");
 }
 
 function draw_graph3() {
@@ -132,6 +128,7 @@ function draw_graph3() {
   g_chart.draw(data_graph3, options_graph3);
   g_current_data = data_graph3;
   g_current_options = options_graph3;
+  reset_combo_boxes("baremetal_cpus");
 }
 
 function draw_graph4() {
@@ -155,6 +152,7 @@ function draw_graph4() {
   g_chart.draw(data_graph4, options_graph4);
   g_current_data = data_graph4;
   g_current_options = options_graph4;
+  reset_combo_boxes("baremetal_cpus");
 }
 
 function draw_graph5() {
@@ -178,7 +176,7 @@ function draw_graph5() {
   g_chart.draw(data_graph5, options_graph5);
   g_current_data = data_graph5;
   g_current_options = options_graph5;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph6() {
@@ -202,7 +200,7 @@ function draw_graph6() {
   g_chart.draw(data_graph6, options_graph6);
   g_current_data = data_graph6;
   g_current_options = options_graph6;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph7() {
@@ -226,7 +224,7 @@ function draw_graph7() {
   g_chart.draw(data_graph7, options_graph7);
   g_current_data = data_graph7;
   g_current_options = options_graph7;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function draw_graph8() {
@@ -250,7 +248,7 @@ function draw_graph8() {
   g_chart.draw(data_graph8, options_graph8);
   g_current_data = data_graph8;
   g_current_options = options_graph8;
-  reset_combo_boxes();
+  reset_combo_boxes("");
 }
 
 function setup_button_click_handlers() {
@@ -259,6 +257,12 @@ function setup_button_click_handlers() {
   document.getElementById("btn_draw_graph7").addEventListener("click", draw_graph7);
   document.getElementById("btn_draw_graph8").addEventListener("click", draw_graph8);
   document.getElementById("btn_show_config").addEventListener("click", show_config_window);
+}
+
+/* Utility function used to reset combobox controls: */
+function reset_combo_boxes(combobox_to_exclude_from_reset) {
+  if (combobox_to_exclude_from_reset != "baremetal_cpus")
+      document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
 }
 
 function show_config_window() {
