@@ -655,9 +655,10 @@ def generate_config_js(jheader):
     config_str += configdump("identity", "Server Identity")
     config_str += configdump("os_release", "Operating System Release")
     config_str += configdump("proc_version", "Linux Kernel Version")
-    if 'cgroup_config' in jheader:
+    if 'cgroup_config' in jheader:        # if cgroups are off, this section will not be present
         config_str += configdump("cgroup_config", "Linux Control Group (CGroup) Configuration")
-    config_str += configdump("lscpu", "CPU Overview")
+    if 'lscpu' in jheader:                # Alpine docker has no lscpu utility 
+        config_str += configdump("lscpu", "CPU Overview")
     if 'proc_meminfo' in jheader:
         config_str += configdump("proc_meminfo", "Memory Overview")
     #config_str += configdump("cpuinfo", "CPU Core Details")
@@ -1167,8 +1168,10 @@ def generate_load_avg(web, jheader, jdata):
     # Process JSON sample and build Google Chart-compatible Javascript variable
     # See https://developers.google.com/chart/interactive/docs/reference
     #
-     
-    num_baremetal_cpus = int(jheader["lscpu"]["cpus"])
+    
+    num_baremetal_cpus = 1
+    if "lscpu" in jheader:
+        num_baremetal_cpus = int(jheader["lscpu"]["cpus"])
      
     load_avg_stats = GoogleChartsTimeSeries(['Timestamp', 'LoadAvg (1min)', 'LoadAvg (5min)', 'LoadAvg (15min)'])
     for i, s in enumerate(jdata):
@@ -1238,11 +1241,18 @@ def generate_monitored_summary(jheader, jdata, logical_cpus_indexes):
     all_netdevices = []
     if "network_interfaces" in jdata_first_sample :
         all_netdevices = jdata_first_sample["network_interfaces"].keys()
+        
+    cpu_model = "Unknown"
+    bogomips = "Unknown"
+    if "lscpu" in jheader:
+        cpu_model = jheader["lscpu"]["model_name"]
+        bogomips = jheader["lscpu"]["bogomips"]
+
     monitored_summary = [
         ( "Hostname:", jheader["identity"]["hostname"] ),
         ( "OS:", jheader["os_release"]["pretty_name"] ),
-        ( "CPU:", jheader["lscpu"]["model_name"] ),
-        ( "BogoMIPS:", jheader["lscpu"]["bogomips"] ),
+        ( "CPU:", cpu_model ),
+        ( "BogoMIPS:", bogomips ),
         ( "Monitored CPUs:", str(len(logical_cpus_indexes)) ),
         ( "Monitored Disks:", str(len(all_disks)) ),
         ( "Monitored Network Devices:", str(len(all_netdevices)) ),

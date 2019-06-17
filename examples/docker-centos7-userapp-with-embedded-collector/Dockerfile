@@ -1,15 +1,13 @@
-FROM centos:7
-ARG rpm_version=1.3
+# NOTE: for this example we build our Docker on Ubuntu which provides a few utils like
+# - lshw
+# - stress
+# out of the box!
+FROM ubuntu:bionic
 
-# first install Python3 & stress utility:
-RUN yum install -y epel-release
-RUN yum install -y python36 stress
+RUN apt-get update &&  apt-get -y install gnupg2 stress lshw
 
-# then install cmonitor from COPR repo:
-RUN yum install -y yum-plugin-copr
-RUN yum copr enable -y f18m/cmonitor
-RUN yum install -y cmonitor-$rpm_version
-
+# for now simply install from the local build (assuming that you built the binary on Ubuntu!)
+COPY cmonitor_collector /usr/bin/
 COPY example-load.sh .
 
 # finally run the cmonitor collector 

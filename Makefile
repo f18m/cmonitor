@@ -12,22 +12,26 @@ ROOT_DIR:=$(THIS_DIR)
 RPM_TMP_DIR:=/tmp/cmonitor/rpm
 RPM_TARBALL_DIR:=/tmp/cmonitor/tarball
 
-# get RPM release from GIT
-TAGVERSION:=$(shell git describe --long --tags)
-
 # main versioning constants
 # IMPORTANT: other places where the version must be updated:
 #  1) examples/docker*/Dockerfile  -> rpm_version string
 #  2) debian/changelog             -> to release a new Ubuntu package
 #
 RPM_VERSION:=1.3
-NUM_COMMITS_SINCE_TAG=$(shell git rev-list $(RPM_VERSION)..HEAD --count)
-#RPM_RELEASE:=$(subst v$(RPM_VERSION)-,,$(TAGVERSION))
-#RPM_RELEASE:=$(subst -,_,$(RPM_RELEASE))
-RPM_RELEASE:=$(NUM_COMMITS_SINCE_TAG)
-ifeq ($(RPM_RELEASE),)
+
+# get RPM release from GIT
+GIT_AVAIL:=$(shell command -v git 2>/dev/null)
+ifeq ($(GIT_AVAIL),)
+# probably we're running in e.g. the Docker to build the musl-compatible binary:
+TAGVERSION:=detached
+NUM_COMMITS_SINCE_TAG=0
 RPM_RELEASE:=2
+else
+TAGVERSION:=$(shell git describe --long --tags)
+NUM_COMMITS_SINCE_TAG=$(shell git rev-list $(RPM_VERSION)..HEAD --count)
+RPM_RELEASE:=$(NUM_COMMITS_SINCE_TAG)
 endif
+
 $(info RPM version is $(RPM_VERSION), RPM release is $(RPM_RELEASE))
 
 #
@@ -142,26 +146,34 @@ endif
 # DOCKER IMAGE
 # 
 
-docker_image: all
+cmonitor_musl: # build cmonitor inside a Docker from Alpine distro, to build a cmonitor_collector musl-linked
+	# use a Docker to compile inside an Alpine environment:
+	docker run --rm -it -v "${PWD}":"/opt/src" radupopescu/musl-builder \
+		sh -c "cd /opt/src && gcc --version && make clean && make"
+
+docker_image: cmonitor_musl
 	@cp -fv src/cmonitor_collector docker
-	@docker build \
+	docker build \
 		--tag f18m/cmonitor:v$(RPM_VERSION)-$(RPM_RELEASE) \
-		--build-arg rpm_version=$(RPM_VERSION)-$(RPM_RELEASE) \
+		--build-arg sampling_interval=3 \
+		--build-arg num_samples=0 \
 		docker
 
 docker_run:
-	@docker rm cmonitor-baremetal-collector || true
+	@docker rm cmonitor-baremetal-collector >/dev/null 2>&1 || true
 	@docker run -it \
 		--rm \
 		--name=cmonitor-baremetal-collector \
 		-v /root:/perf \
 		f18m/cmonitor:v$(RPM_VERSION)-$(RPM_RELEASE)
-	
 
+docker_push:
+	# this requires write permission in the DockerHub repository:
+	@docker push f18m/cmonitor:v$(RPM_VERSION)-$(RPM_RELEASE)
 
 .PHONY: all clean install examples \
 		srpm_tarball srpm rpm \
-		docker_image docker_run
+		cmonitor_musl docker_image docker_run
 
 
 

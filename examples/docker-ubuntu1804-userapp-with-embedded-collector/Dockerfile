@@ -1,14 +1,10 @@
+# NOTE: for this example we build our Docker on Ubuntu which provides a few utils like
+# - lshw
+# - stress
+# out of the box!
 FROM ubuntu:bionic
 
 RUN apt-get update &&  apt-get -y install gnupg2 stress lshw
-
-# this is the way to install a released version from Ubuntu PPA:
-#RUN apt-get install software-properties-common
-#RUN add-apt-repository ppa:francesco-montorsi/ppa
-#RUN echo "deb http://ppa.launchpad.net/francesco-montorsi/ppa/ubuntu bionic main" >>/etc/apt/sources.list
-#RUN echo "deb-src http://ppa.launchpad.net/francesco-montorsi/ppa/ubuntu bionic main" >>/etc/apt/sources.list
-#RUN apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 54B0E4B849B7DBCB
-#RUN apt-get update && apt-get install cmonitor
 
 # for now simply install from the local build (assuming that you built the binary on Ubuntu!)
 COPY cmonitor_collector /usr/bin/

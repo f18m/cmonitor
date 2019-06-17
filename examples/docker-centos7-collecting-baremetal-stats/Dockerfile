@@ -1,14 +1,8 @@
-FROM centos:7
-ARG rpm_version=1.3
+FROM alpine:3.7
 
-# first install Python3:
-RUN yum install -y epel-release
-RUN yum install -y python36
-
-# then install cmonitor from COPR repo:
-RUN yum install -y yum-plugin-copr
-RUN yum copr enable -y f18m/cmonitor
-RUN yum install -y cmonitor-$rpm_version
+# make sure you did run the "cmonitor_musl" target before building this image:
+RUN apk add libstdc++ libc6-compat
+COPY cmonitor_collector /usr/bin/
 
 # finally run the cmonitor collector 
 #  - in foreground since Docker does not like daemons
@@ -19,6 +13,6 @@ CMD /usr/bin/cmonitor_collector \
       --foreground \
       --sampling-interval=3 \
       --num-samples=180 \
-      --collect=cpu,memory,disk,network \
+      --collect=cpu,memory,disk,network,processes \
       --output-filename=docker-centos7-collecting-baremetal-stats \
       --output-directory /perf

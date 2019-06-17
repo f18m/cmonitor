@@ -4,7 +4,8 @@ DOCKER_EXAMPLE_MEMORY_LIMIT:=100m
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f ..)
 HOSTNAME:=docker-centos7-collecting-baremetal-stats
 
-all:
+all: prepare_context
+	@docker stop centos7-cmonitor-for-baremetal-image || true
 	@docker build -t centos7-cmonitor-for-baremetal-image . && \
 		echo "cmonitor docker example built successfully; now running it" && \
 		docker run \
@@ -21,3 +22,12 @@ all:
 		echo "The docker will stop automatically after about 10minutes." && \
 		docker logs -f centos7-collecting-baremetal-stats && \
 		gzip -f ../$(HOSTNAME).json
+
+prepare_context:
+	@cp -fv ../../src/cmonitor_collector .
+	@if ldd ../../src/cmonitor_collector | grep libc.musl >/dev/null; then \
+		echo "Found that cmonitor_collector is correctly compiled for Alpine distro" ; \
+	else \
+		echo "cmonitor_collector needs to be built for Alpine distro. Cannot proceed" ; \
+		exit 2 ; \
+	fi
