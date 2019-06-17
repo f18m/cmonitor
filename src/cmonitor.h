@@ -188,11 +188,11 @@ public:
     // remove streaming opts
     std::string m_strRemoteAddress; // --remote-ip
     std::string m_strRemoteSecret; // --remote-secret
-    unsigned int m_nRemotePort = 0; // --remote-port
+    uint64_t m_nRemotePort = 0; // --remote-port
 
     // data collecting options
-    unsigned int m_nSamples = 0; // --num-samples
-    unsigned int m_nSamplingInterval = 60; // --sampling-interval
+    uint64_t m_nSamples = 0; // --num-samples
+    uint64_t m_nSamplingInterval = 60; // --sampling-interval
     unsigned int m_nCollectFlags = PK_ALL; // --collect: a combination of PerformanceKpiFamily values
     OutputFields m_nOutputFields = PF_USED_BY_CHART_SCRIPT_ONLY; // --deep-collect
     std::string m_strCGroupName; // --cgroup-name
@@ -307,7 +307,7 @@ private:
 
     // limits read from the cgroups that apply to this process:
     uint64_t m_cgroup_memory_limit_bytes = 0;
-    std::set<int> m_cgroup_cpus;
+    std::set<uint64_t> m_cgroup_cpus;
 
     //------------------------------------------------------------------------------
     // Process tracking
@@ -325,8 +325,7 @@ unsigned int replace_string(std::string& str, const std::string& from, const std
 std::string to_lower(const std::string& orig_str);
 std::string trim_string(const std::string& s);
 void strip_spaces(char* s);
-bool string2int(const std::string& str, int& result);
-bool string2int(const std::string& str, uint64_t& result);
+bool string2int(const char* s, uint64_t& result);
 bool file_or_dir_exists(const char* filename);
 template <typename T> std::string stl_container2string(const T& par, const std::string& delim);
 std::vector<std::string> split_string_in_array(const std::string& str, char splitter);
@@ -335,4 +334,4 @@ bool parse_string_with_multiple_ranges(const std::string& data, std::set<int>& r
 bool search_integer(std::string filePath, uint64_t valueToSearch);
 bool read_integer(std::string filePath, uint64_t& value);
 bool read_integers_with_range_validation(
-    const std::string& filename, int lower_limit, int upper_limit, std::set<int>& cpus);
+    const std::string& filename, uint64_t lower_limit, uint64_t upper_limit, std::set<uint64_t>& cpus);

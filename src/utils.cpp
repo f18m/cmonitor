@@ -19,6 +19,7 @@
  */
 
 #include "cmonitor.h"
+#include <limits.h>
 #include <sstream>
 #include <sys/stat.h>
 
@@ -96,21 +97,19 @@ std::string trim_string(const std::string& s)
     return std::string(s, b, e - b + 1);
 }
 
-bool string2int(const std::string& str, int& result)
+bool string2int(const char* s, uint64_t& result)
 {
-    std::stringstream ss(str);
-    if (!(ss >> result)) {
+    char* end;
+    if (s[0] == '\0' || isspace(s[0]))
         return false;
-    }
-    return true;
-}
-
-bool string2int(const std::string& str, uint64_t& result)
-{
-    std::stringstream ss(str);
-    if (!(ss >> result)) {
+    errno = 0;
+    unsigned long l = strtoul(s, &end, 10);
+    /* Both checks are needed because INT_MAX == LONG_MAX is possible. */
+    if (l > INT_MAX || (errno == ERANGE && l == ULONG_MAX))
         return false;
-    }
+    if (*end != '\0')
+        return false;
+    result = l;
     return true;
 }
 
@@ -149,7 +148,7 @@ template <typename T> std::string stl_container2string(const T& par, const std::
     return ret;
 }
 
-template std::string stl_container2string(const std::set<int>& par, const std::string& delim);
+template std::string stl_container2string(const std::set<uint64_t>& par, const std::string& delim);
 
 std::vector<std::string> split_string_in_array(const std::string& str, char splitter)
 {
@@ -168,7 +167,7 @@ std::vector<std::string> split_string_in_array(const std::string& str, char spli
     return tokens;
 }
 
-bool parse_string_with_multiple_ranges(const std::string& data, std::vector<int>& result)
+bool parse_string_with_multiple_ranges(const std::string& data, std::vector<uint64_t>& result)
 {
     // here we support strings containing a combination of
     //  - plain numbers written in base 10
@@ -185,21 +184,21 @@ bool parse_string_with_multiple_ranges(const std::string& data, std::vector<int>
         const std::string& token = *it;
         std::vector<std::string> range = split_string_in_array(token, '-');
         if (range.size() == 1) {
-            int res;
-            if (!string2int(range[0], res))
+            uint64_t res;
+            if (!string2int(range[0].c_str(), res))
                 return false;
 
             result.push_back(res);
         } else if (range.size() == 2) {
-            int start;
-            if (!string2int(range[0], start))
+            uint64_t start;
+            if (!string2int(range[0].c_str(), start))
                 return false;
-            int stop;
-            if (!string2int(range[1], stop))
+            uint64_t stop;
+            if (!string2int(range[1].c_str(), stop))
                 return false;
 
             // expand the range in the output vector
-            for (int i = start; i <= stop; i++)
+            for (uint64_t i = start; i <= stop; i++)
                 result.push_back(i);
         } else {
             return false;
@@ -209,13 +208,13 @@ bool parse_string_with_multiple_ranges(const std::string& data, std::vector<int>
     return true;
 }
 
-bool parse_string_with_multiple_ranges(const std::string& data, std::set<int>& result)
+bool parse_string_with_multiple_ranges(const std::string& data, std::set<uint64_t>& result)
 {
-    std::vector<int> tmpResult;
+    std::vector<uint64_t> tmpResult;
     if (!parse_string_with_multiple_ranges(data, tmpResult))
         return false;
 
-    for (int i : tmpResult)
+    for (uint64_t i : tmpResult)
         result.insert(i);
     return true;
 }
@@ -260,7 +259,7 @@ bool read_integer(std::string filePath, uint64_t& value)
 }
 
 bool read_integers_with_range_validation(
-    const std::string& filename, int lower_limit, int upper_limit, std::set<int>& cpus)
+    const std::string& filename, uint64_t lower_limit, uint64_t upper_limit, std::set<uint64_t>& cpus)
 {
     FILE* stream = fopen(filename.c_str(), "r");
     if (!stream)
@@ -276,7 +275,7 @@ bool read_integers_with_range_validation(
     if (!parse_string_with_multiple_ranges(buffer, cpus))
         return false; // invalid content format??
 
-    std::set<int>::iterator cpuit = cpus.begin();
+    std::set<uint64_t>::iterator cpuit = cpus.begin();
     while (cpuit != cpus.end()) {
         if (*cpuit >= lower_limit && *cpuit < upper_limit)
             cpuit++; // OK; the CPU index is valid

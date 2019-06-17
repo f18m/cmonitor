@@ -395,10 +395,12 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             switch (c) {
             // Data sampling options
             case 's':
-                g_cfg.m_nSamplingInterval = atoi(optarg);
+                string2int(optarg, g_cfg.m_nSamplingInterval);
+                if (g_cfg.m_nSamplingInterval == 0) // safety check
+                    g_cfg.m_nSamplingInterval = 1;
                 break;
             case 'c':
-                g_cfg.m_nSamples = atoi(optarg);
+                string2int(optarg, g_cfg.m_nSamples);
                 break;
             case 'k':
                 g_cfg.m_bAllowMultipleInstances = true;
@@ -443,7 +445,7 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
                 g_cfg.m_strRemoteAddress = optarg;
                 break;
             case 'p':
-                g_cfg.m_nRemotePort = atoi(optarg);
+                string2int(optarg, g_cfg.m_nRemotePort);
                 break;
             case 'X':
                 g_cfg.m_strRemoteSecret = optarg;
@@ -484,11 +486,12 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
     // check arguments we just parsed:
 
     if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort <= 0) {
-        printf("Option -i=%s provided but the -p=port option was not provided\n", g_cfg.m_strRemoteAddress.c_str());
+        printf("Option --remote-ip=%s provided but the --remote-port option was not provided\n",
+            g_cfg.m_strRemoteAddress.c_str());
         exit(52);
     }
     if (g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort > 0) {
-        printf("Option -p=%ud provided but the -i=ip-address option was not provided\n", g_cfg.m_nRemotePort);
+        printf("Option --remote-port=%lu provided but the --remote-ip option was not provided\n", g_cfg.m_nRemotePort);
         exit(53);
     }
 
@@ -615,7 +618,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 
         /* disconnect from terminal */
         g_logger.LogDebug("Forking for daemonization");
-        __pid_t childpid;
+        pid_t childpid;
         if ((childpid = fork()) != 0) {
             exit(0); /* parent returns OK */
         }

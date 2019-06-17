@@ -375,6 +375,8 @@ void CMonitorCollectorApp::header_lscpu()
     char buf[1024 + 1];
 
     DEBUGLOG_FUNCTION_START();
+    if (!file_or_dir_exists("/usr/bin/lscpu"))
+        return;
     if ((pop = popen("/usr/bin/lscpu", "r")) == NULL)
         return;
 
@@ -456,7 +458,7 @@ void CMonitorCollectorApp::header_lshw()
 
     DEBUGLOG_FUNCTION_START();
 
-    if (!file_exists("/usr/bin/header_lshw"))
+    if (!file_exists("/usr/bin/lshw"))
         return;
 
     // header_lshw supports JSON output natively so we just copy/paste its output
@@ -465,7 +467,7 @@ void CMonitorCollectorApp::header_lshw()
     //            not be able to provide all the information it provides if launched
     //            on the baremetal...
 
-    if ((pop = popen("/usr/bin/header_lshw -json", "r")) == NULL)
+    if ((pop = popen("/usr/bin/lshw -json", "r")) == NULL)
         return;
 
     buf[0] = 0;

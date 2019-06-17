@@ -383,9 +383,9 @@ bool get_cgroup_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std
     return false; // cgroup name not found
 }
 
-bool read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<int>& cpus)
+bool read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<uint64_t>& cpus)
 {
-    std::set<int> empty_set;
+    std::set<uint64_t> empty_set;
     return read_integers_with_range_validation(kernelPath + "/cpuset.cpus", 0, INT32_MAX, cpus);
 }
 
@@ -419,7 +419,7 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
 
     valuesINT.resize(num_cpus);
     for (unsigned int i = 0; i < num_cpus; i++)
-        string2int(values[i], valuesINT[i]);
+        string2int(values[i].c_str(), valuesINT[i]);
 
     return true;
 }
@@ -797,7 +797,7 @@ bool CMonitorCollectorApp::cgroup_collect_pids(std::vector<pid_t>& pids)
     std::string line;
     while (std::getline(inputf, line)) {
         uint64_t pid;
-        if (string2int(line, pid))
+        if (string2int(line.c_str(), pid))
             pids.push_back((pid_t)pid);
     }
 
