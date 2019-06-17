@@ -19,6 +19,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "output_frontend.h"
 #include "cmonitor.h"
 #include "influxdb.h"
 #include <algorithm>

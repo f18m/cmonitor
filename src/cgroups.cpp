@@ -20,20 +20,13 @@
  */
 
 #include "cmonitor.h"
+#include "output_frontend.h"
 #include <assert.h>
-#include <cstdint>
-#include <cstdio>
 #include <fstream>
-#include <map>
 #include <pwd.h>
-#include <set>
 #include <sstream>
-#include <string.h>
-#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
-#include <vector>
 
 // ----------------------------------------------------------------------------------
 // Constants

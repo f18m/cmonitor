@@ -19,17 +19,8 @@
  */
 
 #include "cmonitor.h"
-#include <cstdint>
-#include <cstdio>
-#include <fstream>
-#include <set>
 #include <sstream>
-#include <string.h>
-#include <string>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <vector>
 
 // ----------------------------------------------------------------------------------
 // C++ Helper functions

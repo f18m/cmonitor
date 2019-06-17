@@ -19,30 +19,10 @@
  */
 
 #include "cmonitor.h"
-#include <arpa/inet.h>
+#include "output_frontend.h"
 #include <assert.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <ifaddrs.h>
-#include <memory.h>
 #include <mntent.h>
-#include <net/if.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <pwd.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/errno.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/utsname.h>
 #include <sys/vfs.h>
-#include <time.h>
-#include <unistd.h>
 
 #define MAX_LOGICAL_CPU (256)
 #define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpu_count + 1.0)))

@@ -17,38 +17,19 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <arpa/inet.h>
+#include "cmonitor.h"
+#include "output_frontend.h"
 #include <assert.h>
-#include <ctype.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <ifaddrs.h>
 #include <iostream>
-#include <memory.h>
-#include <mntent.h>
-#include <net/if.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <pwd.h>
 #include <signal.h>
 #include <sstream>
 #include <stdarg.h> /* va_list, va_start, va_arg, va_end */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <string>
-#include <sys/errno.h>
 #include <sys/file.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/types.h>
-#include <sys/utsname.h>
-#include <sys/vfs.h>
-#include <time.h>
 #include <unistd.h>
-
-#include "cmonitor.h"
 
 //------------------------------------------------------------------------------
 // Constants
