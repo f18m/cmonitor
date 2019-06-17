@@ -347,9 +347,10 @@ class GoogleChartsGraph:
         js_code = 'function draw_%s() {\n' % (self.js_name)
         js_code += textwrap.indent(js_code_inner, ' ' * JS_INDENT_SIZE)
 
-        if len(self.button_label)>0:
-            # this will be activated by a button that should reset all comboboxes of the graph
-            js_code += '  reset_combo_boxes();\n'
+        # this graph will be activated by either
+        #  - a button that should reset all comboboxes of the page
+        #  - a combo box entry that should reset all other comboboxes in the page 
+        js_code += '  reset_combo_boxes("%s");\n' % self.combobox_label
         
         js_code += '}\n' # end of draw_%s function
         js_code += '\n'
@@ -440,12 +441,6 @@ function clear_chart() {
     g_chart.clearChart();
 }
 
-/* Utility function used to reset combobox controls: */
-function reset_combo_boxes() {
-  document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
-  document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
-}
-
 ''')
         # at this point we will generate all helper JS functions
     
@@ -454,8 +449,11 @@ function reset_combo_boxes() {
         ''' Finish the JS portion and HTML head tag '''
         
         # convert into JS all the charts that belong to this HTML document:
+        combo_box_ctrls = []
         for num, graph in enumerate(self.graphs, start=1):
             self.file.write(graph.toGoogleChartJS())
+            if len(graph.combobox_label)>0:
+                combo_box_ctrls.append(graph.combobox_label)
         
         # add all event listeners for button clicks:
         self.file.write('function setup_button_click_handlers() {\n')
@@ -466,7 +464,17 @@ function reset_combo_boxes() {
                 # this will be selected from a combobox, no need to hook into a button
                 pass
         self.file.write('  document.getElementById("btn_show_config").addEventListener("click", show_config_window);\n')
-        self.file.write('}\n')
+        self.file.write('}\n') # end of setup_button_click_handlers()
+        
+        # add function to reset all comboboxes
+        self.file.write('''
+/* Utility function used to reset combobox controls: */
+function reset_combo_boxes(combobox_to_exclude_from_reset) {
+''')
+        for num, comboname in enumerate(combo_box_ctrls, start=1):
+            self.file.write('  if (combobox_to_exclude_from_reset != "%s")\n' % comboname)
+            self.file.write('      document.getElementById("select_combobox_%s").value = "clear_chart";\n' % comboname)
+        self.file.write('}\n') # end of reset_combo_boxes()
         
         self.file.write(config)
         self.file.write('  </script>\n')
