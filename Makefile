@@ -26,7 +26,7 @@ NUM_COMMITS_SINCE_TAG=$(shell git rev-list $(RPM_VERSION)..HEAD --count)
 #RPM_RELEASE:=$(subst -,_,$(RPM_RELEASE))
 RPM_RELEASE:=$(NUM_COMMITS_SINCE_TAG)
 ifeq ($(RPM_RELEASE),)
-RPM_RELEASE:=1
+RPM_RELEASE:=2
 endif
 $(info RPM version is $(RPM_VERSION), RPM release is $(RPM_RELEASE))
 

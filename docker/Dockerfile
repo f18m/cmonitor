@@ -1,5 +1,5 @@
 FROM centos:7
-ARG rpm_version=1.1
+ARG rpm_version=1.3
 ARG sampling_interval=3
 ARG num_samples=60
 

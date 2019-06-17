@@ -1,5 +1,5 @@
 FROM centos:7
-ARG rpm_version=1.1
+ARG rpm_version=1.3
 
 # first install Python3 & stress utility:
 RUN yum install -y epel-release
