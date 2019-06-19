@@ -14,5 +14,5 @@ CMD /usr/bin/cmonitor_collector \
       --sampling-interval=3 \
       --num-samples=180 \
       --collect=cpu,memory,disk,network,processes \
-      --output-filename=docker-centos7-collecting-baremetal-stats \
+      --output-filename=docker-collecting-baremetal-stats \
       --output-directory /perf

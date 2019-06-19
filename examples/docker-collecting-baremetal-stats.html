@@ -1,0 +1,401 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Monitoring data for hostname docker-collecting-baremetal-stats</title>
+  <style>
+     html,body { height:85%; }
+     body { background-color: #eaeaea; }
+     h3 { margin: 0px; }
+     ul { margin: 0 0 0 0;padding-left: 20px; }
+     button { margin-bottom: 3px; }
+     #hostname_span { background-color: white; color: red; padding: 4px; }
+     #button_table { width:100%; border-collapse: collapse; }
+     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
+     #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
+     #chart_master_inner_p { font-size: x-large; }
+     #bottom_div { float:left; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #bottom_div h3 { font-size: medium; }
+     #bottom_div li { font-size: smaller; }
+     #bottom_table_val { font-family: monospace; }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript">
+/* Load GoogleCharts: */
+google.load("visualization", "1.1", {packages:["corechart"]});
+google.setOnLoadCallback(setup_button_click_handlers);
+
+/* The global chart object: */
+var g_chart = null;
+
+/* Currently selected data & options: */
+var g_current_data = null;
+var g_current_options = null;
+
+/* The global window showing the configuration of all collected data: */
+var g_configWindow = null;
+
+/* Create a trigger for window resize that will redraw current chart */
+var g_window_resize_timer = null;
+window.addEventListener('resize', function(e){
+  if (g_window_resize_timer) 
+    clearTimeout(g_window_resize_timer);
+
+  g_window_resize_timer = setTimeout(function() {
+    if (g_current_data && g_current_options)
+      g_chart.draw(g_current_data, g_current_options);
+  }, 500);
+});
+
+/* Utility function used with combobox controls: */
+function call_function_named(func_name) {
+  eval(func_name + "()");
+}
+
+/* Utility function used to clear main graph: */
+function clear_chart() {
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+}
+
+function draw_graph1() {
+  var deflated_data_base64_graph1 = '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\n';
+  var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
+  var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
+  var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
+  var options_graph1 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 0 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph1, options_graph1);
+  g_current_data = data_graph1;
+  g_current_options = options_graph1;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph2() {
+  var deflated_data_base64_graph2 = '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\n';
+  var deflated_data_binary_graph2 = window.atob(deflated_data_base64_graph2);
+  var inflated_data_graph2 = JSON.parse(pako.inflate(deflated_data_binary_graph2, { to: 'string' }));
+  var data_graph2 = google.visualization.arrayToDataTable(inflated_data_graph2);
+  var options_graph2 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 1 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph2, options_graph2);
+  g_current_data = data_graph2;
+  g_current_options = options_graph2;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph3() {
+  var deflated_data_base64_graph3 = 'eNqVWkuPHDUQ/itoTiC1hvarbHPmQC4gQJyiHBYySJE2AiUroQjx3ylXlbtt98x2WSLS7GT7Sz2++urRvH377+Xly9+3y3eX908vt5cPH2+X5fL89PvtGb/6vn7133L57fPtE/7Vjx/+KL/x65fPL7eP+OHN++fy85tvf/rqn6cPL/jxh6dP779688vP5bf++vOlfny5PT1f3i1vCfRru5q8wGJS+c/bxdpvLku+5hyW9bouBv+kcLXZ0o/Nn8cIARHsegVwG0SEa06xedw59zpIIjOczYIBAEtKV7BebYgziGEAH/W7IXkw5ATCF1/wnwW7QQAaE2AB9IG/tKfeuIgwQD7wAxjUjCj6oPq1+OIQwtDvesxQKpkBZyfC6h3CuGLJ7g4+ZQsGQNSZAsWUMObGXd0adxM0xuQCtJInexzRp5IhowxMKHz1DkHsFttQjPMTYQmBo+scR9dVSyC4iciEQtqIpuTGn7wKijYwbim8tQZ9SDtv0RaflXRxS6GtSZs/hIA/WqMOilsKZ9NGcsMhwS9MUocEXVkPzMeA5ARqV4yjoO52ENswysnrMQplXSE6NM4A2hUEUIVCfLVNXipLrD4zpK++cqKSJBTSGz0ISWzRgL2Oo0GICTuS6PzgSx/WM46wxMZNYrlwUO0bVTInlpDGmkKpsHEEgJxBlanIClsKYcPoETLHGMSsRXlaOSS05eHNIbtE/NeNZf3VFjFJbQGyVQ2IuF4UeyfdKRCIOFkuudJ4lhixJ+Nfb1E79YvIWygTtwaSi2qXhJtGnF6HIbkl8Q+bV2FJFq0xncadwASShZ2/FBukI1bFhDGpm1U4qDSt9Bl/PcKe9LadNUTpcgC1S54lN2zxpcGpTArqavKkuMZsKZXZi+eVXXBPvVlFuAe9hKQUB8+aC00pFYzSyHxUa79n1SW9jIPGhKg3JUtPreVCtC3J8RORJdV1QxPJ5mqpEekagGfZxQTtwzE5hKUEoHaIhNc3PJHY2qTPD8mubwbbEhRyZwLDDyGhYcUhRp5gvYjuHsFCjoyqQOnRk9b3c4JYY7oZ2ZxVoJO5yTUY0VIBWXWSWW73rYEbNE5POfXDwqlLMi7sWSK2WPFJW0WsuCXFHQxIorQVQIp7qADWbaNOd0j3iGeHanwNI5DadlMUVXSgfmaUGL7O6y0EFlXU75iB5dZuux33UtpjQG0Iia2xTTlLWy3zglZZAguuSc3OXJ5E0vU74plHpLjWjjDoWQh6l3IlXLeWeSoAbZJJcG3TykRdWPp1dAsy5zbTpFS0fuAOrLexSRB5g9u3cxMJIsV1YetlrCdg6RSgTxCJbhhF10ycAsJ+TPD9nGuzm9CnIJNu2G8BxFxsRDmqbWHJtcOQS+NylmVABQMyukcZuum4UfqqnRjkAktu3KxhuaOBQ7/nBVbc0ARYbk+luxq1TzLiHlGymyCMnBSca3cI3LecMkVActuOciKV4HKjCK+bAaS3fgRJcvHR2cHnhCq2sjeAHPR0qYF6TqjToGWiYDysk9FQheI6um3bB1irDysMIZH0ljHb6P3JdwbtMqxH/aUGWGzD2IOyKILOHxs6S4Rp+EXUU80eyBo4OVZdN8BKG7cWxnUoS4OesCS0qbkpiEjO9FNgqW0cIjlhtrU5Ft49rp6VLxx15OHp/zDCCeBjGNcpiqvxtdlP+CRaW0+D4lQijWxL6NSa3C9DDFkYMyFOgd82VJd8FX7wZkIVNqntiFdeFkyIghwTqkC5emDPoBWFKIeEqk5+17g0cfGJpLZ5c8fXPLtVf0yIS+zGHlt1n4dbvS2kuL7DSXyp8VM+Gdfc1cpjPAXhOuTWrM51ZN3dgyNFUN6DgD5NuYlNMdzWodCtTo1CqhubXiTZ5rOR1h/S3dQMUBQVj0Utn1UgnfBuI65+kossu3DsZzNxFdHd34utVMvEFJ38xyq5LNxNbviOq7XE1zkhjq+onLqJRBbcQ48H6c5aj0Rwu5d/5fWFnmky1u5bndRyaR9GzbTAN7B9JaPd3U3dwKK8KtvPEQxI52hQd/m4vypLe1BQEYynj+cIadPa1J/iIGhnnkQ6u68X5ak8vlB9HYAuCEPPzEXvQW0DHxDGw1fpol5tBmlre1GiI1yZIkF9aEqsrGtjiXiTg57tibV1HXa2XJYnvT+krGNzyYXvoTk+naIQU7tiJzuC3o7U5VdyEyQiuopJ8o6sm/KKHRnUdvAbsjEeQGdnLc/cyFWqfuSq0ceD59jhRXbhWdKXnLuX2khpUWPAfQxOixIjU+277rJEZFePjElOs8MigIaAiWpDWE9HjtUpQomRhrwQx2YCkvkqu0GQFiI5nP7dYOaj7FhvbtXbEO/ntYRTb4UI6sGMrA+F6xAkEtBVzwkCDKK+kh92wob8SHr0O01mIb3ToJgYapRAeRkimn1SbyO5SulQKiByrLWEpHTt3jaJmCZ1ZA9iKsXCDUon6rnK6aHk9KWfq5w2POOSNdrn3b22MGkDDAzZ5MdNRINvAceYggG1JSKma28HGP2Im6uYum4RosrTR4TEtJ93cqJzqTIeYR3EdJ89tP8XJUL4R1qYdfxAiLHjC8HUJtxT0jJ0BK0SFoy7/T4Nl68TDDgOUPXkq85IfjBma1skYoiajj3S6jNyfyR1q9fbkB4p+kQw7k2kcSoUzg+7wjZNglbOC8ojEbUTdbIO5doNg9qIPJJSbgpaf0RMj7aA3p18ZEikd5VajgV7fxkEH/QY4d4SNyUej2bSmYgaEdID2ydOFgjiu/Fla03KpQUBjjRt1msdhFmHiG4Fk2bC4QZLVm4rQW8H3C+X0iHHcLz7H0Fn82A=\n';
+  var deflated_data_binary_graph3 = window.atob(deflated_data_base64_graph3);
+  var inflated_data_graph3 = JSON.parse(pako.inflate(deflated_data_binary_graph3, { to: 'string' }));
+  var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
+  var options_graph3 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 2 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph3, options_graph3);
+  g_current_data = data_graph3;
+  g_current_options = options_graph3;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph4() {
+  var deflated_data_base64_graph4 = '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\n';
+  var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
+  var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
+  var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
+  var options_graph4 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 3 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph4, options_graph4);
+  g_current_data = data_graph4;
+  g_current_options = options_graph4;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph5() {
+  var deflated_data_base64_graph5 = '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\n';
+  var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
+  var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
+  var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
+  var options_graph5 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "All logical CPUs allowed in cmonitor_collector CGroup (from baremetal stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph5, options_graph5);
+  g_current_data = data_graph5;
+  g_current_options = options_graph5;
+  reset_combo_boxes("");
+}
+
+function draw_graph6() {
+  var deflated_data_base64_graph6 = 'eNqN2M1qFEEUhuFbkV5F6EVXV50/twYvIJDVkMXoNBhMQMxsRLx3O4EQXYzfC7PqeaHh8HCo6sPh13T++X2bPkyn43k73z9u0zw9HD9vD/uj69dHv+fp9mk77X99PH75up3eXV3fP3272Y6n9/uzTz+2bbqbDy/91bq0mn1u+fwb67yue9PnNrd2uTHQpG56A80ATehmLKDpoHHQlG4MzNnAnE3Oef9TJ0MnAV60gKaDxkFTutGYO8DcAeYOMHeAuQPM/S/My+Wmg8ZBU7p5w/yfxkCTqhlvmC8nQycBXrSApoPGQVO6WVfQGGjAkDuYcgdj7mDOA8x5gDkPMOcB5mxgzgbmrDGbxmwas2nMBjAbwGwAs4HNbGAzG9jMBjazgc1sYDMb2MwGjhkGMBvAbACzAcwGMBvA7Bqza8yuMTvA7ACzA8wONrODzexgMzvYzA42s4PN7GAzO9jMDjA7wOwAswPMDjA7wBwac2jMoTEHwBwAcwDMATAHwBwAcwDMATAHwBwAcwDMATAHwBwAcwDMAS6AAS6AqS+AqS+AqS+ACS6ACS6ACS6ACY4ZCY4ZCY4ZCY4ZCY4ZCY4ZCY4ZCY4ZCb5mJPiakeBrRoKvGQkwJ8BcGnNpzKUxF8BcAHMBzAUwF8BcAHMBzAUwF8BcAHMBzAUwF8BcAHMBzAUwl8Zsi8S8J0MnAV60gKaDxkFTupGYnxsDDRhyB1PuYMwdzHmAOQ8w5wHmPMCcDczZwJw15qYxN425acwNYG4Ac/sH890fk+Z/SQ==\n';
+  var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
+  var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
+  var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
+  var options_graph6 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Memory usage in GB (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "GB", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  1
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph6, options_graph6);
+  g_current_data = data_graph6;
+  g_current_options = options_graph6;
+  reset_combo_boxes("");
+}
+
+function draw_graph7() {
+  var deflated_data_base64_graph7 = 'eNqtmUtrWzEQhf9K8SqFS9Bj9Oqu0GX/QcgiJaYE0sciFErpf69ndK8cO7bmSNRkdfmOM9KZI8m6d3d/di+/f+53H3aPDy/7l6dv+92ye374sn8+PPq0Pfq77D7/eHj8+Ovruxv77en7+92rB+H8ga1P7pc7+YYbZ2xZ4mIz/5FbnDvgId6Wk8/i8tmTuDhza65/Tfg/X5P5a9ytGVZ6O62kgzLng9Inlrsem5i1zEaNJTPAemZ9q8H32DjAFmaJ2ayxgTshB2YLs9RjwwDLnmYulUyf9YvFUXHNABX4hU1LHkKtGWDZtJja5HbZOMCyadEBBvsaX6lXnzHJKMrmVq86DxI9lGXbrOHBkQwu9WA2rnD3UtRYSRvKStoixsYBlo0rnArKdSEyJx+6qqzZy9Cs1OyBbN7WIK16qtnDUMne0UN0nFSTGIHSaU0iyLKhKU8UJLmcU7LZqQybTa8zO6oM08qW59FxHtM9rKRtHasdNaBMF08TFNTGNLNCvx0fiFQ2DrDcJWKWzsoiIBh5lQ0DLHtPkmzXZ4MsAiDK7soGJXwXZTs9QajEHmXZNNlzgIHFAbacGow2bqjRfmX3gDJMK/NpK+BKifackvA+kTCDjSL5RVl2X/49ubHqJcBzyoJ3kcRZjv76WCTOKMt+++Mx7jobJc4gKnE+nqd7KBv6dtIAoYR7Tslmu9jOz102DrBsqKN21o4dVsLtHMaGAZYNdab9UOyxElmUpdbmdqTN4xrZgvWNGWD91ua64xJSlC1bn+tsjWVu9eKzUkM6pZTIBqC+VCOLoRJZB/R5qjuwgdC6A4OsxDK1Nu+ycYCVWIbW5j22xtJjbBhgJZZyfxP6UUtrLEGWWoRJZVNbytR6JYgo69uyF1Q2DrClLXvq2CSI4DxI9FCWfbNyn+f7bJawgSi1jlQO8rnujx4oNq87Isj61mT6wOIAy6bZArEStjpjTmXDACumSfNajZWwoazcNwWMZd8sna3qrq6F/d4w00r21Ir/woYeGwdY8fTadXhPKbG0dkYZppXi/uVNtacsNcAzQu6LMqFLW++NjbHUpM8p/dbDw8o4rSyXO3p0uup64Scmuq4eU8rcej/1c1LWtQRkqfW3zqbWmLF/J17W1QNk/da3OhpxVF4TrWPqo/WmGkMDjrJl6cxmW08d14XBSP5ndHI1uUJ9Mm2k776L4VoMjsp1I4ZGHC0wWi+q1teSChpwNMNovXvCUMJR+Z3DlNXQ+rsVQ30LvlpB3aRBtrTgq6zkrmBowNG8ocokWEkaRtIWe9t97X0g0+X0Gk1X3w3NCI9bqVMHHN+y9/8AbbUecQ==\n';
+  var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
+  var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
+  var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
+  var options_graph7 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Average Load  (from baremetal stats)",
+    focusTarget: "category",
+    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Load (%)", gridlines: { color: "lightgrey", count: 11 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph7, options_graph7);
+  g_current_data = data_graph7;
+  g_current_options = options_graph7;
+  reset_combo_boxes("");
+}
+
+function setup_button_click_handlers() {
+  document.getElementById("btn_draw_graph5").addEventListener("click", draw_graph5);
+  document.getElementById("btn_draw_graph6").addEventListener("click", draw_graph6);
+  document.getElementById("btn_draw_graph7").addEventListener("click", draw_graph7);
+  document.getElementById("btn_show_config").addEventListener("click", show_config_window);
+}
+
+/* Utility function used to reset combobox controls: */
+function reset_combo_boxes(combobox_to_exclude_from_reset) {
+  if (combobox_to_exclude_from_reset != "baremetal_cpus")
+      document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
+}
+
+function show_config_window() {
+    if (g_configWindow) g_configWindow.close();
+    g_configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");
+    g_configWindow.document.write("\
+    <html><head>\
+      <title>Configuration</title>\
+      <style>\
+        table { padding-left: 2ex; }\
+        #sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}\
+        #configkey {font-weight: bold;}\
+        #configval {font-family: monospace;}\
+      </style>\
+    </head><body>\
+      <h2>Monitored System Summary</h2>\
+      <table>\
+<tr><td colspan='2' id='sectioncol'>Server Identity</td></tr>\
+    <tr>\
+    <td id='configkey'>Hostname</td><td id='configval'>docker-collecting-baremetal-stats</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Shorthostname</td><td id='configval'>docker-collecting-baremetal-stats</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Lo ip4</td><td id='configval'>127.0.0.1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Eth0 ip4</td><td id='configval'>172.17.0.2</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>All ip addresses</td><td id='configval'>127.0.0.1,172.17.0.2</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Serial-number</td><td id='configval'>System Serial Number</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Model</td><td id='configval'>All Series</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Vendor</td><td id='configval'>ASUS</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>Operating System Release</td></tr>\
+    <tr>\
+    <td id='configkey'>Name</td><td id='configval'>Alpine Linux</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Version id</td><td id='configval'>.7.3</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Pretty name</td><td id='configval'>Alpine Linux v3.7</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>Linux Kernel Version</td></tr>\
+    <tr>\
+    <td id='configkey'>Version</td><td id='configval'>Linux version 4.15.0-51-generic (buildd@lgw01-amd64-059) (gcc version 7.3.0 (Ubuntu 7.3.0-16ubuntu3)) #55-Ubuntu SMP Wed May 15 14:27:21 UTC 2019</td>\
+    </tr>\
+<tr><td colspan='2' id='sectioncol'>Memory Overview</td></tr>\
+    <tr>\
+    <td id='configkey'>Memtotal</td><td id='configval'>15.2GiB</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Hugepages total</td><td id='configval'>0</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Hugepagesize</td><td id='configval'>2.0MiB</td>\
+    </tr>\
+      </table>\
+      <h2>Monitoring Summary</h2>\
+      <table>\
+<tr><td colspan='2' id='sectioncol'>Performance Stats Collector Configuration</td></tr>\
+    <tr>\
+    <td id='configkey'>Command</td><td id='configval'>/usr/bin/cmonitor_collector --foreground --sampling-interval=3 --num-samples=180 --collect=cpu,memory,disk,network,processes --output-filename=docker-collecting-baremetal-stats --output-directory /perf</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Sample interval seconds</td><td id='configval'>3</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Sample num</td><td id='configval'>180</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Version</td><td id='configval'>1.3-3</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Collecting</td><td id='configval'>cpu,disk,memory,network,processes</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Username</td><td id='configval'>root</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Userid</td><td id='configval'>0</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Pid</td><td id='configval'>6</td>\
+    </tr>\
+      </table>\
+    </body></html>\
+");
+}
+
+  </script>
+</head>
+<body>
+  <h1>Monitoring data collected from host <span id="hostname_span">docker-collecting-baremetal-stats</span></h1>
+  <div id="button_div">
+  <table id="button_table">
+  <tr>
+    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (None)</td>
+    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
+  </tr>
+  <tr>
+  <td id="button_table_col">
+    <button id="btn_show_config"><b>Configuration</b></button><br/>
+  </td><td id="button_table_col">
+N/A      </td><td id="button_table_col">
+    <select id="select_combobox_baremetal_cpus" onchange="call_function_named(this.value)">
+      <option value="clear_chart">None</option>
+      <option value="draw_graph1">CPU0</option>
+      <option value="draw_graph2">CPU1</option>
+      <option value="draw_graph3">CPU2</option>
+      <option value="draw_graph4">CPU3</option>
+    </select>
+    <button id="btn_draw_graph5" style="color:red"><b>All CPUs</b></button>
+    <button id="btn_draw_graph6" style="color:darkorange"><b>Memory Usage</b></button>
+    <button id="btn_draw_graph7" style="color:black"><b>Average Load</b></button>
+  </td></tr>
+  </table>
+  </div>
+  <p></p>
+  <div id="chart_master_div"><div id="chart_master_inner_div"><p id="chart_master_inner_p">...click on a button above to show a graph...</p></div></div>
+  <div id="bottom_div">
+    <h3>Monitoring Summary</h3>
+    <table>
+    <tr><td><ul>
+      <li>Version: <span id='bottom_table_val'><a href="https://github.com/f18m/cmonitor">cmonitor</a> 1.3-3</span></li>
+      <li>Collected: <span id='bottom_table_val'>cpu,disk,memory,network,processes</span></li>
+      <li>Started sampling at: <span id='bottom_table_val'>2019-06-18T18:42:19 (UTC)</span></li>
+      <li>Samples: <span id='bottom_table_val'>180</span></li>
+      </ul></td><td><ul>
+      <li>Sampling Interval (s): <span id='bottom_table_val'>3</span></li>
+      <li>Total time sampled (hh:mm:ss): <span id='bottom_table_val'>0:09:00</span></li>
+    </ul></td></tr>
+    </table>
+  </div>
+  <div id="bottom_div">
+    <h3>Monitored System Summary</h3>
+    <table>
+    <tr><td><ul>
+      <li>Hostname: <span id='bottom_table_val'>docker-collecting-baremetal-stats</span></li>
+      <li>OS: <span id='bottom_table_val'>Alpine Linux v3.7</span></li>
+      <li>CPU: <span id='bottom_table_val'>Unknown</span></li>
+      <li>BogoMIPS: <span id='bottom_table_val'>Unknown</span></li>
+      </ul></td><td><ul>
+      <li>Monitored CPUs: <span id='bottom_table_val'>4</span></li>
+      <li>Monitored Disks: <span id='bottom_table_val'>0</span></li>
+      <li>Monitored Network Devices: <span id='bottom_table_val'>0</span></li>
+    </ul></td></tr>
+    </table>
+  </div>
+<p>NOTE: to zoom use left-click and drag; to reset view use right-click.</p>
+</body>
+</html>

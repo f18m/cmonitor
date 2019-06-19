@@ -18,6 +18,6 @@ COPY example-load.sh .
 #  - put resulting files in /perf folder which is actually a volume shared with the host (see docker run command)
 CMD /usr/bin/cmonitor_collector \
       --sampling-interval=3 \
-      --output-filename=docker-centos7-userapp-with-embedded-collector \
+      --output-filename=docker-userapp-with-embedded-collector \
       --output-directory /perf ; \
     bash example-load.sh

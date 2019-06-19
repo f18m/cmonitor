@@ -1,13 +1,13 @@
 #
 # Makefile to regenerate example data
 # 
-
+TOPDIR=..
 EXAMPLE_JSON_FILES=\
 	baremetal1.json.gz \
 	baremetal2.json.gz \
-	docker-centos7-collecting-baremetal-stats.json.gz \
-	docker-centos7-userapp-with-embedded-collector.json.gz \
-	docker-ubuntu1804-userapp-with-embedded-collector.json.gz \
+	docker-collecting-baremetal-stats.json.gz \
+	docker-userapp-with-embedded-collector.json.gz \
+	docker-userapp-with-embedded-collector.json.gz \
 	docker-userapp.json.gz
 
 all:
@@ -21,7 +21,7 @@ clean:
 	
 distclean: clean
 	rm -f *.html
-	
+
 
 #
 # baremetal1 example:
@@ -40,27 +40,26 @@ regen_baremetal1:
 
 
 #
-# docker examples:
-#  - dockerized cmonitor monitoring the baremetal
-#  - dockerized cmonitor embedded inside a docker container
+# docker example: dockerized cmonitor monitoring the baremetal
 #
 
-regen_docker_examples:
-	for dir in docker-centos7-collecting-baremetal-stats \
-			   docker-centos7-userapp-with-embedded-collector \
-			   docker-ubuntu1804-userapp-with-embedded-collector; do \
-		cd $dir && make ; \
-		sleep 10 ; \
-	done
+regen_docker_collecting_baremetal_stats:
+	make -C docker-collecting-baremetal-stats
+	
 
-attach_running_docker:
-	docker exec -i -t ubuntu1804-cmonitor-example /bin/bash
+#
+# docker example: dockerized cmonitor embedded inside a docker container
+#
 
+regen_docker_userapp_with_embedded_collector:
+	make -C docker-userapp-with-embedded-collector
+	
 
-# docker example:
-#  - monitoring of a docker container from the baremetal
+#
+# docker example: monitoring of a docker container from the baremetal
+#
 
-regen_docker_userapp:
+regen_docker_userapp_to_monitor:
 	cd docker-userapp-to-monitor && make
 	sleep 3
 	@echo "Now running cmonitor_collector on the baremetal to monitor the 'userapp' container:"
@@ -72,6 +71,13 @@ regen_docker_userapp:
 		--output-filename=docker-userapp.json \
 		--cgroup-name=docker/$$(docker ps --no-trunc -aqf name=userapp)
 	gzip -f docker-userapp.json
+
+
+# docker helper:
+
+attach_running_docker:
+	docker exec -i -t cmonitor-example /bin/bash
+
 
 #
 # INFLUXDB & GRAFANA example:

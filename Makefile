@@ -16,36 +16,24 @@ RPM_TARBALL_DIR:=/tmp/cmonitor/tarball
 # IMPORTANT: other places where the version must be updated:
 #  - debian/changelog             -> to release a new Ubuntu package
 #
-RPM_VERSION:=1.3
-
-# get RPM release from GIT
-GIT_AVAIL:=$(shell command -v git 2>/dev/null)
-ifeq ($(GIT_AVAIL),)
-# probably we're running in e.g. the Docker to build the musl-compatible binary:
-TAGVERSION:=detached
-NUM_COMMITS_SINCE_TAG=0
-RPM_RELEASE:=3
-else
-TAGVERSION:=$(shell git describe --long --tags)
-NUM_COMMITS_SINCE_TAG=$(shell git rev-list $(RPM_VERSION)..HEAD --count)
-RPM_RELEASE:=$(NUM_COMMITS_SINCE_TAG)
-endif
+CMONITOR_VERSION:=1.4
+CMONITOR_RELEASE:=0
 
 ifeq ($(DOCKER_LATEST),1)
 DOCKER_TAG=latest
 else
-DOCKER_TAG=v$(RPM_VERSION)-$(RPM_RELEASE)
+DOCKER_TAG=v$(CMONITOR_VERSION)-$(CMONITOR_RELEASE)
 endif
 
 
-$(info RPM version is $(RPM_VERSION), RPM release is $(RPM_RELEASE))
+$(info RPM version is $(CMONITOR_VERSION), RPM release is $(CMONITOR_RELEASE))
 
 #
 # BUILD TARGETS
 #
 
 all:
-	$(MAKE) -C src RPM_VERSION=$(RPM_VERSION) RPM_RELEASE=$(RPM_RELEASE)
+	$(MAKE) -C src RPM_VERSION=$(CMONITOR_VERSION) RPM_RELEASE=$(CMONITOR_RELEASE)
 	
 clean:
 	$(MAKE) -C src clean
@@ -84,10 +72,10 @@ srpm_tarball:
 	#  b) the spec file with the version inside it replaced
 	cp -arf $(THIS_DIR) $(RPM_TARBALL_DIR)/ && \
 		cd $(RPM_TARBALL_DIR) && \
-		mv cmonitor cmonitor-$(RPM_VERSION) && \
-		sed -i 's@__RPM_VERSION__@$(RPM_VERSION)@g' cmonitor-$(RPM_VERSION)/spec/cmonitor.spec && \
-		sed -i 's@__RPM_RELEASE__@$(RPM_RELEASE)@g' cmonitor-$(RPM_VERSION)/spec/cmonitor.spec && \
-		tar cvzf $(RPM_TMP_DIR)/cmonitor-$(RPM_VERSION).tar.gz cmonitor-$(RPM_VERSION)/*
+		mv cmonitor cmonitor-$(CMONITOR_VERSION) && \
+		sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' cmonitor-$(CMONITOR_VERSION)/spec/cmonitor.spec && \
+		sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' cmonitor-$(CMONITOR_VERSION)/spec/cmonitor.spec && \
+		tar cvzf $(RPM_TMP_DIR)/cmonitor-$(CMONITOR_VERSION).tar.gz cmonitor-$(CMONITOR_VERSION)/*
 #
 # This target is used by Fedora COPR to automatically produce RPMs for lots of distros.
 # COPR will invoke this target like that:
@@ -102,7 +90,7 @@ ifndef outdir
 endif
 	# now build the SRPM and copy it to the $(outdir) provided by COPR
 	# IMPORTANT: use the spec file that has been edited by the "srpm_tarball" to replace __RPM_VERSION__ 
-	rpmbuild -bs $(RPM_TARBALL_DIR)/cmonitor-$(RPM_VERSION)/spec/cmonitor.spec \
+	rpmbuild -bs $(RPM_TARBALL_DIR)/cmonitor-$(CMONITOR_VERSION)/spec/cmonitor.spec \
 	  --define "_topdir $(RPM_TMP_DIR)" \
 	  --define "_sourcedir $(RPM_TMP_DIR)" \
 	  --define "_builddir $(RPM_TMP_DIR)" \
@@ -146,7 +134,7 @@ endif
 	dpkg-buildpackage -tc -S --force-sign # build source only otherwise Ubuntu PPA rejects with "Source/binary (i.e. mixed) uploads are not allowed"
 	## PROBABLY NOT NECESSARY: debsign -S            # you must have the GPG key setup properly for this to work (see e.g. https://help.github.com/en/articles/generating-a-new-gpg-key)
 	@echo "When ready to upload to your PPA run dput as e.g.:"
-	@echo "    cd .. && dput ppa:francesco-montorsi/cmonitor cmonitor_$(RPM_VERSION).$(RPM_RELEASE)-1ubuntu1_source.changes"
+	@echo "    cd .. && dput ppa:francesco-montorsi/cmonitor cmonitor_$(CMONITOR_VERSION).$(CMONITOR_RELEASE)-1ubuntu1_source.changes"
 
 #
 # DOCKER IMAGE

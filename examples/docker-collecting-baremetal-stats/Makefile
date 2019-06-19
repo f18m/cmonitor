@@ -2,11 +2,11 @@
 DOCKER_EXAMPLE_CPUS:=0
 DOCKER_EXAMPLE_MEMORY_LIMIT:=100m
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f ..)
-HOSTNAME:=docker-centos7-collecting-baremetal-stats
+HOSTNAME:=docker-collecting-baremetal-stats
 
 all: prepare_context
-	@docker stop centos7-cmonitor-for-baremetal-image || true
-	@docker build -t centos7-cmonitor-for-baremetal-image . && \
+	@docker stop collecting-baremetal-stats || true
+	@docker build -t cmonitor-for-baremetal-image . && \
 		echo "cmonitor docker example built successfully; now running it" && \
 		docker run \
 			--detach \
@@ -16,11 +16,11 @@ all: prepare_context
 			--memory=$(DOCKER_EXAMPLE_MEMORY_LIMIT) \
 			--volume=$(DOCKER_EXAMPLE_FOLDER):/perf \
 			--hostname=$(HOSTNAME) \
-			--name centos7-collecting-baremetal-stats \
-			centos7-cmonitor-for-baremetal-image && \
+			--name collecting-baremetal-stats \
+			cmonitor-for-baremetal-image && \
 		echo "cmonitor docker successfully started: baremetal performance stats are collected in $(DOCKER_EXAMPLE_FOLDER)." && \
 		echo "The docker will stop automatically after about 10minutes." && \
-		docker logs -f centos7-collecting-baremetal-stats && \
+		docker logs -f collecting-baremetal-stats && \
 		gzip -f ../$(HOSTNAME).json
 
 prepare_context:

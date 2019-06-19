@@ -201,7 +201,7 @@ docker run -d \
     
 Example results:
 
-1) [docker_centos7_collecting_baremetal_stats](https://f18m.github.io/cmonitor/examples/docker-centos7-collecting-baremetal-stats.html): 
+1) [docker_collecting_baremetal_stats](https://f18m.github.io/cmonitor/examples/docker-collecting-baremetal-stats.html): 
    example of graph generated with the performance stats collected from a physical server from inside a Docker container;
    in this case cgroup stat collection was explicitely disabled so that only baremetal performance graphs are present;
    
@@ -227,13 +227,11 @@ CMD /usr/bin/cmonitor_collector \
 
 Example results:
 
-1) [docker_ubuntu1804_userapp_with_embedded_collector](https://f18m.github.io/cmonitor/examples/docker-ubuntu1804-userapp-with-embedded-collector.html): 
+1) [docker_userapp_with_embedded_collector](https://f18m.github.io/cmonitor/examples/docker-userapp-with-embedded-collector.html): 
    example of graph generated with the performance stats collected from inside a Docker container using Ubuntu as base image; this is a practical example
    where the Docker container is actually deploying something that simulates your target application, together with an embedded
    `cmonitor_collector` instance that monitors the performance of the Docker container itself;
    in this case both cgroup stats and baremetal performance graphs are present.
-2) [docker_centos7_userapp_with_embedded_collector](https://f18m.github.io/cmonitor/examples/docker-centos7-userapp-with-embedded-collector.html):
-   same graph as example n. 2, but obtained from a Docker container running Centos 7 instead of Ubuntu as base image.
    
 <div id='section-id-1324'/>
    

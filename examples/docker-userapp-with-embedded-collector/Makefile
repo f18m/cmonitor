@@ -2,12 +2,11 @@
 DOCKER_EXAMPLE_CPUS:=0,1
 DOCKER_EXAMPLE_MEMORY_LIMIT:=100m
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f ..)
-HOSTNAME:=docker-ubuntu1804-userapp-with-embedded-collector
+HOSTNAME:=docker-userapp-with-embedded-collector
 
-all:
-	@cp -fv ../../src/cmonitor_collector .
-	@cp -fv ../example-load.sh .
-	@docker build -t ubuntu1804-cmonitor-image . && \
+all: prepare_context
+	@docker stop cmonitor-example || true
+	@docker build -t cmonitor-image . && \
 		echo "cmonitor docker example built successfully; now running it" && \
 		docker run \
 			--detach \
@@ -17,9 +16,19 @@ all:
 			--memory=$(DOCKER_EXAMPLE_MEMORY_LIMIT) \
 			--volume=$(DOCKER_EXAMPLE_FOLDER):/perf \
 			--hostname=$(HOSTNAME) \
-			--name ubuntu1804-cmonitor-example \
-			ubuntu1804-cmonitor-image && \
+			--name cmonitor-example \
+			cmonitor-image && \
 		echo "cmonitor docker successfully started: baremetal+container performance stats are collected in $(DOCKER_EXAMPLE_FOLDER)." && \
 		echo "The docker will stop automatically after a while." && \
-		docker logs -f ubuntu1804-cmonitor-example && \
+		docker logs -f cmonitor-example && \
 		gzip -f ../$(HOSTNAME).json
+
+prepare_context:
+	@cp -fv ../example-load.sh .
+	@cp -fv ../../src/cmonitor_collector .
+	@if ldd ../../src/cmonitor_collector | grep libc.so.6 >/dev/null; then \
+		echo "Found that cmonitor_collector is correctly compiled for Ubuntu apparently" ; \
+	else \
+		echo "cmonitor_collector needs to be built for x86_64 distro. Cannot proceed" ; \
+		exit 2 ; \
+	fi
