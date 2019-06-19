@@ -1,3 +1,11 @@
+cmonitor (1.4.0-1ubuntu1) bionic; urgency=medium
+
+  * Switch from Centos7 as official Docker base to Alpine to get a much smaller docker image.
+  * Add --cgroup-name option to allow monitoring cgroups that are not necessarily the one where cmonitor_collector runs.
+  * Refactor example section of the README to better show the possible usage
+
+ -- Francesco Montorsi <francesco.montorsi@gmail.com>  Wed, 19 Jun 2019 23:44:59 +0200
+
 cmonitor (1.1.2-1ubuntu1) bionic; urgency=medium
 
   * More PPA experiments
