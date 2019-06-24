@@ -419,10 +419,10 @@ function setup_button_click_handlers() {
 
 /* Utility function used to reset combobox controls: */
 function reset_combo_boxes(combobox_to_exclude_from_reset) {
-  if (combobox_to_exclude_from_reset != "cgroup_cpus")
-      document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
   if (combobox_to_exclude_from_reset != "baremetal_cpus")
       document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
+  if (combobox_to_exclude_from_reset != "cgroup_cpus")
+      document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
 }
 
 function show_config_window() {

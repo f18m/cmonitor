@@ -15,6 +15,7 @@ RPM_TARBALL_DIR:=/tmp/cmonitor/tarball
 # main versioning constants
 # IMPORTANT: other places where the version must be updated:
 #  - debian/changelog             -> to release a new Ubuntu package
+#  - json2html/cmonitor_chart.py  -> look for CMONITOR_VERSION
 # See also https://github.com/f18m/cmonitor/wiki/new-release
 CMONITOR_VERSION:=1.4
 CMONITOR_RELEASE:=0

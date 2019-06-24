@@ -15,10 +15,15 @@ import datetime
 import zlib
 import binascii
 import textwrap
+import argparse
+import getopt
+import os
 
 # =======================================================================================================
 # CONSTANTS
 # =======================================================================================================
+
+CMONITOR_VERSION = 1.4
 
 GRAPH_SOURCE_DATA_BAREMETAL = 1
 GRAPH_SOURCE_DATA_CGROUP = 2
@@ -34,6 +39,7 @@ JS_INDENT_SIZE = 2
 # GLOBALs
 # =======================================================================================================
 
+verbose = False
 g_num_generated_charts = 1
 g_next_graph_need_stacking = 0
 
@@ -730,7 +736,8 @@ def generate_topN_procs(web, header, jdata, numProcsToShow=20):
         p = process_dict[pid]
         nicecmd = get_nice_cmd(pid)
         
-        print("Processing data for %d-th CPU-top-scorer process [%s]" % (i+1, nicecmd))
+        if verbose:
+            print("Processing data for %d-th CPU-top-scorer process [%s]" % (i+1, nicecmd))
         topN_process_table.addRow([p['cmd'], p['cpu'], p['io']/io_divider, nicecmd, p['mem']/mem_divider])
     
     # generate the bubble chart graph:
@@ -900,7 +907,8 @@ def generate_network_traffic(web, jdata):
                 row.append(+s["network_interfaces"][device]["ibytes"]/divider)
                 row.append(-s["network_interfaces"][device]["obytes"]/divider)
             except KeyError:
-                print("Missing key '%s' while parsing sample %d" % (device, i))
+                if verbose:
+                    print("Missing key '%s' while parsing sample %d" % (device, i))
                 row.append(0)
                 row.append(0)
         net_table.addRow(row)
@@ -927,7 +935,8 @@ def generate_network_traffic(web, jdata):
                 row.append(+s["network_interfaces"][device]["ipackets"])
                 row.append(-s["network_interfaces"][device]["opackets"])
             except KeyError:
-                print("Missing key '%s' while parsing sample %d" % (device, i))
+                if verbose:
+                    print("Missing key '%s' while parsing sample %d" % (device, i))
                 row.append(0)
                 row.append(0)
         net_table.addRow(row)
@@ -1309,7 +1318,8 @@ def main_process_file(infile, outfile):
     # initialise some useful content
     hostname = jheader['identity']['hostname'] 
     jdata_first_sample = jdata[0]
-    print("Found %d data samples" % len(jdata))
+    if verbose:
+        print("Found %d data samples" % len(jdata))
 
     # detect num of CPUs:
     logical_cpus_indexes = []
@@ -1318,7 +1328,8 @@ def main_process_file(infile, outfile):
             cpuIdx = int(key[3:])
             # print("%s %s" %(key, cpuIdx))
             logical_cpus_indexes.append(cpuIdx) 
-    print("Found %d CPUs in input file: %s" % (len(logical_cpus_indexes), ', '.join(str(x) for x in logical_cpus_indexes)))
+    if verbose:
+        print("Found %d CPUs in input file: %s" % (len(logical_cpus_indexes), ', '.join(str(x) for x in logical_cpus_indexes)))
     
     print("Opening output file %s" % outfile)
     web = HtmlOutputPage(outfile, 'Monitoring data for hostname ' + hostname)
@@ -1336,7 +1347,8 @@ def main_process_file(infile, outfile):
     web = generate_topN_procs(web, jheader, jdata)
     web.endHtmlHead(generate_config_js(jheader))
     
-    print("All data samples parsed correctly")
+    if verbose:
+        print("All data samples parsed correctly")
 
     
     # HTML BODY
@@ -1350,7 +1362,73 @@ def main_process_file(infile, outfile):
     web.appendHtmlTable("Monitored System Summary", generate_monitored_summary(jheader, jdata, logical_cpus_indexes))
     web.endHtmlBody()
 
-    print("Completed processing")
+    print("Completed processing of input JSON file. HTML output file is ready.")
+
+
+# =======================================================================================================
+# MAIN
+# =======================================================================================================
+
+def usage():
+    """Provides commandline usage"""
+    print('cmonitor_chart version {}'.format(CMONITOR_VERSION))
+    print('Typical usage:')
+    print('  %s --input=output_from_cmonitor_collector.json [--output=myreport.html]' % sys.argv[0])
+    print('Required parameters:')
+    print('  -i, --input=<file.json>    The JSON file to analyze.')
+    print('Main options:')
+    print('  -h, --help                 (this help)')
+    print('  -v, --verbose              Be verbose.')
+    print('      --version              Print version and exit.')
+    print('  -o, --output=<file.html>   The name of the output HTML file.')
+    sys.exit(0)
+
+def parse_command_line():
+    """Parses the command line and returns the configuration as dictionary object."""
+    try:
+        opts, remaining_args = getopt.getopt(sys.argv[1:], "hvv", 
+            [ "help", "verbose", "version", "output=", "input=" ])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(str(err))  # will print something like "option -a not recognized"
+        usage()  # will exit program
+
+    global verbose
+    input_json = ""
+    output_html = ""
+    for o, a in opts:
+        if o in ("-i", "--input"):
+            input_json = a
+        elif o in ("-o", "--output"):
+            output_html = a
+        elif o in ("-h", "--help"):
+            usage()
+        elif o in ("-v", "--verbose"):
+            verbose = True
+        elif o in ("--version"):
+            print("{}".format(CMONITOR_VERSION))
+            sys.exit(0)
+        else:
+            assert False, "unhandled option " + o + a
+            
+    if input_json == "":
+        print("Please provide --input option (it is a required option)")
+        sys.exit(os.EX_USAGE)
+        
+    if output_html == "":
+        if input_json[-8:] == '.json.gz':
+            output_html = input_json[:-8] + '.html'
+        elif input_json[-5:] == '.json':
+            output_html = input_json[:-5] + '.html'
+        else:
+            output_html = input_json + '.html'
+
+    abs_input_json = input_json
+    if not os.path.isabs(input_json):
+        abs_input_json = os.path.join(os.getcwd(), input_json)
+        
+    return {'input_json' : input_json,
+            'output_html' : output_html}
 
 
 # =======================================================================================================
@@ -1358,16 +1436,5 @@ def main_process_file(infile, outfile):
 # =======================================================================================================
 
 if __name__ == '__main__':
-    cmd = sys.argv[0]
-    infile = sys.argv[1]
-    try:
-        outfile = sys.argv[2]
-    except:
-        if infile[-8:] == '.json.gz':
-            outfile = infile[:-8] + '.html'
-        elif infile[-5:] == '.json':
-            outfile = infile[:-5] + '.html'
-        else:
-            outfile = infile + '.html'
-
-    main_process_file(infile, outfile)
+    config = parse_command_line()
+    main_process_file(config['input_json'], config['output_html'])

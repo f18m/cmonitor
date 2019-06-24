@@ -13,7 +13,7 @@ EXAMPLE_JSON_FILES=\
 all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
 		echo "--------------------------------------------------------" ; \
-		../json2html/cmonitor_chart.py $$jsonExample ; \
+		../json2html/cmonitor_chart.py --input=$$jsonExample --verbose ; \
 	done
 
 clean:
@@ -28,10 +28,15 @@ distclean: clean
 #
 
 regen_baremetal1:
-	@echo "Launching load simulator to have some CPu at 100% and so on..."
+	@echo "Launching load simulator to have some CPU at 100% and so on..."
 	./example-load.sh &
 	@echo "Regenerating example JSON... this will take about 3*60secs."
-	@../src/cmonitor_collector --sampling-interval=10 --num-samples=60 --foreground --output-filename baremetal1 --debug
+	@../src/cmonitor_collector \
+		--sampling-interval=10 \
+		--num-samples=60 \
+		--output-filename baremetal1 \
+		--foreground \
+		--debug
 	@jq -e . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED !!!" ; exit 10 )
 
 #
@@ -67,6 +72,7 @@ regen_docker_userapp_to_monitor:
 	../src/cmonitor_collector \
 		--sampling-interval=10 \
 		--num-samples=60 \
+		--collect=all_cgroup \
 		--foreground \
 		--output-filename=docker-userapp.json \
 		--cgroup-name=docker/$$(docker ps --no-trunc -aqf name=userapp)
