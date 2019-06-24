@@ -419,7 +419,8 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
 
     valuesINT.resize(num_cpus);
     for (unsigned int i = 0; i < num_cpus; i++)
-        string2int(values[i].c_str(), valuesINT[i]);
+        if (!string2int(values[i].c_str(), valuesINT[i]))
+            return false;
 
     return true;
 }
@@ -718,7 +719,8 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
              *     watch -n1 'grep cpu3 -A6 -B1 test.json | tail -20'
              * produces cpu3 at 100%
              */
-            g_logger.LogDebug("CPU %d, prev user=%lu, prev sys=%lu", i, prev_values[i].counter_nsec_user_mode,
+            g_logger.LogDebug("CPU %d, current user=%lu, current sys=%lu, prev user=%lu, prev sys=%lu", // force newline
+                i, counter_nsec_user_mode[i], counter_nsec_sys_mode[i], prev_values[i].counter_nsec_user_mode,
                 prev_values[i].counter_nsec_sys_mode);
             if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
                 double cpuUserPercent = // force newline

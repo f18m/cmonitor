@@ -102,11 +102,12 @@ bool string2int(const char* s, uint64_t& result)
     char* end;
     if (s[0] == '\0' || isspace(s[0]))
         return false;
+
     errno = 0;
     unsigned long l = strtoul(s, &end, 10);
-    /* Both checks are needed because INT_MAX == LONG_MAX is possible. */
-    if (l > INT_MAX || (errno == ERANGE && l == ULONG_MAX))
+    if (errno != 0)
         return false;
+
     if (*end != '\0')
         return false;
     result = l;
