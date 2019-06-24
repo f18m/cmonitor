@@ -87,17 +87,21 @@ struct option_extended {
     { "Data sampling options", &g_long_opts[0], "Seconds between snapshots of data (default 60 seconds)." },
     { "Data sampling options", &g_long_opts[1], "Number of snapshots; special value 0 means forever (default is 0)." },
     { "Data sampling options", &g_long_opts[2],
-        "Allow multiple instances of cmonitor_collector to run on this system." },
+        "Allow multiple simultaneously-running instances of cmonitor_collector on this system." },
     { "Data sampling options", &g_long_opts[3], "Stay in foreground." },
     { "Data sampling options", &g_long_opts[4],
-        "Collect specified list of performance stats. Available performance stats are:\n"
-        "  cpu: collect per-core CPU stats from /proc/stat                [cgroup-mode: also 'cpuacct']\n"
-        "  memory: collect memory stats from /proc/meminfo, /proc/vmstat  [cgroup-mode: also 'memory']\n"
-        "  disk: collect disk stats from /proc/diskstats                  [cgroup'mode: also 'blkio']\n"
-        "  network: collect network stats from /proc/net/dev\n"
-        "  processes: collect processes stats from /proc/net/dev\n"
-        "  cgroups: activates cgroup-mode\n" // force newline
-        "  all: the combination of all previous stats (this is the default)\n"
+        "Collect specified list of performance stats. Available performance stats are:\n" // force newline
+        "  'cpu': collect per-core CPU stats from /proc/stat\n" // force newline
+        "  'memory': collect memory stats from /proc/meminfo, /proc/vmstat\n" // force newline
+        "  'disk': collect disk stats from /proc/diskstats\n" // force newline
+        "  'network': collect network stats from /proc/net/dev\n" // force newline
+        "  'cgroup_cpu': collect CPU stats from the 'cpuacct' cgroup\n" // force newline
+        "  'cgroup_memory': collect memory stats from 'memory' cgroup\n" // force newline
+        /*"  'cgroup_blkio': collect IO stats from 'blkio' cgroup\n" NOT YET AVAILABLE */
+        "  'cgroup_processes': collect stats for each process inside the 'cpuacct' cgroup\n" // force newline
+        "  'all_baremetal': the combination of 'cpu', 'memory', 'disk', 'network'\n"
+        "  'all_cgroup': the combination of 'cgroup_cpu', 'cgroup_memory', 'cgroup_processes'\n"
+        "  'all': the combination of all previous stats (this is the default)\n"
         "Note that a comma-separated list of above stats can be provided." },
     { "Data sampling options", &g_long_opts[5],
         "Collect all available details about the stats families enabled by --collect.\n"
@@ -107,7 +111,7 @@ struct option_extended {
         "If cgroup sampling is active (--collect=cgroups), this option allows to provide explicitly the name of \n"
         "the cgroup to monitor. If not provided or 'self' is provided, the statistics of the cgroups where \n"
         "cmonitor_collector runs will be collected. Note that this option is mostly useful when running \n"
-        "cmonitor_collector directly on the baremetal since a process running inside a container cannot monitor"
+        "cmonitor_collector directly on the baremetal since a process running inside a container cannot monitor\n"
         "the performances of other containers.\n" },
 
     // Options to save data locally
@@ -162,18 +166,28 @@ void interrupt(int signum)
 
 PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
 {
-    if (to_lower(str) == "cgroups")
-        return PK_CGROUPS;
-    if (to_lower(str) == "disk")
-        return PK_DISK;
     if (to_lower(str) == "cpu")
         return PK_CPU;
+    if (to_lower(str) == "disk")
+        return PK_DISK;
     if (to_lower(str) == "memory")
         return PK_MEMORY;
     if (to_lower(str) == "network")
         return PK_NETWORK;
-    if (to_lower(str) == "processes")
-        return PK_PROCESSES;
+
+    if (to_lower(str) == "cgroup_cpu")
+        return PK_CGROUP_CPU_ACCT;
+    if (to_lower(str) == "cgroup_memory")
+        return PK_CGROUP_MEMORY;
+    if (to_lower(str) == "cgroup_blkio")
+        return PK_CGROUP_BLKIO;
+    if (to_lower(str) == "cgroup_processes")
+        return PK_CGROUP_PROCESSES;
+
+    if (to_lower(str) == "all_baremetal")
+        return PK_ALL_BAREMETAL;
+    if (to_lower(str) == "all_cgroup")
+        return PK_ALL_CGROUP;
     if (to_lower(str) == "all")
         return PK_ALL;
 
@@ -183,8 +197,6 @@ PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
 std::string performanceKpiFamily2string(PerformanceKpiFamily k)
 {
     switch (k) {
-    case PK_CGROUPS:
-        return "cgroups";
     case PK_CPU:
         return "cpu";
     case PK_DISK:
@@ -193,8 +205,15 @@ std::string performanceKpiFamily2string(PerformanceKpiFamily k)
         return "memory";
     case PK_NETWORK:
         return "network";
-    case PK_PROCESSES:
-        return "processes";
+
+    case PK_CGROUP_CPU_ACCT:
+        return "cgroup_cpu";
+    case PK_CGROUP_MEMORY:
+        return "cgroup_memory";
+    case PK_CGROUP_BLKIO:
+        return "cgroup_blkio";
+    case PK_CGROUP_PROCESSES:
+        return "cgroup_processes";
 
     default:
         return "";
@@ -239,18 +258,19 @@ void CMonitorLoggerUtils::LogDebug(const char* line, ...)
 {
     char currLogLine[256];
 
+    if (!g_cfg.m_bDebug)
+        return;
+
     va_list args;
     va_start(args, line);
     vsnprintf(currLogLine, 255, line, args);
     va_end(args);
 
-    if (g_cfg.m_bDebug) {
-        // in debug mode stdout is still open, so we can printf:
-        printf("%s", currLogLine);
-        size_t lastCh = strlen(currLogLine) - 1;
-        if (currLogLine[lastCh] != '\n')
-            printf("\n");
-    }
+    // in debug mode stdout is still open, so we can printf:
+    printf("%s", currLogLine);
+    size_t lastCh = strlen(currLogLine) - 1;
+    if (currLogLine[lastCh] != '\n')
+        printf("\n");
 }
 
 void CMonitorLoggerUtils::LogError(const char* line, ...)
@@ -634,14 +654,22 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     }
 
     // init incremental stats (don't write yet anything!)
-    bool bCollectCGroupInfo = g_cfg.m_nCollectFlags & PK_CGROUPS;
+    bool bCollectCGroupInfo = // force newline
+        (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) || // force newline
+        (g_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) || // force newline
+        (g_cfg.m_nCollectFlags & PK_CGROUP_BLKIO) || // force newline
+        (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES); // force newline
     proc_stat(0, bCollectCGroupInfo, PF_NONE /* do not emit JSON data */);
     proc_diskstats(0, PF_NONE /* do not emit JSON data */);
     proc_net_dev(0, PF_NONE /* do not emit JSON data */);
     if (bCollectCGroupInfo) {
         cgroup_init();
-        cgroup_proc_cpuacct(0, false /* do not emit JSON */);
-        cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */);
+
+        if (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT)
+            cgroup_proc_cpuacct(0, false /* do not emit JSON */);
+
+        if (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES)
+            cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */);
     }
 
     double current_time = get_timestamp_sec();
@@ -652,7 +680,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     header_cmonitor_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
     header_etc_os_release();
     header_version();
-    if (g_cfg.m_nCollectFlags & PK_CGROUPS)
+    if (bCollectCGroupInfo)
         cgroup_config(); // needs to run _BEFORE_ lscpu() and proc_cpuinfo()
     header_lscpu();
     header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
@@ -701,26 +729,17 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         // proc_uptime(); // not really useful!!
         proc_loadavg();
 
+        // baremetal stats:
+
         if (g_cfg.m_nCollectFlags & PK_CPU) {
-            if (bCollectCGroupInfo) {
-                // do not list all CPU informations when cgroup mode is ON: don't put information
-                // for CPUs outside current cgroup!
-                proc_stat(elapsed, true /* cgroup */, g_cfg.m_nOutputFields /* emit JSON */);
-                cgroup_proc_cpuacct(elapsed, true /* emit JSON */);
-            } else {
-                // list all CPUs
-                proc_stat(elapsed, false /* cgroup */, g_cfg.m_nOutputFields /* emit JSON */);
-            }
+            // list all CPUs
+            proc_stat(elapsed, false /* cgroup */, g_cfg.m_nOutputFields /* emit JSON */);
         }
 
         if (g_cfg.m_nCollectFlags & PK_MEMORY) {
             proc_read_numeric_stats_from("meminfo", charted_stats_from_meminfo);
             if (g_cfg.m_nOutputFields == PF_ALL)
                 proc_read_numeric_stats_from("vmstat", std::set<std::string>());
-            if (g_cfg.m_nCollectFlags & PK_CGROUPS) {
-                // collect memory stats for current cgroup:
-                cgroup_proc_memory(charted_stats_from_cgroup_memory);
-            }
         }
 
         if (g_cfg.m_nCollectFlags & PK_NETWORK) {
@@ -732,7 +751,20 @@ int CMonitorCollectorApp::run(int argc, char** argv)
             // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
 
-        if (g_cfg.m_nCollectFlags & PK_PROCESSES) {
+        // cgroup stats:
+
+        if (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) {
+            // do not list all CPU informations when cgroup mode is ON: don't put information
+            // for CPUs outside current cgroup!
+            proc_stat(elapsed, true /* cgroup */, g_cfg.m_nOutputFields /* emit JSON */);
+            cgroup_proc_cpuacct(elapsed, true /* emit JSON */);
+        }
+
+        if (g_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) {
+            // collect memory stats for current cgroup:
+            cgroup_proc_memory(charted_stats_from_cgroup_memory);
+        }
+        if (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) {
             cgroup_proc_tasks(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
         }
 

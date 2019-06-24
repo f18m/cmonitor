@@ -46,16 +46,24 @@
 enum PerformanceKpiFamily {
     PK_INVALID = 0,
 
-    PK_CGROUPS = 1, // this activates the collection of cgroup-specific KPIs for other families:
-
     PK_CPU = 2,
     PK_DISK = 4,
     PK_MEMORY = 8,
     PK_NETWORK = 16,
-    PK_PROCESSES = 32,
+    // PK_PROCESSES = 32,
+
+    PK_CGROUP_CPU_ACCT = 128,
+    PK_CGROUP_MEMORY = 256,
+    PK_CGROUP_BLKIO = 512,
+    PK_CGROUP_PROCESSES = 1024,
 
     PK_MAX,
-    PK_ALL = PK_CGROUPS | PK_DISK | PK_CPU | PK_MEMORY | PK_NETWORK | PK_PROCESSES
+
+    PK_ALL_BAREMETAL = PK_CPU | PK_DISK | PK_MEMORY | PK_NETWORK,
+    PK_ALL_CGROUP = PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_PROCESSES,
+
+    PK_ALL = PK_CPU | PK_DISK | PK_MEMORY | PK_NETWORK // force newline
+        | PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_PROCESSES
 };
 
 PerformanceKpiFamily string2PerformanceKpiFamily(const std::string&);

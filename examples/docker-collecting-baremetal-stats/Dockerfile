@@ -13,6 +13,6 @@ CMD /usr/bin/cmonitor_collector \
       --foreground \
       --sampling-interval=3 \
       --num-samples=180 \
-      --collect=cpu,memory,disk,network,processes \
+      --collect=cpu,memory,disk,network \
       --output-filename=docker-collecting-baremetal-stats \
       --output-directory /perf
