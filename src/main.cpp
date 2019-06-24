@@ -84,8 +84,11 @@ struct option_extended {
     const char* additional_help;
 } const g_opts_extended[] = {
     // Data sampling options
-    { "Data sampling options", &g_long_opts[0], "Seconds between snapshots of data (default 60 seconds)." },
-    { "Data sampling options", &g_long_opts[1], "Number of snapshots; special value 0 means forever (default is 0)." },
+    { "Data sampling options", &g_long_opts[0], "Seconds between samples of data (default 60 seconds)." },
+    { "Data sampling options", &g_long_opts[1],
+        "Number of samples to collect; special values are:\n" // force newline
+        "   '0': means forever (default value)\n" // force newline
+        "   'until-cgroup-alive': until the selected cgroup is alive" },
     { "Data sampling options", &g_long_opts[2],
         "Allow multiple simultaneously-running instances of cmonitor_collector on this system." },
     { "Data sampling options", &g_long_opts[3], "Stay in foreground." },
@@ -415,12 +418,22 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             switch (c) {
             // Data sampling options
             case 's':
-                string2int(optarg, g_cfg.m_nSamplingInterval);
+                if (!string2int(optarg, g_cfg.m_nSamplingInterval)) {
+                    printf("Unrecognized sampling interval: %s\n", optarg);
+                    exit(51);
+                }
                 if (g_cfg.m_nSamplingInterval == 0) // safety check
                     g_cfg.m_nSamplingInterval = 1;
                 break;
             case 'c':
-                string2int(optarg, g_cfg.m_nSamples);
+                if (strcmp(optarg, "until-cgroup-alive") == 0)
+                    g_cfg.m_nSamples = SPECIAL_NUMSAMPLES_UNTIL_CGROUP_ALIVE;
+                else {
+                    if (!string2int(optarg, g_cfg.m_nSamples)) {
+                        printf("Unrecognized number of samples to collect: %s\n", optarg);
+                        exit(51);
+                    }
+                }
                 break;
             case 'k':
                 g_cfg.m_bAllowMultipleInstances = true;
@@ -465,7 +478,10 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
                 g_cfg.m_strRemoteAddress = optarg;
                 break;
             case 'p':
-                string2int(optarg, g_cfg.m_nRemotePort);
+                if (!string2int(optarg, g_cfg.m_nRemotePort)) {
+                    printf("Unrecognized remote port: %s\n", optarg);
+                    exit(51);
+                }
                 break;
             case 'X':
                 g_cfg.m_strRemoteSecret = optarg;
@@ -732,8 +748,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         // baremetal stats:
 
         if (g_cfg.m_nCollectFlags & PK_CPU) {
-            // list all CPUs
-            proc_stat(elapsed, false /* cgroup */, g_cfg.m_nOutputFields /* emit JSON */);
+            proc_stat(elapsed, false /* collect from ALL cpus */, g_cfg.m_nOutputFields /* emit JSON */);
         }
 
         if (g_cfg.m_nCollectFlags & PK_MEMORY) {
@@ -756,12 +771,10 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         if (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) {
             // do not list all CPU informations when cgroup mode is ON: don't put information
             // for CPUs outside current cgroup!
-            proc_stat(elapsed, true /* cgroup */, g_cfg.m_nOutputFields /* emit JSON */);
             cgroup_proc_cpuacct(elapsed, true /* emit JSON */);
         }
 
         if (g_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) {
-            // collect memory stats for current cgroup:
             cgroup_proc_memory(charted_stats_from_cgroup_memory);
         }
         if (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) {
@@ -772,6 +785,8 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 
         if (g_bExiting)
             break; // graceful exit allows to produce a valid JSON on SIGTERM signals!
+        if (g_cfg.m_nSamples == SPECIAL_NUMSAMPLES_UNTIL_CGROUP_ALIVE && !cgroup_still_exists())
+            break;
     }
 
     /* finish-of */

@@ -43,6 +43,8 @@
 // Constants
 //------------------------------------------------------------------------------
 
+#define SPECIAL_NUMSAMPLES_UNTIL_CGROUP_ALIVE (UINT64_MAX)
+
 enum PerformanceKpiFamily {
     PK_INVALID = 0,
 
@@ -274,6 +276,7 @@ private:
     bool cgroup_init_check_for_our_pid();
     void cgroup_config();
     bool cgroup_is_allowed_cpu(int cpu);
+    bool cgroup_still_exists();
     void cgroup_proc_memory(const std::set<std::string>& allowedStatsNames);
     void cgroup_proc_cpuacct(double elapsed_sec, bool print);
     void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts);

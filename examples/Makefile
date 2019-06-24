@@ -38,6 +38,7 @@ regen_baremetal1:
 		--foreground \
 		--debug
 	@jq -e . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED !!!" ; exit 10 )
+	@gzip -f baremetal1.json
 
 #
 # NOTE: baremetal2 is a real-world example and thus cannot be regenerated just like others

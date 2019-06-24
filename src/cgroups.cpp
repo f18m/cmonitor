@@ -587,6 +587,13 @@ void CMonitorCollectorApp::cgroup_config()
     g_output.psection_end();
 }
 
+bool CMonitorCollectorApp::cgroup_still_exists()
+{
+    return file_or_dir_exists(m_cgroup_memory_kernel_path.c_str()) && // force newline
+        file_or_dir_exists(m_cgroup_cpuacct_kernel_path.c_str()) && // force newline
+        file_or_dir_exists(m_cgroup_cpuset_kernel_path.c_str());
+}
+
 bool CMonitorCollectorApp::cgroup_is_allowed_cpu(int cpu)
 {
     if (!m_bCGroupsFound)

@@ -192,8 +192,6 @@ int CMonitorCollectorApp::proc_stat_cpu_index(const char* cpu_data, double elaps
             g_output.pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
             g_output.pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
             g_output.pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
-            /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n",
-             * logical_cpu[cpuno].idle, idle, idle-logical_cpu[cpuno].idle); */
             g_output.pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
             g_output.pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
             g_output.pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
@@ -233,7 +231,7 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
 
     static long long old_ctxt;
     static long long old_processes;
-    static cpu_specs_t total_cpu;
+    //static cpu_specs_t total_cpu;
     static cpu_specs_t logical_cpu[MAX_LOGICAL_CPU];
 
     DEBUGLOG_FUNCTION_START();
@@ -252,18 +250,18 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
 
     while (fgets(line, 1000, fp) != NULL) {
         if (!strncmp(line, "cpu", 3)) {
-            if (!strncmp(line, "cpu ", 4)) {
-                if (!onlyCgroupAllowedCpus) {
-                    proc_stat_cpu_total(&line[4], elapsed_sec, output_opts, total_cpu, max_cpu_count);
-                } // else: do not report the TOTAL cpus if cgroup-mode is on: we report only the stats of CPUs in
-                  // current cgroup
+            if (line[3] == ' ') {
+                // found the summary line for ALL cpus together... skip it
+                continue;
             } else {
+                // found a line like:
+                //    cpu1 90470 3217 30294 291392 17250 0 3242 0 0 0
+
                 int cpuno = proc_stat_cpu_index(&line[3], elapsed_sec, output_opts, logical_cpu, onlyCgroupAllowedCpus);
                 if (cpuno > max_cpu_count)
                     max_cpu_count = cpuno;
             }
-        }
-        if (!strncmp(line, "ctxt", 4)) {
+        } else if (!strncmp(line, "ctxt", 4)) {
             value = 0;
             count = sscanf(&line[5], "%lld", &value); /* counter */
             if (count == 1) {
@@ -273,27 +271,23 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
                 }
                 old_ctxt = value;
             }
-        }
-        if (!strncmp(line, "btime", 5)) {
+        } else if (!strncmp(line, "btime", 5)) {
             value = 0;
             count = sscanf(&line[6], "%lld", &value); /* seconds since boot */
             if (output_opts != PF_NONE)
                 g_output.plong("btime", value);
-        }
-        if (!strncmp(line, "processes", 9)) {
+        } else if (!strncmp(line, "processes", 9)) {
             value = 0;
             count = sscanf(&line[10], "%lld", &value); /* counter  actually forks */
             if (output_opts != PF_NONE)
                 g_output.pdouble("processes_forks", ((double)(value - old_processes) / elapsed_sec));
             old_processes = value;
-        }
-        if (!strncmp(line, "procs_running", 13)) {
+        } else if (!strncmp(line, "procs_running", 13)) {
             value = 0;
             count = sscanf(&line[14], "%lld", &value);
             if (output_opts != PF_NONE)
                 g_output.plong("procs_running", value);
-        }
-        if (!strncmp(line, "procs_blocked", 13)) {
+        } else if (!strncmp(line, "procs_blocked", 13)) {
             value = 0;
             count = sscanf(&line[14], "%lld", &value);
             if (output_opts != PF_NONE) {
