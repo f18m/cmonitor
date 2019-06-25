@@ -477,7 +477,7 @@ function clear_chart() {
 /* Utility function used to reset combobox controls: */
 function reset_combo_boxes(combobox_to_exclude_from_reset) {
 ''')
-        for num, comboname in enumerate(combo_box_ctrls, start=1):
+        for num, comboname in enumerate(sorted(combo_box_ctrls), start=1):
             self.file.write('  if (combobox_to_exclude_from_reset != "%s")\n' % comboname)
             self.file.write('      document.getElementById("select_combobox_%s").value = "clear_chart";\n' % comboname)
         self.file.write('}\n') # end of reset_combo_boxes()
@@ -1274,6 +1274,14 @@ def generate_monitored_summary(jheader, jdata, logical_cpus_indexes):
 # MAIN SCRIPT PREPARE DATA
 # =======================================================================================================
 
+def collect_logical_cpu_indexes_from_section(jsample, section_name):
+    logical_cpus_indexes = []
+    for key in jsample[section_name]:
+        if key.startswith('cpu') and key != 'cpu_total':
+            cpuIdx = int(key[3:])
+            logical_cpus_indexes.append(cpuIdx) 
+            # print("%s %s" %(key, cpuIdx))
+    return logical_cpus_indexes
 
 def main_process_file(infile, outfile):
     
@@ -1322,14 +1330,15 @@ def main_process_file(infile, outfile):
         print("Found %d data samples" % len(jdata))
 
     # detect num of CPUs:
-    logical_cpus_indexes = []
-    for key in jdata_first_sample['stat']:
-        if key.startswith('cpu') and key != 'cpu_total':
-            cpuIdx = int(key[3:])
-            # print("%s %s" %(key, cpuIdx))
-            logical_cpus_indexes.append(cpuIdx) 
+    baremetal_logical_cpus_indexes = collect_logical_cpu_indexes_from_section(jdata_first_sample, 'stat')
     if verbose:
-        print("Found %d CPUs in input file: %s" % (len(logical_cpus_indexes), ', '.join(str(x) for x in logical_cpus_indexes)))
+        print("Found %d CPUs in baremetal stats with logical indexes [%s]" % (len(baremetal_logical_cpus_indexes), ', '.join(str(x) for x in baremetal_logical_cpus_indexes)))
+        
+    cgroup_logical_cpus_indexes = []
+    if 'cgroup_cpuacct_stats' in jdata_first_sample:
+        cgroup_logical_cpus_indexes = collect_logical_cpu_indexes_from_section(jdata_first_sample, 'cgroup_cpuacct_stats')
+        if verbose:
+            print("Found %d CPUs in cgroup stats with logical indexes [%s]" % (len(cgroup_logical_cpus_indexes), ', '.join(str(x) for x in cgroup_logical_cpus_indexes)))
     
     print("Opening output file %s" % outfile)
     web = HtmlOutputPage(outfile, 'Monitoring data for hostname ' + hostname)
@@ -1337,8 +1346,8 @@ def main_process_file(infile, outfile):
     # HTML HEAD
     
     web.startHtmlHead()
-    web = generate_baremetal_cpus(web, jdata, logical_cpus_indexes)
-    web = generate_cgroup_cpus(web, jdata, logical_cpus_indexes)
+    web = generate_baremetal_cpus(web, jdata, baremetal_logical_cpus_indexes)
+    web = generate_cgroup_cpus(web, jdata, cgroup_logical_cpus_indexes)
     web = generate_baremetal_memory(web, jdata)
     web = generate_cgroup_memory(web, jheader, jdata)
     web = generate_network_traffic(web, jdata)
@@ -1359,7 +1368,7 @@ def main_process_file(infile, outfile):
         cgroupName = 'None'
     web.startHtmlBody(cgroupName, hostname)
     web.appendHtmlTable("Monitoring Summary", generate_monitoring_summary(jheader, jdata))
-    web.appendHtmlTable("Monitored System Summary", generate_monitored_summary(jheader, jdata, logical_cpus_indexes))
+    web.appendHtmlTable("Monitored System Summary", generate_monitored_summary(jheader, jdata, baremetal_logical_cpus_indexes))
     web.endHtmlBody()
 
     print("Completed processing of input JSON file. HTML output file is ready.")
