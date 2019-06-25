@@ -23,7 +23,7 @@ import os
 # CONSTANTS
 # =======================================================================================================
 
-CMONITOR_VERSION = "1.4-1"
+CMONITOR_VERSION = "1.4-2"
 
 GRAPH_SOURCE_DATA_BAREMETAL = 1
 GRAPH_SOURCE_DATA_CGROUP = 2
