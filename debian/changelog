@@ -1,3 +1,11 @@
+cmonitor (1.4.2-1ubuntu1) bionic; urgency=medium
+
+  * Improve Python script CLI interface (provide --help, --verbose, --input and --output) in cmonitor_chart.
+  * Add --num-samples=until-cgroup-alive to cmonitor_collector.
+  * Bugfixes (notably: fix cpuacct collection)
+
+ -- Francesco Montorsi <francesco.montorsi@gmail.com>  Tue, 25 Jun 2019 13:03:26 +0200
+
 cmonitor (1.4.0-1ubuntu1) bionic; urgency=medium
 
   * Switch from Centos7 as official Docker base to Alpine to get a much smaller docker image.

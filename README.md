@@ -108,7 +108,7 @@ If you use an LXC/Docker container based on a Ubuntu distribution you can simila
 using the following commands:
 
 ```
-add-apt-repository ppa:francesco-montorsi/ppa
+add-apt-repository ppa:francesco-montorsi/cmonitor
 apt-get install cmonitor
 ```
 
