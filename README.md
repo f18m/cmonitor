@@ -158,7 +158,7 @@ To plot the JSON containing the collected statistics, simply launch the `cmonito
 with the RPM/Debian package, with the JSON collected from `cmonitor_collector`:
 
 ```
-cmonitor_chart /path/to/json-stats.json  <optional HTML output filename>
+cmonitor_chart --input=/path/to/json-stats.json --output=<optional HTML output filename>
 ```
 
 Note that to save space/bandwidth you can also gzip the JSON file and pass it gzipped directly to `cmonitor_chart`.
