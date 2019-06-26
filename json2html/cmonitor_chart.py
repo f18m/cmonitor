@@ -18,6 +18,7 @@ import textwrap
 import argparse
 import getopt
 import os
+import time
 
 # =======================================================================================================
 # CONSTANTS
@@ -589,6 +590,10 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
 
 
 
+# =======================================================================================================
+# utility routines
+# =======================================================================================================
+
 def choose_byte_divider(mem_total_bytes):
     divider = 1
     unit = 'Bytes'
@@ -601,11 +606,14 @@ def choose_byte_divider(mem_total_bytes):
     #print("%d -> %s, %d" % (mem_total_bytes,unit, divider))
     return (divider, unit)
 
+def print_data_loading_stats(desc, jdata, n_invalid_samples):
+    if n_invalid_samples>0:
+        print("While parsing %s statistics found %d/%d (%.1f%%) samples that did not contain the JSON section." % 
+                (desc, n_invalid_samples, len(jdata), 100*n_invalid_samples/len(jdata)))
 
 # =======================================================================================================
 # generate_* routines
 # =======================================================================================================
-
 
 def generate_config_js(jheader):
 
@@ -677,7 +685,7 @@ def generate_config_js(jheader):
     config_str += '");\n}\n\n'
     return config_str
 
-def generate_topN_procs(web, header, jdata, numProcsToShow=20):
+def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
     # if process data was not collected, just return:
     if 'cgroup_tasks' not in jdata[0]:
         return web
@@ -687,32 +695,40 @@ def generate_topN_procs(web, header, jdata, numProcsToShow=20):
     process_dict = {}
     max_mem_bytes = 0
     max_io_bytes = 0
+    n_invalid_samples = 0
     for sample in jdata:
-        for process in sample['cgroup_tasks']:
-            
-            # parse data from JSON
-            entry = sample['cgroup_tasks'][process]
-            cmd = entry['cmd']
-            cputime = entry['cpu_usr_total_secs'] + entry['cpu_sys_total_secs']
-            iobytes = entry['io_total_read'] + entry['io_total_write']
-            membytes = entry['mem_rss_bytes']    # take RSS, more realistic/useful compared to the "mem_virtual_bytes"
-            thepid = entry['pid']
-            
-            # keep track of maxs:
-            max_mem_bytes = max(membytes,max_mem_bytes)
-            max_io_bytes = max(iobytes,max_io_bytes)
-            
-            if cputime > 0:
-                try:  # update the current entry
-                    process_dict[thepid]['cpu'] = cputime
-                    process_dict[thepid]['io'] = iobytes
-                    process_dict[thepid]['mem'] = membytes
-                    process_dict[thepid]['cmd'] = cmd
-                except:  # no current entry so add one
-                    process_dict.update({thepid: { 'cpu': cputime,
-                                                   'io': iobytes,
-                                                   'mem': membytes,
-                                                   'cmd': cmd} })
+        try:
+            for process in sample['cgroup_tasks']:
+                
+                # parse data from JSON
+                entry = sample['cgroup_tasks'][process]
+                cmd = entry['cmd']
+                cputime = entry['cpu_usr_total_secs'] + entry['cpu_sys_total_secs']
+                iobytes = entry['io_total_read'] + entry['io_total_write']
+                membytes = entry['mem_rss_bytes']    # take RSS, more realistic/useful compared to the "mem_virtual_bytes"
+                thepid = entry['pid']
+                
+                # keep track of maxs:
+                max_mem_bytes = max(membytes,max_mem_bytes)
+                max_io_bytes = max(iobytes,max_io_bytes)
+                
+                if cputime > 0:
+                    try:  # update the current entry
+                        process_dict[thepid]['cpu'] = cputime
+                        process_dict[thepid]['io'] = iobytes
+                        process_dict[thepid]['mem'] = membytes
+                        process_dict[thepid]['cmd'] = cmd
+                    except:  # no current entry so add one
+                        process_dict.update({thepid: { 'cpu': cputime,
+                                                       'io': iobytes,
+                                                       'mem': membytes,
+                                                       'cmd': cmd} })
+        except KeyError: # avoid crashing if a key is not present in the dictionary...
+            #print("Missing cgroup data while parsing sample %d" % i)
+            n_invalid_samples+=1
+            pass
+    
+    print_data_loading_stats("per-process", jdata, n_invalid_samples)
     
     # now sort all collected processes by the amount of CPU*memory used:
     # NOTE: sorted() will return just the sorted list of KEYs = PIDs
@@ -757,30 +773,34 @@ def generate_topN_procs(web, header, jdata, numProcsToShow=20):
     for key in [ 'cpu', 'io', 'mem' ]:
         process_table[key] = GoogleChartsTimeSeries(['Timestamp'] + [get_nice_cmd(pid) for pid in topN_process_pids_list])
     for sample in jdata:
-        row = {}
-        for key in [ 'cpu', 'io', 'mem' ]:
-            row[key] = [ sample['timestamp']['datetime'] ]
-            
-        for top_process_pid in topN_process_pids_list:
-            #print(top_process_pid)
-            json_key = 'pid_%s' % top_process_pid
-            if json_key in sample['cgroup_tasks']:
-                top_proc_sample = sample['cgroup_tasks'][json_key]
-                row['cpu'].append(top_proc_sample['cpu_tot'])
-                row['io'].append(top_proc_sample['io_rchar'] + top_proc_sample['io_wchar'])
-                row['mem'].append(top_proc_sample['mem_rss_bytes'] / mem_divider)
+        try:
+            row = {}
+            for key in [ 'cpu', 'io', 'mem' ]:
+                row[key] = [ sample['timestamp']['datetime'] ]
                 
-                # keep track of maxs:
-                max_mem_bytes = max(membytes,max_mem_bytes)
-                max_io_bytes = max(iobytes,max_io_bytes)
-            else:
-                # probably this process was born later or dead earlier than this timestamp
-                row['cpu'].append(-1)
-                row['io'].append(-1)
-                row['mem'].append(-1)
-            
-        for key in [ 'cpu', 'io', 'mem' ]:
-            process_table[key].addRow(row[key])
+            for top_process_pid in topN_process_pids_list:
+                #print(top_process_pid)
+                json_key = 'pid_%s' % top_process_pid
+                if json_key in sample['cgroup_tasks']:
+                    top_proc_sample = sample['cgroup_tasks'][json_key]
+                    row['cpu'].append(top_proc_sample['cpu_tot'])
+                    row['io'].append(top_proc_sample['io_rchar'] + top_proc_sample['io_wchar'])
+                    row['mem'].append(top_proc_sample['mem_rss_bytes'] / mem_divider)
+                    
+                    # keep track of maxs:
+                    max_mem_bytes = max(membytes,max_mem_bytes)
+                    max_io_bytes = max(iobytes,max_io_bytes)
+                else:
+                    # probably this process was born later or dead earlier than this timestamp
+                    row['cpu'].append(0)
+                    row['io'].append(0)
+                    row['mem'].append(0)
+                
+            for key in [ 'cpu', 'io', 'mem' ]:
+                process_table[key].addRow(row[key])
+        except KeyError: # avoid crashing if a key is not present in the dictionary...
+            #print("Missing cgroup data while parsing sample %d" % i)
+            pass
 
     # produce the 3 graphs "by process":
     web.appendGoogleChart(GoogleChartsGraph(
@@ -807,7 +827,7 @@ def generate_topN_procs(web, header, jdata, numProcsToShow=20):
     return web
 
 
-def generate_disks_io(web, jdata):
+def generate_baremetal_disks_io(web, jdata):
     # if disk data was not collected, just return:
     if 'disks' not in jdata[0]:
         return web
@@ -872,7 +892,7 @@ def generate_disks_io(web, jdata):
 #     return web
 
 
-def generate_network_traffic(web, jdata):
+def generate_baremetal_network_traffic(web, jdata):
     # if network traffic data was not collected, just return:
     if 'network_interfaces' not in jdata[0]:
         return web
@@ -1029,27 +1049,35 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes):
     # Process JSON sample and fill the GoogleChartsTimeSeries() object
     #
 
+    n_invalid_samples = 0
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
         
-        ts = s['timestamp']['datetime']
-        all_cpus_row = [ ts ]
-        for c in logical_cpus_indexes:
-            # get data:
-            cpu_stats = s['cgroup_cpuacct_stats']['cpu' + str(c)]
-            if 'sys' in cpu_stats:
-                cpu_sys = cpu_stats['sys']
-            else:
-                cpu_sys = 0
-            cpu_total = cpu_stats['user'] + cpu_sys
-
-            # append data:
-            cpu_stats_table[c].addRow([ts, cpu_stats['user'], cpu_sys])
-            all_cpus_row.append(cpu_total)
-        
-        all_cpus_table.addRow(all_cpus_row)
-
+        try:
+            ts = s['timestamp']['datetime']
+            all_cpus_row = [ ts ]
+            for c in logical_cpus_indexes:
+                # get data:
+                cpu_stats = s['cgroup_cpuacct_stats']['cpu' + str(c)]
+                if 'sys' in cpu_stats:
+                    cpu_sys = cpu_stats['sys']
+                else:
+                    cpu_sys = 0
+                cpu_total = cpu_stats['user'] + cpu_sys
+    
+                # append data:
+                cpu_stats_table[c].addRow([ts, cpu_stats['user'], cpu_sys])
+                all_cpus_row.append(cpu_total)
+            
+            all_cpus_table.addRow(all_cpus_row)
+        except KeyError: # avoid crashing if a key is not present in the dictionary...
+            #print("Missing cgroup data while parsing sample %d" % i)
+            n_invalid_samples+=1
+            pass
+    
+    print_data_loading_stats("cgroup CPU", jdata, n_invalid_samples)
+            
     # Produce 1 graph for each CPU:
     for c in logical_cpus_indexes:
         web.appendGoogleChart(GoogleChartsGraph(
@@ -1145,19 +1173,27 @@ def generate_cgroup_memory(web, jheader, jdata):
     cgroup_memory_stats = GoogleChartsTimeSeries(['Timestamp', 'Used', 'Cached (DiskRead)', 'Alloc Failures'])
     divider, unit = choose_byte_divider(mem_total_bytes)
     
+    n_invalid_samples = 0
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
         
-        mu = s['cgroup_memory_stats']['total_rss']
-        mc = s['cgroup_memory_stats']['total_cache']
-        mfail = s['cgroup_memory_stats']['failcnt']
-        cgroup_memory_stats.addRow([
-                s['timestamp']['datetime'],
-                mu / divider,
-                mc / divider,
-                mfail,
-            ])
+        try:
+            mu = s['cgroup_memory_stats']['total_rss']
+            mc = s['cgroup_memory_stats']['total_cache']
+            mfail = s['cgroup_memory_stats']['failcnt']
+            cgroup_memory_stats.addRow([
+                    s['timestamp']['datetime'],
+                    mu / divider,
+                    mc / divider,
+                    mfail,
+                ])
+        except KeyError: # avoid crashing if a key is not present in the dictionary...
+            #print("Missing cgroup data while parsing sample %d" % i)
+            n_invalid_samples+=1
+            pass
+    
+    print_data_loading_stats("cgroup memory", jdata, n_invalid_samples)
 
     # Produce the javascript:
     web.appendGoogleChart(GoogleChartsGraph(
@@ -1171,7 +1207,7 @@ def generate_cgroup_memory(web, jheader, jdata):
     return web
 
 
-def generate_load_avg(web, jheader, jdata):
+def generate_baremetal_avg_load(web, jheader, jdata):
     #
     # MAIN LOOP
     # Process JSON sample and build Google Chart-compatible Javascript variable
@@ -1284,7 +1320,8 @@ def collect_logical_cpu_indexes_from_section(jsample, section_name):
     return logical_cpus_indexes
 
 def main_process_file(infile, outfile):
-    
+    start_time = time.time()
+
     # read the raw .json as text
     try:
         if infile[-8:] == '.json.gz':
@@ -1346,14 +1383,18 @@ def main_process_file(infile, outfile):
     # HTML HEAD
     
     web.startHtmlHead()
+    
+    # baremetal stats:
     web = generate_baremetal_cpus(web, jdata, baremetal_logical_cpus_indexes)
-    web = generate_cgroup_cpus(web, jdata, cgroup_logical_cpus_indexes)
     web = generate_baremetal_memory(web, jdata)
+    web = generate_baremetal_network_traffic(web, jdata)
+    web = generate_baremetal_disks_io(web, jdata)
+    web = generate_baremetal_avg_load(web, jheader, jdata)
+    
+    # cgroup stats:
+    web = generate_cgroup_cpus(web, jdata, cgroup_logical_cpus_indexes)
     web = generate_cgroup_memory(web, jheader, jdata)
-    web = generate_network_traffic(web, jdata)
-    web = generate_disks_io(web, jdata)
-    web = generate_load_avg(web, jheader, jdata)
-    web = generate_topN_procs(web, jheader, jdata)
+    web = generate_cgroup_topN_procs(web, jheader, jdata)
     web.endHtmlHead(generate_config_js(jheader))
     
     if verbose:
@@ -1371,7 +1412,8 @@ def main_process_file(infile, outfile):
     web.appendHtmlTable("Monitored System Summary", generate_monitored_summary(jheader, jdata, baremetal_logical_cpus_indexes))
     web.endHtmlBody()
 
-    print("Completed processing of input JSON file. HTML output file is ready.")
+    end_time = time.time()
+    print("Completed processing of input JSON file of %d samples in %.3fsec. HTML output file is ready." % (len(jdata), end_time - start_time))
 
 
 # =======================================================================================================
