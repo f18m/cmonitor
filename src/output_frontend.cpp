@@ -109,6 +109,13 @@ void CMonitorOutputFrontend::init_influxdb_connection(const std::string& hostnam
         m_influxdb_client_conn->host, m_influxdb_client_conn->port);
 }
 
+void CMonitorOutputFrontend::enable_json_pretty_print()
+{
+    m_onelevel_indent_string = "    ";
+    m_json_pretty_print = true;
+    g_logger.LogDebug("Enabling pretty printing of the JSON");
+}
+
 //------------------------------------------------------------------------------
 // Low level InfluxDB functions
 //------------------------------------------------------------------------------
@@ -308,8 +315,11 @@ void CMonitorOutputFrontend::push_current_sections_to_influxdb(bool is_header)
 
 void CMonitorOutputFrontend::push_json_indent(unsigned int indent)
 {
+    if (m_onelevel_indent_string.empty())
+        return;
+
     for (size_t i = 0; i < indent; i++)
-        fputs("     ", m_outputJson);
+        fputs(m_onelevel_indent_string.c_str(), m_outputJson);
 }
 
 void CMonitorOutputFrontend::push_json_measurements(CMonitorMeasurementVector& measurements, unsigned int indent)
@@ -331,10 +341,11 @@ void CMonitorOutputFrontend::push_json_measurements(CMonitorMeasurementVector& m
         }
 
         bool last = (n == measurements.size() - 1);
-        if (last)
+        if (!last)
+            fputs(",", m_outputJson);
+
+        if (m_json_pretty_print)
             fputs("\n", m_outputJson);
-        else
-            fputs(",\n", m_outputJson);
     }
 }
 
@@ -343,51 +354,81 @@ void CMonitorOutputFrontend::push_json_object_start(const std::string& str, unsi
     push_json_indent(indent);
     fputs("\"", m_outputJson);
     fwrite(str.c_str(), 1, str.size(), m_outputJson);
-    fputs("\": {\n", m_outputJson);
+    fputs("\": {", m_outputJson);
+
+    if (m_json_pretty_print)
+        fputs("\n", m_outputJson);
 }
 
 void CMonitorOutputFrontend::push_json_object_end(bool last, unsigned int indent)
 {
     push_json_indent(indent);
     if (last)
-        fputs("}\n", m_outputJson);
+        fputs("}", m_outputJson);
     else
-        fputs("},\n", m_outputJson);
+        fputs("},", m_outputJson);
+
+    if (m_json_pretty_print)
+        fputs("\n", m_outputJson);
+}
+
+void CMonitorOutputFrontend::push_json_array_start(const std::string& str, unsigned int indent)
+{
+    push_json_indent(indent);
+    fputs("\"", m_outputJson);
+    fwrite(str.c_str(), 1, str.size(), m_outputJson);
+    fputs("\": [\n", m_outputJson);
+}
+
+void CMonitorOutputFrontend::push_json_array_end(unsigned int indent)
+{
+    push_json_indent(indent);
+
+    fputs("]\n", m_outputJson);
+    fputs("}\n", m_outputJson);
 }
 
 void CMonitorOutputFrontend::push_current_sections_to_json(bool is_header)
 {
     // convert the current sample into JSON format:
 
+    // we do all the JSON with max 4 indentation levels:
+    enum { FIRST_LEVEL = 1, SECOND_LEVEL = 2, THIRD_LEVEL = 3, FOURTH_LEVEL = 4 };
+
     if (is_header) {
         fputs("{\n", m_outputJson); // document begin
-        fputs("    \"header\": {\n", m_outputJson);
+        push_json_object_start("header", FIRST_LEVEL);
     } else {
         if (m_samples > 0)
             fputs(",\n", m_outputJson); // add separator from previous sample
-        fputs("    {\n", m_outputJson); // start of new sample inside sample array
+        push_json_indent(FIRST_LEVEL);
+        fputs("{", m_outputJson); // start of new sample inside sample array
+        if (m_json_pretty_print)
+            fputs("\n", m_outputJson);
     }
     for (size_t sec_idx = 0; sec_idx < m_current_sections.size(); sec_idx++) {
         auto& sec = m_current_sections[sec_idx];
 
-        push_json_object_start(sec.m_name, 2);
+        push_json_object_start(sec.m_name, SECOND_LEVEL);
         if (sec.m_measurements.empty()) {
             for (size_t subsec_idx = 0; subsec_idx < sec.m_subsections.size(); subsec_idx++) {
                 auto& subsec = sec.m_subsections[subsec_idx];
 
-                push_json_object_start(subsec.m_name, 3);
-                push_json_measurements(subsec.m_measurements, 4);
-                push_json_object_end(subsec_idx == sec.m_subsections.size() - 1, 3);
+                push_json_object_start(subsec.m_name, THIRD_LEVEL);
+                push_json_measurements(subsec.m_measurements, FOURTH_LEVEL);
+                push_json_object_end(subsec_idx == sec.m_subsections.size() - 1, THIRD_LEVEL);
             }
         } else {
-            push_json_measurements(sec.m_measurements, 3);
+            push_json_measurements(sec.m_measurements, THIRD_LEVEL);
         }
-        push_json_object_end(sec_idx == m_current_sections.size() - 1, 2);
+        push_json_object_end(sec_idx == m_current_sections.size() - 1, SECOND_LEVEL);
     }
     if (is_header) {
-        fputs("    },\n", m_outputJson); // for sure at least 1 sample will follow
+        push_json_indent(FIRST_LEVEL);
+        fputs("},\n", m_outputJson); // for sure at least 1 sample will follow
     } else {
-        fputs("    }", m_outputJson); // not sure if more samples will follow
+        push_json_indent(FIRST_LEVEL);
+        fputs("}", m_outputJson); // not sure if more samples will follow
         m_samples++;
     }
 
@@ -458,15 +499,14 @@ void CMonitorOutputFrontend::pheader_start()
 void CMonitorOutputFrontend::psample_array_start()
 {
     if (m_outputJson) {
-        fputs("    \"samples\": [\n", m_outputJson);
+        push_json_array_start("samples", 1);
     }
 }
 
 void CMonitorOutputFrontend::psample_array_end()
 {
     if (m_outputJson) {
-        fputs("]\n", m_outputJson);
-        fputs("}\n", m_outputJson);
+        push_json_array_end(1);
     }
 }
 

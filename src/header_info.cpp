@@ -261,48 +261,45 @@ void CMonitorCollectorApp::header_cpuinfo()
             // processor++;
         }
 
-        if (cgroup_is_allowed_cpu(processor)) {
-
-            if (!strncmp("clock", buf, strlen("clock"))) { /* POWER ONLY */
-                sscanf(&buf[9], "%lf", &value);
-                g_output.pdouble("mhz_clock", value);
-                // power_nominal_mhz = value; /* save for sys_device_system_cpu() */
-                ispower = 1;
-            }
-            if (!strncmp("vendor_id", buf, strlen("vendor_id"))) {
-                g_output.pstring("vendor_id", &buf[12]);
-            }
-            if (!strncmp("cpu MHz", buf, strlen("cpu MHz"))) {
-                sscanf(&buf[11], "%lf", &value);
-                g_output.pdouble("cpu_mhz", value);
-            }
-            if (!strncmp("cache size", buf, strlen("cache size"))) {
-                sscanf(&buf[13], "%lf", &value);
-                g_output.pdouble("cache_size", value);
-            }
-            if (!strncmp("physical id", buf, strlen("physical id"))) {
-                sscanf(&buf[14], "%d", &int_val);
-                g_output.plong("physical_id", int_val);
-            }
-            if (!strncmp("siblings", buf, strlen("siblings"))) {
-                sscanf(&buf[11], "%d", &int_val);
-                g_output.plong("siblings", int_val);
-            }
-            if (!strncmp("core id", buf, strlen("core id"))) {
-                sscanf(&buf[10], "%d", &int_val);
-                g_output.plong("core_id", int_val);
-            }
-            if (!strncmp("cpu cores", buf, strlen("cpu cores"))) {
-                sscanf(&buf[12], "%d", &int_val);
-                g_output.plong("cpu_cores", int_val);
-            }
-            if (!strncmp("model name", buf, strlen("model name"))) {
-                g_output.pstring("model_name", &buf[13]);
-            }
-            if (!strncmp("timebase", buf, strlen("timebase"))) { /* POWER only */
-                ispower = 1;
-                break;
-            }
+        if (!strncmp("clock", buf, strlen("clock"))) { /* POWER ONLY */
+            sscanf(&buf[9], "%lf", &value);
+            g_output.pdouble("mhz_clock", value);
+            // power_nominal_mhz = value; /* save for sys_device_system_cpu() */
+            ispower = 1;
+        }
+        if (!strncmp("vendor_id", buf, strlen("vendor_id"))) {
+            g_output.pstring("vendor_id", &buf[12]);
+        }
+        if (!strncmp("cpu MHz", buf, strlen("cpu MHz"))) {
+            sscanf(&buf[11], "%lf", &value);
+            g_output.pdouble("cpu_mhz", value);
+        }
+        if (!strncmp("cache size", buf, strlen("cache size"))) {
+            sscanf(&buf[13], "%lf", &value);
+            g_output.pdouble("cache_size", value);
+        }
+        if (!strncmp("physical id", buf, strlen("physical id"))) {
+            sscanf(&buf[14], "%d", &int_val);
+            g_output.plong("physical_id", int_val);
+        }
+        if (!strncmp("siblings", buf, strlen("siblings"))) {
+            sscanf(&buf[11], "%d", &int_val);
+            g_output.plong("siblings", int_val);
+        }
+        if (!strncmp("core id", buf, strlen("core id"))) {
+            sscanf(&buf[10], "%d", &int_val);
+            g_output.plong("core_id", int_val);
+        }
+        if (!strncmp("cpu cores", buf, strlen("cpu cores"))) {
+            sscanf(&buf[12], "%d", &int_val);
+            g_output.plong("cpu_cores", int_val);
+        }
+        if (!strncmp("model name", buf, strlen("model name"))) {
+            g_output.pstring("model_name", &buf[13]);
+        }
+        if (!strncmp("timebase", buf, strlen("timebase"))) { /* POWER only */
+            ispower = 1;
+            break;
         }
     }
     if (processor != -1)

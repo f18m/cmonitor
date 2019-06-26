@@ -34,9 +34,11 @@ regen_baremetal1:
 	@../src/cmonitor_collector \
 		--sampling-interval=10 \
 		--num-samples=60 \
+		--output-pretty \
 		--output-filename baremetal1 \
 		--foreground \
 		--debug
+	@pkill example-load
 	@jq -e . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED !!!" ; exit 10 )
 	@gzip -f baremetal1.json
 

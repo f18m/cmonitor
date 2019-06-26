@@ -1,14 +1,15 @@
 ## TODO collector-side
 
-- Add --num-samples=until-cgroup-alive option
 - Add 'blkio' cgroup data collection
-- Add process thread monitoring
+- Add process _thread_ monitoring
+- Add benchmarks to see if fscanf() is actually slower compared to string2int() to optimize CPU usage
 - Add support for UDP data tx to InfluxDB
 
 ## TODO chart-side
 
-- Add javascript buttons to toggle graphs for e.g. disks/networks/
+- Add javascript buttons to toggle graphs for e.g. disks/networks/cpus
 - Add 'blkio' cgroup data plotting
+- Plot CPU "counters" JSON section
 
 ## TODO other
 

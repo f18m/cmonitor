@@ -65,6 +65,7 @@ struct option g_long_opts[] = {
     // Options to save data locally
     { "output-directory", required_argument, 0, 'm' }, // force newline
     { "output-filename", required_argument, 0, 'f' }, // force newline
+    { "output-pretty", no_argument, 0, 'P' }, // force newline
 
     // Options to stream data remotely
     { "remote-ip", required_argument, 0, 'i' }, // force newline
@@ -111,8 +112,8 @@ struct option_extended {
         "By default, for each family, only the stats that are used by the 'cmonitor_chart' companion utility\n"
         "are collected. With this option a more detailed but larger JSON / InfluxDB data stream is produced." },
     { "Data sampling options", &g_long_opts[6],
-        "If cgroup sampling is active (--collect=cgroups), this option allows to provide explicitly the name of \n"
-        "the cgroup to monitor. If not provided or 'self' is provided, the statistics of the cgroups where \n"
+        "If cgroup sampling is active (--collect=cgroups*), this option allows to provide explicitly the name of\n"
+        "the cgroup to monitor. If 'self' value is passed (the default), the statistics of the cgroups where \n"
         "cmonitor_collector runs will be collected. Note that this option is mostly useful when running \n"
         "cmonitor_collector directly on the baremetal since a process running inside a container cannot monitor\n"
         "the performances of other containers.\n" },
@@ -125,21 +126,23 @@ struct option_extended {
         "\thostname_<year><month><day>_<hour><minutes>.json  (for JSON data)\n"
         "\thostname_<year><month><day>_<hour><minutes>.err   (for error log)\n"
         "Use special prefix 'stdout' to indicate that you want the utility to write on stdout.\n"
-        "Use special prefix 'none' to indicate that you want to disable JSON genreation.\n" },
+        "Use special prefix 'none' to indicate that you want to disable JSON genreation." },
+    { "Options to save data locally", &g_long_opts[9],
+        "Generate a pretty-printed JSON file instead of a machine-friendly JSON (the default).\n" },
 
     // Options to stream data remotely
-    { "Options to stream data remotely", &g_long_opts[9],
+    { "Options to stream data remotely", &g_long_opts[10],
         "IP address or hostname of the InfluxDB instance to send measurements to;\n"
         "cmonitor_collector will use a database named 'cmonitor' to store them." },
-    { "Options to stream data remotely", &g_long_opts[10], "Port used by InfluxDB." },
-    { "Options to stream data remotely", &g_long_opts[11],
+    { "Options to stream data remotely", &g_long_opts[11], "Port used by InfluxDB." },
+    { "Options to stream data remotely", &g_long_opts[12],
         "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).\n" },
 
     // help
-    { "Other options", &g_long_opts[12], "Show version and exit" }, // force newline
-    { "Other options", &g_long_opts[13],
+    { "Other options", &g_long_opts[13], "Show version and exit" }, // force newline
+    { "Other options", &g_long_opts[14],
         "Enable debug mode; automatically activates --foreground mode" }, // force newline
-    { "Other options", &g_long_opts[14], "Show this help" },
+    { "Other options", &g_long_opts[15], "Show this help" },
 
     { NULL, NULL, NULL }
 };
@@ -472,6 +475,9 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
                 if (nchars > 5 && g_cfg.m_strOutputFilenamePrefix.substr(nchars - 5) == ".json")
                     g_cfg.m_strOutputFilenamePrefix = g_cfg.m_strOutputFilenamePrefix.substr(0, nchars - 5);
             } break;
+            case 'P':
+                g_output.enable_json_pretty_print();
+                break;
 
                 // Remote data collector options
             case 'i':
@@ -501,7 +507,7 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
                 break;
 
             default:
-                printf("%s: init failed\n", argv[0]);
+                printf("%s: please use --help to read supported options.\n", argv[0]);
                 exit(1);
                 break;
             }
