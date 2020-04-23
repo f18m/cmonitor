@@ -1311,6 +1311,10 @@ def generate_monitored_summary(jheader, jdata, logical_cpus_indexes):
 # =======================================================================================================
 
 def collect_logical_cpu_indexes_from_section(jsample, section_name):
+    '''
+    Walks over given JSON sample looking for keys 'cpuXYZ' and storing all 'XYZ' CPU indexes.
+    Returns a list of CPU indexes
+    '''
     logical_cpus_indexes = []
     for key in jsample[section_name]:
         if key.startswith('cpu') and key != 'cpu_total':
@@ -1367,9 +1371,11 @@ def main_process_file(infile, outfile):
         print("Found %d data samples" % len(jdata))
 
     # detect num of CPUs:
-    baremetal_logical_cpus_indexes = collect_logical_cpu_indexes_from_section(jdata_first_sample, 'stat')
-    if verbose:
-        print("Found %d CPUs in baremetal stats with logical indexes [%s]" % (len(baremetal_logical_cpus_indexes), ', '.join(str(x) for x in baremetal_logical_cpus_indexes)))
+    baremetal_logical_cpus_indexes = []
+    if 'stat' in jdata[0]:
+        baremetal_logical_cpus_indexes = collect_logical_cpu_indexes_from_section(jdata_first_sample, 'stat')
+        if verbose:
+            print("Found %d CPUs in baremetal stats with logical indexes [%s]" % (len(baremetal_logical_cpus_indexes), ', '.join(str(x) for x in baremetal_logical_cpus_indexes)))
         
     cgroup_logical_cpus_indexes = []
     if 'cgroup_cpuacct_stats' in jdata_first_sample:
@@ -1409,7 +1415,10 @@ def main_process_file(infile, outfile):
         cgroupName = 'None'
     web.startHtmlBody(cgroupName, hostname)
     web.appendHtmlTable("Monitoring Summary", generate_monitoring_summary(jheader, jdata))
-    web.appendHtmlTable("Monitored System Summary", generate_monitored_summary(jheader, jdata, baremetal_logical_cpus_indexes))
+    if len(baremetal_logical_cpus_indexes)>0:
+        web.appendHtmlTable("Monitored System Summary", generate_monitored_summary(jheader, jdata, baremetal_logical_cpus_indexes))
+    elif len(cgroup_logical_cpus_indexes)>0:
+        web.appendHtmlTable("Monitored System Summary", generate_monitored_summary(jheader, jdata, cgroup_logical_cpus_indexes))
     web.endHtmlBody()
 
     end_time = time.time()
