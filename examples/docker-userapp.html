@@ -132,16 +132,16 @@ function draw_graph3() {
 }
 
 function draw_graph4() {
-  var deflated_data_base64_graph4 = 'eNqN1L9qI0EMx/F32eoCgxiNpPmT+t4gXGVS5LgtAgmExI0J9+6RNQ7HFf55OuP9oPXXmt3D4XM7nt727X7783Tcj8+v+5a2l6ff+4t/9fP7q79p+/Wxv/ulh9PHcX/dHtMhrv4omUeqiVvKqUjSfrelVin750z5GrMzU2fG15mmGGZkrSPFwRpproiVMzMhZjhNzkz8pwlS0clC0hQxu7A6ynVm0SlCBf1pNjs9oPaGWHRyodIMsei0Sk3gTSO0KkmFN41QUSoV7KDOUKOMhtUZ6v+aFqTmPo2awWHR2Qdxh9OicwzSBgPswoYC1tK3QoeozU5nvcJhESpegKdFqDbCw6LTmu9zIBadPVMBqkemdny6+7/MYYjNfXY/t4xYZBY/HKqIzX1mqgXedL6IhHoBL4URoezXFaoIVfYNGGIz1Bk6uGOG1ka5V8T08hwrZhFajFiv31Ty3KifNEZoPp8+q8NZ0Vl976aIyWUFPOC06PTryNhNw2mB8IIpC0YWjC6Y21klLRBeMGXByILRBXM7S9IC4QXzX9bjFx7j8ic=\n';
+  var deflated_data_base64_graph4 = 'eNqFz71Kw3AYhfFbkf9U4Qx5P9K0rhYvQHAKHaJ5wWIFsVlEvHeDILjIs57zW55x/GzLx1u1mzZPSy2n12pq5+mxzut0+J2+1B4uNa/X7fT0XPPV5nC6vNzXNF+v2917VTtq/PEb72yvrWxQJw/lbiW9QsN/ogeRQmAoHEWgSBSU0guBoXAUgSJRUMpWCAyFowgUiYJSBiEwFI4iUCQKStkJgaFwFIEiUVDKXggMhaMIFIkCUqITAkPhKAJFoqAUEwJD4SgCRaKgFBcCQ+EoAkWioJQQAkPxJ+X4DZPqygg=\n';
   var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
   var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
   var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
   var options_graph4 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Logical CPU 0 (from CGroup stats), STACKED graph",
+    title: "Memory usage in GB (from baremetal stats), STACKED graph",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "GB", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
   };
@@ -152,22 +152,22 @@ function draw_graph4() {
   g_chart.draw(data_graph4, options_graph4);
   g_current_data = data_graph4;
   g_current_options = options_graph4;
-  reset_combo_boxes("cgroup_cpus");
+  reset_combo_boxes("");
 }
 
 function draw_graph5() {
-  var deflated_data_base64_graph5 = 'eNqNk8FqHTEMRf9lVi0YYUmWZWfdPyhdPbJI6SwKCZTmbULpv9dPngl0kfu8Ghgf5Dm6dy6XP9v17de+PWw/nq779efLvqXt+en7/jxefTlf/U3bt9f99zj6+vZ63V+2x3SJ00+Suaea2FNOoqm0z9t4EldLmfJHmN0wZmIDWEk3qgjl3BDFMcxJrCJMYhpTFojpDatCFWMh6kwFG4SoZRIGChaiXkjQ1uxd1JsiLETNx3IrwqYokzm8NETLMIB3hqdXamBWDc0+oMyI4iMBN0XYzNNIWkdYaPJoJCpRnZojqFLgtPDURl4+pjw81aijL/PpqZm6QEyOdfQO7zzjvINNz1Hviig72o2CarO1RtohxeeHuSBMjs1qcYSdcSpqWpuaI4KMOtTea+sNLK2HaL1VSBAVor1TU0NYiLYBoLX1KapOpUJs/p6NGAqceVbQW83pbJo4ovgYxtwRNgNVqo0RNgO18bfDaeE5zhFjdxlOCwgvMLLA6AJTFpj7WpIWEF5gZIHRBaYsMPe1NC0gvMD8p/X4D6v28bI=\n';
+  var deflated_data_base64_graph5 = 'eNqlV8uOJDUQ/Jc+gai27HybM38xmsPC9mHFsrOC4YAQ/066Xl1VW85uRB9GHnd1VKYzIjP88vL35f2vr7fLj5ePH95v759+u12Gy+cPP98++9ZPy9Y/w+Xj2y+/3n7PP3z6cln/ub79+d4ef5t2P7/NG7cvX/GP+dFpPX7xOryMkN9BLnWQoeiQB8CB7PvLkFMeru3PdpFzIRHj4QrJSpV6/9jtmrmHyBFixlzzBqmB1xIB0rDDKwm11vb4cN2sR3RCFrbxuZzR3yPQwyxRkIpgOFwxeYASRQbnKJLQKkwxSuIxROlh4CE9KbXm+weWVE/3x3ilCtH9mzIfgGaqHsf66QUQMQCATGi4UqJSYVM3jo6Fn64YCInyHDAUM+2EycN5lJoEKy7gVSMmcVx1KWTaqo5YNUK5V90S8vz2w7mpisqcVymG3bTw6bNiRd3UeSmzh72rfu9FodCRrOVeEtXplT0U7jGeqNLCeKzT+hxEhigSL4NZI5wzlzaECwHDugKAQcsth+yQnppnlGKiu8bFyeVFz2lCDnVeFzVpmeuNrd7yLN6+nJB4bqKtoa7riYtYSHXRGBKr9kD31eVUrPKm58wF7uxPJPUEiL8haWOy4P0XeB6BhtQAqY0amph2vah/TPqAGWbGu5qWpBiRRJ8RPynwOoaAgdV6aBj1Xj8yWuqGrvGNyvvxhTLn6izezJBGOuefRgnH45wIS0NxUsmREeeI1qmxs2qm/MOhaQ8aOaE33LtZmbOUKKZI++Dt3EHqHFQXA0MrlX2SNu04wcLTocNAIJ7qM3bnZT3xTPyXq90hVKAe6HEiu0rt6OdGk3G2P+NL1UXO1Pr0plV16lQjOQPVrKtKXIhKPZSo2sAl66YLr0NX2FnQQzyoeDJTnj5tjoJ26QOa1CV9QWXuYQc0KALGuIboHtXqw9FdY02LgdFjs1p7Qq5JbJ1AlQMMzPHkLv91cjtgKGRSr00LK3vjilCgl5rHActUlKizO0gkX9esG5OV/c6AHgo9SEh115mgmaXwyKP+iz4jGBYNgbCcj3bv0eco5qbIZDkhv4j1PYdjhDrMMroMSZqnqdhDeWKCInrLxUUmXkSzHto316dNu5Rdu2T2ubDcNTzYKt0QY8G5yRl57qYmP2XXHHFfRbd6ZbHLm/XcFcY7LCQItQixFmtu00YSQFQMCEtqmbzNL7dJt7rFejDh+LSCbCcdWt0WdgPDHmG9EcNycn78YXbh1bYoNEk/UiDEDsgqbo0PNJ8AOWg0OPzvWcyIzIszZEdnezBE/K1hpzVDkcZpmYdhD+Ug3nyw4cczds+gZWP718nnBrm+vv4LHkf4PA==\n';
   var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
   var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
   var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
   var options_graph5 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Logical CPU 1 (from CGroup stats), STACKED graph",
+    title: "Network Traffic in MB/s (from baremetal stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "MB/s", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
-    isStacked:  1
+    isStacked:  0
   };
 
   if (g_chart && g_chart.clearChart)
@@ -176,20 +176,20 @@ function draw_graph5() {
   g_chart.draw(data_graph5, options_graph5);
   g_current_data = data_graph5;
   g_current_options = options_graph5;
-  reset_combo_boxes("cgroup_cpus");
+  reset_combo_boxes("");
 }
 
 function draw_graph6() {
-  var deflated_data_base64_graph6 = 'eNqNlL+KFEEQh99lIoWm6PrfbaoPYGK0XHDiBsIJBpeI+O5W18wJguV1sOwy+1HTX9Wv63b7eTz/+H4/3h1fHp/vz1+/3Y92PD1+vj/Fow8vj3614/3HT/3ILzwe2i3/e0MdZ7OG3nojbjLeHs0NevwmBjStSF2kBKnYEAG1IKVlSQX10YSg91GBmKSD9PUMSK0iaZEa58OoiXHakuRFchyTmxFYDaY5MrBLcwSpffQibVLTDoSFkKY5M1C0ywWoaqae5uFjw5e5D67INEcCcm3q0XaryDRXA+dQx2h/+fZUNwE2bxJC5cvTnJeJrZCMoqKd4go9Cs7gOlYgXr0UWuNx5Qo8J66BxBkVaMyKTO8xAQetyljlzU7vOUHc1iBFypp6kVNWfXD5N+jthYu4hf+sTumneJAjWskdJpVkmnP4nBGes3x5motDlIyB/wdM8UgP22wat8IqML1HRGKuO1GNcaS2jLwRcdN5luAf7al5RqeKPAc+Iui4Ws7iFZnasaxEJC9wFctxDbzHGtCMZxW3cW03hhG/I+k+il7OVMcOXUazlTaqwFSPZWWm2QHWijzVg4ysR/N71c55qptDH5GiWJxWknJtAxkr94ClT5qTBuFr5lZknfs59DDGjCV5xZ13PCqOrIg4KzLFLXqjsvamDaxIvuaD01dp17JmikcT16di9FUG2waCGwxtMLzByAbzuha1DQQ3GNpgeIORDeZ1LW4bCG4wf2k9/AYPVwpR\n';
+  var deflated_data_base64_graph6 = 'eNqdlsFu2zAMht/Fpw1TDImULKnnvUXQQ7f6UCxrii47FMPefWacFWvmjwN2CRjFXyj9/Elrv/8xnF6e5uFmuL87zaeHr/MQhsPdp/mwLH38vfQzDPfHz1/m5/jh4XF4/bI7fj/Z48d19XC8LMyPT/rt8ugan3+4DfvzX76TmHqYQqohBtGQ2/shxDGGnX28BjKqBYWwso2lFcvbWA5XlFggQccUdjIKUYn2WCyYCJNtLI7dgkSYbm8y2yaVj4ZCNgsqYWU7m1i2RGcrgeRPFihRKGR2il3eCJn/zNZsj5EwFFIdIQsLKe7ZilttyDahkMWp2sRCngMhTChbtaATpm6zFcIyWcsr2/SXkNO5yZayFSsbYDU4R0tMoZCekSs5Us3IwtnU6dFEQlZ2ZHbmT3VmZO9O4VogJzdnbrV/NPdEmDhYIis39mR3rNzIkzpW00T4dDgnPawHZ5bgdO0kpVrDJU527cq3s7wSppQtOq7s7ErvrdjZlY5NNP7PnFwo9KR4LaCRJ6Vzv1gwlDKzSxbMvwRhtuJm224dTSilOMkSS1mduiWalJf2xmxKfVqscIs1eyfU92Ul7FrMvO744svtN4GK78tGFIiZTUyB6bVg4tQg8R7Vva0VwnwhM2HFMTMNL1W8mk+mSCWKXbk2OIJ4p5zWwt3+AvxfuEQ=\n';
   var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
   var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
   var options_graph6 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "All logical CPUs assigned to cmonitor_collector CGroup (from CGroup stats)",
+    title: "Network Traffic in PPS (from baremetal stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "PPS", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
@@ -204,18 +204,18 @@ function draw_graph6() {
 }
 
 function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNqFz71Kw3AYhfFbkf9U4Qx5P9K0rhYvQHAKHaJ5wWIFsVlEvHeDILjIs57zW55x/GzLx1u1mzZPSy2n12pq5+mxzut0+J2+1B4uNa/X7fT0XPPV5nC6vNzXNF+v2917VTtq/PEb72yvrWxQJw/lbiW9QsN/ogeRQmAoHEWgSBSU0guBoXAUgSJRUMpWCAyFowgUiYJSBiEwFI4iUCQKStkJgaFwFIEiUVDKXggMhaMIFIkCUqITAkPhKAJFoqAUEwJD4SgCRaKgFBcCQ+EoAkWioJQQAkPxJ+X4DZPqygg=\n';
+  var deflated_data_base64_graph7 = 'eNqVlz1vE0EQhv9KdBVIm9V87gcloqWhobBS2ImLSEFCwQ1C/HdmjZNgbk6aveLsu7Uezc4778x6t/u1nH5+Py4flof96Xh6/HZc0vK0Pxyf7NWnl1e/0/LjGW6+HPcPN58/Ln+fvj4/no6Xx4f9v4v2dLV4uFo8XC/eXy3evy3epd05gncE2FNJWBMk4iTt/ZIgQ7odt/MX6blQQ+b/3ttti6IuRRRrrVGKpDWEJddSCDkOQSeUkkvBWihOIScWyiqCEofwGqKUkYVxIhRxKdyY7GdhiqcQZ0Vu2KIUdRSSlpE6ygTEU6hm2w6j9stV4jhfqlqBK8UpjlbYcjUb6ARF3K1pBVCCyyVx3Eo0sMIZ5WzqQwuboiSfg7mBlhLHoMtRNHsB9B4HrTQbabklyMpAKnEQ+zvr5rJeZzIkbkTYc1NoMgFaawbtvDXrhkTtpcDDfqnJBbJmbFWpxjm4VU2qBRTjINoqp0KF4/VdPdOZda2SrFnHKf4IY+oAHKc4DdLUh1aIw6lpyR0+1kSI+UV5idOcTolmfgSZiclrkGYQxEoTsXjDTHKp3EmnW1tzp5p5hEReZ0B8CDR3vJ3bJFOZTnxPbi1oZygtDvHUq9msj1XjFPJjYWsnGKewG4sd8+h1LgHFcY56NOxPxQbTPM7vmTZXWgd5OxREs8awEhAVezuXWEEVnDajIdFv7HQ+uUyE5nfPoal5CWscxO7IGg3Uzj7haWyglZrWXiwz44mkhm1oJHVDss+hYbRcrbety2swLJY4wpdrbI44Xkno+e8SS4lD2INga1wmkiJbyaWZQsYNt43PxuFzCZMvktmrc5yxqdLYU41zaIvDJpTGOeyr3bhNBCMuBFVndqQuZBRvuGTYlyjcmQ2AbuEqa32bGzARkO8m+yfrFt7dH1FciGk=\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
   var options_graph7 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Memory usage in GB (from baremetal stats), STACKED graph",
+    title: "Disk I/O (from baremetal stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "GB", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "MB", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
-    isStacked:  1
+    isStacked:  0
   };
 
   if (g_chart && g_chart.clearChart)
@@ -228,24 +228,16 @@ function draw_graph7() {
 }
 
 function draw_graph8() {
-  var deflated_data_base64_graph8 = 'eNqVlc+KFEEMxl9lmZNCMaTyrxJv4uIDCJ6WPYw7DS6OKO56EPHdTU9XicxsDnUbar5fd/Llq/Td3e/d86/vy+7N7nh4Xp4fvy67sjsdPi2nOLodR3/K7uPTcoy/3h0ePi/Hm1e3j09fPiyH4+s4e3s6fXu4eX94PP38sTzt7svdmXyFUL1oqa1AQSpsIYa9VmPX+AHsVbA4slvGyMY0IVVemVKR2PllPZcudxC0TS5E0jJ53fQCZND1ZgaQ6bG3QObt3EJBMEfM9LTqcd/YuMYpwB5ZBOJB1Aw1w3jDNHoOp9z3aOgclGqVlJLL4sCqYyEAxaQjKYNh2/onchXM1N0vjUKGvrF4y/R4NT5yabmexvNRovJVz8BqlOl7pJqKS9dTU6qZXjZjzd3VVmNbbRULN2D0lyEtfRgN1pqCifnVSFeEphJn0EjWeoxF9xhUzFKIGS2Dhl2mTFs7Ev1QWlm3q0WWNnelGahk8uFWA+BtemJEFTL9CJQ4i3a9pe62clW9gqfVt39h0qa9HGVsYpkeL2+FCWLEUFvMHDJqRIpb1f4Wi3FLph9bigna1kVkRDl9vlxFsMXt0CSydm1SkJiVb8Ok/zZaTJuyGdi1SWpMUZjVCK1kFI208moo1+Bh3VjGsXDSdw2rwinb8mcmBmnrcjUKrwEnVfmwSlrftY5NLVXXq13jFHLM9OOyNa7c9XE3MdWPy8Yuo3ohzNaGjyXeGDBuZ0zCYX2RK1q2AH0sKAcGPUMExGc8JvryzSDoRkmN+xYz2xviOpAKkStqGVQvP8cBUBTLGYCX8wi9I6QvGKGCCG//dkMsqGQiAfAsIHNALbP6OgvgLECzAM8CkyZhmdXXWQBnAZoFeBaYNInKrL7OArlJ938BOVeD+g==\n';
+  var deflated_data_base64_graph8 = 'eNqdlt1qHDEMhV+lzFUKZrBlyT+9K/Syb7DkYkuWEkjaXiyFEPrutSVNZn9G3qZ7sbDDOZbm87G8u93rdHz5dZg+TQ/74+H4+HyY3PS0/3Z4ao++LI/+uOnrz/3D59/fP9yF58cfH6eTB3T5IMiTe7fjFe7Ah+qSC9l5B9FhaeoU5kx+/QRHOAM57N+Wk9hJMzkiFWdDjI61cQasJ59u9P6s7nCR0FehOvveHr3DCGykS09bxY+NkY2hV4yiNaUMkvpiXZtv8GB45K+AwA0nMUksHXgTC3ZTy8BQegqXtQabS0IMM5dp4bhymkYmhqkT26po+lB9VqumkUkiJ7Dx/OdOE4NsCL18tRW8pQyagk0WAx/8p09SlzRK3Jv5Fqhn4i11ZGYnaeoqL8zZT1YTWU4syFnr6yYzLVkAJb99MEdGUCOtVUytUCna/HUV0yiIJMvvMpIaaz0/pEurFujitFXamnDZYl40aKSd9lMxEIOmBDe7GxgFZFxTMNCiFqlGETARkM5Dv76KJa4y1DTEw9euOtPqejgGWtANtBCZ/SxZA2MHs+lE3ULvt+7TkZOGNYvxltG74RYNfEHpZKOgsV3RK9eyXv0j8RK3NdSDnlCnOU/lwR41KfOKxRj8VipiYF5R7s4qQ5AsKSOCntxTOsh92dOzGZkQkCwPZI/wpmVAEJb/IvbVEIPwCZx+vPEvo6kZUeCLBGH8hy4CcwmltxF0ZW9JmUvgkYr+rRlLDarOrGaxqY2qbT+qSO2GBQZeHO+ioUAYtCRkmEnsxRjPtjg6LXN2QnxrNc1cxVs+ocQwo5yTMJtFBFK/QyOqtnV0/xdtmJdy\n';
   var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
   var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
   var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
   var options_graph8 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Memory used by cmonitor_collector CGroup in MB (from CGroup stats)",
+    title: "Average Load  (from baremetal stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    series: {
-     0: {targetAxisIndex:0},
-     1: {targetAxisIndex:0},
-     2: {targetAxisIndex:1},
-    },
-    vAxes: {
-      0: { title: "MB" },
-      1: { title: "Alloc Failures" }
-    },
+    vAxis: { title: "Load (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
@@ -260,18 +252,18 @@ function draw_graph8() {
 }
 
 function draw_graph9() {
-  var deflated_data_base64_graph9 = 'eNqlV8uOJDUQ/Jc+gai27HybM38xmsPC9mHFsrOC4YAQ/066Xl1VW85uRB9GHnd1VKYzIjP88vL35f2vr7fLj5ePH95v759+u12Gy+cPP98++9ZPy9Y/w+Xj2y+/3n7PP3z6cln/ub79+d4ef5t2P7/NG7cvX/GP+dFpPX7xOryMkN9BLnWQoeiQB8CB7PvLkFMeru3PdpFzIRHj4QrJSpV6/9jtmrmHyBFixlzzBqmB1xIB0rDDKwm11vb4cN2sR3RCFrbxuZzR3yPQwyxRkIpgOFwxeYASRQbnKJLQKkwxSuIxROlh4CE9KbXm+weWVE/3x3ilCtH9mzIfgGaqHsf66QUQMQCATGi4UqJSYVM3jo6Fn64YCInyHDAUM+2EycN5lJoEKy7gVSMmcVx1KWTaqo5YNUK5V90S8vz2w7mpisqcVymG3bTw6bNiRd3UeSmzh72rfu9FodCRrOVeEtXplT0U7jGeqNLCeKzT+hxEhigSL4NZI5wzlzaECwHDugKAQcsth+yQnppnlGKiu8bFyeVFz2lCDnVeFzVpmeuNrd7yLN6+nJB4bqKtoa7riYtYSHXRGBKr9kD31eVUrPKm58wF7uxPJPUEiL8haWOy4P0XeB6BhtQAqY0amph2vah/TPqAGWbGu5qWpBiRRJ8RPynwOoaAgdV6aBj1Xj8yWuqGrvGNyvvxhTLn6izezJBGOuefRgnH45wIS0NxUsmREeeI1qmxs2qm/MOhaQ8aOaE33LtZmbOUKKZI++Dt3EHqHFQXA0MrlX2SNu04wcLTocNAIJ7qM3bnZT3xTPyXq90hVKAe6HEiu0rt6OdGk3G2P+NL1UXO1Pr0plV16lQjOQPVrKtKXIhKPZSo2sAl66YLr0NX2FnQQzyoeDJTnj5tjoJ26QOa1CV9QWXuYQc0KALGuIboHtXqw9FdY02LgdFjs1p7Qq5JbJ1AlQMMzPHkLv91cjtgKGRSr00LK3vjilCgl5rHActUlKizO0gkX9esG5OV/c6AHgo9SEh115mgmaXwyKP+iz4jGBYNgbCcj3bv0eco5qbIZDkhv4j1PYdjhDrMMroMSZqnqdhDeWKCInrLxUUmXkSzHto316dNu5Rdu2T2ubDcNTzYKt0QY8G5yRl57qYmP2XXHHFfRbd6ZbHLm/XcFcY7LCQItQixFmtu00YSQFQMCEtqmbzNL7dJt7rFejDh+LSCbCcdWt0WdgPDHmG9EcNycn78YXbh1bYoNEk/UiDEDsgqbo0PNJ8AOWg0OPzvWcyIzIszZEdnezBE/K1hpzVDkcZpmYdhD+Ug3nyw4cczds+gZWP718nnBrm+vv4LHkf4PA==\n';
+  var deflated_data_base64_graph9 = 'eNqN1L9qI0EMx/F32eoCgxiNpPmT+t4gXGVS5LgtAgmExI0J9+6RNQ7HFf55OuP9oPXXmt3D4XM7nt727X7783Tcj8+v+5a2l6ff+4t/9fP7q79p+/Wxv/ulh9PHcX/dHtMhrv4omUeqiVvKqUjSfrelVin750z5GrMzU2fG15mmGGZkrSPFwRpproiVMzMhZjhNzkz8pwlS0clC0hQxu7A6ynVm0SlCBf1pNjs9oPaGWHRyodIMsei0Sk3gTSO0KkmFN41QUSoV7KDOUKOMhtUZ6v+aFqTmPo2awWHR2Qdxh9OicwzSBgPswoYC1tK3QoeozU5nvcJhESpegKdFqDbCw6LTmu9zIBadPVMBqkemdny6+7/MYYjNfXY/t4xYZBY/HKqIzX1mqgXedL6IhHoBL4URoezXFaoIVfYNGGIz1Bk6uGOG1ka5V8T08hwrZhFajFiv31Ty3KifNEZoPp8+q8NZ0Vl976aIyWUFPOC06PTryNhNw2mB8IIpC0YWjC6Y21klLRBeMGXByILRBXM7S9IC4QXzX9bjFx7j8ic=\n';
   var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
   var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
   var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
   var options_graph9 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Network Traffic in MB/s (from baremetal stats)",
+    title: "Logical CPU 0 (from CGroup stats), STACKED graph",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "MB/s", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
-    isStacked:  0
+    isStacked:  1
   };
 
   if (g_chart && g_chart.clearChart)
@@ -280,22 +272,22 @@ function draw_graph9() {
   g_chart.draw(data_graph9, options_graph9);
   g_current_data = data_graph9;
   g_current_options = options_graph9;
-  reset_combo_boxes("");
+  reset_combo_boxes("cgroup_cpus");
 }
 
 function draw_graph10() {
-  var deflated_data_base64_graph10 = 'eNqdlsFu2zAMht/Fpw1TDImULKnnvUXQQ7f6UCxrii47FMPefWacFWvmjwN2CRjFXyj9/Elrv/8xnF6e5uFmuL87zaeHr/MQhsPdp/mwLH38vfQzDPfHz1/m5/jh4XF4/bI7fj/Z48d19XC8LMyPT/rt8ugan3+4DfvzX76TmHqYQqohBtGQ2/shxDGGnX28BjKqBYWwso2lFcvbWA5XlFggQccUdjIKUYn2WCyYCJNtLI7dgkSYbm8y2yaVj4ZCNgsqYWU7m1i2RGcrgeRPFihRKGR2il3eCJn/zNZsj5EwFFIdIQsLKe7ZilttyDahkMWp2sRCngMhTChbtaATpm6zFcIyWcsr2/SXkNO5yZayFSsbYDU4R0tMoZCekSs5Us3IwtnU6dFEQlZ2ZHbmT3VmZO9O4VogJzdnbrV/NPdEmDhYIis39mR3rNzIkzpW00T4dDgnPawHZ5bgdO0kpVrDJU527cq3s7wSppQtOq7s7ErvrdjZlY5NNP7PnFwo9KR4LaCRJ6Vzv1gwlDKzSxbMvwRhtuJm224dTSilOMkSS1mduiWalJf2xmxKfVqscIs1eyfU92Ul7FrMvO744svtN4GK78tGFIiZTUyB6bVg4tQg8R7Vva0VwnwhM2HFMTMNL1W8mk+mSCWKXbk2OIJ4p5zWwt3+AvxfuEQ=\n';
+  var deflated_data_base64_graph10 = 'eNqNk8FqHTEMRf9lVi0YYUmWZWfdPyhdPbJI6SwKCZTmbULpv9dPngl0kfu8Ghgf5Dm6dy6XP9v17de+PWw/nq779efLvqXt+en7/jxefTlf/U3bt9f99zj6+vZ63V+2x3SJ00+Suaea2FNOoqm0z9t4EldLmfJHmN0wZmIDWEk3qgjl3BDFMcxJrCJMYhpTFojpDatCFWMh6kwFG4SoZRIGChaiXkjQ1uxd1JsiLETNx3IrwqYokzm8NETLMIB3hqdXamBWDc0+oMyI4iMBN0XYzNNIWkdYaPJoJCpRnZojqFLgtPDURl4+pjw81aijL/PpqZm6QEyOdfQO7zzjvINNz1Hviig72o2CarO1RtohxeeHuSBMjs1qcYSdcSpqWpuaI4KMOtTea+sNLK2HaL1VSBAVor1TU0NYiLYBoLX1KapOpUJs/p6NGAqceVbQW83pbJo4ovgYxtwRNgNVqo0RNgO18bfDaeE5zhFjdxlOCwgvMLLA6AJTFpj7WpIWEF5gZIHRBaYsMPe1NC0gvMD8p/X4D6v28bI=\n';
   var deflated_data_binary_graph10 = window.atob(deflated_data_base64_graph10);
   var inflated_data_graph10 = JSON.parse(pako.inflate(deflated_data_binary_graph10, { to: 'string' }));
   var data_graph10 = google.visualization.arrayToDataTable(inflated_data_graph10);
   var options_graph10 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Network Traffic in PPS (from baremetal stats)",
+    title: "Logical CPU 1 (from CGroup stats), STACKED graph",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "PPS", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
-    isStacked:  0
+    isStacked:  1
   };
 
   if (g_chart && g_chart.clearChart)
@@ -304,20 +296,20 @@ function draw_graph10() {
   g_chart.draw(data_graph10, options_graph10);
   g_current_data = data_graph10;
   g_current_options = options_graph10;
-  reset_combo_boxes("");
+  reset_combo_boxes("cgroup_cpus");
 }
 
 function draw_graph11() {
-  var deflated_data_base64_graph11 = 'eNqVlz1vE0EQhv9KdBVIm9V87gcloqWhobBS2ImLSEFCwQ1C/HdmjZNgbk6aveLsu7Uezc4778x6t/u1nH5+Py4flof96Xh6/HZc0vK0Pxyf7NWnl1e/0/LjGW6+HPcPN58/Ln+fvj4/no6Xx4f9v4v2dLV4uFo8XC/eXy3evy3epd05gncE2FNJWBMk4iTt/ZIgQ7odt/MX6blQQ+b/3ttti6IuRRRrrVGKpDWEJddSCDkOQSeUkkvBWihOIScWyiqCEofwGqKUkYVxIhRxKdyY7GdhiqcQZ0Vu2KIUdRSSlpE6ygTEU6hm2w6j9stV4jhfqlqBK8UpjlbYcjUb6ARF3K1pBVCCyyVx3Eo0sMIZ5WzqQwuboiSfg7mBlhLHoMtRNHsB9B4HrTQbabklyMpAKnEQ+zvr5rJeZzIkbkTYc1NoMgFaawbtvDXrhkTtpcDDfqnJBbJmbFWpxjm4VU2qBRTjINoqp0KF4/VdPdOZda2SrFnHKf4IY+oAHKc4DdLUh1aIw6lpyR0+1kSI+UV5idOcTolmfgSZiclrkGYQxEoTsXjDTHKp3EmnW1tzp5p5hEReZ0B8CDR3vJ3bJFOZTnxPbi1oZygtDvHUq9msj1XjFPJjYWsnGKewG4sd8+h1LgHFcY56NOxPxQbTPM7vmTZXWgd5OxREs8awEhAVezuXWEEVnDajIdFv7HQ+uUyE5nfPoal5CWscxO7IGg3Uzj7haWyglZrWXiwz44mkhm1oJHVDss+hYbRcrbety2swLJY4wpdrbI44Xkno+e8SS4lD2INga1wmkiJbyaWZQsYNt43PxuFzCZMvktmrc5yxqdLYU41zaIvDJpTGOeyr3bhNBCMuBFVndqQuZBRvuGTYlyjcmQ2AbuEqa32bGzARkO8m+yfrFt7dH1FciGk=\n';
+  var deflated_data_base64_graph11 = 'eNqNlL+KFEEQh99lIoWm6PrfbaoPYGK0XHDiBsIJBpeI+O5W18wJguV1sOwy+1HTX9Wv63b7eTz/+H4/3h1fHp/vz1+/3Y92PD1+vj/Fow8vj3614/3HT/3ILzwe2i3/e0MdZ7OG3nojbjLeHs0NevwmBjStSF2kBKnYEAG1IKVlSQX10YSg91GBmKSD9PUMSK0iaZEa58OoiXHakuRFchyTmxFYDaY5MrBLcwSpffQibVLTDoSFkKY5M1C0ywWoaqae5uFjw5e5D67INEcCcm3q0XaryDRXA+dQx2h/+fZUNwE2bxJC5cvTnJeJrZCMoqKd4go9Cs7gOlYgXr0UWuNx5Qo8J66BxBkVaMyKTO8xAQetyljlzU7vOUHc1iBFypp6kVNWfXD5N+jthYu4hf+sTumneJAjWskdJpVkmnP4nBGes3x5motDlIyB/wdM8UgP22wat8IqML1HRGKuO1GNcaS2jLwRcdN5luAf7al5RqeKPAc+Iui4Ws7iFZnasaxEJC9wFctxDbzHGtCMZxW3cW03hhG/I+k+il7OVMcOXUazlTaqwFSPZWWm2QHWijzVg4ysR/N71c55qptDH5GiWJxWknJtAxkr94ClT5qTBuFr5lZknfs59DDGjCV5xZ13PCqOrIg4KzLFLXqjsvamDaxIvuaD01dp17JmikcT16di9FUG2waCGwxtMLzByAbzuha1DQQ3GNpgeIORDeZ1LW4bCG4wf2k9/AYPVwpR\n';
   var deflated_data_binary_graph11 = window.atob(deflated_data_base64_graph11);
   var inflated_data_graph11 = JSON.parse(pako.inflate(deflated_data_binary_graph11, { to: 'string' }));
   var data_graph11 = google.visualization.arrayToDataTable(inflated_data_graph11);
   var options_graph11 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Disk I/O (from baremetal stats)",
+    title: "All logical CPUs assigned to cmonitor_collector CGroup (from CGroup stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "MB", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
@@ -332,16 +324,24 @@ function draw_graph11() {
 }
 
 function draw_graph12() {
-  var deflated_data_base64_graph12 = 'eNqdlt1qHDEMhV+lzFUKZrBlyT+9K/Syb7DkYkuWEkjaXiyFEPrutSVNZn9G3qZ7sbDDOZbm87G8u93rdHz5dZg+TQ/74+H4+HyY3PS0/3Z4ao++LI/+uOnrz/3D59/fP9yF58cfH6eTB3T5IMiTe7fjFe7Ah+qSC9l5B9FhaeoU5kx+/QRHOAM57N+Wk9hJMzkiFWdDjI61cQasJ59u9P6s7nCR0FehOvveHr3DCGykS09bxY+NkY2hV4yiNaUMkvpiXZtv8GB45K+AwA0nMUksHXgTC3ZTy8BQegqXtQabS0IMM5dp4bhymkYmhqkT26po+lB9VqumkUkiJ7Dx/OdOE4NsCL18tRW8pQyagk0WAx/8p09SlzRK3Jv5Fqhn4i11ZGYnaeoqL8zZT1YTWU4syFnr6yYzLVkAJb99MEdGUCOtVUytUCna/HUV0yiIJMvvMpIaaz0/pEurFujitFXamnDZYl40aKSd9lMxEIOmBDe7GxgFZFxTMNCiFqlGETARkM5Dv76KJa4y1DTEw9euOtPqejgGWtANtBCZ/SxZA2MHs+lE3ULvt+7TkZOGNYvxltG74RYNfEHpZKOgsV3RK9eyXv0j8RK3NdSDnlCnOU/lwR41KfOKxRj8VipiYF5R7s4qQ5AsKSOCntxTOsh92dOzGZkQkCwPZI/wpmVAEJb/IvbVEIPwCZx+vPEvo6kZUeCLBGH8hy4CcwmltxF0ZW9JmUvgkYr+rRlLDarOrGaxqY2qbT+qSO2GBQZeHO+ioUAYtCRkmEnsxRjPtjg6LXN2QnxrNc1cxVs+ocQwo5yTMJtFBFK/QyOqtnV0/xdtmJdy\n';
+  var deflated_data_base64_graph12 = 'eNqVlc+KFEEMxl9lmZNCMaTyrxJv4uIDCJ6WPYw7DS6OKO56EPHdTU9XicxsDnUbar5fd/Llq/Td3e/d86/vy+7N7nh4Xp4fvy67sjsdPi2nOLodR3/K7uPTcoy/3h0ePi/Hm1e3j09fPiyH4+s4e3s6fXu4eX94PP38sTzt7svdmXyFUL1oqa1AQSpsIYa9VmPX+AHsVbA4slvGyMY0IVVemVKR2PllPZcudxC0TS5E0jJ53fQCZND1ZgaQ6bG3QObt3EJBMEfM9LTqcd/YuMYpwB5ZBOJB1Aw1w3jDNHoOp9z3aOgclGqVlJLL4sCqYyEAxaQjKYNh2/onchXM1N0vjUKGvrF4y/R4NT5yabmexvNRovJVz8BqlOl7pJqKS9dTU6qZXjZjzd3VVmNbbRULN2D0lyEtfRgN1pqCifnVSFeEphJn0EjWeoxF9xhUzFKIGS2Dhl2mTFs7Ev1QWlm3q0WWNnelGahk8uFWA+BtemJEFTL9CJQ4i3a9pe62clW9gqfVt39h0qa9HGVsYpkeL2+FCWLEUFvMHDJqRIpb1f4Wi3FLph9bigna1kVkRDl9vlxFsMXt0CSydm1SkJiVb8Ok/zZaTJuyGdi1SWpMUZjVCK1kFI208moo1+Bh3VjGsXDSdw2rwinb8mcmBmnrcjUKrwEnVfmwSlrftY5NLVXXq13jFHLM9OOyNa7c9XE3MdWPy8Yuo3ohzNaGjyXeGDBuZ0zCYX2RK1q2AH0sKAcGPUMExGc8JvryzSDoRkmN+xYz2xviOpAKkStqGVQvP8cBUBTLGYCX8wi9I6QvGKGCCG//dkMsqGQiAfAsIHNALbP6OgvgLECzAM8CkyZhmdXXWQBnAZoFeBaYNInKrL7OArlJ938BOVeD+g==\n';
   var deflated_data_binary_graph12 = window.atob(deflated_data_base64_graph12);
   var inflated_data_graph12 = JSON.parse(pako.inflate(deflated_data_binary_graph12, { to: 'string' }));
   var data_graph12 = google.visualization.arrayToDataTable(inflated_data_graph12);
   var options_graph12 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Average Load  (from baremetal stats)",
+    title: "Memory used by cmonitor_collector CGroup in MB (from CGroup stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "Load (%)", gridlines: { color: "lightgrey", count: 11 } },
+    series: {
+     0: {targetAxisIndex:0},
+     1: {targetAxisIndex:0},
+     2: {targetAxisIndex:1},
+    },
+    vAxes: {
+      0: { title: "MB" },
+      1: { title: "Alloc Failures" }
+    },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
@@ -380,7 +380,7 @@ function draw_graph13() {
 }
 
 function draw_graph14() {
-  var deflated_data_base64_graph14 = 'eNq1lstOwzAQRX8FZQWSiTwPv1jzF1UXRWSBVCREs0GIf8eNVIHTOmnTXqmbiZPja+d0nNXqu+m/PrrmqXnd9F3/9t41ptluXrptvvR8uPRjml3/2e12d/fJq31o/tVsY1Fb54qaEhe1qi9qT1rUIlTWWvJ8SuX46HnLfjT/qI5S5pFyPersKN9oPinzKJXrJ1+u13EeX5vVsJv3bCkZbygYa1iM7J99pMW/GldBXAfhqpnHSmo1+QVoAkXmP65Lbbb8hmwBZVYQF6OFMyAsgbi8nMup5RQm2GcrIdqGgXR+7lILF3IUrcD3Y/7SfTno4amNNfKyPfcYRTxIEX+NIpNcAXEVxJ3rGMptmmz3VXaoKOE4y+cm/zn7O8Isvq7GMIUu35YA0iOA9AggPcLiAyW3UYmT7HhJx8i9VE5ZWEMfqeE090s3MwUftesaH6NHBOkRQXpE0PdGuu4w4ZAP3lhDEygyg7inlHAy20KlaKETfAXlHtTwMb8KuS1bLORbI2MJxJ1UQ33r5w7YCbaAMiuIC+kYQgaEJRCXQVwBcRXExejABoQlEJdBXAFxFcTF6CAGhCUQ92od1r993nJp\n';
+  var deflated_data_base64_graph14 = 'eNqtlctOwzAQRX8FZVUkK/I8/GLNX1RdFJEFUpEQ7QYh/h2noqJO45Liq6wmlo/HPvHNev3ZHT7ehu6he94ehsPL69CZbrd9Gnb51ePp1Zfp9of3Yb+/WyWv9r47q9nGorbOFTUlLmpVX9SetKhFqKy15PmUyvHJfMt+sv6kjlL2I+V+1NlJf5P1pOxHqdw/+XK/jvP4xqyPp7liS8l4Q8FYw2JknGuXPTWGAhiumaGmhpDUa/LLOQTohU8Ml/r8Af4fJIBmFMBoF+QMAEEABi9lcOo5hTroqhvRPoyTl3R0JsiFvKZOWeNLv3R/P6o89fGCdMNB+XZfHuDLL/d1hSEAhgIYlWuk3Ke5iKqBwoUbx9m2m/sOx4FwHTZj6cjT27YXAKoCQFUAqApLEy+HhESqg+If1yjnhJTqa5zCktMcCW6ex+e5U6O1q4oAVRGgKgJ+TumGsOOQkz3WOATohQGMiRsntXyQ33yo0xTQ0dGSj/nwpAEktvm/lBEEYMxaUt/7+SSvgwTQjAIYzddIyAAQBGAwgCEAhgIY7VrYABAEYDCAIQCGAhjtWsQAEARg3KRl8w3yQJ5S\n';
   var deflated_data_binary_graph14 = window.atob(deflated_data_base64_graph14);
   var inflated_data_graph14 = JSON.parse(pako.inflate(deflated_data_binary_graph14, { to: 'string' }));
   var data_graph14 = google.visualization.arrayToDataTable(inflated_data_graph14);
@@ -404,7 +404,7 @@ function draw_graph14() {
 }
 
 function draw_graph15() {
-  var deflated_data_base64_graph15 = 'eNq11sFKw0AQBuBXkT1VGGFmZ7LZePYtSg8VcxAqiM1FxHe3FopOdNNk2x9ymSz5dnb5s8l6/RGG99c+3Ien7dAPzy99oLDbPva7w62H061PCvvhrd/vb1ZdMr4Nv+rI2dXcNK6WLrraLLk6iblaVXxt3ktd58dHz3NMo/lHdVbfj/r1WMOj/kbzqe/HxK9fkl9vEw/jG1ofd3MVWTpKJC0xRSX9fvZOqq+SayC3gbhG51muUAXUbfxx+Yqsgto1kIsJQ0MgVkBurHd5gp2dBl7UrQ8DL3zZSuopCnzNrU2YJCRQEtIlSZh0FeQayD13MHAN2xbSwPNmKqHlLHD9FrSgKLSgKLSgKLTV3wieYvOSg4HnNpv/ZoGXwCUVE4UMikIGRSGDfhe6yz4SXFIF1G0Euf+lYX58S6qBuj1mga/LKkP+Fw6sgNzJLHA1q6B2DeRCDgYVArECciPIVZBrIBcTh0ggVkBuBLkKcg3kYuKgBGIF5F4ch80Xb9NdmA==\n';
+  var deflated_data_base64_graph15 = 'eNqt0c1KxDAUhuFbkaxGOIucn2Za195FmcWIXQgjiNONDN67oyB4CoKSl66+hDw56TfPl7K+vSzlrjwe12V9el6KlNPxYTldl+6/l96lnNfX5Xy+2U0t6m35ka2OKddhSFknSzmipdw0UnbXnCN7bZry/uZ8tba5f5NHz/N4fk8MdTPf5j7P84Tm92vL7x3sun+Q+etv7qzqJE10L1XMxT/P1r99vxkBGEO3EQIQChgGGA4YARj9tQwCEAoYBhgOGAEY/bU0AQgFDAMMB4wAjP5a9gIQChgGGA4YARj9tYwCEAoYBhgOGAEY/bVMAhAKGAYYDhgBGN21eBWAUMAwwHDACMDor0UFIBQwDDAcMAIw+msxAQgFDAMMB4wAjP5aXABCAeNftRw+ANcniYE=\n';
   var deflated_data_binary_graph15 = window.atob(deflated_data_base64_graph15);
   var inflated_data_graph15 = JSON.parse(pako.inflate(deflated_data_binary_graph15, { to: 'string' }));
   var data_graph15 = google.visualization.arrayToDataTable(inflated_data_graph15);
@@ -428,7 +428,7 @@ function draw_graph15() {
 }
 
 function draw_graph16() {
-  var deflated_data_base64_graph16 = 'eNq1lstOwzAQRX8FeVUkt/J4xo7Nmr+ouigiC6QiIZoNQvw7oaIqE+I8daVuJo8z18npxPv9p2k+3mrzYJ6PTd28vNbGmtPxqT61hx6vh76sOTfv9fl8t8lR3L35U3uXVO1CUDVlr2qRqOpIompm0rVoXsxZn+/c73zs9O/UiXUe1uuR4Dr5Ov1Y5xHS66eo1xt8e/5g95enufGOso2WKuusZ8s/925p8a/EFRA3QLhix7F5l9hJvXVhAZ5Asf2NOynfXD6DcguIi9EjWBCWQFy/nJt30g7UX41K/MlajEhZ4ms9xsxWkWf1ueqy6r9T5EeMNhGkTVyjzSCXQVwBccemyLhwQ/yqoMU0CXuuKrUpazLP9xIfo0sF0qUC6VIt/uh0NernpzlTZOjFlvD/NFks4nAfjC4JpEsC6ZJAe5S87mNze5slPIFiexC3T4tpg7v/qlIfAeW/aLJ2Y1Lis4PsTVosgbiDmsx4TCU+g3ILiAuZIkwWhCUQ14O4DOIKiIvRwVsQlkBcD+IyiCsgLkYHtiAsgbirdTh8A3VyhVY=\n';
+  var deflated_data_base64_graph16 = 'eNqtlUFOwzAQRa+CsiqSqTyeiWOz5hZVF0VkgVQkRLOpEHcnFCo6aSZN5K+sJlZevv3G9mbzWXXH97Z6rF52Xdu9vrWVq/a753bfv3o6v/py1aH7aA+Hu1WO4u+rizr4pGpf16qmHFQtElUdSVTNTLoWzYs56/HB9z7Ewf8HdWKdh/V8pPaDfIP/sc4jpOdPUc+3Dv341m1Oq7kKnrKLjhrnXWDHP9/6eY/FEACjLmaIsxB5ndhL++Dr+SwC5AlnxlSAuTAGBBIAo1xU7QAIAjDCXEZeS3/I/PqzYJN+rAawYBeizN65DDWP+qduSTdasFjuMAIcxvkOJxgMYAiAYWwtW7QNa678TFofDlrQEWO3u8mClatrAOoagLpm7qmoVY7D0o2tNb7gFksZW9QDU9RydQmgLgHUJcCFlhcchv+rbLEIkCcAGAM/k6fQ9aBFFUCyk7Flt5gBY198j/UIAjBGjd2aowVjQCABMIq3FpMDIAjACAAGAxgCYJRrCQ6AIAAjABgMYAiAUa6FHQBBAMYiLdtvlN+xPw==\n';
   var deflated_data_binary_graph16 = window.atob(deflated_data_base64_graph16);
   var inflated_data_graph16 = JSON.parse(pako.inflate(deflated_data_binary_graph16, { to: 'string' }));
   var data_graph16 = google.visualization.arrayToDataTable(inflated_data_graph16);
@@ -453,11 +453,11 @@ function draw_graph16() {
 
 function setup_button_click_handlers() {
   document.getElementById("btn_draw_graph3").addEventListener("click", draw_graph3);
+  document.getElementById("btn_draw_graph4").addEventListener("click", draw_graph4);
+  document.getElementById("btn_draw_graph5").addEventListener("click", draw_graph5);
   document.getElementById("btn_draw_graph6").addEventListener("click", draw_graph6);
   document.getElementById("btn_draw_graph7").addEventListener("click", draw_graph7);
   document.getElementById("btn_draw_graph8").addEventListener("click", draw_graph8);
-  document.getElementById("btn_draw_graph9").addEventListener("click", draw_graph9);
-  document.getElementById("btn_draw_graph10").addEventListener("click", draw_graph10);
   document.getElementById("btn_draw_graph11").addEventListener("click", draw_graph11);
   document.getElementById("btn_draw_graph12").addEventListener("click", draw_graph12);
   document.getElementById("btn_draw_graph13").addEventListener("click", draw_graph13);
@@ -680,11 +680,11 @@ function show_config_window() {
   </td><td id="button_table_col">
     <select id="select_combobox_cgroup_cpus" onchange="call_function_named(this.value)">
       <option value="clear_chart">None</option>
-      <option value="draw_graph4">CPU0</option>
-      <option value="draw_graph5">CPU1</option>
+      <option value="draw_graph9">CPU0</option>
+      <option value="draw_graph10">CPU1</option>
     </select>
-    <button id="btn_draw_graph6" style="color:red"><b>All CPUs</b></button>
-    <button id="btn_draw_graph8" style="color:darkorange"><b>Memory Usage</b></button>
+    <button id="btn_draw_graph11" style="color:red"><b>All CPUs</b></button>
+    <button id="btn_draw_graph12" style="color:darkorange"><b>Memory Usage</b></button>
     <button id="btn_draw_graph13" style="color:red"><b>CPU/Memory/Disk Bubbles</b></button>
     <button id="btn_draw_graph14" style="color:red"><b>CPU by Process</b></button>
     <button id="btn_draw_graph15" style="color:black"><b>IO by Process</b></button>
@@ -696,11 +696,11 @@ function show_config_window() {
       <option value="draw_graph2">CPU1</option>
     </select>
     <button id="btn_draw_graph3" style="color:red"><b>All CPUs</b></button>
-    <button id="btn_draw_graph7" style="color:darkorange"><b>Memory Usage</b></button>
-    <button id="btn_draw_graph9" style="color:darkblue"><b>Network Traffic (MB/s)</b></button>
-    <button id="btn_draw_graph10" style="color:darkblue"><b>Network Traffic (PPS)</b></button>
-    <button id="btn_draw_graph11" style="color:darkgreen"><b>Disk I/O</b></button>
-    <button id="btn_draw_graph12" style="color:black"><b>Average Load</b></button>
+    <button id="btn_draw_graph4" style="color:darkorange"><b>Memory Usage</b></button>
+    <button id="btn_draw_graph5" style="color:darkblue"><b>Network Traffic (MB/s)</b></button>
+    <button id="btn_draw_graph6" style="color:darkblue"><b>Network Traffic (PPS)</b></button>
+    <button id="btn_draw_graph7" style="color:darkgreen"><b>Disk I/O</b></button>
+    <button id="btn_draw_graph8" style="color:black"><b>Average Load</b></button>
   </td></tr>
   </table>
   </div>
