@@ -18,7 +18,7 @@ RPM_TARBALL_DIR:=/tmp/cmonitor/tarball
 #  - json2html/cmonitor_chart.py  -> look for CMONITOR_VERSION
 # See also https://github.com/f18m/cmonitor/wiki/new-release
 CMONITOR_VERSION:=1.4
-CMONITOR_RELEASE:=3
+CMONITOR_RELEASE:=4
 
 ifeq ($(DOCKER_LATEST),1)
 DOCKER_TAG=latest
