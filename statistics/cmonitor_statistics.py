@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 #
-# cmonitor_summary.py
+# cmonitor_statistics.py
 #
 # Author: Gajanan Khandake
 # Created: April 2021
@@ -11,6 +11,7 @@ import getopt
 import json
 import os
 import sys
+from statistics import mean, median, mode
 
 
 # =======================================================================================================
@@ -22,93 +23,66 @@ CMONITOR_VERSION = "1.4-4"
 # =======================================================================================================
 # CLASS
 # =======================================================================================================
-class CmonitorSummary:
-    class Summary:
-        def __init__(self) -> None:
-            self.__min = sys.maxsize
-            self.__max = 0
-            self.__avg = 0.0
-            self.__total = 0
-            self.__samples = 0
+class CmonitorStatistics:
+    class Statistics:
+        def __init__(self, unit: str) -> None:
+            self.__stats = list()
+            self.__unit = unit
 
-        @property
-        def min(self) -> int:
-            return self.__min
+        def insert_stat(self, value) -> None:
+            self.__stats.append(value)
 
-        @min.setter
-        def min(self, value: int) -> None:
-            self.__min = value
+        def __min(self):
+            return min(self.__stats)
 
-        @property
-        def max(self) -> int:
-            return self.__max
+        def __max(self):
+            return max(self.__stats)
 
-        @max.setter
-        def max(self, value: int) -> None:
-            self.__max = value
+        def __mean(self):
+            return mean(self.__stats)
 
-        @property
-        def average(self) -> int:
-            return self.__avg
+        def __median(self):
+            return median(self.__stats)
 
-        @average.setter
-        def average(self, value: int) -> None:
-            self.__total += value
-            self.__samples += 1
-            self.__avg = self.__total / self.__samples
+        def __mode(self):
+            return mode(self.__stats)
 
         def dump_json(self) -> dict:
             return {
-                "min": self.__min,
-                "max": self.__max,
-                "avg": self.__avg,
+                "minimum": self.__min(),
+                "maximum": self.__max(),
+                "mean": self.__mean(),
+                "median": self.__median(),
+                "mode": self.__mode(),
+                "unit": self.__unit,
             }
 
-    class CgroupTasksSummary:
+    class CgroupTasksStatistics:
         def __init__(self) -> None:
-            self.cpu = CmonitorSummary.Summary()
-            self.memory = CmonitorSummary.Summary()
-            self.io = CmonitorSummary.Summary()
+            self.cpu = CmonitorStatistics.Statistics("%")
+            self.memory = CmonitorStatistics.Statistics("bytes")
+            self.io = CmonitorStatistics.Statistics("bytes")
 
-        def add_cpu_stats(self, stats: dict) -> None:
-            if stats["cpu_tot"] < self.cpu.min:
-                self.cpu.min = stats["cpu_tot"]
-
-            if stats["cpu_tot"] > self.cpu.max:
-                self.cpu.max = stats["cpu_tot"]
-
-            self.cpu.average = stats["cpu_tot"]
+        def insert_cpu_stats(self, stats: dict) -> None:
+            self.cpu.insert_stat(stats["cpu_tot"])
 
         def dump_cpu_stats(self) -> None:
             return self.cpu.dump_json()
 
-        def add_memory_stats(self, stats: dict) -> None:
-            if stats["mem_rss_bytes"] < self.memory.min:
-                self.memory.min = stats["mem_rss_bytes"]
-
-            if stats["mem_rss_bytes"] > self.memory.max:
-                self.memory.max = stats["mem_rss_bytes"]
-
-            self.memory.average = stats["mem_rss_bytes"]
+        def insert_memory_stats(self, stats: dict) -> None:
+            self.memory.insert_stat(stats["mem_rss_bytes"])
 
         def dump_memory_stats(self) -> None:
             return self.memory.dump_json()
 
-        def add_io_stats(self, stats: dict) -> None:
-            total_io = stats["io_rchar"] + stats["io_wchar"]
-            if total_io < self.io.min:
-                self.io.min = total_io
-
-            if total_io > self.io.max:
-                self.io.max = total_io
-
-            self.io.average = total_io
+        def insert_io_stats(self, stats: dict) -> None:
+            self.io.insert_stat(stats["io_rchar"] + stats["io_wchar"])
 
         def dump_io_stats(self) -> None:
             return self.io.dump_json()
 
     def __init__(self) -> None:
-        self.cgroup_summary = self.CgroupTasksSummary()
+        self.cgroup_statistics = self.CgroupTasksStatistics()
         pass
 
     def process(self, input_json: str, output_log: str) -> None:
@@ -116,35 +90,35 @@ class CmonitorSummary:
             json_data = json.load(file)
             for sample in json_data["samples"]:
                 for pid, stats in sample["cgroup_tasks"].items():
-                    self.cgroup_summary.add_cpu_stats(stats)
-                    self.cgroup_summary.add_memory_stats(stats)
-                    self.cgroup_summary.add_io_stats(stats)
+                    self.cgroup_statistics.insert_cpu_stats(stats)
+                    self.cgroup_statistics.insert_memory_stats(stats)
+                    self.cgroup_statistics.insert_io_stats(stats)
 
-            self.dump_summary_json()
+            self.dump_statistics_json()
 
     def __dump_json_to_file(
         self,
-        summary: dict,
+        statistics: dict,
         outfile: str,
     ) -> None:
         pass
 
-    def __dump_json_to_stdout(self, summary: dict) -> None:
-        print(summary)
+    def __dump_json_to_stdout(self, statistics: dict) -> None:
+        print(statistics)
 
-    def dump_summary_json(self, output_log="") -> None:
-        summary = {
-            "summary": {
-                "cpu": self.cgroup_summary.dump_cpu_stats(),
-                "memory": self.cgroup_summary.dump_memory_stats(),
-                "io": self.cgroup_summary.dump_io_stats(),
+    def dump_statistics_json(self, output_log="") -> None:
+        statistics = {
+            "statistics": {
+                "cpu": self.cgroup_statistics.dump_cpu_stats(),
+                "memory": self.cgroup_statistics.dump_memory_stats(),
+                "io": self.cgroup_statistics.dump_io_stats(),
             }
         }
 
         if output_log:
-            self.__dump_json_to_file(summary, output_log)
+            self.__dump_json_to_file(statistics, output_log)
         else:
-            self.__dump_json_to_stdout(summary)
+            self.__dump_json_to_stdout(statistics)
 
 
 # =======================================================================================================
@@ -154,7 +128,7 @@ class CmonitorSummary:
 
 def usage():
     """Provides commandline usage"""
-    print("cmonitor_summary version {}".format(CMONITOR_VERSION))
+    print("cmonitor_statistics version {}".format(CMONITOR_VERSION))
     print("Typical usage:")
     print(
         "  %s --input=output_from_cmonitor_collector.json [--output=myreport.log]"
@@ -216,4 +190,4 @@ def parse_command_line():
 
 if __name__ == "__main__":
     config = parse_command_line()
-    CmonitorSummary().process(config["input_json"], config["output_log"])
+    CmonitorStatistics().process(config["input_json"], config["output_log"])
