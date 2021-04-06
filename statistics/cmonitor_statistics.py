@@ -21,6 +21,12 @@ from statistics import mean, median, mode
 CMONITOR_VERSION = "1.4-4"
 
 # =======================================================================================================
+# GLOBALs
+# =======================================================================================================
+
+verbose = False
+
+# =======================================================================================================
 # CLASS
 # =======================================================================================================
 class CmonitorStatistics:
@@ -48,14 +54,19 @@ class CmonitorStatistics:
             return mode(self.__stats)
 
         def dump_json(self) -> dict:
-            return {
-                "minimum": self.__min(),
-                "maximum": self.__max(),
-                "mean": self.__mean(),
-                "median": self.__median(),
-                "mode": self.__mode(),
-                "unit": self.__unit,
-            }
+            global verbose
+            statistics = dict()
+            statistics["minimum"] = self.__min()
+            statistics["maximum"] = self.__max()
+            statistics["mean"] = self.__mean()
+            statistics["median"] = self.__median()
+            statistics["mode"] = self.__mode()
+            statistics["unit"] = self.__unit
+            if verbose:
+                statistics["stats"] = self.__stats
+                statistics["samples"] = len(self.__stats)
+
+            return statistics
 
     class CgroupTasksStatistics:
         def __init__(self) -> None:
@@ -103,9 +114,6 @@ class CmonitorStatistics:
     ) -> None:
         pass
 
-    def __dump_json_to_stdout(self, statistics: dict) -> None:
-        print(statistics)
-
     def dump_statistics_json(self, output_log="") -> None:
         statistics = {
             "statistics": {
@@ -118,7 +126,7 @@ class CmonitorStatistics:
         if output_log:
             self.__dump_json_to_file(statistics, output_log)
         else:
-            self.__dump_json_to_stdout(statistics)
+            print(statistics)
 
 
 # =======================================================================================================
@@ -181,11 +189,11 @@ def parse_command_line():
     if not os.path.isabs(input_json):
         abs_input_json = os.path.join(os.getcwd(), input_json)
 
-    return {"input_json": input_json, "output_log": output_log}
+    return {"input_json": abs_input_json, "output_log": output_log}
 
 
 # =======================================================================================================
-# MAIN HELPERS
+# MAIN
 # =======================================================================================================
 
 if __name__ == "__main__":
