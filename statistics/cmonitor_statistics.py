@@ -11,7 +11,7 @@ import getopt
 import json
 import os
 import sys
-from statistics import mean, median, mode
+from statistics import mean, median, mode, StatisticsError
 
 
 # =======================================================================================================
@@ -51,7 +51,10 @@ class CmonitorStatistics:
             return median(self.__stats)
 
         def __mode(self):
-            return mode(self.__stats)
+            try:
+                return mode(self.__stats)
+            except StatisticsError:
+                return "no unique mode"
 
         def dump_json(self) -> dict:
             global verbose
