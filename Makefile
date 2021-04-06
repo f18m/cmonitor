@@ -51,6 +51,7 @@ ifndef BINDIR
 endif
 	$(MAKE) -C src install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
 	$(MAKE) -C json2html install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
+	$(MAKE) -C statistics install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
 
 valgrind:
 	$(MAKE) -C src valgrind
