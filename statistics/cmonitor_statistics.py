@@ -96,7 +96,7 @@ class CmonitorStatistics:
         self.cgroup_statistics = self.CgroupTasksStatistics()
         pass
 
-    def process(self, input_json: str, output_log: str) -> None:
+    def process(self, input_json: str, output_file: str) -> None:
         with open(input_json) as file:
             json_data = json.load(file)
             for sample in json_data["samples"]:
@@ -105,16 +105,18 @@ class CmonitorStatistics:
                     self.cgroup_statistics.insert_memory_stats(stats)
                     self.cgroup_statistics.insert_io_stats(stats)
 
-            self.dump_statistics_json()
+            self.dump_statistics_json(output_file)
 
     def __dump_json_to_file(
         self,
         statistics: dict,
         outfile: str,
     ) -> None:
-        pass
+        print(f"Opening output file {outfile}")
+        with open(outfile, "w") as of:
+            json.dump(statistics, of)
 
-    def dump_statistics_json(self, output_log="") -> None:
+    def dump_statistics_json(self, output_file="") -> None:
         statistics = {
             "statistics": {
                 "cpu": self.cgroup_statistics.dump_cpu_stats(),
@@ -123,10 +125,10 @@ class CmonitorStatistics:
             }
         }
 
-        if output_log:
-            self.__dump_json_to_file(statistics, output_log)
+        if output_file:
+            self.__dump_json_to_file(statistics, output_file)
         else:
-            print(statistics)
+            print(json.dumps(statistics))
 
 
 # =======================================================================================================
@@ -165,12 +167,12 @@ def parse_command_line():
 
     global verbose
     input_json = ""
-    output_log = ""
+    output_file = ""
     for o, a in opts:
         if o in ("-i", "--input"):
             input_json = a
         elif o in ("-o", "--output"):
-            output_log = a
+            output_file = a
         elif o in ("-h", "--help"):
             usage()
         elif o in ("-v", "--verbose"):
@@ -189,7 +191,11 @@ def parse_command_line():
     if not os.path.isabs(input_json):
         abs_input_json = os.path.join(os.getcwd(), input_json)
 
-    return {"input_json": abs_input_json, "output_log": output_log}
+    abs_ouput_file = output_file
+    if abs_ouput_file and not os.path.isabs(output_file):
+        abs_ouput_file = os.path.join(os.getcwd(), output_file)
+
+    return {"input_json": abs_input_json, "output_file": abs_ouput_file}
 
 
 # =======================================================================================================
@@ -198,4 +204,4 @@ def parse_command_line():
 
 if __name__ == "__main__":
     config = parse_command_line()
-    CmonitorStatistics().process(config["input_json"], config["output_log"])
+    CmonitorStatistics().process(config["input_json"], config["output_file"])
