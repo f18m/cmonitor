@@ -657,7 +657,7 @@ void CMonitorCollectorApp::cgroup_proc_memory(const std::set<std::string>& allow
     g_output.psection_end();
 }
 
-void CMonitorCollectorApp::cgroup_proc_cpu_throttle()
+void CMonitorCollectorApp::cgroup_proc_cpuacct_throttling()
 {
     if (!m_bCGroupsFound)
         return;
@@ -693,7 +693,7 @@ void CMonitorCollectorApp::cgroup_proc_cpu_throttle()
     }
 }
 
-void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
+void CMonitorCollectorApp::cgroup_proc_cpuacct_cpuusage(double elapsed_sec, bool print)
 {
     if (!m_bCGroupsFound)
         return;
