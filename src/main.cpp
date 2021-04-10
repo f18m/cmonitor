@@ -783,6 +783,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
             // do not list all CPU informations when cgroup mode is ON: don't put information
             // for CPUs outside current cgroup!
             cgroup_proc_cpuacct(elapsed, true /* emit JSON */);
+            cgroup_proc_cpu_throttle();
         }
 
         if (g_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) {

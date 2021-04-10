@@ -280,6 +280,7 @@ private:
     bool cgroup_still_exists();
     void cgroup_proc_memory(const std::set<std::string>& allowedStatsNames);
     void cgroup_proc_cpuacct(double elapsed_sec, bool print);
+    void cgroup_proc_cpu_throttle();
     void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts);
     bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
