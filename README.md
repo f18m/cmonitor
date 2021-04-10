@@ -52,6 +52,7 @@ This project collects performance data about:
 - CPU usage as reported by the `cpuacct` (CPU accounting) cgroup;
 - memory usage as reported by the `memory` cgroup;
 - disk usage as reported by the `blkio` cgroup;
+- CPU trottling reported under `cpuacct` cgroup;
 
 Moreover the project allows you to easily post-process collected data and produce a **self-contained** HTML page which allows
 to visualize all the performance data easily using [Google Charts](https://developers.google.com/chart/).
