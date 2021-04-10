@@ -71,7 +71,7 @@ public:
     //------------------------------------------------------------------------------
 
     void init_json_output_file(const std::string& filenamePrefix);
-    void init_influxdb_connection(const std::string& hostname, unsigned int port);
+    void init_influxdb_connection(const std::string& hostname, unsigned int port, const std::string& dbname);
     void enable_json_pretty_print();
 
     //------------------------------------------------------------------------------
