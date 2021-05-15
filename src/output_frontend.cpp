@@ -88,20 +88,21 @@ std::string hostname_to_ip(const std::string& hostname)
     return "";
 }
 
-void CMonitorOutputFrontend::init_influxdb_connection(const std::string& hostname, unsigned int port)
+void CMonitorOutputFrontend::init_influxdb_connection(
+    const std::string& hostname, unsigned int port, const std::string& dbname)
 {
     std::string ipaddress = hostname_to_ip(hostname);
     if (ipaddress.empty()) {
         char buf[1024];
         herror(buf);
-        fprintf(stderr, "hostname=%s to IP address convertion failed, bailing out: %s\n", hostname.c_str(), buf);
+        fprintf(stderr, "Lookup of IP address for hostname %s failed, bailing out: %s\n", hostname.c_str(), buf);
         exit(98);
     }
 
     m_influxdb_client_conn = new influx_client_t();
     m_influxdb_client_conn->host = strdup(ipaddress.c_str()); // force newline
     m_influxdb_client_conn->port = port; // force newline
-    m_influxdb_client_conn->db = strdup("cmonitor"); // force newline
+    m_influxdb_client_conn->db = strdup(dbname.c_str()); // force newline
     m_influxdb_client_conn->usr = strdup("usr"); // force newline
     m_influxdb_client_conn->pwd = strdup("pwd"); // force newline
 
