@@ -198,6 +198,7 @@ public:
     // remove streaming opts
     std::string m_strRemoteAddress; // --remote-ip
     std::string m_strRemoteSecret; // --remote-secret
+    std::string m_strRemoteDatabaseName = "cmonitor"; // remote-dbname
     uint64_t m_nRemotePort = 0; // --remote-port
 
     // data collecting options

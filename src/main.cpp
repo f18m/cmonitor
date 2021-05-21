@@ -71,6 +71,7 @@ struct option g_long_opts[] = {
     { "remote-ip", required_argument, 0, 'i' }, // force newline
     { "remote-port", required_argument, 0, 'p' }, // force newline
     { "remote-secret", required_argument, 0, 'X' }, // force newline
+    { "remote-dbname", required_argument, 0, 'D' }, // force newline
 
     // Other options
     { "version", no_argument, 0, 'v' }, // force newline
@@ -137,12 +138,13 @@ struct option_extended {
     { "Options to stream data remotely", &g_long_opts[11], "Port used by InfluxDB." },
     { "Options to stream data remotely", &g_long_opts[12],
         "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).\n" },
+    { "Options to stream data remotely", &g_long_opts[13], "Set the InfluxDB database name.\n" },
 
     // help
-    { "Other options", &g_long_opts[13], "Show version and exit" }, // force newline
-    { "Other options", &g_long_opts[14],
+    { "Other options", &g_long_opts[14], "Show version and exit" }, // force newline
+    { "Other options", &g_long_opts[15],
         "Enable debug mode; automatically activates --foreground mode" }, // force newline
-    { "Other options", &g_long_opts[15], "Show this help" },
+    { "Other options", &g_long_opts[16], "Show this help" },
 
     { NULL, NULL, NULL }
 };
@@ -492,6 +494,9 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'X':
                 g_cfg.m_strRemoteSecret = optarg;
                 break;
+            case 'D':
+                g_cfg.m_strRemoteDatabaseName = optarg;
+                break;
 
             // help
             case 'v':
@@ -652,7 +657,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     g_output.init_json_output_file(g_cfg.m_strOutputFilenamePrefix);
     if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort != 0) {
         /* We are attempting sending the data remotely */
-        g_output.init_influxdb_connection(g_cfg.m_strRemoteAddress, g_cfg.m_nRemotePort);
+        g_output.init_influxdb_connection(g_cfg.m_strRemoteAddress, g_cfg.m_nRemotePort, g_cfg.m_strRemoteDatabaseName);
     }
 
     if (!g_cfg.m_bForeground) {
