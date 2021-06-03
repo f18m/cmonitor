@@ -776,7 +776,7 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
         try:
             row = {}
             for key in [ 'cpu', 'io', 'mem' ]:
-                row[key] = [ sample['timestamp']['datetime'] ]
+                row[key] = [ sample['timestamp']['UTC'] ]
                 
             for top_process_pid in topN_process_pids_list:
                 #print(top_process_pid)
@@ -860,7 +860,7 @@ def generate_baremetal_disks_io(web, jdata):
             continue
 
         row = []
-        row.append(s['timestamp']['datetime'])
+        row.append(s['timestamp']['UTC'])
         for device in all_disks:
             #row.append(s["disks"][device]["time"])
             #row.append(s["disks"][device]["reads"])
@@ -921,7 +921,7 @@ def generate_baremetal_network_traffic(web, jdata):
         if i == 0:
             continue
 
-        row = [ s['timestamp']['datetime'] ]
+        row = [ s['timestamp']['UTC'] ]
         for device in all_netdevices:
             try:
                 row.append(+s["network_interfaces"][device]["ibytes"]/divider)
@@ -949,7 +949,7 @@ def generate_baremetal_network_traffic(web, jdata):
         if i == 0:
             continue
 
-        row = [ s['timestamp']['datetime'] ]
+        row = [ s['timestamp']['UTC'] ]
         for device in all_netdevices:
             try:
                 row.append(+s["network_interfaces"][device]["ipackets"])
@@ -991,7 +991,7 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes):
         if i == 0:
             continue  # skip first sample
 
-        ts = s['timestamp']['datetime']
+        ts = s['timestamp']['UTC']
         all_cpus_row = [ ts ]
         for c in logical_cpus_indexes:
             cpu_stats = s['stat']['cpu' + str(c)]
@@ -1055,7 +1055,7 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes):
             continue  # skip first sample
         
         try:
-            ts = s['timestamp']['datetime']
+            ts = s['timestamp']['UTC']
             all_cpus_row = [ ts ]
             for c in logical_cpus_indexes:
                 # get data:
@@ -1138,7 +1138,7 @@ def generate_baremetal_memory(web, jdata):
         mc = meminfo_stats['Cached']
         
         baremetal_memory_stats.addRow([
-                s['timestamp']['datetime'],
+                s['timestamp']['UTC'],
                 int((mem_total_bytes - mf - mc) / divider),   # compute used memory
                 int(mc / divider), # cached
                 int(mf / divider), # free
@@ -1183,7 +1183,7 @@ def generate_cgroup_memory(web, jheader, jdata):
             mc = s['cgroup_memory_stats']['total_cache']
             mfail = s['cgroup_memory_stats']['failcnt']
             cgroup_memory_stats.addRow([
-                    s['timestamp']['datetime'],
+                    s['timestamp']['UTC'],
                     mu / divider,
                     mc / divider,
                     mfail,
@@ -1241,7 +1241,7 @@ def generate_baremetal_avg_load(web, jheader, jdata):
         # we remap that in range [0-100%]
         
         load_avg_stats.addRow([
-                s['timestamp']['datetime'],
+                s['timestamp']['UTC'],
                 100 * float(s['proc_loadavg']['load_avg_1min']) / num_baremetal_cpus,
                 100 * float(s['proc_loadavg']['load_avg_5min']) / num_baremetal_cpus,
                 100 * float(s['proc_loadavg']['load_avg_15min']) / num_baremetal_cpus
