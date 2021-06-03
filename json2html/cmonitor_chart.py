@@ -489,7 +489,7 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
         
         
     
-    def startHtmlBody(self, cgroupName, hostname):
+    def startHtmlBody(self, cgroupName, hostname, logicalName=''):
         self.file.write('<body>\n')
         self.file.write('  <h1>Monitoring data collected from host <span id="hostname_span">' + hostname + '</span></h1>\n')
         self.file.write('  <div id="button_div">\n')
@@ -497,6 +497,8 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
         
         # Table header row
         self.file.write('  <tr>\n')
+        if logicalName:
+            cgroupName = logicalName
         self.file.write('    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (%s)</td>\n' % cgroupName)
         self.file.write('    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>\n')
         self.file.write('  </tr>\n')
@@ -1323,7 +1325,7 @@ def collect_logical_cpu_indexes_from_section(jsample, section_name):
             # print("%s %s" %(key, cpuIdx))
     return logical_cpus_indexes
 
-def main_process_file(infile, outfile):
+def main_process_file(infile, outfile, logicalName):
     start_time = time.time()
 
     # read the raw .json as text
@@ -1413,7 +1415,7 @@ def main_process_file(infile, outfile):
         cgroupName = jheader['cgroup_config']['name']
     else:
         cgroupName = 'None'
-    web.startHtmlBody(cgroupName, hostname)
+    web.startHtmlBody(cgroupName, hostname, logicalName)
     web.appendHtmlTable("Monitoring Summary", generate_monitoring_summary(jheader, jdata))
     if len(baremetal_logical_cpus_indexes)>0:
         web.appendHtmlTable("Monitored System Summary", generate_monitored_summary(jheader, jdata, baremetal_logical_cpus_indexes))
@@ -1441,13 +1443,14 @@ def usage():
     print('  -v, --verbose              Be verbose.')
     print('      --version              Print version and exit.')
     print('  -o, --output=<file.html>   The name of the output HTML file.')
+    print('  -c, --container_name=<logical-name-of-container>   The name of monitored container.')
     sys.exit(0)
 
 def parse_command_line():
     """Parses the command line and returns the configuration as dictionary object."""
     try:
         opts, remaining_args = getopt.getopt(sys.argv[1:], "hvv", 
-            [ "help", "verbose", "version", "output=", "input=" ])
+            [ "help", "verbose", "version", "output=", "input=", "container_name=" ])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like "option -a not recognized"
@@ -1456,11 +1459,14 @@ def parse_command_line():
     global verbose
     input_json = ""
     output_html = ""
+    logical_name = ""
     for o, a in opts:
         if o in ("-i", "--input"):
             input_json = a
         elif o in ("-o", "--output"):
             output_html = a
+        elif o in ("-c", "--container_name"):
+            logical_name = a
         elif o in ("-h", "--help"):
             usage()
         elif o in ("-v", "--verbose"):
@@ -1488,7 +1494,8 @@ def parse_command_line():
         abs_input_json = os.path.join(os.getcwd(), input_json)
         
     return {'input_json' : input_json,
-            'output_html' : output_html}
+            'output_html' : output_html, 
+            'logical_name': logical_name,}
 
 
 # =======================================================================================================
@@ -1497,4 +1504,4 @@ def parse_command_line():
 
 if __name__ == '__main__':
     config = parse_command_line()
-    main_process_file(config['input_json'], config['output_html'])
+    main_process_file(config['input_json'], config['output_html'], config['logical_name'])
