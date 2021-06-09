@@ -473,9 +473,19 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'g':
                 g_cfg.m_strCGroupName = optarg;
                 break;
-            case 'M':
-                // FIXME
-                break;
+            case 'M': {
+                std::string key_value = optarg;
+
+                std::vector<std::string> key_value_tokens = split_string_in_array(key_value, ':');
+                if (key_value_tokens.size() != 2) {
+                    printf(
+                        "Invalid custom metadata [%s]. Every custom metadata option should be in the form key:value.\n",
+                        optarg);
+                    exit(51);
+                }
+
+                g_cfg.m_mapCustomMetadata.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
+            } break;
 
                 // Local data saving options
             case 'm':
@@ -725,6 +735,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
     header_meminfo();
     header_lshw();
+    header_custom_metadata();
     g_output.push_header();
 
     /* first time just sleep(1) so the first snapshot has some real-ish data */
