@@ -693,7 +693,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         cgroup_init();
 
         if (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT)
-            cgroup_proc_cpuacct(0, false /* do not emit JSON */);
+            cgroup_proc_cpuacct_cpuusage(0, false /* do not emit JSON */);
 
         if (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES)
             cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */);
@@ -782,7 +782,8 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         if (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) {
             // do not list all CPU informations when cgroup mode is ON: don't put information
             // for CPUs outside current cgroup!
-            cgroup_proc_cpuacct(elapsed, true /* emit JSON */);
+            cgroup_proc_cpuacct_cpuusage(elapsed, true /* emit JSON */);
+            cgroup_proc_cpuacct_throttling();
         }
 
         if (g_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) {
