@@ -61,6 +61,7 @@ struct option g_long_opts[] = {
     { "collect", required_argument, 0, 'C' }, // force newline
     { "deep-collect", no_argument, 0, 'e' }, // force newline
     { "cgroup-name", required_argument, 0, 'g' }, // force newline
+    { "custom-metadata", required_argument, 0, 'M' }, // force newline
 
     // Options to save data locally
     { "output-directory", required_argument, 0, 'm' }, // force newline
@@ -118,33 +119,36 @@ struct option_extended {
         "cmonitor_collector runs will be collected. Note that this option is mostly useful when running \n"
         "cmonitor_collector directly on the baremetal since a process running inside a container cannot monitor\n"
         "the performances of other containers.\n" },
+    { "Data sampling options", &g_long_opts[7],
+        "Allows to specify custom metadata key:value pairs that will be saved into the JSON output (if saving data\n"
+        "locally) under the 'header.custom_metadata' path. See usage examples below.\n" },
 
     // Options to save data locally
-    { "Options to save data locally", &g_long_opts[7],
-        "Program will write output files to provided directory (default cwd)." },
     { "Options to save data locally", &g_long_opts[8],
+        "Program will write output files to provided directory (default cwd)." },
+    { "Options to save data locally", &g_long_opts[9],
         "Name the output files using provided prefix instead of defaulting to the filenames:\n"
         "\thostname_<year><month><day>_<hour><minutes>.json  (for JSON data)\n"
         "\thostname_<year><month><day>_<hour><minutes>.err   (for error log)\n"
         "Use special prefix 'stdout' to indicate that you want the utility to write on stdout.\n"
         "Use special prefix 'none' to indicate that you want to disable JSON genreation." },
-    { "Options to save data locally", &g_long_opts[9],
+    { "Options to save data locally", &g_long_opts[10],
         "Generate a pretty-printed JSON file instead of a machine-friendly JSON (the default).\n" },
 
     // Options to stream data remotely
-    { "Options to stream data remotely", &g_long_opts[10],
+    { "Options to stream data remotely", &g_long_opts[11],
         "IP address or hostname of the InfluxDB instance to send measurements to;\n"
         "cmonitor_collector will use a database named 'cmonitor' to store them." },
-    { "Options to stream data remotely", &g_long_opts[11], "Port used by InfluxDB." },
-    { "Options to stream data remotely", &g_long_opts[12],
+    { "Options to stream data remotely", &g_long_opts[12], "Port used by InfluxDB." },
+    { "Options to stream data remotely", &g_long_opts[13],
         "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).\n" },
-    { "Options to stream data remotely", &g_long_opts[13], "Set the InfluxDB database name.\n" },
+    { "Options to stream data remotely", &g_long_opts[14], "Set the InfluxDB database name.\n" },
 
     // help
-    { "Other options", &g_long_opts[14], "Show version and exit" }, // force newline
-    { "Other options", &g_long_opts[15],
+    { "Other options", &g_long_opts[15], "Show version and exit" }, // force newline
+    { "Other options", &g_long_opts[16],
         "Enable debug mode; automatically activates --foreground mode" }, // force newline
-    { "Other options", &g_long_opts[16], "Show this help" },
+    { "Other options", &g_long_opts[17], "Show this help" },
 
     { NULL, NULL, NULL }
 };
@@ -357,11 +361,12 @@ void CMonitorCollectorApp::print_help()
 
     std::cerr << "" << std::endl;
     std::cerr << "Examples:" << std::endl;
-    std::cerr << "    1) Collect data every 5 mins all day:" << std::endl;
+    std::cerr << "    1) Collect data from OS every 5 mins all day:" << std::endl;
     std::cerr << "\tcmonitor_collector -s 300 -c 288 -m /home/perf" << std::endl;
-    std::cerr << "    2) Pipe to data handler using half a day of data:" << std::endl;
-    std::cerr << "\tcmonitor_collector --sampling-interval=30 --num-samples=1440 --output-filename=stdout --foreground "
-                 "| myprog"
+    std::cerr << "    2) Collect data from a docker container:" << std::endl;
+    std::cerr << "\tcmonitor_collector --allow-multiple-instances --num-samples=until-cgroup-alive "
+                 "--cgroup-name=docker/025806258fe4ea610fbe6efe55a4ae693e81b888f0b816edac5bddc5f089d09e"
+                 "--custom-metadata='dockerName:wizardly_feynman'"
               << std::endl;
     std::cerr << "    3) Use the defaults (-s 60, collect forever), saving to custom file in background:" << std::endl;
     std::cerr << "\tcmonitor_collector --output-filename=my_server_today" << std::endl;
@@ -369,6 +374,10 @@ void CMonitorCollectorApp::print_help()
     std::cerr << "\t0 4 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -m /home/perf" << std::endl;
     std::cerr << "    5) Crontab entry for pumping data to an InfluxDB:" << std::endl;
     std::cerr << "\t* 0 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -i admin.acme.com -p 8086" << std::endl;
+    std::cerr << "    2) Pipe into 'myprog' half-a-day of sampled performance data:" << std::endl;
+    std::cerr << "\tcmonitor_collector --sampling-interval=30 --num-samples=1440 --output-filename=stdout --foreground "
+                 "| myprog"
+              << std::endl;
     std::cerr << "" << std::endl;
     std::cerr << "NOTE: this is the cgroup-aware fork of original njmon software (see https://github.com/f18m/cmonitor)"
               << std::endl;
@@ -463,6 +472,9 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
                 break;
             case 'g':
                 g_cfg.m_strCGroupName = optarg;
+                break;
+            case 'M':
+                // FIXME
                 break;
 
                 // Local data saving options
