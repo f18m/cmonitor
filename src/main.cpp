@@ -374,7 +374,7 @@ void CMonitorCollectorApp::print_help()
     std::cerr << "\t0 4 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -m /home/perf" << std::endl;
     std::cerr << "    5) Crontab entry for pumping data to an InfluxDB:" << std::endl;
     std::cerr << "\t* 0 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -i admin.acme.com -p 8086" << std::endl;
-    std::cerr << "    2) Pipe into 'myprog' half-a-day of sampled performance data:" << std::endl;
+    std::cerr << "    6) Pipe into 'myprog' half-a-day of sampled performance data:" << std::endl;
     std::cerr << "\tcmonitor_collector --sampling-interval=30 --num-samples=1440 --output-filename=stdout --foreground "
                  "| myprog"
               << std::endl;
