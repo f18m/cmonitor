@@ -478,3 +478,11 @@ void CMonitorCollectorApp::header_lshw()
     pclose(pop);
 #endif
 }
+
+void CMonitorCollectorApp::header_custom_metadata()
+{
+    g_output.psection_start("custom_metadata");
+    for (const auto& entry : g_cfg.m_mapCustomMetadata)
+        g_output.pstring(entry.first.c_str(), entry.second.c_str());
+    g_output.psection_end();
+}

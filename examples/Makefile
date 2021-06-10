@@ -78,7 +78,8 @@ regen_docker_userapp_to_monitor:
 		--collect=all_cgroup \
 		--foreground \
 		--output-filename=docker-userapp.json \
-		--cgroup-name=docker/$$(docker ps --no-trunc -aqf name=userapp)
+		--cgroup-name=docker/$$(docker ps --no-trunc -aqf name=userapp) \
+		--custom-metadata="cmonitor_chart_name:userapp docker"
 	gzip -f docker-userapp.json
 
 
