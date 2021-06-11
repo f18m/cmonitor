@@ -657,7 +657,43 @@ void CMonitorCollectorApp::cgroup_proc_memory(const std::set<std::string>& allow
     g_output.psection_end();
 }
 
-void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
+void CMonitorCollectorApp::cgroup_proc_cpuacct_throttling()
+{
+    if (!m_bCGroupsFound)
+        return;
+
+    // See
+    //   https://www.kernel.org/doc/Documentation/cgroup-v2.txt
+    //   https://medium.com/indeed-engineering/unthrottled-fixing-cpu-limits-in-the-cloud-a0995ede8e89
+
+    std::string path = m_cgroup_cpuacct_kernel_path + "/cpu.stat";
+    if (file_or_dir_exists(path.c_str())) {
+        /* Static data */
+        static FILE* fp = 0;
+        if (fp == 0) {
+            if ((fp = fopen(path.c_str(), "r")) == NULL) {
+                fp = 0;
+                return;
+            }
+        } else {
+            rewind(fp);
+        }
+
+        g_output.psection_start("cgroup_cpu_throttle");
+
+        static char line[8192];
+        while (fgets(line, 1000, fp) != NULL) {
+            uint64_t value;
+            char label[512];
+            sscanf(line, "%s %lu", label, &value);
+            g_output.plong(label, value);
+        }
+
+        g_output.psection_end();
+    }
+}
+
+void CMonitorCollectorApp::cgroup_proc_cpuacct_cpuusage(double elapsed_sec, bool print)
 {
     if (!m_bCGroupsFound)
         return;

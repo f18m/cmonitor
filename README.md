@@ -50,6 +50,7 @@ This project collects performance data about:
 - disk load;
 - average Linux load;
 - CPU usage as reported by the `cpuacct` (CPU accounting) cgroup;
+- CPU throttling reported under `cpuacct` cgroup;
 - memory usage as reported by the `memory` cgroup;
 - disk usage as reported by the `blkio` cgroup;
 

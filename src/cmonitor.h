@@ -184,7 +184,7 @@ typedef struct proc_topper_s {
 
 class CMonitorCollectorAppConfig {
 public:
-    CMonitorCollectorAppConfig() {}
+    CMonitorCollectorAppConfig() { }
 
     // configuration for this process:
     bool m_bAllowMultipleInstances = false; // --allow-multiple-instances
@@ -207,6 +207,7 @@ public:
     unsigned int m_nCollectFlags = PK_ALL; // --collect: a combination of PerformanceKpiFamily values
     OutputFields m_nOutputFields = PF_USED_BY_CHART_SCRIPT_ONLY; // --deep-collect
     std::string m_strCGroupName; // --cgroup-name
+    std::map<std::string, std::string> m_mapCustomMetadata; // --custom-metadata
 };
 
 // app-wide config settings:
@@ -239,7 +240,7 @@ extern CMonitorLoggerUtils g_logger;
 
 class CMonitorCollectorApp {
 public:
-    CMonitorCollectorApp() {}
+    CMonitorCollectorApp() { }
 
     void init_defaults();
     void parse_args(int argc, char** argv);
@@ -268,6 +269,7 @@ private:
     void header_lscpu();
     void header_lshw();
     void header_meminfo();
+    void header_custom_metadata();
 
     //------------------------------------------------------------------------------
     // CGroup functions
@@ -279,7 +281,8 @@ private:
     bool cgroup_is_allowed_cpu(int cpu);
     bool cgroup_still_exists();
     void cgroup_proc_memory(const std::set<std::string>& allowedStatsNames);
-    void cgroup_proc_cpuacct(double elapsed_sec, bool print);
+    void cgroup_proc_cpuacct_cpuusage(double elapsed_sec, bool print);
+    void cgroup_proc_cpuacct_throttling();
     void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts);
     bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
