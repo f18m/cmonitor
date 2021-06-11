@@ -1372,6 +1372,11 @@ def main_process_file(infile, outfile, logicalName):
     if verbose:
         print("Found %d data samples" % len(jdata))
 
+    if 'custom_metadata' in jheader:
+        if 'cmonitor_chart_name' in jheader['custom_metadata']:
+            if jheader['custom_metadata']['cmonitor_chart_name']:
+                logicalName = jheader['custom_metadata']['cmonitor_chart_name']
+
     # detect num of CPUs:
     baremetal_logical_cpus_indexes = []
     if 'stat' in jdata[0]:
