@@ -1,8 +1,8 @@
-src/*.o
-src/cmonitor_collector
+collector/src/*.o
+collector/src/cmonitor_collector
 examples/*/cmonitor_collector
 examples/*/example-load.sh
-docker/cmonitor_collector
+collector/docker/cmonitor_collector
 .cproject
 .project
 .pydevproject
