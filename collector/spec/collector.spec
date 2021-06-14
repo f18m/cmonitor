@@ -1,10 +1,10 @@
-Name:           cmonitor
+Name:           cmonitor-collector
 Version:        __RPM_VERSION__
 Release:        __RPM_RELEASE__
 Summary:        A Docker/LXC, database-free, lightweight container performance monitoring solution
 License:        GPL
 URL:            https://github.com/f18m/cmonitor
-Source0:        cmonitor-__RPM_VERSION__.tar.gz
+Source0:        cmonitor-collector-__RPM_VERSION__.tar.gz
 BuildRequires:  gcc-c++, make
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
@@ -24,8 +24,7 @@ containers in real-time.
 
 %install
 rm -rf %{buildroot}
-%make_install BINDIR=%{_bindir}
+%make_install -C collector BINDIR=%{_bindir}
 
 %files
 %{_bindir}/cmonitor_collector
-%{_bindir}/cmonitor_chart

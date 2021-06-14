@@ -13,7 +13,7 @@ EXAMPLE_JSON_FILES=\
 all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
 		echo "--------------------------------------------------------" ; \
-		../json2html/cmonitor_chart.py --input=$$jsonExample --verbose ; \
+		../tools/chart/cmonitor_chart.py --input=$$jsonExample --verbose ; \
 	done
 
 clean:
