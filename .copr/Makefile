@@ -3,3 +3,4 @@ ROOT_DIR:=$(THIS_DIR)/..
 
 srpm:
 	$(MAKE) -C $(ROOT_DIR)/collector srpm
+	$(MAKE) -C $(ROOT_DIR)/tools srpm
