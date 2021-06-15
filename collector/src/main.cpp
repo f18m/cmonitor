@@ -365,7 +365,7 @@ void CMonitorCollectorApp::print_help()
     std::cerr << "\tcmonitor_collector -s 300 -c 288 -m /home/perf" << std::endl;
     std::cerr << "    2) Collect data from a docker container:" << std::endl;
     std::cerr << "\tcmonitor_collector --allow-multiple-instances --num-samples=until-cgroup-alive "
-                 "--cgroup-name=docker/025806258fe4ea610fbe6efe55a4ae693e81b888f0b816edac5bddc5f089d09e"
+                 "--cgroup-name=docker/025806258f... "
                  "--custom-metadata='dockerName:wizardly_feynman'"
               << std::endl;
     std::cerr << "    3) Use the defaults (-s 60, collect forever), saving to custom file in background:" << std::endl;

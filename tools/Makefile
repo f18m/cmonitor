@@ -21,7 +21,8 @@ install:
 	@mkdir -p $(DESTDIR)/$(BINDIR)/
 	@cp -fv chart/cmonitor_chart.py             $(DESTDIR)/$(BINDIR)/cmonitor_chart
 	@cp -fv statistics/cmonitor_statistics.py   $(DESTDIR)/$(BINDIR)/cmonitor_statistics
-
+	chmod a+x $(DESTDIR)/$(BINDIR)/cmonitor_chart
+	chmod a+x $(DESTDIR)/$(BINDIR)/cmonitor_statistics
 
 
 #
