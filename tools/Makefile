@@ -18,6 +18,9 @@ all:
 clean:
 
 install:
+	@mkdir -p $(DESTDIR)/$(BINDIR)/
+	@cp -fv chart/cmonitor_chart.py             $(DESTDIR)/$(BINDIR)/cmonitor_chart
+	@cp -fv statistics/cmonitor_statistics.py   $(DESTDIR)/$(BINDIR)/cmonitor_statistics
 
 
 
@@ -59,8 +62,23 @@ endif
 	  --define "_builddir $(RPM_TMP_DIR)" \
 	  --define "_rpmdir $(RPM_TMP_DIR)" && \
 		mkdir -p $(outdir)/ && \
-		rm -f $(outdir)/cmonitor-*.src.rpm && \
-		cp -fv $(RPM_TMP_DIR)/SRPMS/cmonitor-*.src.rpm $(outdir)/
+		rm -f $(outdir)/cmonitor-tools-*.src.rpm && \
+		cp -fv $(RPM_TMP_DIR)/SRPMS/cmonitor-tools-*.src.rpm $(outdir)/
+
+#
+# This is useful to produce a binary RPM:
+# (This is not used by COPR but still may be useful for local tests)
+#
+rpm: srpm
+ifndef outdir
+	@echo "*** ERROR: please call this makefile supplying explicitly the outdir variable"
+	@exit 1
+endif
+	cd $(outdir) && \
+		rpmbuild --define "_rpmdir $(RPM_TMP_DIR)" --rebuild cmonitor-tools-*.src.rpm  && \
+		mkdir -p $(outdir)/ && \
+		cp -fv $(RPM_TMP_DIR)/x86_64/cmonitor-*.rpm $(outdir)/
+
 
 
 

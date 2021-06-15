@@ -48,6 +48,7 @@ srpm_tarball:
 	#  b) the spec file with the version inside it replaced
 	cp -arf $(ROOT_DIR)/ $(RPM_TARBALL_DIR)/ && \
 		cd $(RPM_TARBALL_DIR) && \
+		rm -rf cmonitor/tools && \
 		mv cmonitor cmonitor-collector-$(CMONITOR_VERSION) && \
 		sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' cmonitor-collector-$(CMONITOR_VERSION)/collector/spec/collector.spec && \
 		sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' cmonitor-collector-$(CMONITOR_VERSION)/collector/spec/collector.spec && \
@@ -72,8 +73,8 @@ endif
 	  --define "_builddir $(RPM_TMP_DIR)" \
 	  --define "_rpmdir $(RPM_TMP_DIR)" && \
 		mkdir -p $(outdir)/ && \
-		rm -f $(outdir)/cmonitor-*.src.rpm && \
-		cp -fv $(RPM_TMP_DIR)/SRPMS/cmonitor-*.src.rpm $(outdir)/
+		rm -f $(outdir)/cmonitor-collector-*.src.rpm && \
+		cp -fv $(RPM_TMP_DIR)/SRPMS/cmonitor-collector-*.src.rpm $(outdir)/
 
 #
 # This is useful to produce a binary RPM:
@@ -85,7 +86,7 @@ ifndef outdir
 	@exit 1
 endif
 	cd $(outdir) && \
-		rpmbuild --define "_rpmdir $(RPM_TMP_DIR)" --rebuild cmonitor-*.src.rpm  && \
+		rpmbuild --define "_rpmdir $(RPM_TMP_DIR)" --rebuild cmonitor-collector-*.src.rpm  && \
 		mkdir -p $(outdir)/ && \
 		cp -fv $(RPM_TMP_DIR)/x86_64/cmonitor-*.rpm $(outdir)/
 
