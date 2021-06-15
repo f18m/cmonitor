@@ -10,11 +10,12 @@ containers in real-time.
 
 The project is composed by 2 tools: 
 1) a **lightweight agent** (80KB, native binary; no JVM, Python or other interpreters needed) to collect actual CPU/memory/disk statistics (Linux-only)
-   and store them in a JSON file;
+   and store them in a JSON file; this is the so-called "collector" utility;
 2) a simple **Python script to convert the generated JSON** to a self-contained HTML page.
 
-The agent is actually a cgroup-aware statistics collector; cgroups (i.e. Linux Control Groups) are the basic technology used 
-to create containers (you can [read more on them here](https://en.wikipedia.org/wiki/Cgroups)); this project is thus aimed at monitoring your LXC/Docker container performances but can equally monitor physical servers.
+The collector utility is a cgroup-aware statistics collector; cgroups (i.e. Linux Control Groups) are the basic technology used 
+to create containers (you can [read more on them here](https://en.wikipedia.org/wiki/Cgroups)); this project is thus aimed at
+monitoring your LXC/Docker container performances but can equally monitor physical servers.
 
 This project supports only **Linux x86_64 architectures**.
 
@@ -98,7 +99,7 @@ and just install the RPM right away from the [COPR](https://copr.fedorainfraclou
 ```
 yum install -y yum-plugin-copr
 yum copr enable -y f18m/cmonitor
-yum install -y cmonitor
+yum install -y cmonitor-collector cmonitor-tools
 ```
 
 <div id='section-id-78'/>
