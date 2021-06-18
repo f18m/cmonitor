@@ -364,9 +364,10 @@ void CMonitorCollectorApp::print_help()
     std::cerr << "    1) Collect data from OS every 5 mins all day:" << std::endl;
     std::cerr << "\tcmonitor_collector -s 300 -c 288 -m /home/perf" << std::endl;
     std::cerr << "    2) Collect data from a docker container:" << std::endl;
+    std::cerr << "\tDOCKER_NAME=your_docker_name" << std::endl;
+    std::cerr << "\tDOCKER_ID=$(docker ps -aq --no-trunc -f \"name=$DOCKER_NAME\")" << std::endl;
     std::cerr << "\tcmonitor_collector --allow-multiple-instances --num-samples=until-cgroup-alive "
-                 "--cgroup-name=docker/025806258f... "
-                 "--custom-metadata='dockerName:wizardly_feynman'"
+                 "--cgroup-name=docker/$DOCKER_ID --custom-metadata='cmonitor_chart_name:$DOCKER_NAME'"
               << std::endl;
     std::cerr << "    3) Use the defaults (-s 60, collect forever), saving to custom file in background:" << std::endl;
     std::cerr << "\tcmonitor_collector --output-filename=my_server_today" << std::endl;
@@ -686,7 +687,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         assert(!g_cfg.m_bDebug); // in debug mode we enable foreground mode!
 
         /* disconnect from terminal */
-        g_logger.LogDebug("Forking for daemonization");
+        printf("cmonitor_collector will now run in background, collecting data as requested.\n");
         pid_t childpid;
         if ((childpid = fork()) != 0) {
             exit(0); /* parent returns OK */

@@ -43,6 +43,7 @@ JS_INDENT_SIZE = 2
 verbose = False
 g_num_generated_charts = 1
 g_next_graph_need_stacking = 0
+g_datetime_field = 'datetime' # by default cmonitor_collector stores localtime as 'datetime' and UTC timestamps as 'utc'
 
 # =======================================================================================================
 # GoogleChartsTimeSeries
@@ -776,7 +777,7 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
         try:
             row = {}
             for key in [ 'cpu', 'io', 'mem' ]:
-                row[key] = [ sample['timestamp']['datetime'] ]
+                row[key] = [ sample['timestamp'][g_datetime_field] ]
                 
             for top_process_pid in topN_process_pids_list:
                 #print(top_process_pid)
@@ -860,7 +861,7 @@ def generate_baremetal_disks_io(web, jdata):
             continue
 
         row = []
-        row.append(s['timestamp']['datetime'])
+        row.append(s['timestamp'][g_datetime_field])
         for device in all_disks:
             #row.append(s["disks"][device]["time"])
             #row.append(s["disks"][device]["reads"])
@@ -884,7 +885,7 @@ def generate_baremetal_disks_io(web, jdata):
 #     fsstr = fsstr[:-1]
 #     startHtmlHead_line_graph(web, fsstr)
 #     for i, s in enumerate(jdata):
-#         web.write(",['Date(%s)' " % (googledate(s['timestamp']['datetime'])))
+#         web.write(",['Date(%s)' " % (googledate(s['timestamp'][g_datetime_field])))
 #         for fs in s["filesystems"].keys():
 #             web.write(", %.1f" % (s["filesystems"][fs]["fs_full_percent"]))
 #         web.write("]\n")
@@ -921,7 +922,7 @@ def generate_baremetal_network_traffic(web, jdata):
         if i == 0:
             continue
 
-        row = [ s['timestamp']['datetime'] ]
+        row = [ s['timestamp'][g_datetime_field] ]
         for device in all_netdevices:
             try:
                 row.append(+s["network_interfaces"][device]["ibytes"]/divider)
@@ -949,7 +950,7 @@ def generate_baremetal_network_traffic(web, jdata):
         if i == 0:
             continue
 
-        row = [ s['timestamp']['datetime'] ]
+        row = [ s['timestamp'][g_datetime_field] ]
         for device in all_netdevices:
             try:
                 row.append(+s["network_interfaces"][device]["ipackets"])
@@ -991,7 +992,7 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes):
         if i == 0:
             continue  # skip first sample
 
-        ts = s['timestamp']['datetime']
+        ts = s['timestamp'][g_datetime_field]
         all_cpus_row = [ ts ]
         for c in logical_cpus_indexes:
             cpu_stats = s['stat']['cpu' + str(c)]
@@ -1055,7 +1056,7 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes):
             continue  # skip first sample
         
         try:
-            ts = s['timestamp']['datetime']
+            ts = s['timestamp'][g_datetime_field]
             all_cpus_row = [ ts ]
             for c in logical_cpus_indexes:
                 # get data:
@@ -1138,7 +1139,7 @@ def generate_baremetal_memory(web, jdata):
         mc = meminfo_stats['Cached']
         
         baremetal_memory_stats.addRow([
-                s['timestamp']['datetime'],
+                s['timestamp'][g_datetime_field],
                 int((mem_total_bytes - mf - mc) / divider),   # compute used memory
                 int(mc / divider), # cached
                 int(mf / divider), # free
@@ -1183,7 +1184,7 @@ def generate_cgroup_memory(web, jheader, jdata):
             mc = s['cgroup_memory_stats']['total_cache']
             mfail = s['cgroup_memory_stats']['failcnt']
             cgroup_memory_stats.addRow([
-                    s['timestamp']['datetime'],
+                    s['timestamp'][g_datetime_field],
                     mu / divider,
                     mc / divider,
                     mfail,
@@ -1241,7 +1242,7 @@ def generate_baremetal_avg_load(web, jheader, jdata):
         # we remap that in range [0-100%]
         
         load_avg_stats.addRow([
-                s['timestamp']['datetime'],
+                s['timestamp'][g_datetime_field],
                 100 * float(s['proc_loadavg']['load_avg_1min']) / num_baremetal_cpus,
                 100 * float(s['proc_loadavg']['load_avg_5min']) / num_baremetal_cpus,
                 100 * float(s['proc_loadavg']['load_avg_15min']) / num_baremetal_cpus
@@ -1441,19 +1442,21 @@ def usage():
     print('  -v, --verbose              Be verbose.')
     print('      --version              Print version and exit.')
     print('  -o, --output=<file.html>   The name of the output HTML file.')
+    print('  -u, --utc                  Plot data using UTC timestamps instead of local timezone')
     sys.exit(0)
 
 def parse_command_line():
     """Parses the command line and returns the configuration as dictionary object."""
     try:
-        opts, remaining_args = getopt.getopt(sys.argv[1:], "hvv", 
-            [ "help", "verbose", "version", "output=", "input=" ])
+        opts, remaining_args = getopt.getopt(sys.argv[1:], "hvvu", 
+            [ "help", "verbose", "version", "output=", "input=", "utc" ])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err))  # will print something like "option -a not recognized"
         usage()  # will exit program
 
     global verbose
+    global g_datetime_field
     input_json = ""
     output_html = ""
     for o, a in opts:
@@ -1465,6 +1468,8 @@ def parse_command_line():
             usage()
         elif o in ("-v", "--verbose"):
             verbose = True
+        elif o in ("-u", "--utc"):
+            g_datetime_field = 'UTC' # instead of default 'datetime' which means local timezone
         elif o in ("--version"):
             print("{}".format(CMONITOR_VERSION))
             sys.exit(0)
