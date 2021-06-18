@@ -11,6 +11,8 @@ EXAMPLE_JSON_FILES=\
 	docker-userapp.json.gz
 CMONITOR_COLLECTOR=$(TOPDIR)/collector/src/cmonitor_collector
 
+SHELL:=/bin/bash 
+
 all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
 		echo "--------------------------------------------------------" ; \
@@ -64,20 +66,41 @@ regen_docker_collecting_baremetal_stats:
 # docker_userapp:
 #  monitoring of a docker container from the baremetal
 #
+DOCKER_EXAMPLE_CPUS:=0,1
+DOCKER_EXAMPLE_MEMORY_LIMIT:=100m
+DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f .)
 
 regen_docker_userapp:
-	cd docker-userapp-to-monitor && make
+	docker stop userapp || true
+	pkill example_load_re
+	docker run \
+		--detach \
+		--interactive \
+		--tty \
+		--rm \
+		--cpuset-cpus=$(DOCKER_EXAMPLE_CPUS) \
+		--memory=$(DOCKER_EXAMPLE_MEMORY_LIMIT) \
+		--volume=$(DOCKER_EXAMPLE_FOLDER):/perf \
+		-P \
+		--name userapp \
+		redis:latest
 	sleep 3
+	for i in $$(seq 1 10); do \
+		./example_load_redis.py userapp & \
+		sleep 1 ; \
+	done
 	@echo "Now running cmonitor_collector on the baremetal to monitor the 'userapp' container:"
 	# NOTE: we know that docker creates a cgroup always named docker/container-ID
 	$(CMONITOR_COLLECTOR) \
-		--sampling-interval=10 \
+		--sampling-interval=2 \
 		--num-samples=60 \
 		--collect=all_cgroup \
 		--foreground \
 		--output-filename=docker-userapp.json \
 		--cgroup-name=docker/$$(docker ps --no-trunc -aqf name=userapp) \
-		--custom-metadata="cmonitor_chart_name:userapp docker"
+		--custom-metadata="cmonitor_chart_name:userapp (Redis docker)"
+	pkill example_load_re
+	docker stop userapp
 	gzip -f docker-userapp.json
 
 

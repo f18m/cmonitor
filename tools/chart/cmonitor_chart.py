@@ -1199,7 +1199,7 @@ def generate_cgroup_memory(web, jheader, jdata):
     # Produce the javascript:
     web.appendGoogleChart(GoogleChartsGraph(
             data=cgroup_memory_stats,  # Data
-            graph_title='Memory used by cmonitor_collector CGroup in ' + unit +  " (from CGroup stats)",
+            graph_title='Used memory in ' + unit +  " (from CGroup stats)",
             button_label="Memory Usage",
             y_axis_title=[unit, "Alloc Failures"],
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
