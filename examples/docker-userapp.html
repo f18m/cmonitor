@@ -1,14 +1,14 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>Monitoring data for hostname MSP153</title>
+  <title>Monitoring data for userapp docker</title>
   <style>
      html,body { height:85%; }
      body { background-color: #eaeaea; }
      h3 { margin: 0px; }
      ul { margin: 0 0 0 0;padding-left: 20px; }
      button { margin-bottom: 3px; }
-     #hostname_span { background-color: white; color: red; padding: 4px; }
+     #monitored_system_span { background-color: white; color: red; padding: 4px; }
      #button_table { width:100%; border-collapse: collapse; }
      #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
      #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
@@ -60,7 +60,7 @@ function clear_chart() {
 }
 
 function draw_graph1() {
-  var deflated_data_base64_graph1 = 'eNqVlc9u2zAMxl9l8KkDBMGiSEnubcCOe4MghxQNhgLttkNQYBj27hP/uLFTM2t88EH4fST9iaR3uz/D6fev43A/PB5Ox9PTy3EIw/Ph4fjcj77OR3/D8O3n4fHL6/dPd+nl6cfnYXFAlwdJT/ZhJxHuYIQUSkgpjIFSgNppiBP1V6n8rjQuH/SUmZU5jqK5QYesw5iA5rwNcFo81VOSZpxu00HQhGP/ul4u61ayqXi6xEKKdY33IMgVVPJ04mlhZ3IkkKzgwtnglX3d3VhU6adBLS8LRwK7LKkHrS5qcuBsfimF9Wr9WU3CWD4QF7Rg7JBETX5UcwXW3hNfYxeCLzRT9EMneV+hySxUGq7SGAz+f2CcW6eRdXqO2UPhXDFGYNIPa7b0iKtmQSkqV1eHqtMcdrEuLKZUKRtlJ8jNbtMUDJbIyrpoUnZktDFZXdRGSIJqVJ81U8Rrns7ikqgF9Hvvc4UXQ109FWn83n2bMs+aElSHooOLRr4qXHaPsh5pPiUnhZshawZu+W2lL7UJ4xHY8qN5Opu1Bjfpqk1d0XRcW/OMq28bW2Beos1FF2PXUYlbXdjsyucaXNTsKdP6p9FzwOUnT14Ms4q0to/q2tuC2vLXFc2evSuYd9FEnmxe5mf/fHbuNkZBNsXoofOmstDo/wA7gjqYbBXYpt3v/wH+7AEH\n';
+  var deflated_data_base64_graph1 = 'eNqNlk1rHDEMhv9KmFMKZrAkf01vgR7zD5YcNmQpgXz0sBRK6H+vLcm7MyHydA57MM8r2e9oX8/h8DGd//w6Td+np+P5dH5+PU1uejk+nl7q0o++9NdN9+/Hp7vfP29u4fX57du0WoifF0BWHtyBK9yiR3DJQXEQHCyuVDrMMUeHs8foYEaTBYFLY4HRaLIoLCHDuEOT0KmyjJJJBiGRN9x+ofUw8ah4hUkqGyx6tYIqGhqYo189aMrUFR9VGPzmAVPIFtG88FFC21zAsKyeYkrVr9iUic8Vsn0w9Szwu0iNtlk1LDObtx6000VLCuof8HGqfq2MYyVcrS9b96gKk6nTIWsO0uwbmu0mtB71hSdnhHfTeulsknF9cClswcgmxTbkJJNeTBIE9duZYCH3KNbYV60ak/K1jw2TNIJtoyps73sxZWpQriDFIRm1QSUZNF2nbg/v+xJKJq0WIduZeGS9TaPQkYtzbTBZHZZFKu/AQQpX1Vw4Gk1SnfCxo6YVwV3Cdh+F1VQtbAPasM5GaXXzDttzOf4PrAPRJmdpKJmk2tASuQYn1zVzObprIvWwHMDQA79v2Lwdmk+SwLl7PGJJWJLp2YGDwP46l2SybMYXWUsS75YwOdHF1iP069CEQWhieodFYYMedwyTwvx6aI8OQmOPsTHN1gBPFIynLztBE1eWkcIBDYJ/vuQ1wNH6CKpKFCU0quRNZKbh3zSLVaBHKdu4zaPgyOIb1Ivoi6uVv69MJXvo5aMt4ZguTuC83dsiY2ZHYBE/Pf+JOIWz3QIFlVAN49Au4pnXu4B24CDw5d+g18fDPzbobm0=\n';
   var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
   var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
   var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
@@ -84,7 +84,7 @@ function draw_graph1() {
 }
 
 function draw_graph2() {
-  var deflated_data_base64_graph2 = 'eNp9071qwzAQwPF30dSCOHSfkjr3DUqnkCGlHgoJlCZLKH33ymdnPG3G/iHpL0uHw2+63b+X9JI+T7fl9nVZUk7n08dyHq9eH6/+cnq/Lj/j09v9elsu6ZgP/vWJCmG2jJhLVsxUn1OmDko9lwjxitCgGsZIHDE01hjpiqQDk0SI8mqsQROMDa5IGZBj421iwOM5RN7WGVhqjLxNBYwtRt7GCIVbhHhrA7UeE0+jNsbhGHkbM2iTGHkbdxCbjLT9twq1TNDWpmO6cCvF27TPdlK2uHEASo/NdibHcWstRt6mFXqdzCb7KZE2mc7b6tjvcDb1NDZAtNh4GhboIjHyNlw3iWLkba1AwwnyNgHsGhtPsw4UnzfzNlSoKrHxNiOoFWNE+y+x+FLa1rZeyqIx2toYKk7W5HGqgBSuqeZ93b1TbB4XjnqPEe3bVHAyEu/TWZUYbXHjvDk6/gPkNEa+\n';
+  var deflated_data_base64_graph2 = 'eNqF1MtKLDEQgOF36ZVCKFK3JOXaNxBXgwvFXhxQOOhsRHx3uysz4Kartt0fPflTyZxO38v56/+63C2vz+f1/O99Xcry9vyyvm2P7q+Pfsry+Ll+bK8evj7P6/vyVE7+9oYqYWkFR0EpaGXcLqUpkLRSDxHuChmUKVC0K62goweKdzUETCMlF6UWrUt31QUq25Gi6olC0BUDhNfFIwXKE3uFzi1QnigKwyRQntgE+hiB0ssvkh4rnIkNbEiAPNEQzHqgPNFsW3ykrlNUaoHyRBwQ7CnOwmYg9Xjx5IW6b5YFCC+KqQdqFm5DNArULGzAzIHywj6AWwuUJ45tT+n4CLIndgNWDZAnkoEeX9hNeaJ04BqpeU4xGg/PQjVoFn3qehNHP94tmUNk6DgC5IVSw6Mll8K23VcJ1ByignQK1PyzqWBkgfJEMej9ePXqiRVqIDAnlBPOieREM9JKLjAnlBPOieQkDeolF5gTygnnRHKSBo2SC8wJ5YRz8ifo6RdPi+Qi\n';
   var deflated_data_binary_graph2 = window.atob(deflated_data_base64_graph2);
   var inflated_data_graph2 = JSON.parse(pako.inflate(deflated_data_binary_graph2, { to: 'string' }));
   var data_graph2 = google.visualization.arrayToDataTable(inflated_data_graph2);
@@ -108,7 +108,7 @@ function draw_graph2() {
 }
 
 function draw_graph3() {
-  var deflated_data_base64_graph3 = 'eNp9lL1OQzEMRt8lE0iRFcd/N8y8AWKqOhRxB6RWQnCXCvHupL4pm7MmR7GP8yWHw0/arp9rekrvp23dPi5ryul8elvPfen5vvSb0+v3+tW3Xq7f23pJx3zw3YdaKmbNiLlkwVztMeUqUJYllwiiG6QNyFoMsUMVGnEMyQ3CBotSBNXsjEIrLWbwBkmvVjCG6qhGqjHkclVBZi3xgLQsMSQDYpMIIpcjg1YnjMup9ClpDLncUkEsZtzNFIxrDLkb92oUM65GAoghxK7GCIIcM66GBLVYDLkaLaA8OYlGTKRNoHsoLR43/4eSKRy37PfW5eKWZJfrU7JlArmcIMRJkuHWX2WbQO5m1AMwgfZMFkAO563uJgxNYgTHtFVbDNXRNsWImzFBfGk6Arn01E5quVjrN0thNcsjbC2uZruZGZi0GNofG4JWjaH9J+mfWxw2G3K9J+/7+AeN9EZ5\n';
+  var deflated_data_base64_graph3 = 'eNqF071OwzAQwPF3yQSSdfJ92D4z8waIqepQRAakVkI0S4V4d9xrilhytyY/2f5f4t3ue1oun/P0NL0flnn5OM1Tmo6Ht/k4Hj3fH/2k6fU8f41XL5fzMp+mfdrZ2wfKhKkm1ISSsCd9nJIKSOaUNxGaUqhdHEVXRQy5eYqvqghw746Sq2oFKnvnKrZWA1baUpQtkQhUxEGWWAh6K46yRG5ArrLETpCxOcoSFYFFHWWJTaBq3VSY1jkQOcYKuUPT7igrRB0f0VuL12lV9k5lhR0BxUEW2Dv0sr0hWWAjIPTQrVCBUR1lhVVBa3GUFWoec2+OskJh6FkcZYnYQMr2jnxLHMdCdhDep0XiKFrva9++Y0NZYmVomRwlq9LmqbLuWOr2uMQSe4Xs/PFyS2wMtZKjLFF03ERvLUskGYnsKPm7+95at6847k/e/ueLJWbIjsCYUEw4JhKTEpGaYoExoZhwTCQmYVBLscCYUEw4JhKTMEhTLDAmFBOOyb+g/S8EuuQZ\n';
   var deflated_data_binary_graph3 = window.atob(deflated_data_base64_graph3);
   var inflated_data_graph3 = JSON.parse(pako.inflate(deflated_data_binary_graph3, { to: 'string' }));
   var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
@@ -132,13 +132,13 @@ function draw_graph3() {
 }
 
 function draw_graph4() {
-  var deflated_data_base64_graph4 = 'eNp1lb2OU0EMRt/lViCNrPG/TQsPQEMVbbGIFEiLRJFmhXh3PHPvUq2rJJOT8Rz7u5Pb7c/xeP19Pz4dP54f98fPX/djHC/P3+8vtfTlbenvOD5//TaP/YLH07jt7z7QJBw2EMccioP84zEoQSkHKcyIjuRFooFbrSawZ0fKJhmCdRhBsnSkLlJqM5KBCWH8PkljgRYQgusMObMDcZHKgFyfCsQO3OZiwOtHdQSzjtzmycDigwy0P+U2VwFjW6TN6MhtzgiTY5Hi+j7Jp3kVzToHJLXcFqeoHXmYVi+tI7c5M2jICAL1DtzinCBWx6jJC3XkOXIHn/W+inMHnt5atWm9IDakbG/N3XRBUJQOxCtEM1foaHoHnlkvj4jBASbtlltcq93uK26aLSlX3CRyZd27+chp7jWfWHETbsajW5ytWmMrINqdUk9xnJAiq5ceLbnNV8ilklehiw7c4jEhsB6Kug6yJbe4AGYduKLkLbi968KgSjBNQGnmY1u8ivpqlkBqx23v1Wzfl4FZdiRdc7S6DWpn7jh+uwtmiTF047bLmsGxRh/1RLSlt7ZWwms166zcFPdx2WTSym92xf3/E06Zw+tZ0+xIulo5a4yBYGQdyVd1c1l/A9Hl1y/1ym+Rq0cl9PQP8vlrPg==\n';
+  var deflated_data_base64_graph4 = 'eNqNlL+OFDEMxt9lKpAsK/G/2LTcA1xDtbriEFsgHRLFNgjx7jiZ3QIJQ4rV7GR+sv19sX25/DxuP75fjw/Hl9fb9fb12/WA4+318/Utj54eR7/g+Pj8qR3r0Y8XuKxv76hRB4Pu0AV6gL8/wBRJDFxQGpdkn2hnVCZwRwspUZqoNlQfQIxt1ChPNDOHDlBBjihRuaMaBkPRuK5VJzoEG+f/gez0d5TaMkAIh3YgQhcpyf5Q1QmUMIaW6DJgNBxswAPpH+gyQBQ9BIKw9VGiywATHO7gHVm8RPVeAKlPH8ytQPtpgGG4TKuISnDpj44RAziyiijRpT8iRY08zAaooz4aQMmmq8Z1pUt/hkv/s4wuJbjUW2Q7y6witEpPS71OSwMGIfWa7HeUKeU7cvcSPeXn9QeBObppiZ7yDZkZvOVFjRJd8kdmNgNhjCYlugzw9H9e20DRqgBeBoxAVp2xvXNJLgMoUHNXTFdJSnQZIDl4zeauiGqqEz37v89LNcbRqCSXfo3cPDZRHzX6mH8fPPOrVa7K2QCZOA/CsJUzJad+aatTB6MZlSjdh0rzVTznv456NoCijOybbMRqA5PcF2BL5+NcQHXUZYDkkI48yUerpkqXAQ3b/JVM34FoB+IdSHYg/T9ksMP0HYh2IN6BZAfaEDdgh+k7EO1AvAPJDrQhzmGH6TsQ7UC8A/0h7uU3zYsPVA==\n';
   var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
   var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
   var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
   var options_graph4 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "All logical CPUs assigned to cmonitor_collector CGroup (from CGroup stats)",
+    title: "All logical CPUs (from CGroup stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
@@ -156,7 +156,7 @@ function draw_graph4() {
 }
 
 function draw_graph5() {
-  var deflated_data_base64_graph5 = 'eNp1lM2qE0EQhV/lMqsrNKH+u8udePEBBFchi3gzYHBEMXEh4rtbk0kCpqd2w8x3prrqnOrt9s9w/v1jHN4Oh/15PB+/jUMZpv3ncYpXL7dXf8vw6TQe4tP7/euX8fD0/HI8ff047g9v4t27afr++vRhf5x+/RxPw65sL8pnAsJiBbFAUSxUA4aNkVlr8QAFyZks43nmaWMqBK0g0Aa1MQfg2qRmMlnKiKuhXcoQhRAzXjuegVFpnady7YLl2gRrdUhpXPCqbCYXXlSQJePp8ffK6GYZzh3eQBgyXB5xIyflDL+PxivSwsfvPRk9d6Op5A1TGq/+GsnF3Ti4SSsNiEkyES2iKkAXGW48dE1Kozkmmew2J2zii8kOTjU9m/R8WAic8XrjZTE5+gGoSebkPiio7cZb02wVZCVFiKoGngmor0BigJoJ+D8zYqpccY4vY/NsF2QZ090N1Y01p9iiCDgipcW0P50Q18x1Ld2KooK5acbjYxLRAJqm/MrVFH6AWCa4302NQa53E8zmY42mslzpyuWE1diJMkF/O0Uk4xZMVtxWRtUcTWvGY9+6C7CmBa6zqnOJRRAAu2sm4M5tioGZUCaQFYE6W9qDdm7EOs2JJJq3PFnDWm7pFaZFpXOZULGoSabC/niMEMPIBH26okAFTM+1MjEBjZ3KBNJ7Eo8R+t3uHz0DskA=\n';
+  var deflated_data_base64_graph5 = 'eNqV1M1qFEEQB/BXCXOK0Axd39XexOADCJ5CDmt2wJAVxcSDiO9u7U5PRMc69G2Ynd9297+q+vb25/T84+syvZ6Oh+fl+eHzMpXpdPi4nOLVzfbqV5k+PC3H+Ont4f7Tcry6vnl4eny/HI6v4t2b0+nL/dW7w8Pp+7flabortxd5jRWhaAEvwAVa8fi4zkrVnOOhFqimTun3sAJuzQBXYCQCKcAzgFkZuekFoBCSpIDWFYTddd0SmRhpCngFJqQdsIBpviU5A5yNK2K8qDhDHMK0CMWbxGHdsgJeV1EAqZh+Df+sArN508hASUKmDvsyqOp+WcgEa1aSALSroSMqtBTsA/PW3DgF0ksSFac5aufn81Q2zAj0rIybqPe+EtesivHY4/LYVcNLXI2oSnwBYuiWwp6XCPb+Amjng6WAtuObdYBE8ZwC3g8JxSIGqeiBOZtbnxLyFigR+J85ZPLKkoKXQRSFfgxuyJVT0YMybLU3FmitscdU7DsLVKImngreqthifC9VjP+v0S7GDpavtI0kKaCvI4kQDRbQG1M2ZbT1mYJLT8HVpGkKYC9aRdGaCtxfeU0rpyNMa25/n2a9YLAqS9qatMYHszTj84hRODzHh+CxRUud7CY67pzYblYoLvtpE1OKJsEW0VDqYLsKtMa4Ic0xpB4NiIxQ0ynlP7caSltDRPZaNRe02+K5srFDkdaope5lWrl3OWpEqDnYbrdqrfbwLMrVMiFlGMCwwGFBw4KHxWhUWoYBDAscFjQseFiMRmVlGMCwwGFBw4KHxWhUXoYBDAscFjQs8qjufgOWtJKy\n';
   var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
   var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
   var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
@@ -188,7 +188,7 @@ function draw_graph5() {
 }
 
 function draw_graph6() {
-  var deflated_data_base64_graph6 = 'eNp1krFOAzEMhl/llAmkKNhJnNhrOyAGBAvTqQMSNzAclXq39O25axFqnfMWOZ/+fLHd925/HMfPny/n3f79o5u/x2E5vjy9dc+7tfZ/+zqMx9O5253nYXIH37tpPg3T5HwNgB4C+L9K95BAgB6dlxyBA9zCJUi6h6MQZQtmUjAzJguuCk4ItVpwLCq5sqzOCDED3NMUCusfRuE1mhPkBs7aA4shTSFpD4FiSC8PRS0tlkYK1DjnitvJKSTRzrGQBUc9FcGrc6sRQ0E9QkGyYGqSK5lwliZZyrYzBq66dTmyBVcNM15at7Uc2ErzskwmnbOmExkzxJD0KgHVW/jwC4gO+jo=\n';
+  var deflated_data_base64_graph6 = 'eNqV0j1rwzAQBuC/YjS1IK73Zfm8JkPoUNqlk8lQqIcOTiD2kn9fh5RifD5KNQnp4ZXupK5L+/MwfJw+U077t/dq+hr6efr89Foddre1392XfjhfrtXuOvVjOuYujdOlH8eUW6g5I2D+WakeRLmWx3nHBBVwiQ1U1lgIt3EBsxWWxuiGldHWuGnXySTBNWowZ5kiW1xwMYuwuPqUmhkTsiL+rYtgFI2lXQ7XmnsffWsUijuGrUQYN5I1xORww9sFCCi53mC9jRnMPye2EfZPxBzi2mEsQYEM5AtUiZLRfSstzT+wBX+QwDeDZHHl4zdGz/wY\n';
   var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
   var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
@@ -212,7 +212,7 @@ function draw_graph6() {
 }
 
 function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNqt1sFOwzAMBuBXQT2BFEWxHTsJZ95i2mGIHpCGhFgvCPHupEMbTWjaro12mpV+yfI3zna7r6b7fG+bx+bl0LXd61vbqOZ4eG6PsfR0KX2r5tR9tKfT3T2ZYPih+StgYLZJwXugYYHAOJeMcD4kBhkMPn0EhNJZjGRGyB4x1kFqoGQrhczwAbIRjjkbESSd1qJPR0A6Lfr489ICcbZS7kfs1e68w/doEJQoAGUUg4J+jWbyA14L4+VrCcJ5yMwZVMGwFQzebKAaEoKag13njAZkjYYgt0GLAgKnJfhpaGFKwNr+UiVocVRgNfVUCdqeF6kKBFQwsIJxDUh8jADXQ5MBoWgT3DJoNiC02g+xcciOpMQ0dbZKzkRUhHHT3FJoe162QtuzFdqevaQkQcfLaz3E288Sz50lvDaXOQgrLIYqGLaCsb3PiapAZNmwaBd4DVTIhjiCcgt0Q0BA/V1SgmyF7dmeklMViHNKzsQmDdugQUri4rGjtdC/lOKbQ1P/i0pQMSWieI2MvDn7/Q+2C5RZ\n';
+  var deflated_data_base64_graph7 = 'eNqt1N9KwzAUBvBXkV4phJDzJ8mJ177F8EKxF8IEcbsR8d3tJoP1zNpu+yiMcZr+cpKv6Wr11W0/3/vuvnt52vbb17e+C9366blfD6WHQ+k7dJvtR7/Z3NyKcpa77rgglEYFqUbjESTuEWI3opiNC0rVjRA/i5tW2Yofoa5Q2c2SsmssNYeyK6TiUXWL0+Ja15P9oOGRx7Da7/AtJ6ZQAlkg3f3m3VYkd+UUs/HwR1O0lE/upwmuhb80fzHF1HgGoiXSXDc8jQwrS00WS3KQisVa2xU9KWJh+WqEU0AYhEAYgQgCWRAO52hNZyVAQjSTENvQyfHhJIutlUltlFWusVm+sK+jwEqNNn8eJqXZ1LiMFzkpKWLD96m1HKnaVRJPRKclstWzIMAJ40NgpsP0epX0b2Ciw0d1IXSSV5apvZmRAEdNFn4MOcX6+zZOQovz2lv6j8SIdQkCUQQCiEn/iGn/2pSzIUJ0wwjEJZSHD57ZRZIi2gHElAPCIATCCEQQiCIQQDglIAxCIIxABIEoAgGEUwPCIATCCEQQiCIQQDgWEAYhEEYggkDOCufxByP5rGs=\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
@@ -236,7 +236,7 @@ function draw_graph7() {
 }
 
 function draw_graph8() {
-  var deflated_data_base64_graph8 = 'eNqt0c1KQzEQBeBXkawqzCLzkz/XvsWli4pZCBXEezdSfHfbQtEJCEoOd3eYfJPcsyynsH289fAQng9b315ee6BwPDz14zl6vEWfFNbtva/r3U5ji+k+fAfSUjIX1Mr6M1COpbiJUpszNEqr/ghn9VtiHow2HIlW2BuSh5vyYNTGw0RJaZho2a81qX6C/Vqp5+f5QNNw03SZ2NNy/cM7icKUiZkiJSa+3DH+7fvNEIChAMMARpo2hAAEAwwBGAowDGDM16IEIBhgCMBQgGEAY74WIwDBAEMAhgIMAxjztSQCEAwwBGAowDCAMV9LJgDBAEMAhgIMAxjztRQCEAwwBGAowPhXLfsvBW5/sQ==\n';
+  var deflated_data_base64_graph8 = 'eNqt0ctKxEAQheFXkV6NUIuuSzo9rn2LMIsRsxBGEJONiO/ujCCYEkHxJ5DFofrry5mm17K+PM3lptwf13l9eJyLlNPxbj6do9vP6E3Ksj7Py3K187DBr8vXwLVuAh+7bifU0xK1NNF63wahY5rwvEvaNqy3PBEpGC3tUod0sLpPqKWgtoxGuly0dPT49h56XnKQ6eOFd1ZNpYl20bj8h8tT1N99PyB7IQwlECMQJ5AgkP+XY1UIQwnECMQJJAgEKEeFMJRAjECcQIJAgHJMCEMJxAjECSQIBCjHhTCUQIxAnECCQIByQghDCcQIxAkkCAQoZxDCUAIxAnECCQIBymlCGEogRiBOIEEgQDmjEIYSiBGIE0gQCFBOF8JQAjECcQL5UzmHd9e6l/U=\n';
   var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
   var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
   var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
@@ -260,7 +260,7 @@ function draw_graph8() {
 }
 
 function draw_graph9() {
-  var deflated_data_base64_graph9 = 'eNqtlcFugzAMQH9lyqmTMmQ7CSQ77y8Qh07jMKmTpsGlmvbvo5VYSYoJDIub5bw4eXao62/Vnz9b9azejn3bv3+0SqvT8bU9DaGXMfSjVdd/tV33cDAQwD2qW4CCczYKeI9mGjAIVRVlVD5EDAMUfLwESxPvAmXCCMkSsBXGDCqTSjFh+IBJRuVckhHKeFtLPs7AeFvyw/HigHFJpe6S0ej6esMHAkJdakQN2qHGS42w+IXCEvj2CdwY4mCUh0GOYQQYVoDhdjNIR4gCABDI/g816ykUfmjEqZl1sHWe4oI51lpfUxrHWu1tenAOtl+g0QIIFGCQAOPP0/04b4ctiuK6koNlRc1VPA+zM8by5+VYC+r4yeNg+x1agbfRCryNdjS2pZM4mNs/Yy43Y/OyOBgJFGQEGFaAsf8NLLUAIvGT+20twxg/y83IwTaIulXNwazAVe03VmkBxNXYtvnmYRNj65Ec7M7YGiQHY40tQZvmFyqrpgM=\n';
+  var deflated_data_base64_graph9 = 'eNqt1N9qwjAUBvBXGblykEnOn7Zx13sL8cKxXgwcjNkbGXv3qSDa0542bh8FwUP6y0m+pOv1d+gOn214Dm/bru3eP9oQw2772u6OpZdL6SeGfffV7vcPC1Gu5DHcFoRSryBNpv4IEvMKsRlR59wvKDVmhNhZzLTKubYj1BQaNrOkyjSWVgZlU0i1RdUsTmvTug72g46vbOL6vMMLTkyxjpQj6em3Om1FMs9qqZxy+5Qq+8c8DruKY+pwlixJr7CLUYk21xH7iG2kQJOLNrU7xZoiFlj9G+EUEQYhEEYggkAKwhkeAlcDpEQzKY0e52uLrtrLzb8ThT3eBFhqTWizSY7N4WqKCOGcZPnSJjV2Ip3+urgY4AbyJcD7VuhqkwF6c7jaMMBlSokS6x9aA1xJKfxw9hfqYsX53Xquxoj1CQJRBAKIS0fimj/nLkaIjhiBmJTK7q6rKaIlQFxVRBiEQBiBCAJRBAIIp44IgxAIIxBBIIpAAOE0EWEQAmEEIghEEQggnBwRBiEQRiCCQO4KZ/MLE5C/Ow==\n';
   var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
   var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
   var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
@@ -338,10 +338,10 @@ function show_config_window() {
     <td id='configkey'>Flannel.1 ip4</td><td id='configval'>10.42.0.0</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Docker0 ip4</td><td id='configval'>172.17.0.1</td>\
+    <td id='configkey'>Cni0 ip4</td><td id='configval'>10.42.0.1</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Cni0 ip4</td><td id='configval'>10.42.0.1</td>\
+    <td id='configkey'>Docker0 ip4</td><td id='configval'>172.17.0.1</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Br-2033c628bee1 ip4</td><td id='configval'>172.22.0.1</td>\
@@ -401,82 +401,40 @@ function show_config_window() {
     <td id='configkey'>Br-d7b58e8a0815 ip4</td><td id='configval'>192.168.48.1</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Vethf2f637f ip6</td><td id='configval'>fe80::744f:eeff:fe07:e120</td>\
-    </tr>\
-    <tr>\
     <td id='configkey'>Lo ip6</td><td id='configval'>::1</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Eno1 ip6</td><td id='configval'>fe80::2979:7829:ff99:a609</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Vetha512bae ip6</td><td id='configval'>fe80::c4ac:70ff:feae:ea34</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Veth65eb354 ip6</td><td id='configval'>fe80::5098:c9ff:fe22:6221</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Veth4ca83f0 ip6</td><td id='configval'>fe80::bcc1:92ff:fe68:f3cf</td>\
-    </tr>\
-    <tr>\
     <td id='configkey'>Flannel.1 ip6</td><td id='configval'>fe80::f056:b0ff:fef4:5a76</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Veth9294a77 ip6</td><td id='configval'>fe80::1c:40ff:fece:efdc</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Docker0 ip6</td><td id='configval'>fe80::42:5eff:fef0:649a</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Cni0 ip6</td><td id='configval'>fe80::e889:78ff:fe0f:3d17</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Veth921ca6d ip6</td><td id='configval'>fe80::a082:82ff:fed6:2325</td>\
+    <td id='configkey'>Docker0 ip6</td><td id='configval'>fe80::42:bbff:fe5d:a7a3</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Veth79b9859 ip6</td><td id='configval'>fe80::f4d8:ceff:feac:9a9c</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Veth2d1feaf ip6</td><td id='configval'>fe80::d871:b9ff:fe6b:afe8</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Veth472ac7e ip6</td><td id='configval'>fe80::64fb:2eff:fe77:864f</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Veth87582ce ip6</td><td id='configval'>fe80::f812:ccff:febe:4a45</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Br-3972b62fe577 ip6</td><td id='configval'>fe80::42:16ff:fe96:6cea</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Veth4d5a7d2 ip6</td><td id='configval'>fe80::d42c:12ff:fea1:9b2d</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Veth52e1d51 ip6</td><td id='configval'>fe80::2415:52ff:fe68:558</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Vethd28ca25 ip6</td><td id='configval'>fe80::d0b1:aaff:feae:3907</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Veth8bce27f ip6</td><td id='configval'>fe80::78e5:3bff:fea9:8387</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Veth390c1bf ip6</td><td id='configval'>fe80::8c82:26ff:febb:2da6</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Veth3083e41 ip6</td><td id='configval'>fe80::5cca:7aff:fe59:bfb2</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Vethd7ef44c ip6</td><td id='configval'>fe80::3ce1:afff:fed5:1fa5</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Veth65b4fa6 ip6</td><td id='configval'>fe80::4cdf:b7ff:fec0:e4f7</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Veth1a5e685 ip6</td><td id='configval'>fe80::e81f:87ff:fedd:7392</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Veth23d1067 ip6</td><td id='configval'>fe80::48e9:1aff:fe66:9ded</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Vethe5a7614 ip6</td><td id='configval'>fe80::24e7:6aff:feca:11aa</td>\
-    </tr>\
-    <tr>\
     <td id='configkey'>Br-5716e55410f8 ip6</td><td id='configval'>fe80::42:35ff:feb7:88c1</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Vethc7ac412 ip6</td><td id='configval'>fe80::34e6:bbff:febb:40d9</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>All ip addresses</td><td id='configval'>127.0.0.1,172.20.52.153,192.168.66.1,192.168.122.1,10.42.0.0,172.17.0.1,10.42.0.1,172.22.0.1,192.168.96.1,192.168.176.1,192.168.192.1,192.168.208.1,192.168.240.1,172.19.0.1,172.21.0.1,172.23.0.1,172.27.0.1,172.25.0.1,172.26.0.1,172.28.0.1,172.29.0.1,172.30</td>\
+    <td id='configkey'>All ip addresses</td><td id='configval'>127.0.0.1,172.20.52.153,192.168.66.1,192.168.122.1,10.42.0.0,10.42.0.1,172.17.0.1,172.22.0.1,192.168.96.1,192.168.176.1,192.168.192.1,192.168.208.1,192.168.240.1,172.19.0.1,172.21.0.1,172.23.0.1,172.27.0.1,172.25.0.1,172.26.0.1,172.28.0.1,172.29.0.1,172.30</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Serial-number</td><td id='configval'>............</td>\
@@ -506,16 +464,16 @@ function show_config_window() {
     </tr>\
 <tr><td colspan='2' id='sectioncol'>Linux Control Group (CGroup) Configuration</td></tr>\
     <tr>\
-    <td id='configkey'>Name</td><td id='configval'>docker/b237d8e457009ad36ebe39fd18ca4ac7d8303c90af3ce95b462226de39b88eec</td>\
+    <td id='configkey'>Name</td><td id='configval'>docker/1978a98620f9090663297c02234aad09dbd5f5d77090266b67384189f80ebf4d</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Memory path</td><td id='configval'>/sys/fs/cgroup/memory/docker/b237d8e457009ad36ebe39fd18ca4ac7d8303c90af3ce95b462226de39b88eec</td>\
+    <td id='configkey'>Memory path</td><td id='configval'>/sys/fs/cgroup/memory/docker/1978a98620f9090663297c02234aad09dbd5f5d77090266b67384189f80ebf4d</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Cpuacct path</td><td id='configval'>/sys/fs/cgroup/cpu,cpuacct/docker/b237d8e457009ad36ebe39fd18ca4ac7d8303c90af3ce95b462226de39b88eec</td>\
+    <td id='configkey'>Cpuacct path</td><td id='configval'>/sys/fs/cgroup/cpu,cpuacct/docker/1978a98620f9090663297c02234aad09dbd5f5d77090266b67384189f80ebf4d</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Cpuset path</td><td id='configval'>/sys/fs/cgroup/cpuset/docker/b237d8e457009ad36ebe39fd18ca4ac7d8303c90af3ce95b462226de39b88eec</td>\
+    <td id='configkey'>Cpuset path</td><td id='configval'>/sys/fs/cgroup/cpuset/docker/1978a98620f9090663297c02234aad09dbd5f5d77090266b67384189f80ebf4d</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Cpus</td><td id='configval'>0, 1</td>\
@@ -567,7 +525,7 @@ function show_config_window() {
     <td id='configkey'>Stepping</td><td id='configval'>4</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Cpu mhz</td><td id='configval'>3104.028</td>\
+    <td id='configkey'>Cpu mhz</td><td id='configval'>3442.407</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Cpu max mhz</td><td id='configval'>3600.0000</td>\
@@ -593,7 +551,7 @@ function show_config_window() {
       <table>\
 <tr><td colspan='2' id='sectioncol'>Performance Stats Collector Configuration</td></tr>\
     <tr>\
-    <td id='configkey'>Command</td><td id='configval'>../src/cmonitor_collector --sampling-interval=10 --num-samples=60 --collect=all_cgroup --foreground --output-filename=docker-userapp.json --cgroup-name=docker/b237d8e457009ad36ebe39fd18ca4ac7d8303c90af3ce95b462226de39b88eec --custom-metadata=cmonitor_chart</td>\
+    <td id='configkey'>Command</td><td id='configval'>../collector/src/cmonitor_collector --sampling-interval=10 --num-samples=60 --collect=all_cgroup --foreground --output-filename=docker-userapp.json --cgroup-name=docker/1978a98620f9090663297c02234aad09dbd5f5d77090266b67384189f80ebf4d --custom-metadata=cmon</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Sample interval seconds</td><td id='configval'>10</td>\
@@ -602,7 +560,7 @@ function show_config_window() {
     <td id='configkey'>Sample num</td><td id='configval'>60</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Version</td><td id='configval'>1.4-4</td>\
+    <td id='configkey'>Version</td><td id='configval'>1.5-0</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Collecting</td><td id='configval'>cgroup_cpu,cgroup_memory,cgroup_blkio,cgroup_processes</td>\
@@ -614,7 +572,7 @@ function show_config_window() {
     <td id='configkey'>Userid</td><td id='configval'>0</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Pid</td><td id='configval'>27286</td>\
+    <td id='configkey'>Pid</td><td id='configval'>33674</td>\
     </tr>\
       </table>\
     </body></html>\
@@ -624,11 +582,11 @@ function show_config_window() {
   </script>
 </head>
 <body>
-  <h1>Monitoring data collected from host <span id="hostname_span">MSP153</span></h1>
+  <h1>Monitoring data collected from <span id="monitored_system_span">userapp docker</span></h1>
   <div id="button_div">
   <table id="button_table">
   <tr>
-    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (docker/b237d8e457009ad36ebe39fd18ca4ac7d8303c90af3ce95b462226de39b88eec)</td>
+    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (docker/userapp docker)</td>
     <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
   </tr>
   <tr>
@@ -657,13 +615,13 @@ function show_config_window() {
     <h3>Monitoring Summary</h3>
     <table>
     <tr><td><ul>
-      <li>Version: <span id='bottom_table_val'><a href="https://github.com/f18m/cmonitor">cmonitor</a> 1.4-4</span></li>
+      <li>Version: <span id='bottom_table_val'><a href="https://github.com/f18m/cmonitor">cmonitor</a> 1.5-0</span></li>
       <li>Collected: <span id='bottom_table_val'>cgroup_cpu,cgroup_memory,cgroup_blkio,cgroup_processes</span></li>
-      <li>Started sampling at: <span id='bottom_table_val'>2021-06-10T22:51:17 (UTC)</span></li>
-      <li>Samples: <span id='bottom_table_val'>47</span></li>
+      <li>Started sampling at: <span id='bottom_table_val'>2021-06-18T12:18:58 (UTC)</span></li>
+      <li>Samples: <span id='bottom_table_val'>60</span></li>
       </ul></td><td><ul>
       <li>Sampling Interval (s): <span id='bottom_table_val'>10</span></li>
-      <li>Total time sampled (hh:mm:ss): <span id='bottom_table_val'>0:07:50</span></li>
+      <li>Total time sampled (hh:mm:ss): <span id='bottom_table_val'>0:10:00</span></li>
     </ul></td></tr>
     </table>
   </div>

@@ -398,7 +398,7 @@ class HtmlOutputPage:
      h3 { margin: 0px; }
      ul { margin: 0 0 0 0;padding-left: 20px; }
      button { margin-bottom: 3px; }
-     #hostname_span { background-color: white; color: red; padding: 4px; }
+     #monitored_system_span { background-color: white; color: red; padding: 4px; }
      #button_table { width:100%; border-collapse: collapse; }
      #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
      #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
@@ -490,9 +490,9 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
         
         
     
-    def startHtmlBody(self, cgroupName, hostname):
+    def startHtmlBody(self, cgroupName, monitored_system):
         self.file.write('<body>\n')
-        self.file.write('  <h1>Monitoring data collected from host <span id="hostname_span">' + hostname + '</span></h1>\n')
+        self.file.write('  <h1>Monitoring data collected from <span id="monitored_system_span">' + monitored_system + '</span></h1>\n')
         self.file.write('  <div id="button_div">\n')
         self.file.write('  <table id="button_table">\n')
         
@@ -1027,7 +1027,7 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes):
     # Also produce the "all CPUs" graph
     web.appendGoogleChart(GoogleChartsGraph(
             data=all_cpus_table,  # Data
-            graph_title="All logical CPUs allowed in cmonitor_collector CGroup (from baremetal stats)",
+            graph_title="All logical CPUs (from baremetal stats)",
             button_label="All CPUs",
             y_axis_title="Time (%)",
             graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
@@ -1093,7 +1093,7 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes):
     # Also produce the "all CPUs" graph
     web.appendGoogleChart(GoogleChartsGraph(
             data=all_cpus_table,  # Data
-            graph_title="All logical CPUs assigned to cmonitor_collector CGroup (from CGroup stats)",
+            graph_title="All logical CPUs (from CGroup stats)",
             button_label="All CPUs",
             y_axis_title="Time (%)",
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
@@ -1365,8 +1365,22 @@ def main_process_file(infile, outfile):
         print("Unexpected JSON format. Aborting.")
         sys.exit(1)
     
-    # initialise some useful content
-    hostname = jheader['identity']['hostname'] 
+    # load some basic fields from the JSON
+    monitored_system = "Unknown"
+    if 'identity' in jheader:
+        if 'hostname' in jheader['identity']:
+            monitored_system = "host " + jheader['identity']['hostname'] 
+    if 'custom_metadata' in jheader:
+        if 'cmonitor_chart_name' in jheader['custom_metadata']:
+            monitored_system = jheader['custom_metadata']['cmonitor_chart_name']
+    
+    cgroupName = 'None'
+    if 'cgroup_config' in jheader and 'name' in jheader['cgroup_config']:
+        cgroupName = jheader['cgroup_config']['name']
+    if 'custom_metadata' in jheader:
+        if 'cmonitor_chart_name' in jheader['custom_metadata']:
+            cgroupName = "docker/" + jheader['custom_metadata']['cmonitor_chart_name']
+    
     jdata_first_sample = jdata[0]
     if verbose:
         print("Found %d data samples" % len(jdata))
@@ -1385,7 +1399,7 @@ def main_process_file(infile, outfile):
             print("Found %d CPUs in cgroup stats with logical indexes [%s]" % (len(cgroup_logical_cpus_indexes), ', '.join(str(x) for x in cgroup_logical_cpus_indexes)))
     
     print("Opening output file %s" % outfile)
-    web = HtmlOutputPage(outfile, 'Monitoring data for hostname ' + hostname)
+    web = HtmlOutputPage(outfile, 'Monitoring data for ' + monitored_system)
 
     # HTML HEAD
     
@@ -1409,12 +1423,7 @@ def main_process_file(infile, outfile):
 
     
     # HTML BODY
-    
-    if 'cgroup_config' in jheader and 'name' in jheader['cgroup_config']:
-        cgroupName = jheader['cgroup_config']['name']
-    else:
-        cgroupName = 'None'
-    web.startHtmlBody(cgroupName, hostname)
+    web.startHtmlBody(cgroupName, monitored_system)
     web.appendHtmlTable("Monitoring Summary", generate_monitoring_summary(jheader, jdata))
     if len(baremetal_logical_cpus_indexes)>0:
         web.appendHtmlTable("Monitored System Summary", generate_monitored_summary(jheader, jdata, baremetal_logical_cpus_indexes))

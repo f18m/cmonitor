@@ -9,6 +9,7 @@ EXAMPLE_JSON_FILES=\
 	docker-userapp-with-embedded-collector.json.gz \
 	docker-userapp-with-embedded-collector.json.gz \
 	docker-userapp.json.gz
+CMONITOR_COLLECTOR=$(TOPDIR)/collector/src/cmonitor_collector
 
 all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
@@ -25,13 +26,14 @@ distclean: clean
 
 #
 # baremetal1 example:
+#  example of graph generated with the performance stats collected from a physical (baremetal) server running Ubuntu 18.04
 #
 
 regen_baremetal1:
 	@echo "Launching load simulator to have some CPU at 100% and so on..."
 	./example-load.sh &
 	@echo "Regenerating example JSON... this will take about 3*60secs."
-	@../src/cmonitor_collector \
+	@$(CMONITOR_COLLECTOR) \
 		--sampling-interval=10 \
 		--num-samples=60 \
 		--output-pretty \
@@ -47,32 +49,28 @@ regen_baremetal1:
 #
 
 
+
 #
-# docker example: dockerized cmonitor monitoring the baremetal
+# docker_collecting_baremetal_stats: 
+#  dockerized cmonitor monitoring the baremetal
 #
 
 regen_docker_collecting_baremetal_stats:
 	make -C docker-collecting-baremetal-stats
 	
 
-#
-# docker example: dockerized cmonitor embedded inside a docker container
-#
-
-regen_docker_userapp_with_embedded_collector:
-	make -C docker-userapp-with-embedded-collector
-	
 
 #
-# docker example: monitoring of a docker container from the baremetal
+# docker_userapp:
+#  monitoring of a docker container from the baremetal
 #
 
-regen_docker_userapp_to_monitor:
+regen_docker_userapp:
 	cd docker-userapp-to-monitor && make
 	sleep 3
 	@echo "Now running cmonitor_collector on the baremetal to monitor the 'userapp' container:"
 	# NOTE: we know that docker creates a cgroup always named docker/container-ID
-	../src/cmonitor_collector \
+	$(CMONITOR_COLLECTOR) \
 		--sampling-interval=10 \
 		--num-samples=60 \
 		--collect=all_cgroup \
@@ -82,6 +80,16 @@ regen_docker_userapp_to_monitor:
 		--custom-metadata="cmonitor_chart_name:userapp docker"
 	gzip -f docker-userapp.json
 
+
+
+#
+# docker_userapp_with_embedded_collector:
+#  dockerized cmonitor embedded inside a docker container
+#
+
+regen_docker_userapp_with_embedded_collector:
+	make -C docker-userapp-with-embedded-collector
+	
 
 # docker helper:
 
@@ -128,7 +136,7 @@ regen_grafana_screenshots:
 	sleep 10 # give time to influxDB to start!
 	curl -i -XPOST http://localhost:8086/query --data-urlencode "q=CREATE DATABASE cmonitor"    # do not depend on "influx" CLI utility
 	@echo "InfluxDB and Grafana dockers should be up and running... launching cmonitor to collect 10min of data"
-	@../src/cmonitor_collector \
+	@$(CMONITOR_COLLECTOR) \
 		--sampling-interval=2 --num-samples=300 \
 		--remote-ip=localhost --remote-port=8086 \
 		--output-filename=none \
