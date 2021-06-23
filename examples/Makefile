@@ -66,19 +66,27 @@ regen_docker_collecting_baremetal_stats:
 # docker_userapp:
 #  monitoring of a docker container from the baremetal
 #
+# NOTES:
+# - Redis + example_load_redis.py is used as "model" of a generic user application 
+# - cpuset cgroup is used (--cpuset-cpus): 2 cpus allowed regardless of how many are available
+# - cpuacct cgroup is used (--cpus): 0.9 cpu time max can be consumed on each allowed cpu
+# - memory cgroup is used (--memory) max 100MB can be consumed
+#
 DOCKER_EXAMPLE_CPUS:=0,1
+DOCKER_EXAMPLE_CPU_QUOTA:=0.9
 DOCKER_EXAMPLE_MEMORY_LIMIT:=100m
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f .)
 
 regen_docker_userapp:
 	docker stop userapp || true
-	pkill example_load_re
+	pkill example_load_re || true
 	docker run \
 		--detach \
 		--interactive \
 		--tty \
 		--rm \
 		--cpuset-cpus=$(DOCKER_EXAMPLE_CPUS) \
+		--cpus=$(DOCKER_EXAMPLE_CPU_QUOTA) \
 		--memory=$(DOCKER_EXAMPLE_MEMORY_LIMIT) \
 		--volume=$(DOCKER_EXAMPLE_FOLDER):/perf \
 		-P \

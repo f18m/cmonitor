@@ -1,6 +1,8 @@
 #!/usr/bin/python3 
 
 #
+# Very simple script to generate some "random" load on a Redis instance
+#
 # Author: Francesco Montorsi
 # Created: June 2021
 #
@@ -13,6 +15,7 @@ import redis
 import random
 
 loadtime_before_random_sleep_sec = 3
+cmd_batch_len = 30
 
 
 def get_ext_test_port(internal_port, full_container_name):
@@ -44,9 +47,9 @@ if __name__ == '__main__':
     while True:
         start_time = time.time()
         while round(time.time() - start_time, 3) < loadtime_before_random_sleep_sec:
-            for i in range(1, 30):
+            for i in range(1, cmd_batch_len):
                 r.set(f'foo{i}', 'bar')
-            for i in range(1, 30):
+            for i in range(1, cmd_batch_len):
                 r.get(f'bar{i}')
 
         time.sleep(random.randint(0, loadtime_before_random_sleep_sec*2))

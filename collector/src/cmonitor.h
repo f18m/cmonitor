@@ -323,6 +323,8 @@ private:
     // limits read from the cgroups that apply to this process:
     uint64_t m_cgroup_memory_limit_bytes = 0;
     std::set<uint64_t> m_cgroup_cpus;
+    uint64_t m_cgroup_cpuacct_period_us = 0;
+    uint64_t m_cgroup_cpuacct_quota_us = 0;
 
     //------------------------------------------------------------------------------
     // Process tracking

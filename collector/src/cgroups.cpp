@@ -524,6 +524,14 @@ void CMonitorCollectorApp::cgroup_init()
         g_logger.LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
+    if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_period_us", m_cgroup_cpuacct_period_us)) {
+        g_logger.LogDebug("Could not read the CPU period from 'cpuacct' cgroup. CGroup mode disabled.\n");
+        return;
+    }
+    if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_quota_us", m_cgroup_cpuacct_quota_us)) {
+        g_logger.LogDebug("Could not read the CPU quota from 'cpuacct' cgroup. CGroup mode disabled.\n");
+        return;
+    }
 
     // cpuset and memory cgroups found:
     m_bCGroupsFound = true;
@@ -576,14 +584,24 @@ void CMonitorCollectorApp::cgroup_config()
         return;
 
     g_output.psection_start("cgroup_config");
+
+    // the cgroup name
     g_output.pstring("name", m_cgroup_systemd_name.c_str());
+
+    // the cgroup paths
     g_output.pstring("memory_path", &m_cgroup_memory_kernel_path[0]);
     g_output.pstring("cpuacct_path", &m_cgroup_cpuacct_kernel_path[0]);
     g_output.pstring("cpuset_path", &m_cgroup_cpuset_kernel_path[0]);
 
+    // actual cgroup limits
     std::string tmp = stl_container2string(m_cgroup_cpus, ",");
     g_output.pstring("cpus", &tmp[0]);
+    if (m_cgroup_cpuacct_period_us)
+        g_output.pdouble("cpu_quota_perc", (double)m_cgroup_cpuacct_quota_us / (double)m_cgroup_cpuacct_period_us);
+    else
+        g_output.pdouble("cpu_quota_perc", 0.0);
     g_output.plong("memory_limit_bytes", m_cgroup_memory_limit_bytes);
+
     g_output.psection_end();
 }
 
