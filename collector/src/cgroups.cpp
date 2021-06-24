@@ -675,43 +675,7 @@ void CMonitorCollectorApp::cgroup_proc_memory(const std::set<std::string>& allow
     g_output.psection_end();
 }
 
-void CMonitorCollectorApp::cgroup_proc_cpuacct_throttling()
-{
-    if (!m_bCGroupsFound)
-        return;
-
-    // See
-    //   https://www.kernel.org/doc/Documentation/cgroup-v2.txt
-    //   https://medium.com/indeed-engineering/unthrottled-fixing-cpu-limits-in-the-cloud-a0995ede8e89
-
-    std::string path = m_cgroup_cpuacct_kernel_path + "/cpu.stat";
-    if (file_or_dir_exists(path.c_str())) {
-        /* Static data */
-        static FILE* fp = 0;
-        if (fp == 0) {
-            if ((fp = fopen(path.c_str(), "r")) == NULL) {
-                fp = 0;
-                return;
-            }
-        } else {
-            rewind(fp);
-        }
-
-        g_output.psection_start("cgroup_cpu_throttle");
-
-        static char line[8192];
-        while (fgets(line, 1000, fp) != NULL) {
-            uint64_t value;
-            char label[512];
-            sscanf(line, "%s %lu", label, &value);
-            g_output.plong(label, value);
-        }
-
-        g_output.psection_end();
-    }
-}
-
-void CMonitorCollectorApp::cgroup_proc_cpuacct_cpuusage(double elapsed_sec, bool print)
+void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 {
     if (!m_bCGroupsFound)
         return;
@@ -740,108 +704,150 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct_cpuusage(double elapsed_sec, bool
     // non-static data:
     char label[512];
 
+    if (print)
+        g_output.psection_start("cgroup_cpuacct_stats");
+
     std::string path = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
     if (file_or_dir_exists(path.c_str())) {
+        bool bValidData = true;
 
         // this system supports per-cpu system/user stats:
 
         std::vector<uint64_t> counter_nsec_sys_mode;
         if (!read_cpuacct_line(path, counter_nsec_sys_mode))
-            return;
+            bValidData = false;
 
         std::vector<uint64_t> counter_nsec_user_mode;
         if (!read_cpuacct_line(m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_user", counter_nsec_user_mode))
-            return;
+            bValidData = false;
 
         if (counter_nsec_sys_mode.size() != counter_nsec_user_mode.size())
-            return;
+            bValidData = false;
         if (counter_nsec_sys_mode.empty())
-            return;
+            bValidData = false;
 
-        g_logger.LogDebug(
-            "Found cpuacct.usage_percpu_sys/user cgroups; computing CPU usage for %.2fsec delta time and %zu CPUs "
-            "(print=%d)\n",
-            elapsed_sec, counter_nsec_user_mode.size(), print);
+        if (bValidData) {
+            g_logger.LogDebug(
+                "Found cpuacct.usage_percpu_sys/user cgroups; computing CPU usage for %.2fsec delta time and %zu CPUs "
+                "(print=%d)\n",
+                elapsed_sec, counter_nsec_user_mode.size(), print);
 
-        if (print)
-            g_output.psection_start("cgroup_cpuacct_stats");
-        for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
+            for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
 
-            /*
-             * We know how much time has elapsed; we thus divide the delta
-             * of the incremental counter of ns spent in user mode by the elapsed
-             * to understand how much time (for this CPU) was spent in user mode.
-             *
-             * HOW TO TEST THIS CODE:
-             * run
-             *     make ; src/cmonitor_collector -C -c100 -s1 >test.json
-             *     taskset --cpu-list 3 stress --cpu 1   # launch a "stress" process with CPU-affinity on cpu #3
-             * then just verify that
-             *     watch -n1 'grep cpu3 -A6 -B1 test.json | tail -20'
-             * produces cpu3 at 100%
-             */
-            g_logger.LogDebug("CPU %d, current user=%lu, current sys=%lu, prev user=%lu, prev sys=%lu", // force newline
-                i, counter_nsec_user_mode[i], counter_nsec_sys_mode[i], prev_values[i].counter_nsec_user_mode,
-                prev_values[i].counter_nsec_sys_mode);
-            if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
-                double cpuUserPercent = // force newline
-                    100 * ((double)(counter_nsec_user_mode[i] - prev_values[i].counter_nsec_user_mode))
-                    / (elapsed_sec * 1E9);
-                double cpuSysPercent = // force newline
-                    100 * ((double)(counter_nsec_sys_mode[i] - prev_values[i].counter_nsec_sys_mode))
-                    / (elapsed_sec * 1E9);
+                /*
+                 * We know how much time has elapsed; we thus divide the delta
+                 * of the incremental counter of ns spent in user mode by the elapsed
+                 * to understand how much time (for this CPU) was spent in user mode.
+                 *
+                 * HOW TO TEST THIS CODE:
+                 * run
+                 *     make ; src/cmonitor_collector -C -c100 -s1 >test.json
+                 *     taskset --cpu-list 3 stress --cpu 1   # launch a "stress" process with CPU-affinity on cpu #3
+                 * then just verify that
+                 *     watch -n1 'grep cpu3 -A6 -B1 test.json | tail -20'
+                 * produces cpu3 at 100%
+                 */
+                g_logger.LogDebug(
+                    "CPU %d, current user=%lu, current sys=%lu, prev user=%lu, prev sys=%lu", // force newline
+                    i, counter_nsec_user_mode[i], counter_nsec_sys_mode[i], prev_values[i].counter_nsec_user_mode,
+                    prev_values[i].counter_nsec_sys_mode);
+                if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
+                    double cpuUserPercent = // force newline
+                        100 * ((double)(counter_nsec_user_mode[i] - prev_values[i].counter_nsec_user_mode))
+                        / (elapsed_sec * 1E9);
+                    double cpuSysPercent = // force newline
+                        100 * ((double)(counter_nsec_sys_mode[i] - prev_values[i].counter_nsec_sys_mode))
+                        / (elapsed_sec * 1E9);
 
-                // output JSON counter
-                sprintf(label, "cpu%zu", i);
-                g_output.psubsection_start(label);
-                g_output.pdouble("user", cpuUserPercent);
-                g_output.pdouble("sys", cpuSysPercent);
-                g_output.psubsection_end();
+                    // output JSON counter
+                    sprintf(label, "cpu%zu", i);
+                    g_output.psubsection_start(label);
+                    g_output.pdouble("user", cpuUserPercent);
+                    g_output.pdouble("sys", cpuSysPercent);
+                    g_output.psubsection_end();
+                }
+
+                // save for next cycle
+                prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
+                prev_values[i].counter_nsec_sys_mode = counter_nsec_sys_mode[i];
             }
-
-            // save for next cycle
-            prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
-            prev_values[i].counter_nsec_sys_mode = counter_nsec_sys_mode[i];
         }
-        if (print)
-            g_output.psection_end();
+
     } else {
+        bool bValidData = true;
 
         // just get the per-cpu total:
 
         std::vector<uint64_t> counter_nsec_user_mode;
         if (!read_cpuacct_line(m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu", counter_nsec_user_mode))
-            return;
+            bValidData = false;
         if (counter_nsec_user_mode.empty())
-            return;
+            bValidData = false;
 
-        g_logger.LogDebug("Reading data from cgroup cpuacct.usage_percpu");
+        if (bValidData) {
+            g_logger.LogDebug("Found data from cgroup cpuacct.usage_percpu");
 
-        if (print)
-            g_output.psection_start("cgroup_cpuacct_stats");
-        for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
+            for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
 
-            /*
-             * Same comments for USER/SYS computations done above apply here!
-             */
-            if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
-                double cpuUserPercent = // force newline
-                    100 * ((double)(counter_nsec_user_mode[i] - prev_values[i].counter_nsec_user_mode))
-                    / (elapsed_sec * 1E9);
+                /*
+                 * Same comments for USER/SYS computations done above apply here!
+                 */
+                if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
+                    double cpuUserPercent = // force newline
+                        100 * ((double)(counter_nsec_user_mode[i] - prev_values[i].counter_nsec_user_mode))
+                        / (elapsed_sec * 1E9);
 
-                // output JSON counter
-                sprintf(label, "cpu%zu", i);
-                g_output.psubsection_start(label);
-                g_output.pdouble("user", cpuUserPercent);
-                g_output.psubsection_end();
+                    // output JSON counter
+                    sprintf(label, "cpu%zu", i);
+                    g_output.psubsection_start(label);
+                    g_output.pdouble("user", cpuUserPercent);
+                    g_output.psubsection_end();
+                }
+
+                // save for next cycle
+                prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
+            }
+        }
+    }
+
+    // See
+    //   https://www.kernel.org/doc/Documentation/cgroup-v2.txt
+    //   https://medium.com/indeed-engineering/unthrottled-fixing-cpu-limits-in-the-cloud-a0995ede8e89
+
+    path = m_cgroup_cpuacct_kernel_path + "/cpu.stat";
+    if (file_or_dir_exists(path.c_str())) {
+        /* Static data */
+        static FILE* fp = 0;
+        if (fp == 0) {
+            if ((fp = fopen(path.c_str(), "r")) == NULL) {
+                fp = 0;
+            }
+        } else {
+            rewind(fp);
+        }
+
+        if (fp) {
+
+            if (print)
+                g_output.psubsection_start("throttling");
+
+            static char line[8192];
+            while (fgets(line, 1000, fp) != NULL) {
+                uint64_t value;
+                char label[512];
+                sscanf(line, "%s %lu", label, &value);
+
+                if (print)
+                    g_output.plong(label, value);
             }
 
-            // save for next cycle
-            prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
+            if (print)
+                g_output.psubsection_end();
         }
-        if (print)
-            g_output.psection_end();
     }
+
+    if (print)
+        g_output.psection_end();
 }
 
 bool CMonitorCollectorApp::cgroup_collect_pids(std::vector<pid_t>& pids)
