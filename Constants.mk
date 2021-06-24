@@ -13,7 +13,7 @@ RPM_TARBALL_DIR:=/tmp/cmonitor/tarball
 #  - debian/changelog             -> to release a new Ubuntu package
 #  - json2html/cmonitor_chart.py  -> look for CMONITOR_VERSION
 # See also https://github.com/f18m/cmonitor/wiki/new-release
-CMONITOR_VERSION:=1.5
+CMONITOR_VERSION:=1.6
 CMONITOR_RELEASE:=0
 
 ifeq ($(DOCKER_LATEST),1)

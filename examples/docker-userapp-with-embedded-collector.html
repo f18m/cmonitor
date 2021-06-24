@@ -252,13 +252,13 @@ function draw_graph8() {
 }
 
 function draw_graph9() {
-  var deflated_data_base64_graph9 = 'eNqN1rFKQ0EQheF32UphkZ3dMzO5tvoANlbBQjGFoGCRRsR3NwQtLGT+Ily4OXBg5vIx+/1nO368H9p1e348Ho4vb4fW2+vj0+H19Or299VXbzd396OdH9Ye+v7838UctvXotutzdOt22fq4Gj1MsUVuPrS7cov/8vrJn37/RbKO2ACZBTIBMludmRNkHGR2dWYZyIAxLzBngTkLzFlgzg66HHQ56Sp3OvusI15HdnXEQJOBKgNd00BGIJN1Zg2QWSATIAMWKjBngTkLzNnBnB3M2cs5rz7qiOoIKDLQVKu7gLoLqLuAuguou4C6C6i7gLqnDOgS6BLoEtipg5062KmDndbqqlZXtbrqoMhAk4GqWl0BdQXUFVBXQF0BdQXUFVBXQF0BdQXUFVBXQF0Bdb1W1/uqI1FHtjpSf8sO0HWArgN0HaDrAF0H6DpA18Gp6+DUdXDqOkDXAboO0HWArgN0o0Y3anSjPnVPTwMZgQzomqBrgq4a3QDoBkA3ALoB0A2AbgB0A6AbAN0A6AZAN2t0s0Y3a3SzRjcBugnQTYBuAnQToJsA3QToJkA3AboJLt0El24CdPMvug/fUacVlA==\n';
+  var deflated_data_base64_graph9 = 'eNqN1z1LA0EQxvHvspXCEHZ25+XOVksLC61CioiHHiQqco2I391DsRAM/AnhuMtzPMVs+DHb7UdZ3l+nclEe9su0zMepSDns76fD+ujq99GnlOv5OC/rb7dPby/LcpifH9eby5u7+nPRspPt9wtnreooITpIq6Ki50W0Vlk/myqhFmPk6NWGjWucesv+vLV+TwWTBrXiZMfJwMmRJlvDScfJgSa74iQeUcczMjwjwzMyPCPH7Y7bnbfDE9Kk0aDT4ECDirsVlytub4qThpNJk73iZMfJwEl8PAzPyPCMDM/I8Ywcz8jhjLpUGjQaxNWKu6kvHfvSsS8d+9KxLx370rEvHfuyJnG74XbD7YZPiOMT4viEOD4h1Bejvhj1xQRXK+5WXE59MeyLYV8M+2LYF8O+GPbFsC+GfTHsi2FfDPti2BfDvjj1xaXTYNDgSIP0P+SYF8e8OObFMS+OeXHMi2NeHK8vjtcXx+uLY14c8+KYF8e8OOYlKC9BeQm6vqxXxUnDSdzecHvD7ZSXwLwE5iUwL4F5CcxLYF4C8xKYl8C8BOYlKS9JeUnKS1JeEvOSmJfEvCTmJTEviXlJzEtiXhLzknh7Sby9JOYl/+Nl9wXyua+4\n';
   var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
   var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
   var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
   var options_graph9 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "All logical CPUs (from CGroup stats)",
+    title: "All logical CPUs available in the cgroup",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
@@ -276,18 +276,19 @@ function draw_graph9() {
 }
 
 function draw_graph10() {
-  var deflated_data_base64_graph10 = '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\n';
+  var deflated_data_base64_graph10 = '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\n';
   var deflated_data_binary_graph10 = window.atob(deflated_data_base64_graph10);
   var inflated_data_graph10 = JSON.parse(pako.inflate(deflated_data_binary_graph10, { to: 'string' }));
   var data_graph10 = google.visualization.arrayToDataTable(inflated_data_graph10);
   var options_graph10 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Memory used by cmonitor_collector CGroup in MB (from CGroup stats)",
+    title: "Used memory in MB (from memory cgroup)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
     series: {
      0: {targetAxisIndex:0},
      1: {targetAxisIndex:0},
+     3: {targetAxisIndex:0},
      2: {targetAxisIndex:1},
     },
     vAxes: {
@@ -619,7 +620,7 @@ function show_config_window() {
       <option value="draw_graph8">CPU1</option>
     </select>
     <button id="btn_draw_graph9" style="color:red"><b>All CPUs</b></button>
-    <button id="btn_draw_graph10" style="color:darkorange"><b>Memory Usage</b></button>
+    <button id="btn_draw_graph10" style="color:darkorange"><b>Memory</b></button>
     <button id="btn_draw_graph11" style="color:red"><b>CPU/Memory/Disk Bubbles</b></button>
     <button id="btn_draw_graph12" style="color:red"><b>CPU by Process</b></button>
     <button id="btn_draw_graph13" style="color:black"><b>IO by Process</b></button>
@@ -631,7 +632,7 @@ function show_config_window() {
       <option value="draw_graph2">CPU1</option>
     </select>
     <button id="btn_draw_graph3" style="color:red"><b>All CPUs</b></button>
-    <button id="btn_draw_graph4" style="color:darkorange"><b>Memory Usage</b></button>
+    <button id="btn_draw_graph4" style="color:darkorange"><b>Memory</b></button>
     <button id="btn_draw_graph5" style="color:darkgreen"><b>Disk I/O</b></button>
     <button id="btn_draw_graph6" style="color:black"><b>Average Load</b></button>
   </td></tr>

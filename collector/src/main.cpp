@@ -767,6 +767,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     for (unsigned int loop = 0; g_cfg.m_nSamples == 0 || loop < g_cfg.m_nSamples; loop++) {
         if (loop != 0)
             sleep(g_cfg.m_nSamplingInterval);
+        g_logger.LogDebug("Starting sample %u/%lu", loop, g_cfg.m_nSamples);
 
         /* calculate elapsed time to include sleep and data collection time */
         double previous_time = current_time;

@@ -24,8 +24,8 @@ all: prepare_context
 		gzip -f ../$(HOSTNAME).json
 
 prepare_context:
-	@cp -fv ../../src/cmonitor_collector .
-	@if ldd ../../src/cmonitor_collector | grep libc.musl >/dev/null; then \
+	@cp -fv ../../collector/src/cmonitor_collector .
+	@if ldd ../../collector/src/cmonitor_collector | grep libc.musl >/dev/null; then \
 		echo "Found that cmonitor_collector is correctly compiled for Alpine distro" ; \
 	else \
 		echo "cmonitor_collector needs to be built for Alpine distro. Cannot proceed" ; \

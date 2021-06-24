@@ -35,10 +35,17 @@ endif
 
 valgrind:
 	$(MAKE) -C collector valgrind
+cmonitor_musl:
+	$(MAKE) -C collector cmonitor_musl
+docker_image:
+	$(MAKE) -C collector docker_image
+docker_run:
+	$(MAKE) -C collector docker_run
+docker_push:
+	$(MAKE) -C collector docker_push
 
 examples:
 	$(MAKE) -C examples all
-
 
 .PHONY: all clean install examples 
 

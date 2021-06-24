@@ -34,7 +34,7 @@ distclean: clean
 regen_baremetal1:
 	@echo "Launching load simulator to have some CPU at 100% and so on..."
 	./example-load.sh &
-	@echo "Regenerating example JSON... this will take about 3*60secs."
+	@echo "Regenerating example JSON... this will take about 10minutes (60 samples every 10secs)."
 	@$(CMONITOR_COLLECTOR) \
 		--sampling-interval=10 \
 		--num-samples=60 \
@@ -70,11 +70,11 @@ regen_docker_collecting_baremetal_stats:
 # - Redis + example_load_redis.py is used as "model" of a generic user application 
 # - cpuset cgroup is used (--cpuset-cpus): 2 cpus allowed regardless of how many are available
 # - cpuacct cgroup is used (--cpus): 0.9 cpu time max can be consumed on each allowed cpu
-# - memory cgroup is used (--memory) max 100MB can be consumed
+# - memory cgroup is used (--memory) max 10MB can be consumed
 #
 DOCKER_EXAMPLE_CPUS:=0,1
 DOCKER_EXAMPLE_CPU_QUOTA:=0.9
-DOCKER_EXAMPLE_MEMORY_LIMIT:=100m
+DOCKER_EXAMPLE_MEMORY_LIMIT:=10m
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f .)
 
 regen_docker_userapp:
