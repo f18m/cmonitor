@@ -769,6 +769,8 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
     # now that first pass is done, adjust units for IO & memory
     mem_divider, mem_unit = choose_byte_divider(header['proc_meminfo']['MemTotal'])
     
+    # FIXME: show CPU and memory limits not only in "All CPUS" and "Memory" tabs but also in per-process charts:
+    
     # now generate instead a table of CPU/IO/MEMORY usage over time per process:
     process_table = {}
     for key in [ 'cpu', 'io', 'mem' ]:
@@ -1034,7 +1036,7 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes):
             stack_state=False))
     return web
 
-def generate_cgroup_cpus(web, jdata, logical_cpus_indexes):
+def generate_cgroup_cpus(web, jheader, jdata, logical_cpus_indexes):
     if 'cgroup_cpuacct_stats' not in jdata[0]:
         return web  # cgroup mode not enabled at collection time!
         
@@ -1043,8 +1045,11 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes):
     for c in logical_cpus_indexes:
         cpu_stats_table[c] = GoogleChartsTimeSeries(['Timestamp', 'User', 'System'])
         
-    all_cpus_table = GoogleChartsTimeSeries(['Timestamp'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
+    all_cpus_table = GoogleChartsTimeSeries(['Timestamp', 'Limit', 'Throttling'] + [('CPU' + str(x)) for x in logical_cpus_indexes])
         
+    cpu_quota_perc = 100
+    if "cpu_quota_perc" in jheader["cgroup_config"]:
+        cpu_quota_perc = 100 * jheader["cgroup_config"]["cpu_quota_perc"]
     #
     # MAIN LOOP
     # Process JSON sample and fill the GoogleChartsTimeSeries() object
@@ -1057,7 +1062,13 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes):
         
         try:
             ts = s['timestamp'][g_datetime_field]
-            all_cpus_row = [ ts ]
+            
+            cpu_throttling = 0
+            if 'throttling' in s['cgroup_cpuacct_stats']:
+                # throttling is new since cmonitor_collector 1.5-0
+                cpu_throttling = 100 * s['cgroup_cpuacct_stats']['throttling']['nr_throttled'] / s['cgroup_cpuacct_stats']['throttling']['nr_periods']
+            
+            all_cpus_row = [ ts , cpu_quota_perc, cpu_throttling ]
             for c in logical_cpus_indexes:
                 # get data:
                 cpu_stats = s['cgroup_cpuacct_stats']['cpu' + str(c)]
@@ -1090,14 +1101,17 @@ def generate_cgroup_cpus(web, jdata, logical_cpus_indexes):
                 graph_source=GRAPH_SOURCE_DATA_CGROUP,
                 stack_state=True))
 
-    # Also produce the "all CPUs" graph
+    # Also produce the "all CPUs" graph that includes some very useful KPIs like
+    # - CPU limit imposed on Linux CFS scheduler
+    # - Amount of CPU throttling
     web.appendGoogleChart(GoogleChartsGraph(
             data=all_cpus_table,  # Data
-            graph_title="All logical CPUs (from CGroup stats)",
+            graph_title="All logical CPUs available in the cgroup",
             button_label="All CPUs",
             y_axis_title="Time (%)",
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
             stack_state=False))
+    
     return web
 
 def generate_baremetal_memory(web, jdata):
@@ -1149,7 +1163,7 @@ def generate_baremetal_memory(web, jdata):
     web.appendGoogleChart(GoogleChartsGraph(
             data=baremetal_memory_stats,  # Data
             graph_title='Memory usage in ' + unit + " (from baremetal stats)",
-            button_label="Memory Usage",
+            button_label="Memory",
             y_axis_title=unit,
             graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
             stack_state=True))
@@ -1171,7 +1185,7 @@ def generate_cgroup_memory(web, jheader, jdata):
     else:
         mem_total_bytes = jdata[0]['cgroup_memory_stats']['total_cache'] + \
                           jdata[0]['cgroup_memory_stats']['total_rss'] 
-    cgroup_memory_stats = GoogleChartsTimeSeries(['Timestamp', 'Used', 'Cached (DiskRead)', 'Alloc Failures'])
+    cgroup_memory_stats = GoogleChartsTimeSeries(['Timestamp', 'Used', 'Cached (DiskRead)', 'Alloc Failures', 'Limit'])
     divider, unit = choose_byte_divider(mem_total_bytes)
     
     n_invalid_samples = 0
@@ -1188,6 +1202,7 @@ def generate_cgroup_memory(web, jheader, jdata):
                     mu / divider,
                     mc / divider,
                     mfail,
+                    mem_total_bytes / divider, # imposed limit of memory in this cgroup
                 ])
         except KeyError: # avoid crashing if a key is not present in the dictionary...
             #print("Missing cgroup data while parsing sample %d" % i)
@@ -1199,12 +1214,13 @@ def generate_cgroup_memory(web, jheader, jdata):
     # Produce the javascript:
     web.appendGoogleChart(GoogleChartsGraph(
             data=cgroup_memory_stats,  # Data
-            graph_title='Used memory in ' + unit +  " (from CGroup stats)",
-            button_label="Memory Usage",
+            graph_title='Used memory in ' + unit +  " (from memory cgroup)",
+            button_label="Memory",
             y_axis_title=[unit, "Alloc Failures"],
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
             stack_state=False,
             series_for_2nd_yaxis=[2])) # put "failcnt" on 2nd y axis
+    
     return web
 
 
@@ -1413,7 +1429,7 @@ def main_process_file(infile, outfile):
     web = generate_baremetal_avg_load(web, jheader, jdata)
     
     # cgroup stats:
-    web = generate_cgroup_cpus(web, jdata, cgroup_logical_cpus_indexes)
+    web = generate_cgroup_cpus(web, jheader, jdata, cgroup_logical_cpus_indexes)
     web = generate_cgroup_memory(web, jheader, jdata)
     web = generate_cgroup_topN_procs(web, jheader, jdata)
     web.endHtmlHead(generate_config_js(jheader))
