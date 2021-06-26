@@ -106,13 +106,17 @@ yum install -y cmonitor-collector cmonitor-tools
 
 ### Ubuntu
 
-If you use an LXC/Docker container based on a Ubuntu distribution you can similarly install from [my Ubuntu PPA](https://launchpad.net/~francesco-montorsi/+archive/ubuntu/cmonitor)
+If you use an LXC/Docker container based on a Ubuntu distribution you can similarly install from [my Ubuntu PPA](https://launchpad.net/~francesco-montorsi/+archive/ubuntu/cmonitor). 
 using the following commands:
 
 ```
 add-apt-repository ppa:francesco-montorsi/cmonitor
 apt-get install cmonitor
 ```
+
+WARNING: I'm having troubles maintaining both the RPM, docker and Ubuntu packaging for this project, so typically the Ubuntu (.deb) package is
+updated only later, when I have time. If you want to test very latest cmonitor release as .deb please let me know, I might be able to push the latest
+release in my PPA.
 
 <div id='section-id-88'/>
 
