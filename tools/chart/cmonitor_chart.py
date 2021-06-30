@@ -1066,7 +1066,9 @@ def generate_cgroup_cpus(web, jheader, jdata, logical_cpus_indexes):
             cpu_throttling = 0
             if 'throttling' in s['cgroup_cpuacct_stats']:
                 # throttling is new since cmonitor_collector 1.5-0
-                cpu_throttling = 100 * s['cgroup_cpuacct_stats']['throttling']['nr_throttled'] / s['cgroup_cpuacct_stats']['throttling']['nr_periods']
+                nr_periods = s['cgroup_cpuacct_stats']['throttling']['nr_periods']
+                if nr_periods:
+                    cpu_throttling = 100 * s['cgroup_cpuacct_stats']['throttling']['nr_throttled'] / nr_periods
             
             all_cpus_row = [ ts , cpu_quota_perc, cpu_throttling ]
             for c in logical_cpus_indexes:
