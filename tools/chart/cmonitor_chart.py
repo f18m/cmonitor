@@ -300,7 +300,7 @@ class GoogleChartsGraph:
             ret_string += '  },\n'
         else:
             ret_string += '  vAxis: { title: "%s", gridlines: { color: "lightgrey", count: 11 } },\n' % str(self.y_axis_title)
-        ret_string += '  explorer: { actions: ["dragToZoom", "rightClickToReset"], axis: "horizontal", keepInBounds: true, maxZoomIn: 20.0 },\n'
+        ret_string += '  explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },\n'
         
         # graph stacking
         g_next_graph_need_stacking = self.stack_state
