@@ -235,9 +235,9 @@ DOCKER_ID=$(docker ps -aq --no-trunc -f "name=userapp")
 cmonitor_collector \
    --num-samples=until-cgroup-alive \
    --cgroup-name=docker/$DOCKER_ID \
-   --custom-metadata='cmonitor_chart_name:userapp' \
-  --sampling-interval=3 \
-  --output-filename docker-userapp.json
+   --custom-metadata=cmonitor_chart_name:userapp \
+   --sampling-interval=3 \
+   --output-filename docker-userapp.json
 ```
 
 Example results:
