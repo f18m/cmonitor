@@ -3,40 +3,42 @@
 
 # cmonitor - lightweight container monitor
 
-A **Docker, LXC, database-free, lightweight container performance monitoring solution**, perfect for ephemeral containers
+A **Docker, LXC, Kubernetes, database-free, lightweight container performance monitoring solution**, perfect for ephemeral containers
 (e.g. containers used for DevOps automatic testing). Can also be used with InfluxDB and Grafana to monitor long-lived 
 containers in real-time.
 
-The project is composed by 2 tools: 
+The project is composed by 2 parts: 
 1) a **lightweight agent** (80KB, native binary; no JVM, Python or other interpreters needed) to collect actual CPU/memory/disk statistics (Linux-only)
-   and store them in a JSON file; this is the so-called "collector" utility;
-2) a simple **Python script to convert the generated JSON** to a self-contained HTML page.
+   and store them in a JSON file; this is the so-called "cmonitor_collector" utility;
+2) some simple **Python tools to process the generated JSONs**; most important one is "cmonitor_chart" that turns the JSON into a self-contained HTML page
+   using [Google Charts](https://developers.google.com/chart) to visualize all collected data.
 
 The collector utility is a cgroup-aware statistics collector; cgroups (i.e. Linux Control Groups) are the basic technology used 
 to create containers (you can [read more on them here](https://en.wikipedia.org/wiki/Cgroups)); this project is thus aimed at
-monitoring your LXC/Docker container performances but can equally monitor physical servers.
+monitoring your LXC/Docker/Kubernetes POD container performances. Of course the utility is generic and can still monitor physical servers.
 
 This project supports only **Linux x86_64 architectures**.
 
 Table of contents of this README:
 
-- [Features](#section-id-24)
-- [Yet-Another-Monitoring-Project?](#section-id-41)
-- [How to install](#section-id-65)
-  - [RPM](#section-id-67)
-  - [Ubuntu](#section-id-78)
-  - [Docker](#section-id-88)
-- [How to use](#section-id-100)
-  - [Step 1: collect stats](#section-id-102)
-  - [Step 2: plot stats collected as JSON](#section-id-120)
-  - [Usage scenarios and HTML result examples](#section-id-132)
-    - [Monitoring the baremetal server (no containers)](#section-id-1321)
-    - [Monitoring the baremetal server from a Docker container](#section-id-1322)
-    - [Monitoring a Docker container launching cmonitor on the baremetal](#section-id-1324)
-    - [Monitoring a Docker container embedding cmonitor inside it](#section-id-1323)
-  - [Connecting with InfluxDB and Grafana](#section-id-159)
-- [Project History](#section-id-185)
-- [License](#section-id-186)
+- [cmonitor - lightweight container monitor](#cmonitor---lightweight-container-monitor)
+  - [Features](#features)
+  - [Yet-Another-Monitoring-Project?](#yet-another-monitoring-project)
+  - [How to install](#how-to-install)
+    - [RPM](#rpm)
+    - [Ubuntu](#ubuntu)
+    - [Docker](#docker)
+  - [How to use](#how-to-use)
+    - [Step 1: collect stats](#step-1-collect-stats)
+    - [Step 2: plot stats collected as JSON](#step-2-plot-stats-collected-as-json)
+    - [Usage scenarios and HTML result examples](#usage-scenarios-and-html-result-examples)
+      - [Monitoring the baremetal server (no containers)](#monitoring-the-baremetal-server-no-containers)
+      - [Monitoring the baremetal server from a Docker container](#monitoring-the-baremetal-server-from-a-docker-container)
+      - [Monitoring a Docker container launching cmonitor on the baremetal](#monitoring-a-docker-container-launching-cmonitor-on-the-baremetal)
+      - [Monitoring a Docker container embedding cmonitor inside it](#monitoring-a-docker-container-embedding-cmonitor-inside-it)
+    - [Connecting with InfluxDB and Grafana](#connecting-with-influxdb-and-grafana)
+  - [Project History](#project-history)
+  - [License](#license)
 
 <div id='section-id-24'/>
 
@@ -64,24 +66,27 @@ to visualize all the performance data easily using [Google Charts](https://devel
 
 You may be thinking "yet another monitoring project" for containers. Indeed there are already quite a few open source solutions, e.g.:
 
-- [kapacitor](https://www.influxdata.com/time-series-platform/kapacitor/)
-- [Prometheus](https://prometheus.io/)
-- [cAdvisor](https://github.com/google/cadvisor)
-- [netdata](https://github.com/netdata/netdata)
-- [collectd](https://collectd.org/)
+- [cAdvisor](https://github.com/google/cadvisor): a Google-sponsored utility to monitor containers
+- [netdata](https://github.com/netdata/netdata): a web application targeting monitoring of large clusters
+- [collectd](https://collectd.org/): a system statics collection daemon (not much container-oriented though)
+- [metrics-server](https://github.com/kubernetes-sigs/metrics-server): the Kubernetes official metric server (Kubernetes only)
 
-All these are very complete solutions that allow you to monitor swarms of containers, in real time.
+Almost all of these are very complete solutions that allow you to monitor swarms of containers, in real time.
 The downside is that all these projects require you to setup an infrastructure (usually a time-series database) that collects
 in real-time all the statistics and then have some powerful web platform (e.g. Graphana) to render those time-series.
-All this is fantastic for **persistent** containers.
+All that is fantastic for **persistent** containers.
 
 This project instead is focused on providing a database-free, lightweight container performance monitoring solution, 
 perfect for **ephemeral** containers (e.g. containers used for DevOps automatic testing). The idea is much simpler:
 1) you collect data for your container (or, well, your physical server) using a small collector software (written in C++ to
   avoid Java virtual machines, Python interpreters or the like!) that saves data on disk in JSON format;
-2) you save the JSON file, convert it to a **self-contained** HTML page;
-3) you can archive that HTML file, send it by email, put in a tarball or whatever you like the most: no dependencies at all
-  are required to visualize it later!
+2) whenever needed, the JSON can be either converted to a **self-contained** HTML page for human inspection or some kind of
+   algorithm can be run to perform targeted analysis (e.g. imagine you need to search for time ranges where high-CPU usage was
+   combined with high-memory usage or where instead CPU usage was apparently low but CPU was throttled due to cgroup limits);
+3) the human-friendly HTML file, or the result of the analysis, can be then sent by email, stored in a tarball or as "artifact"
+   of your CI/CD. The idea is that these post-processing results will have no dependencies at all with any infrastructure,
+   so they can be consumed anywhere at anytime (in other words you don't need to make a time-series database available 24/7
+   to go and dig performance results of your containers).
 
 
 <div id='section-id-65'/>
