@@ -61,6 +61,7 @@ struct option g_long_opts[] = {
     { "collect", required_argument, 0, 'C' }, // force newline
     { "deep-collect", no_argument, 0, 'e' }, // force newline
     { "cgroup-name", required_argument, 0, 'g' }, // force newline
+    { "score-threshold", required_argument, 0, 't' }, // force newline
     { "custom-metadata", required_argument, 0, 'M' }, // force newline
 
     // Options to save data locally
@@ -119,37 +120,42 @@ struct option_extended {
         "the cgroup to monitor. If 'self' value is passed (the default), the statistics of the cgroups where \n"
         "cmonitor_collector runs will be collected. Note that this option is mostly useful when running \n"
         "cmonitor_collector directly on the baremetal since a process running inside a container cannot monitor\n"
-        "the performances of other containers.\n" },
+        "the performances of other containers." },
     { "Data sampling options", &g_long_opts[7],
+        "If cgroup process/thread sampling is active (--collect=cgroup_processes/cgroup_threads) use the provided\n"
+        "score threshold to filter out non-interesting processes/threads. The 'score' is a number that is linearly\n"
+        "increasing with the CPU usage. Defaults to value '1' to filter out all processes/threads having zero CPU "
+        "usage. Use '0' to turn off filtering by score." },
+    { "Data sampling options", &g_long_opts[8],
         "Allows to specify custom metadata key:value pairs that will be saved into the JSON output (if saving data\n"
         "locally) under the 'header.custom_metadata' path. See usage examples below.\n" },
 
     // Options to save data locally
-    { "Options to save data locally", &g_long_opts[8],
-        "Program will write output files to provided directory (default cwd)." },
     { "Options to save data locally", &g_long_opts[9],
+        "Program will write output files to provided directory (default cwd)." },
+    { "Options to save data locally", &g_long_opts[10],
         "Name the output files using provided prefix instead of defaulting to the filenames:\n"
         "\thostname_<year><month><day>_<hour><minutes>.json  (for JSON data)\n"
         "\thostname_<year><month><day>_<hour><minutes>.err   (for error log)\n"
         "Use special prefix 'stdout' to indicate that you want the utility to write on stdout.\n"
-        "Use special prefix 'none' to indicate that you want to disable JSON genreation." },
-    { "Options to save data locally", &g_long_opts[10],
+        "Use special prefix 'none' to indicate that you want to disable JSON generation." },
+    { "Options to save data locally", &g_long_opts[11],
         "Generate a pretty-printed JSON file instead of a machine-friendly JSON (the default).\n" },
 
     // Options to stream data remotely
-    { "Options to stream data remotely", &g_long_opts[11],
+    { "Options to stream data remotely", &g_long_opts[12],
         "IP address or hostname of the InfluxDB instance to send measurements to;\n"
         "cmonitor_collector will use a database named 'cmonitor' to store them." },
-    { "Options to stream data remotely", &g_long_opts[12], "Port used by InfluxDB." },
-    { "Options to stream data remotely", &g_long_opts[13],
+    { "Options to stream data remotely", &g_long_opts[13], "Port used by InfluxDB." },
+    { "Options to stream data remotely", &g_long_opts[14],
         "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).\n" },
-    { "Options to stream data remotely", &g_long_opts[14], "Set the InfluxDB database name.\n" },
+    { "Options to stream data remotely", &g_long_opts[15], "Set the InfluxDB database name.\n" },
 
     // help
-    { "Other options", &g_long_opts[15], "Show version and exit" }, // force newline
-    { "Other options", &g_long_opts[16],
+    { "Other options", &g_long_opts[16], "Show version and exit" }, // force newline
+    { "Other options", &g_long_opts[17],
         "Enable debug mode; automatically activates --foreground mode" }, // force newline
-    { "Other options", &g_long_opts[17], "Show this help" },
+    { "Other options", &g_long_opts[18], "Show this help" },
 
     { NULL, NULL, NULL }
 };
@@ -371,8 +377,8 @@ void CMonitorCollectorApp::print_help()
     std::cerr << "    2) Collect data from a docker container:" << std::endl;
     std::cerr << "\tDOCKER_NAME=your_docker_name" << std::endl;
     std::cerr << "\tDOCKER_ID=$(docker ps -aq --no-trunc -f \"name=$DOCKER_NAME\")" << std::endl;
-    std::cerr << "\tcmonitor_collector --allow-multiple-instances --num-samples=until-cgroup-alive "
-                 "--cgroup-name=docker/$DOCKER_ID --custom-metadata='cmonitor_chart_name:$DOCKER_NAME'"
+    std::cerr << "\tcmonitor_collector --allow-multiple-instances --num-samples=until-cgroup-alive " << std::endl;
+    std::cerr << "\t\t\t--cgroup-name=docker/$DOCKER_ID --custom-metadata='cmonitor_chart_name:$DOCKER_NAME'"
               << std::endl;
     std::cerr << "    3) Use the defaults (-s 60, collect forever), saving to custom file in background:" << std::endl;
     std::cerr << "\tcmonitor_collector --output-filename=my_server_today" << std::endl;
@@ -387,6 +393,8 @@ void CMonitorCollectorApp::print_help()
     std::cerr << "" << std::endl;
     std::cerr << "NOTE: this is the cgroup-aware fork of original njmon software (see https://github.com/f18m/cmonitor)"
               << std::endl;
+
+    // FIXME: add example for LXC container monitoring
 
     exit(0);
 }
@@ -479,6 +487,12 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'g':
                 g_cfg.m_strCGroupName = optarg;
                 break;
+            case 't':
+                if (!string2int(optarg, g_cfg.m_nProcessScoreThreshold)) {
+                    printf("Unrecognized score threshold: %s\n", optarg);
+                    exit(51);
+                }
+                break;
             case 'M': {
                 std::string key_value = optarg;
 
@@ -568,6 +582,11 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
     if (g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort > 0) {
         printf("Option --remote-port=%lu provided but the --remote-ip option was not provided\n", g_cfg.m_nRemotePort);
         exit(53);
+    }
+    if ((g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) && (g_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {
+        printf("If --collect=cgroup_threads is provided, it is not required to provide --collect=cgroup_processes "
+               "since implicitly statistics for all processes will already be collected\n");
+        exit(54);
     }
 
     optind = 0; /* reset getopt lib */

@@ -71,6 +71,8 @@ regen_docker_collecting_baremetal_stats:
 # - cpuset cgroup is used (--cpuset-cpus): 2 cpus allowed regardless of how many are available
 # - cpuacct cgroup is used (--cpus): 0.9 cpu time max can be consumed on each allowed cpu
 # - memory cgroup is used (--memory) max 10MB can be consumed
+# - cgroup_thread collection is enabled and score-filtering is disabled to make sure to capture
+#   all 5 threads of Redis software, despite most of these having 0% CPU usage
 #
 DOCKER_EXAMPLE_CPUS:=0,1
 DOCKER_EXAMPLE_CPU_QUOTA:=0.9
@@ -107,6 +109,7 @@ regen_docker_userapp:
 		--foreground \
 		--output-filename=docker-userapp.json \
 		--cgroup-name=docker/$$(docker ps --no-trunc -aqf name=userapp) \
+		--score-threshold=0 \
 		--custom-metadata="cmonitor_chart_name:userapp (Redis docker)"
 	pkill example_load_re
 	docker stop userapp

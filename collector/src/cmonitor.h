@@ -207,6 +207,7 @@ public:
     unsigned int m_nCollectFlags = PK_ALL; // --collect; this is a bitmask of PerformanceKpiFamily values
     OutputFields m_nOutputFields = PF_USED_BY_CHART_SCRIPT_ONLY; // --deep-collect
     std::string m_strCGroupName; // --cgroup-name
+    uint64_t m_nProcessScoreThreshold = 1; // --score-threshold
     std::map<std::string, std::string> m_mapCustomMetadata; // --custom-metadata
 };
 

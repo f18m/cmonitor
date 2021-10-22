@@ -36,11 +36,6 @@
 #define MIN_ELAPSED_SECS (0.1)
 #define PAGESIZE_BYTES (1024 * 4)
 
-/* Put a threshold on the CPU percentage basically:
- */
-//#define PROCESS_SCORE_IGNORE_THRESHOLD (1000)
-#define PROCESS_SCORE_IGNORE_THRESHOLD (1)
-
 typedef std::map<std::string /* controller type */, std::string /* path */> cgroup_paths_map_t;
 
 // ----------------------------------------------------------------------------------
@@ -103,7 +98,7 @@ const char* get_state(char n)
 
 bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* pout, OutputFields output_opts)
 {
-#define MAX_PROC_FILENAME_LEN 64
+#define MAX_PROC_FILENAME_LEN 128
 #define MAX_PROC_CONTENT_LEN 4096
 
     FILE* fp = NULL;
@@ -128,7 +123,8 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* pout, OutputFields output_opt
         pout->username[63] = 0;
     }
 
-    { /* the statistic file for the process
+    { /* the statistic file for the process/thread
+
          VERY IMPORTANT: for multithreaded application it might be tricky to understand /proc file organization.
          Consider a single process with PID=TID=A having 2 secondary threads with TID=B and TID=C.
          The kernel stat files layout will look like:
@@ -254,9 +250,9 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* pout, OutputFields output_opt
         }
     }
 
-    if (output_opts == PF_ALL) { /* the statm file for the process */
+    if (output_opts == PF_ALL) { /* the statm file for the process/thread */
 
-        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/statm", pid);
+        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/task/%d/statm", pid, pid);
         if ((fp = fopen(filename, "r")) == NULL) {
             g_logger.LogError("failed to open file %s", filename);
             return false;
@@ -278,9 +274,9 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* pout, OutputFields output_opt
         }
     }
 
-    { /* the status file for the process */
+    { /* the status file for the process/thread */
 
-        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/status", pid);
+        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/task/%d/status", pid, pid);
         if ((fp = fopen(filename, "r")) == NULL) {
             g_logger.LogError("failed to open file %s", filename);
             return false;
@@ -291,17 +287,17 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* pout, OutputFields output_opt
             }
             if (strncmp("Tgid:", buf, 5) == 0) {
                 // this info is only available from the /status file apparently and not from /stat
+                // and indicates whether this PID is the main thread (TGID==PID) or a secondary thread (TGID!=PID)
                 sscanf(&buf[6], "%d", &pout->pi_tgid);
             }
         }
         fclose(fp);
     }
 
-    /*if (uid == (uid_t)0)*/
-    { /* the io file for the process */
+    { /* the I/O file for the process/thread */
         pout->io_read_bytes = 0;
         pout->io_write_bytes = 0;
-        sprintf(filename, "/proc/%d/io", pid);
+        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/task/%d/io", pid, pid);
         if ((fp = fopen(filename, "r")) != NULL) {
             for (int i = 0; i < 6; i++) {
                 if (fgets(buf, 1024, fp) == NULL) {
@@ -993,7 +989,7 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, OutputFields ou
     static double ticks = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
     size_t nProcsOverThreshold = 0;
     g_output.psection_start("cgroup_tasks");
-    for (auto entry = m_topper.lower_bound(PROCESS_SCORE_IGNORE_THRESHOLD); entry != m_topper.end(); entry++) {
+    for (auto entry = m_topper.lower_bound(g_cfg.m_nProcessScoreThreshold); entry != m_topper.end(); entry++) {
         uint64_t score = (*entry).first;
         const procsinfo_t* p = (*entry).second.current;
         const procsinfo_t* q = (*entry).second.prev;
