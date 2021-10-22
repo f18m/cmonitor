@@ -7,3 +7,5 @@ collector/docker/cmonitor_collector
 .project
 .pydevproject
 .settings
+.vscode
+

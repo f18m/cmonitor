@@ -34,8 +34,8 @@ Table of contents of this README:
     - [Usage scenarios and HTML result examples](#usage-scenarios-and-html-result-examples)
       - [Monitoring the baremetal server (no containers)](#monitoring-the-baremetal-server-no-containers)
       - [Monitoring the baremetal server from a Docker container](#monitoring-the-baremetal-server-from-a-docker-container)
-      - [Monitoring a Docker container launching cmonitor on the baremetal](#monitoring-a-docker-container-launching-cmonitor-on-the-baremetal)
-      - [Monitoring a Docker container embedding cmonitor inside it](#monitoring-a-docker-container-embedding-cmonitor-inside-it)
+      - [Monitoring a Docker container launching cmonitor_collector on the baremetal](#monitoring-a-docker-container-launching-cmonitor_collector-on-the-baremetal)
+      - [Monitoring a Docker container that embeds cmonitor_collector](#monitoring-a-docker-container-that-embeds-cmonitor_collector)
     - [Connecting with InfluxDB and Grafana](#connecting-with-influxdb-and-grafana)
   - [Project History](#project-history)
   - [License](#license)
@@ -218,7 +218,7 @@ Example results:
       
 <div id='section-id-1324'/>
    
-#### Monitoring a Docker container launching cmonitor on the baremetal
+#### Monitoring a Docker container launching cmonitor_collector on the baremetal
 
 In this case you can simply install cmonitor as RPM or APT package following instructions in [How to install](#section-id-65)
 and then launch the cmonitor_collector utility as any other Linux daemon, specifying the name of the container it should monitor.
@@ -247,7 +247,7 @@ Example results:
    
 <div id='section-id-1323'/>
    
-#### Monitoring a Docker container embedding cmonitor inside it
+#### Monitoring a Docker container that embeds cmonitor_collector
 
 If you can easily modify the Dockerfile of your container, you can embed cmonitor so that it runs inside your container and
 monitor your dockerized-application.

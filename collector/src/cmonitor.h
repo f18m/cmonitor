@@ -48,23 +48,23 @@
 enum PerformanceKpiFamily {
     PK_INVALID = 0,
 
-    PK_CPU = 2,
-    PK_DISK = 4,
-    PK_MEMORY = 8,
-    PK_NETWORK = 16,
-    // PK_PROCESSES = 32,
+    PK_BAREMETAL_CPU = 2, // collect cpu stats from /proc/stat
+    PK_BAREMETAL_DISK = 4, // collect disk stats from /proc/diskstats
+    PK_BAREMETAL_MEMORY = 8, // collect memory stats from /proc/meminfo
+    PK_BAREMETAL_NETWORK = 16, // collect cpu stats from /proc/net/dev
 
-    PK_CGROUP_CPU_ACCT = 128,
-    PK_CGROUP_MEMORY = 256,
-    PK_CGROUP_BLKIO = 512,
-    PK_CGROUP_PROCESSES = 1024,
+    PK_CGROUP_CPU_ACCT = 128, // collect CPU stats for the whole cgroup from controller "cpu accounting"
+    PK_CGROUP_MEMORY = 256, // collect memory stats for the whole cgroup from controller "memory"
+    PK_CGROUP_BLKIO = 512, // collect IO stats for the whole cgroup from controller "bulk IO"
+    PK_CGROUP_PROCESSES = 1024, // provide per-PID info about CPU,memory,disk // FIXME: make granularity configurable
+    PK_CGROUP_THREADS = 2048, // provide per-thread info about CPU,memory,disk // FIXME: make granularity configurable
 
     PK_MAX,
 
-    PK_ALL_BAREMETAL = PK_CPU | PK_DISK | PK_MEMORY | PK_NETWORK,
+    PK_ALL_BAREMETAL = PK_BAREMETAL_CPU | PK_BAREMETAL_DISK | PK_BAREMETAL_MEMORY | PK_BAREMETAL_NETWORK,
     PK_ALL_CGROUP = PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_PROCESSES,
 
-    PK_ALL = PK_CPU | PK_DISK | PK_MEMORY | PK_NETWORK // force newline
+    PK_ALL = PK_BAREMETAL_CPU | PK_BAREMETAL_DISK | PK_BAREMETAL_MEMORY | PK_BAREMETAL_NETWORK // force newline
         | PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_PROCESSES
 };
 
@@ -195,7 +195,7 @@ public:
     std::string m_strOutputDir; // --output-directory
     std::string m_strOutputFilenamePrefix; // --output-filename
 
-    // remove streaming opts
+    // remote streaming opts
     std::string m_strRemoteAddress; // --remote-ip
     std::string m_strRemoteSecret; // --remote-secret
     std::string m_strRemoteDatabaseName = "cmonitor"; // remote-dbname
@@ -204,7 +204,7 @@ public:
     // data collecting options
     uint64_t m_nSamples = 0; // --num-samples
     uint64_t m_nSamplingInterval = 60; // --sampling-interval
-    unsigned int m_nCollectFlags = PK_ALL; // --collect: a combination of PerformanceKpiFamily values
+    unsigned int m_nCollectFlags = PK_ALL; // --collect; this is a bitmask of PerformanceKpiFamily values
     OutputFields m_nOutputFields = PF_USED_BY_CHART_SCRIPT_ONLY; // --deep-collect
     std::string m_strCGroupName; // --cgroup-name
     std::map<std::string, std::string> m_mapCustomMetadata; // --custom-metadata
@@ -221,8 +221,8 @@ class CMonitorLoggerUtils {
 public:
     void init_error_output_file(const std::string& filenamePrefix);
 
-    void LogDebug(const char* line, ...);
-    void LogError(const char* line, ...);
+    void LogDebug(const char* line, ...) __attribute__((format(printf, 2, 3)));
+    void LogError(const char* line, ...) __attribute__((format(printf, 2, 3)));
 
 private:
     std::string m_strErrorFileName;
@@ -282,11 +282,11 @@ private:
     bool cgroup_still_exists();
     void cgroup_proc_memory(const std::set<std::string>& allowedStatsNames);
     void cgroup_proc_cpuacct(double elapsed_sec, bool print);
-    void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts);
+    void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads);
     bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
     //------------------------------------------------------------------------------
-    // Functions to collect /proc stats
+    // Functions to collect /proc stats (baremetal)
     //------------------------------------------------------------------------------
 
     void proc_stat(double elapsed, bool onlyCgroupAllowedCpus, OutputFields output_opts);
@@ -330,7 +330,10 @@ private:
     //------------------------------------------------------------------------------
     std::map<pid_t, procsinfo_t> m_pid_databases[2];
     unsigned int m_pid_database_current_index = 0; // will be alternatively 0 and 1
-    std::map<uint64_t /* process score */, proc_topper_t> m_topper;
+
+    // it's possible, even if unlikely, for 2 PIDs to have identical process score...
+    // that's why we use std::multimap instead of a std::map
+    std::multimap<uint64_t /* process score */, proc_topper_t> m_topper;
 };
 
 //------------------------------------------------------------------------------

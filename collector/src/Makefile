@@ -12,6 +12,11 @@ OUT=cmonitor_collector
 VALGRIND_LOGFILE_POSTFIX:=${OUT}-$(shell date +%F-%H%M%S)
 VALGRIND_COMMON_OPTS:=--gen-suppressions=all --time-stamp=yes --error-limit=no
 
+ifeq ($(CMONITOR_ARGS),)
+CMONITOR_ARGS:=--num-samples=10 --sampling-interval=1 --foreground --debug --collect=all --remote-ip=localhost --remote-port=8086
+endif
+
+
 # NOTE: --track-origins=yes makes Valgrind VERY slow but without it Valgrind will report false memory leaks
 MEMCHECK_COMMON_OPTS:=--tool=memcheck --track-origins=yes --malloc-fill=AF --free-fill=BF --leak-check=full
 
@@ -48,7 +53,7 @@ valgrind:
 			 $(VALGRIND_COMMON_OPTS) \
 			--log-file=valgrind-$(VALGRIND_LOGFILE_POSTFIX).log \
 			$(THIS_DIR)/$(OUT) \
-			--num-samples=10 --sampling-interval=1 --foreground --debug --collect=all --remote-ip=localhost --remote-port=8086
+			$(CMONITOR_ARGS)
 	@echo "Valgrind exited"
 
 

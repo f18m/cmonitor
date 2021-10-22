@@ -51,13 +51,20 @@ uint64_t compute_proc_score(const procsinfo_t* current_stats, const procsinfo_t*
 {
     static double ticks_per_sec = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
 
-    uint64_t cputime_clock_ticks = // force newline
-        (current_stats->pi_utime - prev_stats->pi_utime) + // force newline
-        (current_stats->pi_stime - prev_stats->pi_stime);
+    // take the total time this process/task/thread has been scheduled in both USER and KERNEL space:
+    uint64_t cputime_clock_ticks = 0;
+    if (current_stats->pi_utime > prev_stats->pi_utime && // force newline
+        current_stats->pi_stime > prev_stats->pi_stime) {
+        cputime_clock_ticks = // force newline
+            (current_stats->pi_utime - prev_stats->pi_utime) + // userspace
+            (current_stats->pi_stime - prev_stats->pi_stime); // kernelspace
+    }
 
     // give a score which is linear in both CPU time and virtual memory size:
     // return (cputime_clock_ticks * ticks_per_sec) * current_stats->pi_vsize;
 
+    // prefer a score based only on CPU time:
+    // FIXME: it would be nice to have the "score policy" configurable and not hardcoded like that
     return cputime_clock_ticks * ticks_per_sec;
 }
 
@@ -94,55 +101,94 @@ const char* get_state(char n)
     }
 }
 
-bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p, OutputFields output_opts)
+bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* pout, OutputFields output_opts)
 {
-    FILE* fp;
-    char filename[64];
-    char buf[1024 * 4];
-    int size = 0;
-    int ret = 0;
-    int count = 0;
-    int i;
-    struct stat statbuf;
-    struct passwd* pw;
+#define MAX_PROC_FILENAME_LEN 64
+#define MAX_PROC_CONTENT_LEN 4096
+
+    FILE* fp = NULL;
+    char filename[MAX_PROC_FILENAME_LEN] = { '\0' };
+    char buf[MAX_PROC_CONTENT_LEN] = { '\0' };
+
+    memset(pout, 0, sizeof(procsinfo_t));
 
     /* the statistic directory for the process */
-    snprintf(filename, 64, "/proc/%d", pid);
+    snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d", pid);
+    struct stat statbuf;
     if (stat(filename, &statbuf) != 0) {
         g_logger.LogError("ERROR: failed to stat file %s", filename);
         return false;
     }
 
     // by looking at the owner of the directory we know which user is running it:
-    p->uid = statbuf.st_uid;
-    pw = getpwuid(statbuf.st_uid);
+    pout->uid = statbuf.st_uid;
+    struct passwd* pw = getpwuid(statbuf.st_uid);
     if (pw) {
-        strncpy(p->username, pw->pw_name, 63);
-        p->username[63] = 0;
+        strncpy(pout->username, pw->pw_name, 63);
+        pout->username[63] = 0;
     }
 
-    { /* the statistic file for the process */
-        snprintf(filename, 64, "/proc/%d/stat", pid);
+    { /* the statistic file for the process
+         VERY IMPORTANT: for multithreaded application it might be tricky to understand /proc file organization.
+         Consider a single process with PID=TID=A having 2 secondary threads with TID=B and TID=C.
+         The kernel stat files layout will look like:
+            /proc/A
+                  +-- stat            contains statistics about the main thread (PID=TID=A)
+                  +-- task/A/stat     contains statistics about the main thread (PID=TID=A)
+                  +-- task/B/stat     contains statistics about the secondary thread TID=B
+                  +-- task/C/stat     contains statistics about the secondary thread TID=C
+         So far so good, here comes the tricky part:
+            /proc/B                   it exists even if B is just a secondary thread of PID=A
+                  +-- stat            contains statistics about the main thread (PID=TID=A) and
+                                      this is the tricky part... you would expect this to contain stats of TID=B!!
+                  +-- task/A/stat     contains statistics about the main thread (PID=TID=A)
+                  +-- task/B/stat     contains statistics about the secondary thread TID=B
+                  +-- task/C/stat     contains statistics about the secondary thread TID=C
+
+         To make sure we always get statistics for the thread identified by PID=pid, regardless of the fact it's
+         the main thread or a secondary one, we always look at /proc/<pid>/task/<pid>/stat
+       */
+        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/task/%d/stat", pid, pid);
         if ((fp = fopen(filename, "r")) == NULL) {
             g_logger.LogError("ERROR: failed to open file %s", filename);
             return false;
         }
 
-        size = fread(buf, 1, 1024 - 1, fp);
-        fclose(fp);
-        if (size == -1) {
+        size_t size = fread(buf, 1, MAX_PROC_CONTENT_LEN, fp);
+        bool io_error = ferror(fp);
+        bool reached_eof = feof(fp);
+        fclose(fp); // regardless of what happened, always close the file
+        if (size == 0 || size >= MAX_PROC_CONTENT_LEN || io_error) {
             g_logger.LogError(
-                "ERROR: procsinfo read returned = %d assuming process stopped pid=%d errno=%d\n", ret, pid, errno);
+                "ERROR: procsinfo read returned = %zu assuming process stopped pid=%d errno=%d\n", size, pid, errno);
             return false;
         }
-        ret = sscanf(buf, "%d (%s)", &p->pi_pid, &p->pi_comm[0]);
+        if (!reached_eof) {
+            g_logger.LogError("ERROR: procsinfo read returned = %zu for pid=%d but did not reach EOF\n", size, pid);
+            return false;
+        }
+
+        // make sure the buffer is always NUL-terminated
+        buf[size - 1] = '\0';
+
+        // read columns (1) and (2):   "pid" and "comm"
+        // see http://man7.org/linux/man-pages/man5/proc.5.html, search for /proc/[pid]/stat
+        int ret = sscanf(buf, "%d (%s)", &pout->pi_pid, &pout->pi_comm[0]);
         if (ret != 2) {
             g_logger.LogError("procsinfo sscanf returned = %d line=%s\n", ret, buf);
             return false;
         }
-        p->pi_comm[strlen(p->pi_comm) - 1] = 0;
+        pout->pi_comm[strlen(pout->pi_comm) - 1] = 0;
+
+        // never seen a case where inside /proc/<pid>/task/<pid>/stat you find mention of a pid != <pid>
+        if (pout->pi_pid != pid) {
+            g_logger.LogError(
+                "ERROR: found pid=%d inside the filename=%s... unexpected mismatch\n", pout->pi_pid, filename);
+            return false;
+        }
 
         /* now look for ") " as dumb Infiniband driver includes "()" */
+        size_t count = 0;
         for (count = 0; count < size; count++)
             if (buf[count] == ')' && buf[count + 1] == ' ')
                 break;
@@ -161,71 +207,71 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p, OutputFields output_opts)
             "%lu %lu %lu %ld %ld %ld %ld %ld %ld %lu " /* from 14 to 23 */
             "%lu %ld %lu %lu %lu %lu %lu %lu %lu %lu " /* from 24 to 33 */
             "%lu %lu %lu %lu %lu %d %d %lu %lu %llu", /* from 34 to 42 */
-            &p->pi_state, /*3 - these numbers are taken from "man proc" */
-            &p->pi_ppid, /*4*/
-            &p->pi_pgrp, /*5*/
-            &p->pi_session, /*6*/
-            &p->pi_tty_nr, /*7*/
-            &p->pi_tty_pgrp, /*8*/
-            &p->pi_flags, /*9*/
-            &p->pi_minflt, /*10*/
-            &p->pi_child_min_flt, /*11*/
-            &p->pi_majflt, /*12*/
-            &p->pi_child_maj_flt, /*13*/
-            &p->pi_utime, /*14*/
-            &p->pi_stime, /*15*/
-            &p->pi_child_utime, /*16*/
-            &p->pi_child_stime, /*17*/
-            &p->pi_priority, /*18*/
-            &p->pi_nice, /*19*/
-            &p->pi_num_threads, /*20*/
+            &pout->pi_state, /*3 - these numbers are taken from "man proc" */
+            &pout->pi_ppid, /*4*/
+            &pout->pi_pgrp, /*5*/
+            &pout->pi_session, /*6*/
+            &pout->pi_tty_nr, /*7*/
+            &pout->pi_tty_pgrp, /*8*/
+            &pout->pi_flags, /*9*/
+            &pout->pi_minflt, /*10*/
+            &pout->pi_child_min_flt, /*11*/
+            &pout->pi_majflt, /*12*/
+            &pout->pi_child_maj_flt, /*13*/
+            &pout->pi_utime, /*14*/
+            &pout->pi_stime, /*15*/
+            &pout->pi_child_utime, /*16*/
+            &pout->pi_child_stime, /*17*/
+            &pout->pi_priority, /*18*/
+            &pout->pi_nice, /*19*/
+            &pout->pi_num_threads, /*20*/
             &junk, /*21*/
-            &p->pi_start_time, /*22*/
-            &p->pi_vsize, /*23*/
-            &p->pi_rss, /*24*/
-            &p->pi_rsslimit, /*25*/
-            &p->pi_start_code, /*26*/
-            &p->pi_end_code, /*27*/
-            &p->pi_start_stack, /*28*/
-            &p->pi_esp, /*29*/
-            &p->pi_eip, /*30*/
-            &p->pi_signal_pending, /*31*/
-            &p->pi_signal_blocked, /*32*/
-            &p->pi_signal_ignore, /*33*/
-            &p->pi_signal_catch, /*34*/
-            &p->pi_wchan, /*35*/
-            &p->pi_swap_pages, /*36*/
-            &p->pi_child_swap_pages, /*37*/
-            &p->pi_signal_exit, /*38*/
-            &p->pi_last_cpu, /*39*/
-            &p->pi_realtime_priority, /*40*/
-            &p->pi_sched_policy, /*41*/
-            &p->pi_delayacct_blkio_ticks /*42*/
+            &pout->pi_start_time, /*22*/
+            &pout->pi_vsize, /*23*/
+            &pout->pi_rss, /*24*/
+            &pout->pi_rsslimit, /*25*/
+            &pout->pi_start_code, /*26*/
+            &pout->pi_end_code, /*27*/
+            &pout->pi_start_stack, /*28*/
+            &pout->pi_esp, /*29*/
+            &pout->pi_eip, /*30*/
+            &pout->pi_signal_pending, /*31*/
+            &pout->pi_signal_blocked, /*32*/
+            &pout->pi_signal_ignore, /*33*/
+            &pout->pi_signal_catch, /*34*/
+            &pout->pi_wchan, /*35*/
+            &pout->pi_swap_pages, /*36*/
+            &pout->pi_child_swap_pages, /*37*/
+            &pout->pi_signal_exit, /*38*/
+            &pout->pi_last_cpu, /*39*/
+            &pout->pi_realtime_priority, /*40*/
+            &pout->pi_sched_policy, /*41*/
+            &pout->pi_delayacct_blkio_ticks /*42*/
         );
         if (ret != 40) {
-            g_logger.LogError("procsinfo2 sscanf wanted 40 returned = %d pid=%d line=%s\n", ret, pid, buf);
+            g_logger.LogError("procsinfo sscanf wanted 40 returned = %d pid=%d line=%s\n", ret, pid, buf);
             return false;
         }
     }
 
     if (output_opts == PF_ALL) { /* the statm file for the process */
 
-        snprintf(filename, 64, "/proc/%d/statm", pid);
+        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/statm", pid);
         if ((fp = fopen(filename, "r")) == NULL) {
             g_logger.LogError("failed to open file %s", filename);
             return false;
         }
-        size = fread(buf, 1, 1024 * 4 - 1, fp);
+        size_t size = fread(buf, 1, MAX_PROC_CONTENT_LEN - 1, fp);
         fclose(fp); /* close it even if the read failed, the file could have been removed
                     between open & read i.e. the device driver does not behave like a file */
-        if (size == -1) {
+        if (size == 0) {
             g_logger.LogError("failed to read file %s", filename);
             return false;
         }
 
-        ret = sscanf(&buf[0], "%lu %lu %lu %lu %lu %lu %lu", // force newline
-            &p->statm_size, &p->statm_resident, &p->statm_share, &p->statm_trs, &p->statm_lrs, &p->statm_drs,
-            &p->statm_dt);
+        int ret = sscanf(&buf[0], "%lu %lu %lu %lu %lu %lu %lu", // force newline
+            &pout->statm_size, &pout->statm_resident, &pout->statm_share, &pout->statm_trs, &pout->statm_lrs,
+            &pout->statm_drs, &pout->statm_dt);
         if (ret != 7) {
             g_logger.LogError("sscanf wanted 7 returned = %d line=%s\n", ret, buf);
             return false;
@@ -234,18 +280,18 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p, OutputFields output_opts)
 
     { /* the status file for the process */
 
-        snprintf(filename, 64, "/proc/%d/status", pid);
+        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/status", pid);
         if ((fp = fopen(filename, "r")) == NULL) {
             g_logger.LogError("failed to open file %s", filename);
             return false;
         }
-        for (i = 0;; i++) {
+        for (int i = 0;; i++) {
             if (fgets(buf, 1024, fp) == NULL) {
                 break;
             }
             if (strncmp("Tgid:", buf, 5) == 0) {
                 // this info is only available from the /status file apparently and not from /stat
-                sscanf(&buf[6], "%d", &p->pi_tgid);
+                sscanf(&buf[6], "%d", &pout->pi_tgid);
             }
         }
         fclose(fp);
@@ -253,22 +299,22 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* p, OutputFields output_opts)
 
     /*if (uid == (uid_t)0)*/
     { /* the io file for the process */
-        p->io_read_bytes = 0;
-        p->io_write_bytes = 0;
+        pout->io_read_bytes = 0;
+        pout->io_write_bytes = 0;
         sprintf(filename, "/proc/%d/io", pid);
         if ((fp = fopen(filename, "r")) != NULL) {
-            for (i = 0; i < 6; i++) {
+            for (int i = 0; i < 6; i++) {
                 if (fgets(buf, 1024, fp) == NULL) {
                     break;
                 }
                 if (strncmp("rchar:", buf, 6) == 0)
-                    sscanf(&buf[7], "%lld", &p->io_rchar);
+                    sscanf(&buf[7], "%lld", &pout->io_rchar);
                 if (strncmp("wchar:", buf, 6) == 0)
-                    sscanf(&buf[7], "%lld", &p->io_wchar);
+                    sscanf(&buf[7], "%lld", &pout->io_wchar);
                 if (strncmp("read_bytes:", buf, 11) == 0)
-                    sscanf(&buf[12], "%lld", &p->io_read_bytes);
+                    sscanf(&buf[12], "%lld", &pout->io_read_bytes);
                 if (strncmp("write_bytes:", buf, 12) == 0)
-                    sscanf(&buf[13], "%lld", &p->io_write_bytes);
+                    sscanf(&buf[13], "%lld", &pout->io_write_bytes);
             }
         }
 
@@ -536,10 +582,11 @@ void CMonitorCollectorApp::cgroup_init()
     // cpuset and memory cgroups found:
     m_bCGroupsFound = true;
     g_logger.LogDebug("CGroup monitoring successfully enabled. CGroup name is %s\n", m_cgroup_systemd_name.c_str());
-    g_logger.LogDebug("Found cpuset cgroup limiting to CPUs: %s, mounted at %s\n",
+    g_logger.LogDebug("Found cpuset cgroup limiting to CPUs %s, mounted at %s\n",
         stl_container2string(m_cgroup_cpus, ",").c_str(), m_cgroup_cpuset_kernel_path.c_str());
-    g_logger.LogDebug("Found cpuacct cgroup mounted at %s\n", m_cgroup_cpuacct_kernel_path.c_str());
-    g_logger.LogDebug("Found memory cgroup limiting to Bytes: %lu, mounted at %s\n", m_cgroup_memory_limit_bytes,
+    g_logger.LogDebug("Found cpuacct cgroup limiting at %lu/%lu usecs mounted at %s\n", m_cgroup_cpuacct_quota_us,
+        m_cgroup_cpuacct_period_us, m_cgroup_cpuacct_kernel_path.c_str());
+    g_logger.LogDebug("Found memory cgroup limiting to %luB, mounted at %s\n", m_cgroup_memory_limit_bytes,
         m_cgroup_memory_kernel_path.c_str());
 }
 
@@ -681,7 +728,6 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         return;
 
     /* NOTE: newer distros have stats like
-     *
      *     /sys/fs/cgroup/cpu,cpuacct/cpuacct.usage_percpu_sys
      *     /sys/fs/cgroup/cpu,cpuacct/cpuacct.usage_percpu_user
      * but older ones (e.g. Centos7) have only:
@@ -748,7 +794,7 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
                  * produces cpu3 at 100%
                  */
                 g_logger.LogDebug(
-                    "CPU %d, current user=%lu, current sys=%lu, prev user=%lu, prev sys=%lu", // force newline
+                    "CPU %zu, current user=%lu, current sys=%lu, prev user=%lu, prev sys=%lu", // force newline
                     i, counter_nsec_user_mode[i], counter_nsec_sys_mode[i], prev_values[i].counter_nsec_user_mode,
                     prev_values[i].counter_nsec_sys_mode);
                 if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
@@ -853,7 +899,7 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 bool CMonitorCollectorApp::cgroup_collect_pids(std::vector<pid_t>& pids)
 {
     std::string path = m_cgroup_cpuacct_kernel_path + "/tasks";
-    g_logger.LogDebug("Trying to read tasks for my cgroup from %s.\n", path.c_str());
+    g_logger.LogDebug("Trying to read tasks inside the monitored cgroup from %s.\n", path.c_str());
     if (!file_or_dir_exists(path.c_str()))
         return false;
 
@@ -866,14 +912,18 @@ bool CMonitorCollectorApp::cgroup_collect_pids(std::vector<pid_t>& pids)
     std::string line;
     while (std::getline(inputf, line)) {
         uint64_t pid;
+        // this PID is actually a TID (thread ID) most of the time... because in the kernel process/thread distinction
+        // is much less strong than userspace: they're all tasks
         if (string2int(line.c_str(), pid))
             pids.push_back((pid_t)pid);
     }
 
+    g_logger.LogDebug("Found %zu PIDs/TIDs to monitor: %s.\n", pids.size(), stl_container2string(pids, ",").c_str());
+
     return true;
 }
 
-void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts)
+void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads)
 {
     char str[256];
 
@@ -893,15 +943,20 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, OutputFields ou
     // get new fresh processes data and update current database:
     currDB.clear();
     for (size_t i = 0; i < all_pids.size(); i++) {
+
+        // acquire all possible informations on this PID (or TID)
         procsinfo_t procData;
-        memset(&procData, 0, sizeof(procData));
         cgroup_proc_procsinfo(all_pids[i], &procData, output_opts);
 
-        // FIXME: allow to process threads
-        if (procData.pi_pid == procData.pi_tgid)
+        if (include_threads) {
+            // g_logger.LogDebug("Found thread %d %d", procData.pi_pid, procData.pi_tgid);
             currDB.insert(std::make_pair(all_pids[i], procData));
-        // else
-        // g_logger.LogDebug("Found thread %d %d", procData.pi_pid, procData.pi_tgid);
+        } else {
+            // only the main thread has its PID == TGID...
+            if (procData.pi_pid == procData.pi_tgid)
+                // this is the main thread of current PID... insert it into the database
+                currDB.insert(std::make_pair(all_pids[i], procData));
+        }
     }
 
     if (output_opts == PF_NONE)
@@ -915,16 +970,24 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, OutputFields ou
         // find the previous stats for this PID:
         const procsinfo_t* pprev = &prevDB[current_entry.first /* pid */];
 
+        // compute the score
         uint64_t score = compute_proc_score(pcurrent, pprev, elapsed_sec);
         proc_topper_t newEntry = { .current = pcurrent, .prev = pprev };
         m_topper.insert(std::make_pair(score, newEntry));
+
+        // of the 40 fields of procsinfo_t we're mostly interested in user and system time:
+        g_logger.LogDebug("pid=%d: %s: utime=%lu, stime=%lu, score=%lu", pcurrent->pi_pid, pcurrent->pi_comm,
+            pcurrent->pi_utime, pcurrent->pi_stime, score);
+        // g_logger.LogDebug("PID=%lu -> score=%lu", current_entry.first, score);
     }
 
     if (m_topper.empty())
         return;
 
-    g_logger.LogDebug("Tracking %zu/%zu processes/threads; min/max score found: %lu/%lu", // force newline
-        currDB.size(), all_pids.size(), m_topper.begin()->first, m_topper.rbegin()->first);
+    g_logger.LogDebug(
+        "Tracking %zu/%zu processes/threads (include_threads=%d); min/max score found: %lu/%lu", // force
+                                                                                                 // newline
+        currDB.size(), all_pids.size(), include_threads, m_topper.begin()->first, m_topper.rbegin()->first);
 
     // Now output all data for each process, starting from the minimal score PROCESS_SCORE_IGNORE_THRESHOLD
     static double ticks = (double)sysconf(_SC_CLK_TCK); // clock ticks per second

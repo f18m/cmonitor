@@ -78,8 +78,8 @@ DOCKER_EXAMPLE_MEMORY_LIMIT:=10m
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f .)
 
 regen_docker_userapp:
-	docker stop userapp || true
-	pkill example_load_re || true
+	-docker stop userapp >/dev/null 2>&1
+	-pkill example_load_re >/dev/null 2>&1
 	docker run \
 		--detach \
 		--interactive \
@@ -93,7 +93,8 @@ regen_docker_userapp:
 		--name userapp \
 		redis:latest
 	sleep 3
-	for i in $$(seq 1 10); do \
+	for i in $$(seq 1 3); do \
+		echo "Spawning instance $i of the simple Redis load application" ; \
 		./example_load_redis.py userapp & \
 		sleep 1 ; \
 	done
@@ -102,7 +103,7 @@ regen_docker_userapp:
 	$(CMONITOR_COLLECTOR) \
 		--sampling-interval=2 \
 		--num-samples=60 \
-		--collect=all_cgroup \
+		--collect=cgroup_cpu,cgroup_memory,cgroup_threads \
 		--foreground \
 		--output-filename=docker-userapp.json \
 		--cgroup-name=docker/$$(docker ps --no-trunc -aqf name=userapp) \

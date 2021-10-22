@@ -217,7 +217,7 @@ int CMonitorCollectorApp::proc_stat_cpu_index(const char* cpu_data, double elaps
 }
 
 /*
-read /proc/stat and unpick
+read /proc/stat
 */
 void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedCpus, OutputFields output_opts)
 {
@@ -231,7 +231,7 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
 
     static long long old_ctxt;
     static long long old_processes;
-    //static cpu_specs_t total_cpu;
+    // static cpu_specs_t total_cpu;
     static cpu_specs_t logical_cpu[MAX_LOGICAL_CPU];
 
     DEBUGLOG_FUNCTION_START();
@@ -300,6 +300,9 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
         g_output.psection_end();
 }
 
+/*
+read /proc/diskstats
+*/
 void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields output_opts)
 {
     // please refer https://www.kernel.org/doc/Documentation/iostats.txt
@@ -491,6 +494,9 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields outpu
         g_output.psection_end();
 }
 
+/*
+ read /proc/net/dev
+ */
 void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_opts)
 {
     struct netinfo {
@@ -653,6 +659,9 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_
         g_output.psection_end();
 }
 
+/*
+ read /proc/uptime
+*/
 void CMonitorCollectorApp::proc_uptime()
 {
     static FILE* fp = 0;

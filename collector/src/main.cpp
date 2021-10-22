@@ -105,9 +105,10 @@ struct option_extended {
         "  'cgroup_memory': collect memory stats from 'memory' cgroup\n" // force newline
         /*"  'cgroup_blkio': collect IO stats from 'blkio' cgroup\n" NOT YET AVAILABLE */
         "  'cgroup_processes': collect stats for each process inside the 'cpuacct' cgroup\n" // force newline
-        "  'all_baremetal': the combination of 'cpu', 'memory', 'disk', 'network'\n"
-        "  'all_cgroup': the combination of 'cgroup_cpu', 'cgroup_memory', 'cgroup_processes'\n"
-        "  'all': the combination of all previous stats (this is the default)\n"
+        "  'cgroup_threads': collect stats for each thread inside the 'cpuacct' cgroup\n" // force newline
+        "  'all_baremetal': the combination of 'cpu', 'memory', 'disk', 'network'\n" // force newline
+        "  'all_cgroup': the combination of 'cgroup_cpu', 'cgroup_memory', 'cgroup_processes'\n" // force newline
+        "  'all': the combination of all previous stats (this is the default)\n" // force newline
         "Note that a comma-separated list of above stats can be provided." },
     { "Data sampling options", &g_long_opts[5],
         "Collect all available details about the stats families enabled by --collect.\n"
@@ -179,13 +180,13 @@ void interrupt(int signum)
 PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
 {
     if (to_lower(str) == "cpu")
-        return PK_CPU;
+        return PK_BAREMETAL_CPU;
     if (to_lower(str) == "disk")
-        return PK_DISK;
+        return PK_BAREMETAL_DISK;
     if (to_lower(str) == "memory")
-        return PK_MEMORY;
+        return PK_BAREMETAL_MEMORY;
     if (to_lower(str) == "network")
-        return PK_NETWORK;
+        return PK_BAREMETAL_NETWORK;
 
     if (to_lower(str) == "cgroup_cpu")
         return PK_CGROUP_CPU_ACCT;
@@ -195,6 +196,8 @@ PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
         return PK_CGROUP_BLKIO;
     if (to_lower(str) == "cgroup_processes")
         return PK_CGROUP_PROCESSES;
+    if (to_lower(str) == "cgroup_threads")
+        return PK_CGROUP_THREADS;
 
     if (to_lower(str) == "all_baremetal")
         return PK_ALL_BAREMETAL;
@@ -209,13 +212,13 @@ PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
 std::string performanceKpiFamily2string(PerformanceKpiFamily k)
 {
     switch (k) {
-    case PK_CPU:
+    case PK_BAREMETAL_CPU:
         return "cpu";
-    case PK_DISK:
+    case PK_BAREMETAL_DISK:
         return "disk";
-    case PK_MEMORY:
+    case PK_BAREMETAL_MEMORY:
         return "memory";
-    case PK_NETWORK:
+    case PK_BAREMETAL_NETWORK:
         return "network";
 
     case PK_CGROUP_CPU_ACCT:
@@ -226,6 +229,8 @@ std::string performanceKpiFamily2string(PerformanceKpiFamily k)
         return "cgroup_blkio";
     case PK_CGROUP_PROCESSES:
         return "cgroup_processes";
+    case PK_CGROUP_THREADS:
+        return "cgroup_threads";
 
     default:
         return "";
@@ -708,7 +713,8 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) || // force newline
         (g_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) || // force newline
         (g_cfg.m_nCollectFlags & PK_CGROUP_BLKIO) || // force newline
-        (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES); // force newline
+        (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) || // force newline
+        (g_cfg.m_nCollectFlags & PK_CGROUP_THREADS);
     proc_stat(0, bCollectCGroupInfo, PF_NONE /* do not emit JSON data */);
     proc_diskstats(0, PF_NONE /* do not emit JSON data */);
     proc_net_dev(0, PF_NONE /* do not emit JSON data */);
@@ -719,7 +725,9 @@ int CMonitorCollectorApp::run(int argc, char** argv)
             cgroup_proc_cpuacct(0, false /* do not emit JSON */);
 
         if (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES)
-            cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */);
+            cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */, false /* do not include threads */);
+        if (g_cfg.m_nCollectFlags & PK_CGROUP_THREADS)
+            cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */, true /* do include threads */);
     }
 
     double current_time = get_timestamp_sec();
@@ -762,7 +770,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     // else: leave empty
 
     // start actual data samples:
-    g_logger.LogDebug("Starting sampling of performance data; collect flags=%lu", g_cfg.m_nCollectFlags);
+    g_logger.LogDebug("Starting sampling of performance data; collect flags=%u", g_cfg.m_nCollectFlags);
     g_output.psample_array_start();
     for (unsigned int loop = 0; g_cfg.m_nSamples == 0 || loop < g_cfg.m_nSamples; loop++) {
         if (loop != 0)
@@ -783,21 +791,21 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 
         // baremetal stats:
 
-        if (g_cfg.m_nCollectFlags & PK_CPU) {
+        if (g_cfg.m_nCollectFlags & PK_BAREMETAL_CPU) {
             proc_stat(elapsed, false /* collect from ALL cpus */, g_cfg.m_nOutputFields /* emit JSON */);
         }
 
-        if (g_cfg.m_nCollectFlags & PK_MEMORY) {
+        if (g_cfg.m_nCollectFlags & PK_BAREMETAL_MEMORY) {
             proc_read_numeric_stats_from("meminfo", charted_stats_from_meminfo);
             if (g_cfg.m_nOutputFields == PF_ALL)
                 proc_read_numeric_stats_from("vmstat", std::set<std::string>());
         }
 
-        if (g_cfg.m_nCollectFlags & PK_NETWORK) {
+        if (g_cfg.m_nCollectFlags & PK_BAREMETAL_NETWORK) {
             proc_net_dev(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
         }
 
-        if (g_cfg.m_nCollectFlags & PK_DISK) {
+        if (g_cfg.m_nCollectFlags & PK_BAREMETAL_DISK) {
             proc_diskstats(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
             // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
@@ -814,7 +822,10 @@ int CMonitorCollectorApp::run(int argc, char** argv)
             cgroup_proc_memory(charted_stats_from_cgroup_memory);
         }
         if (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) {
-            cgroup_proc_tasks(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
+            cgroup_proc_tasks(elapsed, g_cfg.m_nOutputFields /* emit JSON */, false /* do not include threads */);
+        }
+        if (g_cfg.m_nCollectFlags & PK_CGROUP_THREADS) {
+            cgroup_proc_tasks(elapsed, g_cfg.m_nOutputFields /* emit JSON */, true /* do include threads */);
         }
 
         g_output.push_current_sample();
