@@ -36,12 +36,12 @@ Table of contents of this README:
       - [Monitoring the baremetal server from a Docker container](#monitoring-the-baremetal-server-from-a-docker-container)
       - [Monitoring a Docker container launching cmonitor_collector on the baremetal](#monitoring-a-docker-container-launching-cmonitor_collector-on-the-baremetal)
       - [Monitoring a Docker container that embeds cmonitor_collector](#monitoring-a-docker-container-that-embeds-cmonitor_collector)
+      - [Monitoring a Kubernetes POD launching cmonitor_collector on the worker node](#monitoring-a-kubernetes-pod-launching-cmonitor_collector-on-the-worker-node)
     - [Connecting with InfluxDB and Grafana](#connecting-with-influxdb-and-grafana)
     - [Reference Manual](#reference-manual)
   - [Project History](#project-history)
   - [License](#license)
 
-<div id='section-id-24'/>
 
 ## Features
 
@@ -62,7 +62,6 @@ Moreover the project allows you to easily post-process collected data and produc
 to visualize all the performance data easily using [Google Charts](https://developers.google.com/chart/).
 
 
-<div id='section-id-41'/>
 
 ## Yet-Another-Monitoring-Project?
 
@@ -91,13 +90,11 @@ perfect for **ephemeral** containers (e.g. containers used for DevOps automatic 
    to go and dig performance results of your containers).
 
 Moreover, cmonitor is the only tool (to the best of author's knowledge) that can collect CPU usage of multithreaded applications
-with thread granularity.
+with per-thread granularity.
 
-<div id='section-id-65'/>
 
 ## How to install
 
-<div id='section-id-67'/>
 
 ### RPM
 
@@ -110,7 +107,8 @@ yum copr enable -y f18m/cmonitor
 yum install -y cmonitor-collector cmonitor-tools
 ```
 
-<div id='section-id-78'/>
+Note that the RPM `cmonitor-collector` has no dependencies from Python and has very small set of dependencies (GNU libc and few others)
+so can be installed easily everywhere. The RPM `cmonitor-tools` instead requires Python3.
 
 ### Ubuntu
 
@@ -126,7 +124,6 @@ WARNING: I'm having troubles maintaining both the RPM, docker and Ubuntu packagi
 updated only later, when I have time. If you want to test very latest cmonitor release as .deb please let me know, I might be able to push the latest
 release in my PPA.
 
-<div id='section-id-88'/>
 
 ### Docker
 
@@ -140,11 +137,8 @@ which downloads the Docker image for this project from [Docker Hub](https://hub.
 See below for examples on how to run the Docker image.
 
 
-<div id='section-id-100'/>
 
 ## How to use
-
-<div id='section-id-102'/>
 
 ### Step 1: collect stats
 
@@ -164,7 +158,6 @@ Whenever you want you can either:
   see below for practical examples.
 
 
-<div id='section-id-120'/>
 
 ### Step 2: plot stats collected as JSON
 
@@ -178,11 +171,9 @@ cmonitor_chart --input=/path/to/json-stats.json --output=<optional HTML output f
 Note that to save space/bandwidth you can also gzip the JSON file and pass it gzipped directly to `cmonitor_chart`.
 
 
-<div id='section-id-132'/>
 
 ### Usage scenarios and HTML result examples
 
-<div id='section-id-1321'/>
 
 #### Monitoring the baremetal server (no containers)
 
@@ -199,7 +190,6 @@ Example results:
    the `cmonitor_collector` utility was running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
    graphs are present;
 
-<div id='section-id-1322'/>
 
 #### Monitoring the baremetal server from a Docker container
 
@@ -220,12 +210,12 @@ Example results:
    in this case cgroup stat collection was explicitely disabled so that only baremetal performance graphs are present;
    
       
-<div id='section-id-1324'/>
    
 #### Monitoring a Docker container launching cmonitor_collector on the baremetal
 
 In this case you can simply install cmonitor as RPM or APT package following instructions in [How to install](#section-id-65)
-and then launch the cmonitor_collector utility as any other Linux daemon, specifying the name of the container it should monitor.
+and then launch the cmonitor_collector utility as any other Linux daemon, specifying the name of the cgroup associated with
+the docker container to monitor.
 In the following example a [Redis](https://hub.docker.com/_/redis) docker container is launched with the name 'userapp' and its
 CPU, memory, network and disk usage are monitored launching a cmonitor_collector instance:
 
@@ -238,7 +228,8 @@ DOCKER_ID=$(docker ps -aq --no-trunc -f "name=userapp")
 # is always named 'docker/container-ID'
 cmonitor_collector \
    --num-samples=until-cgroup-alive \
-   --cgroup-name=docker/$DOCKER_ID \
+   --cgroup-name=docker/${DOCKER_ID} \
+   --collect=cgroup_threads,cgroup_cpu,cgroup_memory --score-threshold=0 \
    --custom-metadata=cmonitor_chart_name:userapp \
    --sampling-interval=3 \
    --output-filename docker-userapp.json
@@ -250,7 +241,6 @@ Example results:
    from the baremetal a simple Redis docker simulating a simple application, doing some CPU and I/O. In this example the 
    `--collect=cgroup_threads` is further used to show Redis CPU usage by-thread.
    
-<div id='section-id-1323'/>
    
 #### Monitoring a Docker container that embeds cmonitor_collector
 
@@ -278,7 +268,31 @@ Example results:
    in this case both cgroup stats and baremetal performance graphs are present.
 
 
-<div id='section-id-159'/>
+#### Monitoring a Kubernetes POD launching cmonitor_collector on the worker node
+
+In this case you can simply install cmonitor as RPM or APT package following instructions in [How to install](#section-id-65)
+on all the worker nodes where Kubernetes might be scheduling the POD you want to monitor.
+Then, you can launch the `cmonitor_collector` utility as any other Linux daemon, specifying the name of the cgroup associated
+with the Kubernetes POD (or more precisely, associated with one of the containers inside the Kubernetes POD, in case it contains
+also sidecar containers).
+Finding the name of the cgroup associated with your POD is tricky. It depends on the specific Kubernetes Container Runtime Interface
+(CRI), but the following example shows a generic-enough procedure:
+
+```
+PODNAME=<your-pod-name>
+CONTAINERNAME=<main-container-name>
+CONTAINERID=$(kubectl get pod ${PODNAME} -o json | jq -r '.status.containerStatuses[] | select(.name=="${CONTAINERNAME}") | .containerID' | sed  's@containerd://@@')
+FULL_CGROUP_NAME=$(find /sys/fs/cgroup -name ${CONTAINERID} | head -1 |sed 's@/sys/fs/cgroup/memory/@@')
+
+cmonitor_collector \
+   --num-samples=until-cgroup-alive \
+   --cgroup-name=${FULL_CGROUP_NAME} \
+   --collect=cgroup_threads,cgroup_cpu,cgroup_memory --score-threshold=0 \
+   --custom-metadata=cmonitor_chart_name:${PODNAME} \
+   --sampling-interval=3 \
+   --output-filename pod-performances.json
+```
+
 
 ### Connecting with InfluxDB and Grafana
 
@@ -392,9 +406,6 @@ NOTE: this is the cgroup-aware fork of original njmon software (see https://gith
 ```
 
 
-
-<div id='section-id-185'/>
-
 ## Project History
 
 This project started as a fork of [Nigel's performance Monitor for Linux](http://nmon.sourceforge.net), adding cgroup-awareness;
@@ -412,7 +423,7 @@ This fork supports only Linux x86_64 architectures; support for AIX/PowerPC (pre
 - Original project: [http://nmon.sourceforge.net](http://nmon.sourceforge.net)
 - Other forks: [https://github.com/axibase/nmon](https://github.com/axibase/nmon)
 
-<div id='section-id-186'/>
+
 
 ## License
 
