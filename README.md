@@ -37,6 +37,7 @@ Table of contents of this README:
       - [Monitoring a Docker container launching cmonitor_collector on the baremetal](#monitoring-a-docker-container-launching-cmonitor_collector-on-the-baremetal)
       - [Monitoring a Docker container that embeds cmonitor_collector](#monitoring-a-docker-container-that-embeds-cmonitor_collector)
     - [Connecting with InfluxDB and Grafana](#connecting-with-influxdb-and-grafana)
+    - [Reference Manual](#reference-manual)
   - [Project History](#project-history)
   - [License](#license)
 
@@ -305,6 +306,93 @@ make -C examples regen_grafana_screenshots
 which uses Docker files to deploy a temporary setup and fill the InfluxDB with 10minutes of data collected from the baremetal.
 
 
+
+### Reference Manual
+
+The most detailed documentation on how to use cmonitor tool is available from `--help` option:
+
+```
+cmonitor_collector: Performance stats collector outputting JSON format.
+List of arguments that can be provided follows:
+
+Data sampling options
+  -s, --sampling-interval=<REQ ARG>     Seconds between samples of data (default 60 seconds).
+  -c, --num-samples=<REQ ARG>           Number of samples to collect; special values are:
+                                           '0': means forever (default value)
+                                           'until-cgroup-alive': until the selected cgroup is alive
+  -k, --allow-multiple-instances        Allow multiple simultaneously-running instances of cmonitor_collector on this system.
+  -F, --foreground                      Stay in foreground.
+  -C, --collect=<REQ ARG>               Collect specified list of performance stats. Available performance stats are:
+                                          'cpu': collect per-core CPU stats from /proc/stat
+                                          'memory': collect memory stats from /proc/meminfo, /proc/vmstat
+                                          'disk': collect disk stats from /proc/diskstats
+                                          'network': collect network stats from /proc/net/dev
+                                          'cgroup_cpu': collect CPU stats from the 'cpuacct' cgroup
+                                          'cgroup_memory': collect memory stats from 'memory' cgroup
+                                          'cgroup_processes': collect stats for each process inside the 'cpuacct' cgroup
+                                          'cgroup_threads': collect stats for each thread inside the 'cpuacct' cgroup
+                                          'all_baremetal': the combination of 'cpu', 'memory', 'disk', 'network'
+                                          'all_cgroup': the combination of 'cgroup_cpu', 'cgroup_memory', 'cgroup_processes'
+                                          'all': the combination of all previous stats (this is the default)
+                                        Note that a comma-separated list of above stats can be provided.
+  -e, --deep-collect                    Collect all available details about the stats families enabled by --collect.
+                                        By default, for each family, only the stats that are used by the 'cmonitor_chart' companion utility
+                                        are collected. With this option a more detailed but larger JSON / InfluxDB data stream is produced.
+  -g, --cgroup-name=<REQ ARG>           If cgroup sampling is active (--collect=cgroups*), this option allows to provide explicitly the name of
+                                        the cgroup to monitor. If 'self' value is passed (the default), the statistics of the cgroups where 
+                                        cmonitor_collector runs will be collected. Note that this option is mostly useful when running 
+                                        cmonitor_collector directly on the baremetal since a process running inside a container cannot monitor
+                                        the performances of other containers.
+  -t, --score-threshold=<REQ ARG>       If cgroup process/thread sampling is active (--collect=cgroup_processes/cgroup_threads) use the provided
+                                        score threshold to filter out non-interesting processes/threads. The 'score' is a number that is linearly
+                                        increasing with the CPU usage. Defaults to value '1' to filter out all processes/threads having zero CPU usage.
+  -M, --custom-metadata=<REQ ARG>       Allows to specify custom metadata key:value pairs that will be saved into the JSON output (if saving data
+                                        locally) under the 'header.custom_metadata' path. See usage examples below.
+                                        
+Options to save data locally
+  -m, --output-directory=<REQ ARG>      Program will write output files to provided directory (default cwd).
+  -f, --output-filename=<REQ ARG>       Name the output files using provided prefix instead of defaulting to the filenames:
+                                                hostname_<year><month><day>_<hour><minutes>.json  (for JSON data)
+                                                hostname_<year><month><day>_<hour><minutes>.err   (for error log)
+                                        Use special prefix 'stdout' to indicate that you want the utility to write on stdout.
+                                        Use special prefix 'none' to indicate that you want to disable JSON generation.
+  -P, --output-pretty                   Generate a pretty-printed JSON file instead of a machine-friendly JSON (the default).
+                                        
+Options to stream data remotely
+  -i, --remote-ip=<REQ ARG>             IP address or hostname of the InfluxDB instance to send measurements to;
+                                        cmonitor_collector will use a database named 'cmonitor' to store them.
+  -p, --remote-port=<REQ ARG>           Port used by InfluxDB.
+  -X, --remote-secret=<REQ ARG>         Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).
+                                        
+  -D, --remote-dbname=<REQ ARG>         Set the InfluxDB database name.
+                                        
+Other options
+  -v, --version                         Show version and exit
+  -d, --debug                           Enable debug mode; automatically activates --foreground mode
+  -h, --help                            Show this help
+
+Examples:
+    1) Collect data from OS every 5 mins all day:
+        cmonitor_collector -s 300 -c 288 -m /home/perf
+    2) Collect data from a docker container:
+        DOCKER_NAME=your_docker_name
+        DOCKER_ID=$(docker ps -aq --no-trunc -f "name=$DOCKER_NAME")
+        cmonitor_collector --allow-multiple-instances --num-samples=until-cgroup-alive 
+                        --cgroup-name=docker/$DOCKER_ID --custom-metadata='cmonitor_chart_name:$DOCKER_NAME'
+    3) Use the defaults (-s 60, collect forever), saving to custom file in background:
+        cmonitor_collector --output-filename=my_server_today
+    4) Crontab entry:
+        0 4 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -m /home/perf
+    5) Crontab entry for pumping data to an InfluxDB:
+        * 0 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -i admin.acme.com -p 8086
+    6) Pipe into 'myprog' half-a-day of sampled performance data:
+        cmonitor_collector --sampling-interval=30 --num-samples=1440 --output-filename=stdout --foreground | myprog
+
+NOTE: this is the cgroup-aware fork of original njmon software (see https://github.com/f18m/cmonitor)
+```
+
+
+
 <div id='section-id-185'/>
 
 ## Project History
@@ -328,4 +416,4 @@ This fork supports only Linux x86_64 architectures; support for AIX/PowerPC (pre
 
 ## License
 
-Just like the [original project](http://nmon.sourceforge.net), this project is licensed under [GNU GPL 2.0](LICENSE).
+Just like the [original project](http://nmon.sourceforge.net), this project is licensed under [GNU GPL 
