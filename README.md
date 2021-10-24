@@ -186,7 +186,7 @@ Example results:
    note that despite the absence of any kind of container, the `cmonitor_collector` utility (like just any other software in modern Linux distributions) was running inside the default "user.slice" cgroup and collected both the stats of that cgroup and all baremetal stats (which in this case mostly coincide since the "user.slice" cgroup contains almost all running processes of the server);
    
 2) [baremetal2](https://f18m.github.io/cmonitor/examples/baremetal2.html): 
-   This is a longer example of collected statistics (results in a larger file, may take some time to download)  generated with 9 hours of performance stats collected from a physical server running Centos7 and with 56 CPUs (!!); 
+   This is a longer example of collected statistics (results in a larger file, may take some time to download) generated with 9 hours of performance stats collected from a physical server running Centos7 and with 56 CPUs (!!); 
    the `cmonitor_collector` utility was running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
    graphs are present;
 
