@@ -114,8 +114,8 @@ private:
     public:
         CMonitorOutputMeasurement(const char* name = "", const char* value = "", bool numeric = false)
         {
-            strncpy(m_name.data(), name, CMONITOR_MEASUREMENT_NAME_MAXLEN);
-            strncpy(m_value.data(), value, CMONITOR_MEASUREMENT_VALUE_MAXLEN);
+            strncpy(m_name.data(), name, CMONITOR_MEASUREMENT_NAME_MAXLEN - 1);
+            strncpy(m_value.data(), value, CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
             m_numeric = numeric;
         }
 
