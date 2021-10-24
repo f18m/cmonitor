@@ -673,8 +673,8 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
             '  <div id="chart_master_div"><div id="chart_master_inner_div"><p id="chart_master_inner_p">...click on a button above to show a graph...</p></div></div>\n'
         )
 
-    def appendHtmlTable(self, name, table_entries, css_style="bottom_div"):
-        self.file.write(f'  <div id="{css_style}">\n')
+    def appendHtmlTable(self, name, table_entries, div_id="bottom_div"):
+        self.file.write("  <div id='" + div_id + "'>\n")
         self.file.write("    <h3>" + name + "</h3>\n")
         self.file.write("    <table>\n")
         self.file.write("    <tr><td><ul>\n")
@@ -1742,7 +1742,7 @@ def main_process_file(infile, outfile):
         )
 
     web.appendHtmlTable(
-        "About this", generate_about_this(jheader, jdata), css_style="bottom_about_div"
+        "About this", generate_about_this(jheader, jdata), div_id="bottom_about_div"
     )
     web.endHtmlBody()
 
