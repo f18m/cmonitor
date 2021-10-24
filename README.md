@@ -182,7 +182,7 @@ and then launch the cmonitor collector as any other Linux daemon.
 Example results:
 
 1) [baremetal1](https://f18m.github.io/cmonitor/examples/baremetal1.html): 
-   example of graph generated with the performance stats collected from a physical (baremetal) server running Ubuntu 18.04; 
+   example of graph generated with the performance stats collected from a physical (baremetal) server; 
    note that despite the absence of any kind of container, the `cmonitor_collector` utility (like just any other software in modern Linux distributions) was running inside the default "user.slice" cgroup and collected both the stats of that cgroup and all baremetal stats (which in this case mostly coincide since the "user.slice" cgroup contains almost all running processes of the server);
    
 2) [baremetal2](https://f18m.github.io/cmonitor/examples/baremetal2.html): 

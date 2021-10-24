@@ -119,11 +119,12 @@ endif
 
 cmonitor_musl: # build cmonitor inside a Docker from Alpine distro, to build a cmonitor_collector musl-linked
 	# use a Docker to compile inside an Alpine environment:
-	docker run --rm -it -v "${ROOT_DIR}":"/opt/src" radupopescu/musl-builder \
+	docker run --rm -it -v "${ROOT_DIR}":"/opt/src" -e "MUSL_BUILD=1" \
+		radupopescu/musl-builder \
 		sh -c "cd /opt/src/collector && gcc --version && make clean && make"
 
 docker_image: cmonitor_musl
-	@cp -fv src/cmonitor_collector docker
+	@cp -fv bin/musl/cmonitor_collector docker
 	docker build \
 		--tag f18m/cmonitor:$(DOCKER_TAG) \
 		--build-arg sampling_interval=3 \

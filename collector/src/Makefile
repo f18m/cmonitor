@@ -5,9 +5,21 @@
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 -DVERSION_STRING=\"$(RPM_VERSION)-$(RPM_RELEASE)\"
+
+ifeq ($(DEBUG),1)
 CXXFLAGS+=-g -O0    #useful for debugging
-#CXXFLAGS+=-g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
-OUT=cmonitor_collector
+LDFLAGS+=-g -O0    #useful for debugging
+else
+CXXFLAGS+=-g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
+LDFLAGS+=-g -O2
+endif
+
+ifeq ($(MUSL_BUILD),1)
+OUTDIR=../bin/musl
+else
+OUTDIR=../bin/glibc
+endif
+OUT=$(OUTDIR)/cmonitor_collector
 
 VALGRIND_LOGFILE_POSTFIX:=${OUT}-$(shell date +%F-%H%M%S)
 VALGRIND_COMMON_OPTS:=--gen-suppressions=all --time-stamp=yes --error-limit=no
@@ -38,6 +50,7 @@ HEADERS = \
 # Targets
 
 $(OUT): $(OBJS)
+	mkdir -p $(OUTDIR)
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS)
 
 clean:

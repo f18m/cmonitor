@@ -1,8 +1,8 @@
 collector/src/*.o
-collector/src/cmonitor_collector
+collector/docker/cmonitor_collector
+collector/bin
 examples/*/cmonitor_collector
 examples/*/example-load.sh
-collector/docker/cmonitor_collector
 .cproject
 .project
 .pydevproject

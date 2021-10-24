@@ -9,7 +9,7 @@ EXAMPLE_JSON_FILES=\
 	docker-userapp-with-embedded-collector.json.gz \
 	docker-userapp-with-embedded-collector.json.gz \
 	docker-userapp.json.gz
-CMONITOR_COLLECTOR=$(TOPDIR)/collector/src/cmonitor_collector
+CMONITOR_COLLECTOR=$(TOPDIR)/collector/bin/glibc/cmonitor_collector
 
 SHELL:=/bin/bash 
 
