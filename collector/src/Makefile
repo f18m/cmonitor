@@ -55,7 +55,10 @@ $(OUT): $(OBJS)
 
 clean:
 	rm -f $(OUT) $(OBJS) *.err *.json *.log
-	
+
+strip:
+	strip $(OUT)
+
 install:
 	@mkdir -p $(DESTDIR)/$(BINDIR)/
 	@cp -fv $(OUT) $(DESTDIR)/$(BINDIR)/

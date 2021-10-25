@@ -19,6 +19,9 @@ all:
 clean:
 	$(MAKE) -C src clean
 
+strip:
+	$(MAKE) -C src strip
+
 install:
 ifndef DESTDIR
 	@echo "*** ERROR: please call this makefile supplying explicitly the DESTDIR variable. E.g. DESTDIR=/tmp/myinstall"
@@ -118,10 +121,12 @@ endif
 # 
 
 cmonitor_musl: # build cmonitor inside a Docker from Alpine distro, to build a cmonitor_collector musl-linked
-	# use a Docker to compile inside an Alpine environment:
+	@# use a Docker to compile inside an Alpine environment:
+	@# NOTE: by default debug symbols are embededed in the binary (to support COPR builds) but
+	#        for docker builds, we strip them away to reduce docker size:
 	docker run --rm -it -v "${ROOT_DIR}":"/opt/src" -e "MUSL_BUILD=1" \
 		radupopescu/musl-builder \
-		sh -c "cd /opt/src/collector && gcc --version && make clean && make"
+		sh -c "cd /opt/src/collector && gcc --version && make clean && make && make strip"
 
 docker_image: cmonitor_musl
 	@cp -fv bin/musl/cmonitor_collector docker
