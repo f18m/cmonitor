@@ -24,7 +24,7 @@ import time
 # CONSTANTS
 # =======================================================================================================
 
-CMONITOR_VERSION = "1.7-0"
+CMONITOR_VERSION = "1.8-0"
 
 GRAPH_SOURCE_DATA_BAREMETAL = 1
 GRAPH_SOURCE_DATA_CGROUP = 2
