@@ -34,13 +34,13 @@ MEMCHECK_COMMON_OPTS:=--tool=memcheck --track-origins=yes --malloc-fill=AF --fre
 
 
 OBJS = \
-    cgroups.o \
-    header_info.o \
-    main.o \
-    output_frontend.o \
-    proc_stats.o \
-    utils.o
-    
+    $(OUTDIR)/cgroups.o \
+    $(OUTDIR)/header_info.o \
+    $(OUTDIR)/main.o \
+    $(OUTDIR)/output_frontend.o \
+    $(OUTDIR)/proc_stats.o \
+    $(OUTDIR)/utils.o
+
 HEADERS = \
     cmonitor.h \
     output_frontend.h \
@@ -75,5 +75,5 @@ valgrind:
 
 # Rules
 
-%.o: %.cpp $(HEADERS)
+$(OUTDIR)/%.o: %.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c -o $@ $< 

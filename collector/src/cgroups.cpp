@@ -742,6 +742,7 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         uint64_t counter_nsec_sys_mode;
     };
     static struct cpuacct_utilisation prev_values[MAX_LOGICAL_CPU] = { 0 };
+    static struct cpuacct_utilisation prev_values_for_total_cpu = { 0 };
 
     // non-static data:
     char label[512];
@@ -750,8 +751,9 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         g_output.psection_start("cgroup_cpuacct_stats");
 
     std::string path = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
+    cpuacct_utilisation total_cpu_usage = { 0 };
+    bool bValidData = true;
     if (file_or_dir_exists(path.c_str())) {
-        bool bValidData = true;
 
         // this system supports per-cpu system/user stats:
 
@@ -809,6 +811,10 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
                     g_output.psubsection_end();
                 }
 
+                // maintain the total cpu usage counter
+                total_cpu_usage.counter_nsec_user_mode += counter_nsec_user_mode[i];
+                total_cpu_usage.counter_nsec_sys_mode += counter_nsec_sys_mode[i];
+
                 // save for next cycle
                 prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
                 prev_values[i].counter_nsec_sys_mode = counter_nsec_sys_mode[i];
@@ -816,8 +822,6 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         }
 
     } else {
-        bool bValidData = true;
-
         // just get the per-cpu total:
 
         std::vector<uint64_t> counter_nsec_user_mode;
@@ -846,10 +850,36 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
                     g_output.psubsection_end();
                 }
 
+                // maintain the total cpu usage counter
+                total_cpu_usage.counter_nsec_user_mode += counter_nsec_user_mode[i];
+
                 // save for next cycle
                 prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
             }
         }
+    }
+
+    // emit aggregated counter across all cpus
+    if (bValidData) {
+        if (print && elapsed_sec > MIN_ELAPSED_SECS) {
+            double cpuUserPercent = // force newline
+                100
+                * ((double)(total_cpu_usage.counter_nsec_user_mode - prev_values_for_total_cpu.counter_nsec_user_mode))
+                / (elapsed_sec * 1E9);
+            double cpuSysPercent = // force newline
+                100
+                * ((double)(total_cpu_usage.counter_nsec_sys_mode - prev_values_for_total_cpu.counter_nsec_sys_mode))
+                / (elapsed_sec * 1E9);
+
+            // output JSON counter
+            g_output.psubsection_start("cpu_tot");
+            g_output.pdouble("user", cpuUserPercent);
+            g_output.pdouble("sys", cpuSysPercent);
+            g_output.psubsection_end();
+        }
+
+        // save for next cycle
+        prev_values_for_total_cpu = total_cpu_usage;
     }
 
     // See
