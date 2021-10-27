@@ -1,6 +1,9 @@
 language: cpp
 
-dist: xenial
+# test with Ubuntu Focal Fossa 20.04 having: 
+#   Python 3.8.2
+#   gcc 9.3.0 
+dist: focal
 
 addons:
   apt:
