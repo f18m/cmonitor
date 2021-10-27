@@ -11,6 +11,7 @@ import getopt
 import json
 import os
 import sys
+import gzip
 from statistics import mean, median, mode, StatisticsError
 
 
@@ -59,15 +60,17 @@ class CmonitorStatistics:
         def dump_json(self) -> dict:
             global verbose
             statistics = dict()
-            statistics["minimum"] = self.__min()
-            statistics["maximum"] = self.__max()
-            statistics["mean"] = self.__mean()
-            statistics["median"] = self.__median()
-            statistics["mode"] = self.__mode()
-            statistics["unit"] = self.__unit
-            if verbose:
-                statistics["stats"] = self.__stats
-                statistics["samples"] = len(self.__stats)
+
+            if len(self.__stats) > 0:
+                statistics["minimum"] = self.__min()
+                statistics["maximum"] = self.__max()
+                statistics["mean"] = self.__mean()
+                statistics["median"] = self.__median()
+                statistics["mode"] = self.__mode()
+                statistics["unit"] = self.__unit
+                if verbose:
+                    statistics["stats"] = self.__stats
+                    statistics["samples"] = len(self.__stats)
 
             return statistics
 
@@ -78,37 +81,116 @@ class CmonitorStatistics:
             self.io = CmonitorStatistics.Statistics("bytes")
 
         def insert_cpu_stats(self, stats: dict) -> None:
-            self.cpu.insert_stat(stats["cpu_tot"])
+            self.cpu.insert_stat(stats["cpu_tot"]["user"] + stats["cpu_tot"]["sys"])
 
         def dump_cpu_stats(self) -> None:
             return self.cpu.dump_json()
 
         def insert_memory_stats(self, stats: dict) -> None:
-            self.memory.insert_stat(stats["mem_rss_bytes"])
+            self.memory.insert_stat(stats["total_rss"])
 
         def dump_memory_stats(self) -> None:
             return self.memory.dump_json()
 
-        def insert_io_stats(self, stats: dict) -> None:
-            self.io.insert_stat(stats["io_rchar"] + stats["io_wchar"])
-
-        def dump_io_stats(self) -> None:
-            return self.io.dump_json()
+        # cgroup_blkio not yet available
+        # def insert_io_stats(self, stats: dict) -> None:
+        #    self.io.insert_stat(stats["io_rchar"] + stats["io_wchar"])
+        # def dump_io_stats(self) -> None:
+        #    return self.io.dump_json()
 
     def __init__(self) -> None:
         self.cgroup_statistics = self.CgroupTasksStatistics()
         pass
 
-    def process(self, input_json: str, output_file: str) -> None:
-        with open(input_json) as file:
-            json_data = json.load(file)
-            for sample in json_data["samples"]:
-                for pid, stats in sample["cgroup_tasks"].items():
-                    self.cgroup_statistics.insert_cpu_stats(stats)
-                    self.cgroup_statistics.insert_memory_stats(stats)
-                    self.cgroup_statistics.insert_io_stats(stats)
+    def load_json_data(self, infile):
+        """
+        This function is able to read both JSON files produced by cmonitor_collector and
+        compressed JSON.GZ files.
+        Moreover this function is also tolerant to unfinished JSON files (i.e. files in which
+        cmonitor_collector is still appending data).
+        Finally it also performs very basic validation of JSON structure.
+        Returns the JSON structure of the document.
 
-            self.dump_statistics_json(output_file)
+        This function is shared between cmonitor_chart.py and cmonitor_statistics.py
+        """
+        # read the raw .json as text
+        try:
+            if infile[-8:] == ".json.gz":
+                print("Loading gzipped JSON file %s" % infile)
+                f = gzip.open(infile, "rb")
+                text = f.read()
+                f.close()
+
+                # in Python 3.5 the gzip returns a sequence of "bytes" and not a "str"
+                if isinstance(text, bytes):
+                    text = text.decode("utf-8")
+            else:
+                print("Loading JSON file %s" % infile)
+                f = open(infile, "r")
+                text = f.read()
+                f.close()
+        except OSError as err:
+            print("Error while opening input JSON file '%s': %s" % (infile, err))
+            sys.exit(1)
+
+        # fix up the end of the file if it is not complete
+        ending = text[-3:-1]  # The last two character
+        if ending == "},":  # the data capture is still running or halted
+            text = text[:-2] + "\n ]\n}\n"
+        else:
+            ending = text[-5:]  # The last two character
+            if ending == "    }":
+                text += "\n  ]\n}\n"
+
+        # Convert the text to json and extract the stats
+        entry = json.loads(text)  # convert text to JSON
+        try:
+            jheader = entry["header"]
+            jdata = entry[
+                "samples"
+            ]  # removes outer parts so we have a list of snapshot dictionaries
+        except:
+            print("Unexpected JSON format. Aborting.")
+            sys.exit(1)
+        return entry
+
+    def process(self, input_json: str, output_file: str) -> None:
+        json_data = self.load_json_data(input_json)
+        if "samples" not in json_data:
+            print("Unexpected JSON format. Aborting.")
+            sys.exit(1)
+
+        first_sample = json_data["samples"][0]
+        do_cpu_stats = True
+        if "cgroup_cpuacct_stats" not in first_sample:
+            do_cpu_stats = False
+            print(
+                "WARNING: The JSON file provided does not contain measurements for the 'cpuacct' cgroup. Please use '--collect=cgroup_cpu' when launching cmonitor_collector."
+            )
+        elif "cpu_tot" not in first_sample["cgroup_cpuacct_stats"]:
+            do_cpu_stats = False
+            print(
+                "WARNING: The JSON file provided does not contain the 'cpu_tot' measurement. Probably it was produced by cmonitor version 1.7-0 or earlier. Skipping CPU statistics."
+            )
+
+        do_memory_stats = True
+        if "cgroup_memory_stats" not in first_sample:
+            do_memory_stats = False
+            print(
+                "WARNING: The JSON file provided does not contain measurements for the 'memory' cgroup. Please use '--collect=cgroup_memory' when launching cmonitor_collector."
+            )
+
+        for sample in json_data["samples"]:
+            if do_cpu_stats:
+                self.cgroup_statistics.insert_cpu_stats(sample["cgroup_cpuacct_stats"])
+            if do_memory_stats:
+                self.cgroup_statistics.insert_memory_stats(
+                    sample["cgroup_memory_stats"]
+                )
+
+            # self.cgroup_statistics.insert_io_stats(stats)     # cgroup_blkio not yet available
+
+        self.dump_statistics_json(output_file)
 
     def __dump_json_to_file(
         self,
@@ -124,14 +206,15 @@ class CmonitorStatistics:
             "statistics": {
                 "cpu": self.cgroup_statistics.dump_cpu_stats(),
                 "memory": self.cgroup_statistics.dump_memory_stats(),
-                "io": self.cgroup_statistics.dump_io_stats(),
+                # "io": self.cgroup_statistics.dump_io_stats(),
             }
         }
 
         if output_file:
             self.__dump_json_to_file(statistics, output_file)
         else:
-            print(json.dumps(statistics))
+            print("Result of analysis:")
+            print(json.dumps(statistics, indent=4, sort_keys=True))
 
 
 # =======================================================================================================
@@ -142,9 +225,11 @@ class CmonitorStatistics:
 def usage():
     """Provides commandline usage"""
     print("cmonitor_statistics version {}".format(CMONITOR_VERSION))
+    print("Utility to post-process data recorded by 'cmonitor_collector' and")
+    print("extract min/max/mean/median/mode for CPU/MEMORY/IO measurements.")
     print("Typical usage:")
     print(
-        "  %s --input=output_from_cmonitor_collector.json [--output=myreport.log]"
+        "  %s --input=output_from_cmonitor_collector.json [--output=myreport.json]"
         % sys.argv[0]
     )
     print("Required parameters:")
@@ -153,7 +238,9 @@ def usage():
     print("  -h, --help                 (this help)")
     print("  -v, --verbose              Be verbose.")
     print("      --version              Print version and exit.")
-    print("  -o, --output=<file.log>   The name of the output log file.")
+    print(
+        "  -o, --output=<file.json>   The name of the output JSON file with statistics."
+    )
     sys.exit(0)
 
 

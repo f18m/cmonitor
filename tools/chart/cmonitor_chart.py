@@ -1603,16 +1603,24 @@ def collect_logical_cpu_indexes_from_section(jsample, section_name):
     """
     logical_cpus_indexes = []
     for key in jsample[section_name]:
-        if key.startswith("cpu") and key != "cpu_total":
+        if key.startswith("cpu") and key != "cpu_total" and key != "cpu_tot":
             cpuIdx = int(key[3:])
             logical_cpus_indexes.append(cpuIdx)
             # print("%s %s" %(key, cpuIdx))
     return logical_cpus_indexes
 
 
-def main_process_file(infile, outfile):
-    start_time = time.time()
+def load_json_data(infile):
+    """
+    This function is able to read both JSON files produced by cmonitor_collector and
+    compressed JSON.GZ files.
+    Moreover this function is also tolerant to unfinished JSON files (i.e. files in which
+    cmonitor_collector is still appending data).
+    Finally it also performs very basic validation of JSON structure.
+    Returns the JSON structure of the document.
 
+    This function is shared between cmonitor_chart.py and cmonitor_statistics.py
+    """
     # read the raw .json as text
     try:
         if infile[-8:] == ".json.gz":
@@ -1652,6 +1660,16 @@ def main_process_file(infile, outfile):
     except:
         print("Unexpected JSON format. Aborting.")
         sys.exit(1)
+    return entry
+
+
+def main_process_file(infile, outfile):
+    start_time = time.time()
+
+    # load the JSON
+    entry = load_json_data(infile)
+    jheader = entry["header"]
+    jdata = entry["samples"]
 
     # load some basic fields from the JSON
     monitored_system = "Unknown"
@@ -1761,6 +1779,8 @@ def main_process_file(infile, outfile):
 def usage():
     """Provides commandline usage"""
     print("cmonitor_chart version {}".format(CMONITOR_VERSION))
+    print("Utility to post-process data recorded by 'cmonitor_collector' and")
+    print("create a self-contained HTML file for visualizing that data.")
     print("Typical usage:")
     print(
         "  %s --input=output_from_cmonitor_collector.json [--output=myreport.html]"

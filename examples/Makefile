@@ -15,8 +15,10 @@ SHELL:=/bin/bash
 
 all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
-		echo "--------------------------------------------------------" ; \
-		../tools/chart/cmonitor_chart.py --input=$$jsonExample --verbose ; \
+		echo "-- TOOL: cmonitor_chart ------------------------------------------------------" ; \
+		../tools/chart/cmonitor_chart.py --input=$$jsonExample --verbose --utc || exit 10; \
+		echo "-- TOOL: cmonitor_statistics -------------------------------------------------" ; \
+		../tools/statistics/cmonitor_statistics.py --input=$$jsonExample || exit 11; \
 	done
 
 clean:

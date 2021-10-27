@@ -50,7 +50,6 @@ HEADERS = \
 # Targets
 
 $(OUT): $(OBJS)
-	mkdir -p $(OUTDIR)
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS)
 
 clean:
@@ -76,4 +75,5 @@ valgrind:
 # Rules
 
 $(OUTDIR)/%.o: %.cpp $(HEADERS)
+	@mkdir -p $(OUTDIR)
 	$(CXX) $(CXXFLAGS) -c -o $@ $< 
