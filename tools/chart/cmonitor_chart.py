@@ -1256,13 +1256,15 @@ def generate_cgroup_cpus(web, jheader, jdata, logical_cpus_indexes):
         cpu_stats_table[c] = GoogleChartsTimeSeries(["Timestamp", "User", "System"])
 
     all_cpus_table = GoogleChartsTimeSeries(
-        ["Timestamp", "Limit", "Throttling"]
+        ["Timestamp", "Limit/Quota", "Throttling"]
         + [("CPU" + str(x)) for x in logical_cpus_indexes]
     )
 
     cpu_quota_perc = 100
     if "cpu_quota_perc" in jheader["cgroup_config"]:
         cpu_quota_perc = 100 * jheader["cgroup_config"]["cpu_quota_perc"]
+        if cpu_quota_perc == -100:  # means there's no CPU limit
+            cpu_quota_perc = -1
     #
     # MAIN LOOP
     # Process JSON sample and fill the GoogleChartsTimeSeries() object

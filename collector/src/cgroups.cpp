@@ -35,6 +35,8 @@
 #define MAX_LOGICAL_CPU (256)
 #define MIN_ELAPSED_SECS (0.1)
 #define PAGESIZE_BYTES (1024 * 4)
+#define GIGABYTE (1000ul * 1000ul * 1000ul)
+#define MEMORY_LIMIT_MAX_VALUE (1000 * 1000 * GIGABYTE)
 
 typedef std::map<std::string /* controller type */, std::string /* path */> cgroup_paths_map_t;
 
@@ -558,6 +560,11 @@ void CMonitorCollectorApp::cgroup_init()
         g_logger.LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
+    // IMPORTANT: m_cgroup_memory_limit_bytes might assume some crazy high value like 9*10^6 GB
+    //            that means "no limit"
+    if (m_cgroup_memory_limit_bytes > MEMORY_LIMIT_MAX_VALUE)
+        m_cgroup_memory_limit_bytes = UINT64_MAX;
+
     if (!read_from_system_cpu_for_current_cgroup(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
         g_logger.LogDebug("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
         return;
@@ -570,6 +577,9 @@ void CMonitorCollectorApp::cgroup_init()
         g_logger.LogDebug("Could not read the CPU period from 'cpuacct' cgroup. CGroup mode disabled.\n");
         return;
     }
+
+    // IMPORTANT: m_cgroup_cpuacct_quota_us might assume the special value UINT64_MAX when "-1" is reported by the
+    // cgroup controller... it just means "no limit"
     if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_quota_us", m_cgroup_cpuacct_quota_us)) {
         g_logger.LogDebug("Could not read the CPU quota from 'cpuacct' cgroup. CGroup mode disabled.\n");
         return;
@@ -639,11 +649,17 @@ void CMonitorCollectorApp::cgroup_config()
     // actual cgroup limits
     std::string tmp = stl_container2string(m_cgroup_cpus, ",");
     g_output.pstring("cpus", &tmp[0]);
-    if (m_cgroup_cpuacct_period_us)
+    if (m_cgroup_cpuacct_quota_us == UINT64_MAX)
+        g_output.pdouble("cpu_quota_perc", -1.0f);
+    else if (m_cgroup_cpuacct_period_us)
         g_output.pdouble("cpu_quota_perc", (double)m_cgroup_cpuacct_quota_us / (double)m_cgroup_cpuacct_period_us);
     else
         g_output.pdouble("cpu_quota_perc", 0.0);
-    g_output.plong("memory_limit_bytes", m_cgroup_memory_limit_bytes);
+
+    if (m_cgroup_memory_limit_bytes == UINT64_MAX)
+        g_output.pdouble("memory_limit_bytes", -1.0f);
+    else
+        g_output.plong("memory_limit_bytes", m_cgroup_memory_limit_bytes);
 
     g_output.psection_end();
 }

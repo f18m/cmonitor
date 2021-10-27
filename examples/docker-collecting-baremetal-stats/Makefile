@@ -1,8 +1,10 @@
 # as part of this example limit the CPUs where this docker can run to just 1 (the first available)
+TOPDIR=../..
 DOCKER_EXAMPLE_CPUS:=0
 DOCKER_EXAMPLE_MEMORY_LIMIT:=100m
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f ..)
 HOSTNAME:=docker-collecting-baremetal-stats
+CMONITOR_COLLECTOR=$(TOPDIR)/collector/bin/musl/cmonitor_collector
 
 all: prepare_context
 	@docker stop collecting-baremetal-stats || true
@@ -24,8 +26,8 @@ all: prepare_context
 		gzip -f ../$(HOSTNAME).json
 
 prepare_context:
-	@cp -fv ../../collector/src/cmonitor_collector .
-	@if ldd ../../collector/src/cmonitor_collector | grep libc.musl >/dev/null; then \
+	@cp -fv $(CMONITOR_COLLECTOR) .
+	@if ldd $(CMONITOR_COLLECTOR) | grep libc.musl >/dev/null; then \
 		echo "Found that cmonitor_collector is correctly compiled for Alpine distro" ; \
 	else \
 		echo "cmonitor_collector needs to be built for Alpine distro. Cannot proceed" ; \
