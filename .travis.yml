@@ -10,7 +10,6 @@ addons:
     packages:
     - valgrind
     - python3
-    - j2cli
 
 install: pip install j2cli
 
