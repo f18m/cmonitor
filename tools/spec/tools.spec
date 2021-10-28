@@ -5,7 +5,7 @@ Summary:        A Docker/LXC, database-free, lightweight container performance m
 License:        GPL
 URL:            https://github.com/f18m/cmonitor
 Source0:        cmonitor-tools-__RPM_VERSION__.tar.gz
-BuildRequires:  gcc-c++, make
+BuildRequires:  gcc-c++, make, j2cli
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
 # of debug info files apparently:
