@@ -27,7 +27,7 @@ containers in real-time.
 %install
 rm -rf %{buildroot}
 # we use j2cli during the "install" phase... 
-pip install j2cli
+pip3 install j2cli
 %make_install -C tools BINDIR=%{_bindir}
 
 %files
