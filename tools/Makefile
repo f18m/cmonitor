@@ -9,23 +9,37 @@ THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/..)
 include $(ROOT_DIR)/Constants.mk
 
+TOOLS = \
+	chart/cmonitor_chart.py \
+	statistics/cmonitor_statistics.py
+
 #
 # BUILD TARGETS
 #
 
-all:
-	VERSION_STRING=$(CMONITOR_VERSION)-$(CMONITOR_RELEASE) j2 chart/cmonitor_chart.py.j2 -o chart/cmonitor_chart.py
-	VERSION_STRING=$(CMONITOR_VERSION)-$(CMONITOR_RELEASE) j2 statistics/cmonitor_statistics.py.j2 -o statistics/cmonitor_statistics.py
-	chmod a+x chart/cmonitor_chart.py statistics/cmonitor_statistics.py
+all: $(TOOLS)
 
 clean:
+	rm -f $(TOOLS)
 
-install:
+install: $(TOOLS)
 	@mkdir -p $(DESTDIR)/$(BINDIR)/
 	@cp -fv chart/cmonitor_chart.py             $(DESTDIR)/$(BINDIR)/cmonitor_chart
 	@cp -fv statistics/cmonitor_statistics.py   $(DESTDIR)/$(BINDIR)/cmonitor_statistics
 	chmod a+x $(DESTDIR)/$(BINDIR)/cmonitor_chart
 	chmod a+x $(DESTDIR)/$(BINDIR)/cmonitor_statistics
+
+# TOOLS
+
+chart/cmonitor_chart.py:
+	VERSION_STRING=$(CMONITOR_VERSION)-$(CMONITOR_RELEASE) \
+		j2 chart/cmonitor_chart.py.j2 -o chart/cmonitor_chart.py
+	chmod a+x chart/cmonitor_chart.py
+
+statistics/cmonitor_statistics.py:
+	VERSION_STRING=$(CMONITOR_VERSION)-$(CMONITOR_RELEASE) \
+		j2 statistics/cmonitor_statistics.py.j2 -o statistics/cmonitor_statistics.py
+	chmod a+x statistics/cmonitor_statistics.py
 
 
 #

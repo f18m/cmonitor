@@ -3,6 +3,8 @@ collector/docker/cmonitor_collector
 collector/bin
 examples/*/cmonitor_collector
 examples/*/example-load.sh
+tools/chart/cmonitor_chart.py
+tools/statistics/cmonitor_statistics.py
 .cproject
 .project
 .pydevproject
