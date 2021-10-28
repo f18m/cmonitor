@@ -55,7 +55,7 @@ srpm_tarball:
 	#  b) the spec file with the version inside it replaced
 	cp -arf $(ROOT_DIR)/ $(RPM_TARBALL_DIR)/ && \
 		cd $(RPM_TARBALL_DIR) && \
-		rm -rf cmonitor/collector && \
+		rm -rf cmonitor/examples && \
 		mv cmonitor cmonitor-tools-$(CMONITOR_VERSION) && \
 		sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec && \
 		sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec && \

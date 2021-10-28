@@ -5,6 +5,7 @@ include $(ROOT_DIR)/Constants.mk
 $(info Launching COPR build from directory: $(THIS_DIR))
 
 srpm:
+	echo "Running srpm target from .copr/Makefile"
 	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
 	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
 	$(MAKE) -C $(THIS_DIR) srpm
