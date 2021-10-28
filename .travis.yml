@@ -10,5 +10,6 @@ addons:
     packages:
     - valgrind
     - python3
+    - j2cli
 
 script: make && make examples
