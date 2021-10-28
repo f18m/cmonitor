@@ -319,7 +319,7 @@ function draw_graph11() {
   var options_graph11 = {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
-    title: "Top 20 processes/threads for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
+    title: "Top 20 processes for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
     hAxis: { title:"CPU time" },
     vAxis: { title:"I/O GB" },
     sizeAxis: { maxSize: 200 },
@@ -336,13 +336,13 @@ function draw_graph11() {
 }
 
 function draw_graph12() {
-  var deflated_data_base64_graph12 = 'eNqtmcGK2zAQhl+l5NSCEJrRjKTpuW+x7GFLcyi0ULp7KaXvXjkmrJVYsewZcghy7A//8vzS78nT09/T259f59Pn07eXt/Pb95/nkzv9ePl6/lEPfbke+udOr2+/z6+vHz5Cyp9O70Ph5QgElkMUWQ4jNZfejLghRW4upRZMFJdDhptrmx9Dey43pFiaXym2AtqTsUVBaBQg1uGze7pMWz0XxCUHxWFwwXGpp4axzzoDHOgR1EUA+BBhlJO7HBEvKQ9LCv0bCsnHgMOk2JBS8IHyoVlODQhC8BjkEEka0vrMjIAQ9U8e2YBhUMTRoIojGTCygZuCAWOuW/CJSMWZy1aKTwE0IJ5FQV0QEqpuiWdpJfnMKk4anObCvgg+AMkgqFq1JOqB0Kn9iI71iKJHgIESMJACBloQDBhkwMh6RgwGjGjAmKyH2YugEjRZb7KVkkM4cyRrQTyDUilKkEHpskHpskHp8rV0pydV4Cgoumv5QhDPpABdRUmNp1KOc8Y8mZMXwEccGDMmQPQc+SFJbc94m1WPMUTP2BFQM3iM0AWN7yU16QSKXVDRq9JH1WgQVStjREupcY1hw0wjguYXHtogGciirGdwMGAYGJENjMhqI5I+mJI+mJIzELIIppm9xHQY9K4HAnkEOEx6t6Gwj3QYpA+qZBBUySCokkFQJYOgSnNQ1TIM6pYMHEhLCxasEZUPgpYbBwSu1Y8HF4VlyQr5HOkg6L5uOfkIsht0X7yX0Er7QOzCGkdS2stRFzG7pEeIHrHZE5gW5DzA2ZIDUDyjDJAMVOl7qGzQQ2WDYMoGwZQNgikb9FDZoIfK1x6qjrGtJWcfGLZAA5EUAH1JZZO0LisGn3Pao62TTi/rJe4CrRtxikPjmHSXUlOpr92w95mlu6haXwmZ437OrSXrBpfigfsBtS/rNxkwip6BBlrQQMtqSCXw2MvfPdBqUp1edrt9pS5pzZe1ZrqhoQt6tEPWEHJrzi7n0f44SQQqY6SH8VWyj4EGQb2tErIX5PE56rZXL6vXjrWiV88Qpj+6dtwRG1Q1q3fO7IIeEfWIpEeIHrGRWUv2nOIQ6LEeAKo7Nw+RDGTpQ2s2CK3ZILRmg9CaDUJrNgiteayRusUw0EIGWna1UJ//Ax5LqUA=\n';
+  var deflated_data_base64_graph12 = 'eNqtmUGP0zAQhf8K6gmkyHjsGdvDmSMXJG6rPSyigkq7LNoNB4T47zhFaOM2TpzkqYfWrfMpL5lnv0xvbn4f+l8/jod3hy93/bE/PRwP3eH+7vPxPn/1/v9Xf7rDh9PDqX/78edjf5dnfPr29Nj396fvX/PguX86Pj+/ek0hvhkNVcYjUhoPnep46Lk49GIkBclLcSiXYGY/HgpdHFv8aMu5UpB8Kn5lXwooJ7sSRbZQ4Fwe3nY35yua55J2oaPUOdvZTlKeSnb42PiaJlFHKBAvgIiM9dRKiws0VaMhNou0Sydng/HWNfP8BC9YYzluugdhApfHxlndxNMJ3vQVa8E5h6oRJzASzAAe5gDPMFKEudLCSOOaJxOYd9HGJa/JBEt7cDKWSXmpCW7X6clYbAomyi5aWHUTkpikbganq3DZ+ClwDec6kLtdJyhQQoEIpo1g4gimzhGMxDBSRJG8hZE8jPRiZBeNqtuJezHyYNKdNHZjmsa9OBnjQko7cbCyF1jZC6zspSz74W4m2orzXVn6ZNUI78CVMjUHcU3baWscHoNRcnM0WmNzIm/EyywPZHY/ncq3kRRFWh3FIxnnqYpbu6vlpGbZV3EJpRMVyj0slGdSu7qUA6jQginbJf57FOQFHkwoRxRJLIwEs7XAbC0gWzMqgjMqgnMHk3YVwaMY9WEz7lIhWTaOaDPv0tQqxvNmHCqSMyySMyySMyySMyyS8ziS7yXBap5hfuZrQyeXw7hsxF1vYWQl+8dtXG6uy13ZRM8bcbWal2A86WpcrfDP8ZzX4aSzdZqGsJYGMoB0AQVSFKix6zJsBLGB1iaQKBlx2sCD6UT1xQXWFxdYBBdYBBdYBBdYX1xgfXEp++L7SK3qYjRWaAnXHL6JnEkhLfLmhHprYgxr1M7m8PMK7Vbh5mw9hLp2WKjk8ZCMziXNGm3a3PlRWsSvp00bPG+7wW84NwK5PL8zjJRQJAdT52DqZuI4k3G1Z48abiaTD22Daqevyqu7PNdYNehUccu7d45Pl1av0pb37kE0cWrjNQR1jcZbbsTNb+MUjTppv3YLLfPzGrliFZr3AtnhT9MVZycwRwhoV4+dRYE8ChRQIEWBmtJ5ikaCb8K1KCTinDCkiQcTiornERbPIyyeR1g8j7B4HmHxPK5pji+RYOoYpm5DW/z2L6UvRsU=\n';
   var deflated_data_binary_graph12 = window.atob(deflated_data_base64_graph12);
   var inflated_data_graph12 = JSON.parse(pako.inflate(deflated_data_binary_graph12, { to: 'string' }));
   var data_graph12 = google.visualization.arrayToDataTable(inflated_data_graph12);
   var options_graph12 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 processes/threads for CPU usage (from cgroup stats)",
+    title: "Top 20 processes for CPU usage (from cgroup stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "CPU (%)", gridlines: { color: "lightgrey", count: 11 } },
@@ -366,7 +366,7 @@ function draw_graph13() {
   var data_graph13 = google.visualization.arrayToDataTable(inflated_data_graph13);
   var options_graph13 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 processes/threads for I/O usage (from cgroup stats)",
+    title: "Top 20 processes for I/O usage (from cgroup stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "IO Read+Write (Bytes Per Sec)", gridlines: { color: "lightgrey", count: 11 } },
@@ -384,16 +384,16 @@ function draw_graph13() {
 }
 
 function draw_graph14() {
-  var deflated_data_base64_graph14 = 'eNqt2M9q20AQBvBXKTq1sA2zuzP7J+e8hckhpToUUii1L6Xk3aMkmGhtjbTyfORg1pZ+ZpQZ6fMeDv+H078/43A//Hw6jadfv8fBDc9PP8bn6a2H81svbjie/o7H45evPuVvw+eyynzlq58vQ63zZeTm1IuVNFKU5lRuYeY4X4q/OLf5kNpjpZFiaT7l2BbQHhxaylNTQQjT8tEd3i/bdKyvLjlfXCBHTsp0KPX9LRveeTvBKlHvOFAZv5P0WhloeUJiscF0oAtLSKwCsRDs/RAEYABaOwJ6OzLAyIAZI4Dx0cL1rkTirQbZxBIQE0JiyDIldV73+depWIVhwZkHNTixE8VOeEAlHlCKB9QSPMBggJHtRiSAEQHG2wjum+YVrAIxDkhMkBiglwXQywLoZTn3cl+yWcOiI6DFQKtvXttv0ixPSMw8wfEy7t5mVLuxI9x+DqKKCRIr9urscTcC4u5k9NRyeaNTZ8wjMUB1nO2GEMAAzKUA5lLMc8n2KMv2KMsOUMgsyvY/yVVMkFgBYvaUy4CUy4CUy4CUy4CUyx8p12oAWpgBw8jzaexNRypWgFiTac3YdQtvz5aKZRgmjoCWubfFJTtR7cTmPsNSP6hYQmKA6uwbtwLYuBVAkhVAkhVAkhXAxq0ANm7lvHFrM7Zrub5HaFhHgN2BLVe3fsdSsYTEKgxLVyG3J4ZplgCtArS8eXCnVwYYxW4EQC0BUMtiyN36J2nYYtq9GYtIbO2BqqEqVoHYaiLejWmP2LXrpmIFiKnbvTdhgMYX89M3O7IT0U4kO1HtxEb+Xf41pGIJiQGqs+ffDMi/GZB/MyD/ZkD+zYD8m/s2cLcMQC0MqGXXvu3jK55S3Q0=\n';
+  var deflated_data_base64_graph14 = 'eNq12suOG0UUBuBXibwCqRXVuVexi4RY8QajLAbwYiRHIMZZIMS7U4My4L/i9rQ51YqUTPvyjfuk6lT97n54+PNw/uO34+G7wy+P5+P56dPxsBxOjz8dT/2h718f+ms5/Pj06encn/twOv3687sfHp9On38/PvcHns/93+d335DHtxeHzS6PqNHlIbd2eSgKbx2ODCQxeKsirCqXh0bDe+HJgq81kKTCsyp4AvhiRooKnAFzP/y4PPxTz/5aaosvVBcuS1ms9pdS0ffVwheRtpRtf66DtNClR8Wcs6KC2NRtTXhfmnKpW+HYC6YCRTWRMksWkFttskHbJPtucruUvZX+9xyZGWWm9GBjm0/CFGuFw7Kk0HwSp1mRSp42cYZRoZrvBmUHE2YVcW8F/mVoVimaon032rASStXaLBoL4iHKs2gfaK0bx9m/v3yVhkZDUZnrFJoXaDT9OaLkhOPFBpKpZcmKZAsuWZLwzIXMKW3aDiaee1/L8+Vk6LLsLx80beoOJrRZrq3UmjUFmgs3rpyup8gOJm5bCjeRu/rUDbrtRivMKiH2l23yHNr2o+tAR+N0F4Q5Jsys6Z5littvi5bv1jGY7TUqbdi/3qL7kAI5SvAsGevQrOfeSXIMspbYuM6+/t41GbOTFubCs2hBWo0kNy5kiE2TTGg8KuLZECJDVOpmUGw1vzSPVdqQ7hWYRkPHUZVGJVsJzE6TTJhpan0NprSJ525S5J6d7M2+gCXwHvZkFq0DbVtXnRtmzDcxPGkUy0ZoGVJTN4Pyn9N3MLG/9H1YS+7DFAOSFW/ZVK4YkOaQcOJ9OZSmWRIDUjftv2i4cde1SmMFpInSLBqaiymJ8SQaU1OnNZtwdEhNk0zoKj2CWk0PBkxNk0zoKhaFtq/cq6YPJlt6bmFc6qZ72sSc1NcpLulOhQGpmzDWN+2MV+mKtPvllxApGnOS9ymqNIvWgW5xe+2/g46daMPU5Fz060tX/1OWQTZN7uVs8fkkXlTR5tmMa8NS5tYHVWwOXW/QWAHvE3kajZWo3W7ZSgwXlqqr583hylIPYHmzDqawZE3MR5NMaDF9C1urp81A0/rqkDXx4lKQl5qeqHhxKTR8ghmDWd/eDw3dcI3GYBTmNy6L30vLQMf1r3Zu9O1V2vejob+Em12v9d20Y2jqso8d4c2t+Jpsu8nQcWp/bppMhDQTJ5vEy1VRNKsHpU0sQf8p+wWSD6FpkonnLlRKpM1AM+za4nBzCKzRmJ3m0tB4qjUqNouGxlP7zkZsc6N8g2670ZiraniwzqKh9dTmq9uH1Xqv0nU32oYbaqTnwlm0DnT6GzwfctUMMzBQNeKQkiVlIPvePEv6fBKmWWNJfykYQ5Lqpt3em17J76s0VkDImGbRWAmzZpStBCapSSa0mNabl6QHwXCTXt9BUn74Y1MJ52wyja9u0yO3mv+gMaIeNYvqcCcwtRbp/3odTl9L8UijMaLU0gNquDuvqJc77mz4+DfrcHDi\n';
   var deflated_data_binary_graph14 = window.atob(deflated_data_base64_graph14);
   var inflated_data_graph14 = JSON.parse(pako.inflate(deflated_data_binary_graph14, { to: 'string' }));
   var data_graph14 = google.visualization.arrayToDataTable(inflated_data_graph14);
   var options_graph14 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 processes/threads for memory usage (from cgroup stats)",
+    title: "Top 20 processes for memory usage (from cgroup stats)",
     focusTarget: "category",
     hAxis: { gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "RSS Memory (GB)", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "RSS Memory (MB)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
   };
@@ -654,7 +654,7 @@ function show_config_window() {
       </ul></td><td><ul>
       <li>Total time sampled (hh:mm:ss): <span id='bottom_table_val'>0:06:45</span></li>
       <li>Version (cmonitor_collector): <span id='bottom_table_val'>1.3-3</span></li>
-      <li>Version (cmonitor_chart): <span id='bottom_table_val'>1.8-0</span></li>
+      <li>Version (cmonitor_chart): <span id='bottom_table_val'>1.8-2</span></li>
     </ul></td></tr>
     </table>
   </div>

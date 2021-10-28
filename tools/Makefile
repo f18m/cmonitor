@@ -31,13 +31,13 @@ install: $(TOOLS)
 
 # TOOLS
 
-chart/cmonitor_chart.py:
+chart/cmonitor_chart.py: chart/cmonitor_chart.py.j2
 	cp chart/cmonitor_chart.py.j2 chart/cmonitor_chart.py
 	sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' chart/cmonitor_chart.py
 	sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' chart/cmonitor_chart.py
 	chmod a+x chart/cmonitor_chart.py
 
-statistics/cmonitor_statistics.py:
+statistics/cmonitor_statistics.py: statistics/cmonitor_statistics.py.j2
 	cp statistics/cmonitor_statistics.py.j2 statistics/cmonitor_statistics.py
 	sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' statistics/cmonitor_statistics.py
 	sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' statistics/cmonitor_statistics.py

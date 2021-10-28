@@ -729,6 +729,46 @@ def print_data_loading_stats(desc, jdata, n_invalid_samples):
         )
 
 
+def cgroup_get_cpu_quota_percentage(jheader):
+    cpu_quota_perc = 100
+    if "cpu_quota_perc" in jheader["cgroup_config"]:
+        cpu_quota_perc = 100 * jheader["cgroup_config"]["cpu_quota_perc"]
+        if cpu_quota_perc == -100:  # means there's no CPU limit
+            cpu_quota_perc = -1
+    return cpu_quota_perc
+
+
+def cgroup_get_cpu_throttling(s):
+    cpu_throttling = 0
+    if "throttling" in s["cgroup_cpuacct_stats"]:
+        # throttling is new since cmonitor_collector 1.5-0
+        nr_periods = s["cgroup_cpuacct_stats"]["throttling"]["nr_periods"]
+        if nr_periods:
+            cpu_throttling = (
+                100
+                * s["cgroup_cpuacct_stats"]["throttling"]["nr_throttled"]
+                / nr_periods
+            )
+    return cpu_throttling
+
+
+def cgroup_get_memory_limit(jheader, jdata):
+    if "memory_limit_bytes" in jheader["cgroup_config"]:
+        # IMPORTANT: this value could be -1 if there's no limit
+        cgroup_limit_bytes = jheader["cgroup_config"]["memory_limit_bytes"]
+
+    system_total_bytes = (
+        jdata[0]["cgroup_memory_stats"]["total_cache"]
+        + jdata[0]["cgroup_memory_stats"]["total_rss"]
+    )
+
+    if cgroup_limit_bytes == -1:
+        divider, unit = choose_byte_divider(system_total_bytes)
+    else:
+        divider, unit = choose_byte_divider(cgroup_limit_bytes)
+    return cgroup_limit_bytes, divider, unit
+
+
 # =======================================================================================================
 # generate_* routines
 # =======================================================================================================
@@ -906,35 +946,70 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
             [p["cmd"], p["cpu"], p["io"] / io_divider, nicecmd, p["mem"] / mem_divider]
         )
 
+    # did we collect processes or threads?
+    string_collected_kpis = header["cmonitor"][
+        "collecting"
+    ]  # e.g. "cgroup_cpu,cgroup_memory,cgroup_threads"
+    collected_threads = "cgroup_threads" in string_collected_kpis
+    if collected_threads:
+        chart_desc_prefix = "Top %d threads " % numProcsToShow
+        if verbose:
+            print(
+                "Threads (instead of processes) have been collected in the input JSON file."
+            )
+    else:
+        chart_desc_prefix = "Top %d processes " % numProcsToShow
+
     # generate the bubble chart graph:
     web.appendGoogleChart(
         GoogleChartsGraph(
             button_label="CPU/Memory/Disk Bubbles",
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
             graph_type=GRAPH_TYPE_BUBBLE_CHART,
-            graph_title="Top %d processes/threads for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)"
-            % numProcsToShow,
+            graph_title=chart_desc_prefix
+            + "for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
             y_axis_title=["CPU time", "I/O " + io_unit],
             data=topN_process_table,
         )
     )
 
-    # now that first pass is done, adjust units for IO & memory
-    mem_divider, mem_unit = choose_byte_divider(header["proc_meminfo"]["MemTotal"])
-
-    # FIXME: show CPU and memory limits not only in "All CPUS" and "Memory" tabs but also in per-process charts:
+    # now that first pass is done, adjust units for memory
+    mem_limit_bytes, mem_divider, mem_unit = cgroup_get_memory_limit(header, jdata)
 
     # now generate instead a table of CPU/IO/MEMORY usage over time per process:
     process_table = {}
-    for key in ["cpu", "io", "mem"]:
-        process_table[key] = GoogleChartsTimeSeries(
-            ["Timestamp"] + [get_nice_cmd(pid) for pid in topN_process_pids_list]
-        )
+    process_table["cpu"] = GoogleChartsTimeSeries(
+        ["Timestamp", "Limit/Quota", "Throttling"]
+        + [get_nice_cmd(pid) for pid in topN_process_pids_list]
+    )
+    process_table["io"] = GoogleChartsTimeSeries(
+        ["Timestamp"] + [get_nice_cmd(pid) for pid in topN_process_pids_list]
+    )
+    process_table["mem"] = GoogleChartsTimeSeries(
+        ["Timestamp", "Limit", "Alloc Failures"]
+        + [get_nice_cmd(pid) for pid in topN_process_pids_list]
+    )
+
+    cpu_quota_perc = cgroup_get_cpu_quota_percentage(header)
     for sample in jdata:
         try:
             row = {}
             for key in ["cpu", "io", "mem"]:
                 row[key] = [sample["timestamp"][g_datetime_field]]
+
+            # CPU graph has
+            # - limit/quota and
+            # - throttling
+            # as additional columns right after the timestamp
+            row["cpu"].append(cpu_quota_perc)
+            row["cpu"].append(cgroup_get_cpu_throttling(sample))
+
+            # Memory graph has
+            # - limit
+            # - alloc failures
+            # as additional columns right after the timestamp
+            row["mem"].append(mem_limit_bytes / mem_divider)
+            row["mem"].append(sample["cgroup_memory_stats"]["failcnt"])
 
             for top_process_pid in topN_process_pids_list:
                 # print(top_process_pid)
@@ -966,9 +1041,8 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
     web.appendGoogleChart(
         GoogleChartsGraph(
             data=process_table["cpu"],
-            graph_title="Top %d processes/threads for CPU usage (from cgroup stats)"
-            % numProcsToShow,
-            button_label="CPU by Process",
+            graph_title=chart_desc_prefix + "for CPU usage (from cgroup stats)",
+            button_label="CPU by Thread" if collected_threads else "CPU by Process",
             y_axis_title="CPU (%)",
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
             stack_state=False,
@@ -977,9 +1051,8 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
     web.appendGoogleChart(
         GoogleChartsGraph(
             data=process_table["io"],
-            graph_title="Top %d processes/threads for I/O usage (from cgroup stats)"
-            % numProcsToShow,
-            button_label="IO by Process",
+            graph_title=chart_desc_prefix + "for I/O usage (from cgroup stats)",
+            button_label="IO by Thread" if collected_threads else "IO by Process",
             y_axis_title="IO Read+Write (Bytes Per Sec)",
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
             stack_state=False,
@@ -988,9 +1061,10 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
     web.appendGoogleChart(
         GoogleChartsGraph(
             data=process_table["mem"],
-            graph_title="Top %d processes/threads for memory usage (from cgroup stats)"
-            % numProcsToShow,
-            button_label="Memory by Process",
+            graph_title=chart_desc_prefix + "for memory usage (from cgroup stats)",
+            button_label="Memory by Thread"
+            if collected_threads
+            else "Memory by Process",
             y_axis_title="RSS Memory (%s)" % mem_unit,
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
             stack_state=False,
@@ -1260,16 +1334,12 @@ def generate_cgroup_cpus(web, jheader, jdata, logical_cpus_indexes):
         + [("CPU" + str(x)) for x in logical_cpus_indexes]
     )
 
-    cpu_quota_perc = 100
-    if "cpu_quota_perc" in jheader["cgroup_config"]:
-        cpu_quota_perc = 100 * jheader["cgroup_config"]["cpu_quota_perc"]
-        if cpu_quota_perc == -100:  # means there's no CPU limit
-            cpu_quota_perc = -1
     #
     # MAIN LOOP
     # Process JSON sample and fill the GoogleChartsTimeSeries() object
     #
 
+    cpu_quota_perc = cgroup_get_cpu_quota_percentage(jheader)
     n_invalid_samples = 0
     for i, s in enumerate(jdata):
         if i == 0:
@@ -1278,18 +1348,7 @@ def generate_cgroup_cpus(web, jheader, jdata, logical_cpus_indexes):
         try:
             ts = s["timestamp"][g_datetime_field]
 
-            cpu_throttling = 0
-            if "throttling" in s["cgroup_cpuacct_stats"]:
-                # throttling is new since cmonitor_collector 1.5-0
-                nr_periods = s["cgroup_cpuacct_stats"]["throttling"]["nr_periods"]
-                if nr_periods:
-                    cpu_throttling = (
-                        100
-                        * s["cgroup_cpuacct_stats"]["throttling"]["nr_throttled"]
-                        / nr_periods
-                    )
-
-            all_cpus_row = [ts, cpu_quota_perc, cpu_throttling]
+            all_cpus_row = [ts, cpu_quota_perc, cgroup_get_cpu_throttling(s)]
             for c in logical_cpus_indexes:
                 # get data:
                 cpu_stats = s["cgroup_cpuacct_stats"]["cpu" + str(c)]
@@ -1415,17 +1474,12 @@ def generate_cgroup_memory(web, jheader, jdata):
     # Process JSON sample and build Google Chart-compatible Javascript variable
     # See https://developers.google.com/chart/interactive/docs/reference
     #
-    if "memory_limit_bytes" in jheader["cgroup_config"]:
-        mem_total_bytes = jheader["cgroup_config"]["memory_limit_bytes"]
-    else:
-        mem_total_bytes = (
-            jdata[0]["cgroup_memory_stats"]["total_cache"]
-            + jdata[0]["cgroup_memory_stats"]["total_rss"]
-        )
+
     cgroup_memory_stats = GoogleChartsTimeSeries(
         ["Timestamp", "Used", "Cached (DiskRead)", "Alloc Failures", "Limit"]
     )
-    divider, unit = choose_byte_divider(mem_total_bytes)
+
+    mem_limit_bytes, divider, unit = cgroup_get_memory_limit(jheader, jdata)
 
     n_invalid_samples = 0
     for i, s in enumerate(jdata):
@@ -1442,7 +1496,7 @@ def generate_cgroup_memory(web, jheader, jdata):
                     mu / divider,
                     mc / divider,
                     mfail,
-                    mem_total_bytes / divider,  # imposed limit of memory in this cgroup
+                    mem_limit_bytes / divider,  # imposed limit of memory in this cgroup
                 ]
             )
         except KeyError:  # avoid crashing if a key is not present in the dictionary...
@@ -1667,7 +1721,9 @@ def load_json_data(infile):
     try:
         cmonitor_collector_version = jheader["cmonitor"]["version"]
         if cmonitor_collector_version != VERSION_STRING:
-            print(f"WARNING: the input JSON file has been generated by cmonitor_collector v{cmonitor_collector_version}, different than the version of this tool which is v{VERSION_STRING}.")
+            print(
+                f"WARNING: the input JSON file has been generated by cmonitor_collector v{cmonitor_collector_version}, different than the version of this tool which is v{VERSION_STRING}."
+            )
     except KeyError:
         pass
     return entry
