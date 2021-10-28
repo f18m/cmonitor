@@ -79,18 +79,34 @@ class CmonitorStatistics:
             self.cpu = CmonitorStatistics.Statistics("%")
             self.memory = CmonitorStatistics.Statistics("bytes")
             self.io = CmonitorStatistics.Statistics("bytes")
+            self.memory_failcnt = CmonitorStatistics.Statistics("")
+            self.cpu_throttle = CmonitorStatistics.Statistics("%")
 
         def insert_cpu_stats(self, stats: dict) -> None:
             self.cpu.insert_stat(stats["cpu_tot"]["user"] + stats["cpu_tot"]["sys"])
+            if "throttling" in stats:
+                cpu_throttle_percentage = 0
+                if stats["throttling"]["nr_periods"] > 0:
+                    cpu_throttle_percentage = (
+                        stats["throttling"]["nr_throttled"] * 100
+                    ) / stats["throttling"]["nr_periods"]
+                self.cpu_throttle.insert_stat(cpu_throttle_percentage)
 
         def dump_cpu_stats(self) -> None:
             return self.cpu.dump_json()
 
+        def dump_cpu_throttle_stats(self) -> None:
+            return self.cpu_throttle.dump_json()
+
         def insert_memory_stats(self, stats: dict) -> None:
             self.memory.insert_stat(stats["total_rss"])
+            self.memory_failcnt.insert_stat(stats["failcnt"])
 
         def dump_memory_stats(self) -> None:
             return self.memory.dump_json()
+
+        def dump_memory_failcnt_stats(self) -> None:
+            return self.memory_failcnt.dump_json()
 
         # cgroup_blkio not yet available
         # def insert_io_stats(self, stats: dict) -> None:
@@ -205,7 +221,9 @@ class CmonitorStatistics:
         statistics = {
             "statistics": {
                 "cpu": self.cgroup_statistics.dump_cpu_stats(),
+                "cpu_throttle": self.cgroup_statistics.dump_cpu_throttle_stats(),
                 "memory": self.cgroup_statistics.dump_memory_stats(),
+                "memory_failcnt": self.cgroup_statistics.dump_memory_failcnt_stats(),
                 # "io": self.cgroup_statistics.dump_io_stats(),
             }
         }
