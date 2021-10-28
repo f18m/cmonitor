@@ -19,7 +19,7 @@ from statistics import mean, median, mode, StatisticsError
 # CONSTANTS
 # =======================================================================================================
 
-CMONITOR_VERSION = "1.8-0"
+VERSION_STRING = "{{ VERSION_STRING }}"
 
 # =======================================================================================================
 # GLOBALs
@@ -242,7 +242,7 @@ class CmonitorStatistics:
 
 def usage():
     """Provides commandline usage"""
-    print("cmonitor_statistics version {}".format(CMONITOR_VERSION))
+    print("cmonitor_statistics version {}".format(VERSION_STRING))
     print("Utility to post-process data recorded by 'cmonitor_collector' and")
     print("extract min/max/mean/median/mode for CPU/MEMORY/IO measurements.")
     print("Typical usage:")
@@ -286,7 +286,7 @@ def parse_command_line():
         elif o in ("-v", "--verbose"):
             verbose = True
         elif o in ("--version"):
-            print("{}".format(CMONITOR_VERSION))
+            print("{}".format(VERSION_STRING))
             sys.exit(0)
         else:
             assert False, "unhandled option " + o + a

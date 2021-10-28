@@ -24,7 +24,7 @@ import time
 # CONSTANTS
 # =======================================================================================================
 
-CMONITOR_VERSION = "1.8-0"
+VERSION_STRING = "{{ VERSION_STRING }}"
 
 GRAPH_SOURCE_DATA_BAREMETAL = 1
 GRAPH_SOURCE_DATA_CGROUP = 2
@@ -1545,7 +1545,7 @@ def generate_monitoring_summary(jheader, jdata):
             ),
         ),
         ("Version (cmonitor_collector):", jheader["cmonitor"]["version"]),
-        ("Version (cmonitor_chart):", CMONITOR_VERSION),
+        ("Version (cmonitor_chart):", VERSION_STRING),
     ]
     return monitoring_summary
 
@@ -1780,7 +1780,7 @@ def main_process_file(infile, outfile):
 
 def usage():
     """Provides commandline usage"""
-    print("cmonitor_chart version {}".format(CMONITOR_VERSION))
+    print("cmonitor_chart version {}".format(VERSION_STRING))
     print("Utility to post-process data recorded by 'cmonitor_collector' and")
     print("create a self-contained HTML file for visualizing that data.")
     print("Typical usage:")
@@ -1832,7 +1832,7 @@ def parse_command_line():
                 "UTC"  # instead of default 'datetime' which means local timezone
             )
         elif o in ("--version"):
-            print("{}".format(CMONITOR_VERSION))
+            print("{}".format(VERSION_STRING))
             sys.exit(0)
         else:
             assert False, "unhandled option " + o + a

@@ -3,6 +3,7 @@
 #
 
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/../..)
 
 CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 -DVERSION_STRING=\"$(RPM_VERSION)-$(RPM_RELEASE)\"
 
@@ -49,7 +50,7 @@ HEADERS = \
 
 # Targets
 
-$(OUT): $(OBJS)
+$(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS)
 
 clean:
@@ -74,6 +75,6 @@ valgrind:
 
 # Rules
 
-$(OUTDIR)/%.o: %.cpp $(HEADERS)
+$(OUTDIR)/%.o: %.cpp $(HEADERS) $(ROOT_DIR)/Constants.mk
 	@mkdir -p $(OUTDIR)
 	$(CXX) $(CXXFLAGS) -c -o $@ $< 

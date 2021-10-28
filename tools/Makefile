@@ -14,7 +14,9 @@ include $(ROOT_DIR)/Constants.mk
 #
 
 all:
-	
+	VERSION_STRING=$(CMONITOR_VERSION)-$(CMONITOR_RELEASE) j2 chart/cmonitor_chart.py.j2 -o chart/cmonitor_chart.py
+	VERSION_STRING=$(CMONITOR_VERSION)-$(CMONITOR_RELEASE) j2 statistics/cmonitor_statistics.py.j2 -o statistics/cmonitor_statistics.py
+
 clean:
 
 install:
