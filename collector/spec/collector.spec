@@ -5,7 +5,9 @@ Summary:        A Docker/LXC, database-free, lightweight container performance m
 License:        GPL
 URL:            https://github.com/f18m/cmonitor
 Source0:        cmonitor-collector-__RPM_VERSION__.tar.gz
-BuildRequires:  gcc-c++, make
+
+# these are the requirements that we need on COPR builds:
+BuildRequires:  gcc-c++, make, python-pip
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
 # of debug info files apparently:
