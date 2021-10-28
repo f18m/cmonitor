@@ -12,4 +12,6 @@ addons:
     - python3
     - j2cli
 
+install: pip install j2cli
+
 script: make && make examples
