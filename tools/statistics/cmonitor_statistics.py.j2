@@ -227,7 +227,10 @@ class CmonitorStatistics:
             )
 
         for sample in json_data["samples"]:
-            nsample = sample["timestamp"]["sample_index"]
+            try:
+                nsample = sample["timestamp"]["sample_index"]
+            except KeyError:
+                nsample = -1
             if do_cpu_stats:
                 self.cgroup_statistics.insert_cpu_stats(sample["cgroup_cpuacct_stats"], nsample)
             if do_memory_stats:
