@@ -100,11 +100,12 @@ const char* get_state(char n)
 
 bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts)
 {
+#define MAX_STAT_FILE_PREFIX_LEN 64
 #define MAX_PROC_FILENAME_LEN 128
 #define MAX_PROC_CONTENT_LEN 4096
 
     FILE* fp = NULL;
-    char stat_file_prefix[MAX_PROC_FILENAME_LEN] = { '\0' };
+    char stat_file_prefix[MAX_STAT_FILE_PREFIX_LEN] = { '\0' };
     char filename[MAX_PROC_FILENAME_LEN] = { '\0' };
     char buf[MAX_PROC_CONTENT_LEN] = { '\0' };
 
@@ -156,9 +157,9 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
          we look at /proc/<pid>/<statistics-file>
     */
     if (include_threads)
-        snprintf(stat_file_prefix, MAX_PROC_FILENAME_LEN, "/proc/%d/task/%d/", pid, pid);
+        snprintf(stat_file_prefix, MAX_STAT_FILE_PREFIX_LEN, "/proc/%d/task/%d/", pid, pid);
     else
-        snprintf(stat_file_prefix, MAX_PROC_FILENAME_LEN, "/proc/%d/", pid);
+        snprintf(stat_file_prefix, MAX_STAT_FILE_PREFIX_LEN, "/proc/%d/", pid);
 
     { /* process the statistic file for the process/thread */
         snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/stat", stat_file_prefix);
