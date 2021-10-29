@@ -98,12 +98,13 @@ const char* get_state(char n)
     }
 }
 
-bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* pout, OutputFields output_opts)
+bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts)
 {
 #define MAX_PROC_FILENAME_LEN 128
 #define MAX_PROC_CONTENT_LEN 4096
 
     FILE* fp = NULL;
+    char stat_file_prefix[MAX_PROC_FILENAME_LEN] = { '\0' };
     char filename[MAX_PROC_FILENAME_LEN] = { '\0' };
     char buf[MAX_PROC_CONTENT_LEN] = { '\0' };
 
@@ -125,28 +126,42 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* pout, OutputFields output_opt
         pout->username[63] = 0;
     }
 
-    { /* the statistic file for the process/thread
-
-         VERY IMPORTANT: for multithreaded application it might be tricky to understand /proc file organization.
-         Consider a single process with PID=TID=A having 2 secondary threads with TID=B and TID=C.
-         The kernel stat files layout will look like:
+    /*
+        ABOUT STATISTIC FILES CONSIDERED IN THIS FUNCTION:
+        For multithreaded application it might be tricky to understand /proc file organization.
+        Consider a single process with PID=TID=A having 2 secondary threads with TID=B and TID=C.
+        The kernel "stat" files layout (but the same applies to all other files considered below
+        like "statm", "status" and "io") will look like:
             /proc/A
-                  +-- stat            contains statistics about the main thread (PID=TID=A)
+                  +-- stat            contains statistics about the whole process having PID=TID=A
                   +-- task/A/stat     contains statistics about the main thread (PID=TID=A)
                   +-- task/B/stat     contains statistics about the secondary thread TID=B
                   +-- task/C/stat     contains statistics about the secondary thread TID=C
          So far so good, here comes the tricky part:
             /proc/B                   it exists even if B is just a secondary thread of PID=A
-                  +-- stat            contains statistics about the main thread (PID=TID=A) and
-                                      this is the tricky part... you would expect this to contain stats of TID=B!!
+                  +
+                  +-- stat            this is the tricky part... you would expect this to contain stats of TID=B
+                  +                   but instead it contains statistics about the whole process (PID=TID=A)
                   +-- task/A/stat     contains statistics about the main thread (PID=TID=A)
                   +-- task/B/stat     contains statistics about the secondary thread TID=B
                   +-- task/C/stat     contains statistics about the secondary thread TID=C
 
+         This means that:
+         a) WHEN COLLECTING PER-THREAD STATISTICS:
          To make sure we always get statistics for the thread identified by PID=pid, regardless of the fact it's
-         the main thread or a secondary one, we always look at /proc/<pid>/task/<pid>/stat
-       */
-        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/task/%d/stat", pid, pid);
+         the main thread or a secondary one, we always look at /proc/<pid>/task/<pid>/<statistics-file>
+
+         b) WHEN COLLECTING PER-PROCESS STATISTICS:
+         To make sure we collect the stats for the whole process identified by PID=pid (and not just its main thread),
+         we look at /proc/<pid>/<statistics-file>
+    */
+    if (include_threads)
+        snprintf(stat_file_prefix, MAX_PROC_FILENAME_LEN, "/proc/%d/task/%d/", pid, pid);
+    else
+        snprintf(stat_file_prefix, MAX_PROC_FILENAME_LEN, "/proc/%d/", pid);
+
+    { /* process the statistic file for the process/thread */
+        snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/stat", stat_file_prefix);
         if ((fp = fopen(filename, "r")) == NULL) {
             g_logger.LogError("ERROR: failed to open file %s", filename);
             return false;
@@ -252,9 +267,9 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* pout, OutputFields output_opt
         }
     }
 
-    if (output_opts == PF_ALL) { /* the statm file for the process/thread */
+    if (output_opts == PF_ALL) { /* process the statm file for the process/thread */
 
-        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/task/%d/statm", pid, pid);
+        snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/statm", stat_file_prefix);
         if ((fp = fopen(filename, "r")) == NULL) {
             g_logger.LogError("failed to open file %s", filename);
             return false;
@@ -276,9 +291,9 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* pout, OutputFields output_opt
         }
     }
 
-    { /* the status file for the process/thread */
+    { /* process the status file for the process/thread */
 
-        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/task/%d/status", pid, pid);
+        snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/status", stat_file_prefix);
         if ((fp = fopen(filename, "r")) == NULL) {
             g_logger.LogError("failed to open file %s", filename);
             return false;
@@ -296,10 +311,10 @@ bool cgroup_proc_procsinfo(pid_t pid, procsinfo_t* pout, OutputFields output_opt
         fclose(fp);
     }
 
-    { /* the I/O file for the process/thread */
+    { /* process the I/O file for the process/thread */
         pout->io_read_bytes = 0;
         pout->io_write_bytes = 0;
-        snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d/task/%d/io", pid, pid);
+        snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/io", stat_file_prefix);
         if ((fp = fopen(filename, "r")) != NULL) {
             for (int i = 0; i < 6; i++) {
                 if (fgets(buf, 1024, fp) == NULL) {
@@ -988,7 +1003,7 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, OutputFields ou
 
         // acquire all possible informations on this PID (or TID)
         procsinfo_t procData;
-        cgroup_proc_procsinfo(all_pids[i], &procData, output_opts);
+        cgroup_proc_procsinfo(all_pids[i], include_threads, &procData, output_opts);
 
         if (include_threads) {
             // g_logger.LogDebug("Found thread %d %d", procData.pi_pid, procData.pi_tgid);
