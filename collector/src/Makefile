@@ -37,6 +37,7 @@ MEMCHECK_COMMON_OPTS:=--tool=memcheck --track-origins=yes --malloc-fill=AF --fre
 OBJS = \
     $(OUTDIR)/cgroups.o \
     $(OUTDIR)/header_info.o \
+    $(OUTDIR)/logger.o \
     $(OUTDIR)/main.o \
     $(OUTDIR)/output_frontend.o \
     $(OUTDIR)/proc_stats.o \
