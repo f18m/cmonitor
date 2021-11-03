@@ -401,15 +401,21 @@ bool get_cgroup_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std
      *   See http://man7.org/linux/man-pages/man5/fstab.5.html
      *   Each line is composed by:
      *                     fs_spec  fs_file  fs_vfstype  fs_mntops  fs_freq  fs_passno
-     *   We are interested into the lines that indicate a specific CGROUP TYPE mountpoint like:
-     *   under LXC:
-     *    cgroup /sys/fs/cgroup/cpuset/lxc/container1-main cgroup rw,nosuid,nodev,noexec,relatime,cpuset 0 0
-     *   under Docker:
-     *    cgroup /sys/fs/cgroup/cpuset cgroup ro,nosuid,nodev,noexec,relatime,cpuset 0 0
+     *   We are interested into the lines that provide the "cgroup" or "cgroup2" fs_spec
      *
-     * the second string fs_file (/sys/fs/cgroup/cpuset/lxc/container1-main or /sys/fs/cgroup/cpuset) tells you where to
-     * find all the current value of that cgroup; the fourth string fs_mntops contains the indication of the cgroup type
-     * (e.g. cpuset)
+     *   For cgroups v1:
+     *     under LXC:
+     *       cgroup /sys/fs/cgroup/cpuset/lxc/container1-main cgroup rw,nosuid,nodev,noexec,relatime,cpuset 0 0
+     *     under Docker:
+     *       cgroup /sys/fs/cgroup/cpuset cgroup ro,nosuid,nodev,noexec,relatime,cpuset 0 0
+     *   the second string fs_file (/sys/fs/cgroup/cpuset/lxc/container1-main or /sys/fs/cgroup/cpuset) tells you where
+     * to find all the current value of that cgroup; the fourth string fs_mntops contains the indication of the cgroup
+     * type (e.g. cpuset)
+     *
+     *   For cgroups v2:
+     *     under Docker:
+     *      cgroup2 /sys/fs/cgroup cgroup2 rw,seclabel,nosuid,nodev,noexec,relatime,nsdelegate 0 0
+     *
      */
     std::ifstream inputf("/proc/self/mounts");
     if (!inputf.is_open())
@@ -424,9 +430,10 @@ bool get_cgroup_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std
 
         std::string fs_spec = tuple[0];
         std::string fs_file = tuple[1];
+        std::string fs_vfstype = tuple[2];
         std::string fs_mntops = tuple[3];
 
-        if (fs_spec == "cgroup" && fs_mntops.find(cgroup_type) != std::string::npos) {
+        if (fs_spec == "cgroup" && fs_vfstype == "cgroup" && fs_mntops.find(cgroup_type) != std::string::npos) {
             // found the right "cgroup type"
 
             if (fs_file.empty() || fs_file == "/") {
@@ -437,6 +444,9 @@ bool get_cgroup_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std
                 cgroup_pathOUT = fs_file;
                 return true;
             }
+        } else if (fs_spec == "cgroup2" && fs_vfstype == "cgroup2") {
+            cgroup_pathOUT = fs_file;
+            return true;
         }
     }
 
@@ -491,8 +501,11 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
 
 void CMonitorCollectorApp::cgroup_init()
 {
-    m_bCGroupsFound = false;
+    m_nCGroupsFound = CG_NONE;
     m_cgroup_systemd_name = "N/A";
+
+    // FIXME: cgroups v2: all paths are different
+    //
 
     // ABSOLUTE PATH PREFIXES
 
@@ -602,7 +615,7 @@ void CMonitorCollectorApp::cgroup_init()
     }
 
     // cpuset and memory cgroups found:
-    m_bCGroupsFound = true;
+    m_nCGroupsFound = CG_VERSION1;
     g_logger.LogDebug("CGroup monitoring successfully enabled. CGroup name is %s\n", m_cgroup_systemd_name.c_str());
     g_logger.LogDebug("Found cpuset cgroup limiting to CPUs %s, mounted at %s\n",
         stl_container2string(m_cgroup_cpus, ",").c_str(), m_cgroup_cpuset_kernel_path.c_str());
@@ -649,7 +662,7 @@ bool CMonitorCollectorApp::cgroup_init_check_for_our_pid()
 
 void CMonitorCollectorApp::cgroup_config()
 {
-    if (!m_bCGroupsFound)
+    if (m_nCGroupsFound == CG_NONE)
         return;
 
     g_output.psection_start("cgroup_config");
@@ -689,14 +702,14 @@ bool CMonitorCollectorApp::cgroup_still_exists()
 
 bool CMonitorCollectorApp::cgroup_is_allowed_cpu(int cpu)
 {
-    if (!m_bCGroupsFound)
+    if (m_nCGroupsFound == CG_NONE)
         return true; // allowed
     return m_cgroup_cpus.find(cpu) != m_cgroup_cpus.end();
 }
 
 void CMonitorCollectorApp::cgroup_proc_memory(const std::set<std::string>& allowedStatsNames)
 {
-    if (!m_bCGroupsFound)
+    if (m_nCGroupsFound == CG_NONE)
         return;
 
     // See
@@ -752,7 +765,7 @@ void CMonitorCollectorApp::cgroup_proc_memory(const std::set<std::string>& allow
 
 void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 {
-    if (!m_bCGroupsFound)
+    if (m_nCGroupsFound == CG_NONE)
         return;
 
     /* NOTE: newer distros have stats like
@@ -992,7 +1005,7 @@ void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, OutputFields ou
 {
     char str[256];
 
-    if (!m_bCGroupsFound)
+    if (m_nCGroupsFound == CG_NONE)
         return;
 
     // swap databases

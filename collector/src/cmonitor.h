@@ -77,6 +77,12 @@ enum OutputFields {
     PF_USED_BY_CHART_SCRIPT_ONLY // force newline
 };
 
+enum CGroupDetected {
+    CG_NONE, // force newline
+    CG_VERSION1, // force newline
+    CG_VERSION2 // force newline
+};
+
 //------------------------------------------------------------------------------
 // Types
 //------------------------------------------------------------------------------
@@ -313,7 +319,7 @@ private:
     //------------------------------------------------------------------------------
     // CGroups variables
     //------------------------------------------------------------------------------
-    bool m_bCGroupsFound = false;
+    CGroupDetected m_nCGroupsFound = CG_NONE;
 
     // paths of cgroups for the cgroup to monitor (either our own cgroup or another one):
     std::string m_cgroup_systemd_name;
