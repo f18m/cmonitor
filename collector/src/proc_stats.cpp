@@ -368,8 +368,10 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields outpu
                 }
             }
             pclose(pop);
-        } else
+        } else {
+            g_logger.LogErrorWithErrno("failed to list number of disks using 'lsblk'");
             disks_found = 0;
+        }
         // g_logger.LogDebug("DEBUG %ld disks\n", disks);
         previous = (diskinfo*)calloc(sizeof(struct diskinfo), disks_found);
 
@@ -584,7 +586,7 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_
             interfaces_found = 0;
 
         if ((fp = fopen("/proc/net/dev", "r")) == NULL) {
-            g_logger.LogErrorWithErrno("failed to open - /proc/net/dev");
+            g_logger.LogErrorWithErrno("failed to open /proc/net/dev");
             return;
         }
     } else

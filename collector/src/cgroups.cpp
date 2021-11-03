@@ -497,7 +497,7 @@ void CMonitorCollectorApp::cgroup_init()
     // ABSOLUTE PATH PREFIXES
 
     if (!get_cgroup_abs_path_prefix_for_this_pid("memory", m_cgroup_memory_kernel_path)) {
-        g_logger.LogDebug("Could not find the 'memory' cgroup path prefix. CGroup mode disabled.\n");
+        g_logger.LogError("Could not find the 'memory' cgroup path prefix. CGroup mode disabled.\n");
         return;
     }
 
@@ -509,12 +509,12 @@ void CMonitorCollectorApp::cgroup_init()
         cpuacct_controller_name = "cpuacct,cpu";
 
         if (!get_cgroup_abs_path_prefix_for_this_pid(cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
-            g_logger.LogDebug("Could not find the 'cpuacct' cgroup path prefix. CGroup mode disabled.\n");
+            g_logger.LogError("Could not find the 'cpuacct' cgroup path prefix. CGroup mode disabled.\n");
             return;
         }
     }
     if (!get_cgroup_abs_path_prefix_for_this_pid("cpuset", m_cgroup_cpuset_kernel_path)) {
-        g_logger.LogDebug("Could not find the 'cpuset' cgroup path prefix. CGroup mode disabled.\n");
+        g_logger.LogError("Could not find the 'cpuset' cgroup path prefix. CGroup mode disabled.\n");
         return;
     }
 
@@ -573,7 +573,7 @@ void CMonitorCollectorApp::cgroup_init()
     // READ LIMITS IMPOSED BY CGROUPS
 
     if (!read_integer(m_cgroup_memory_kernel_path + "/memory.limit_in_bytes", m_cgroup_memory_limit_bytes)) {
-        g_logger.LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        g_logger.LogError("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
     // IMPORTANT: m_cgroup_memory_limit_bytes might assume some crazy high value like 9*10^6 GB
@@ -582,22 +582,22 @@ void CMonitorCollectorApp::cgroup_init()
         m_cgroup_memory_limit_bytes = UINT64_MAX;
 
     if (!read_from_system_cpu_for_current_cgroup(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
-        g_logger.LogDebug("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
+        g_logger.LogError("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
         return;
     }
     if (m_cgroup_memory_limit_bytes == 0) {
-        g_logger.LogDebug("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        g_logger.LogError("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
     if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_period_us", m_cgroup_cpuacct_period_us)) {
-        g_logger.LogDebug("Could not read the CPU period from 'cpuacct' cgroup. CGroup mode disabled.\n");
+        g_logger.LogError("Could not read the CPU period from 'cpuacct' cgroup. CGroup mode disabled.\n");
         return;
     }
 
     // IMPORTANT: m_cgroup_cpuacct_quota_us might assume the special value UINT64_MAX when "-1" is reported by the
     // cgroup controller... it just means "no limit"
     if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_quota_us", m_cgroup_cpuacct_quota_us)) {
-        g_logger.LogDebug("Could not read the CPU quota from 'cpuacct' cgroup. CGroup mode disabled.\n");
+        g_logger.LogError("Could not read the CPU quota from 'cpuacct' cgroup. CGroup mode disabled.\n");
         return;
     }
 
@@ -782,15 +782,15 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
     if (print)
         g_output.psection_start("cgroup_cpuacct_stats");
 
-    std::string path = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
+    std::string cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
     cpuacct_utilisation total_cpu_usage = { 0 };
     bool bValidData = true;
-    if (file_or_dir_exists(path.c_str())) {
+    if (file_or_dir_exists(cgroup_stat_file.c_str())) {
 
         // this system supports per-cpu system/user stats:
 
         std::vector<uint64_t> counter_nsec_sys_mode;
-        if (!read_cpuacct_line(path, counter_nsec_sys_mode))
+        if (!read_cpuacct_line(cgroup_stat_file, counter_nsec_sys_mode))
             bValidData = false;
 
         std::vector<uint64_t> counter_nsec_user_mode;
@@ -856,8 +856,11 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
     } else {
         // just get the per-cpu total:
 
+        // update "cgroup_stat_file" which might be used later for error logging
+        cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu";
+
         std::vector<uint64_t> counter_nsec_user_mode;
-        if (!read_cpuacct_line(m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu", counter_nsec_user_mode))
+        if (!read_cpuacct_line(cgroup_stat_file, counter_nsec_user_mode))
             bValidData = false;
         if (counter_nsec_user_mode.empty())
             bValidData = false;
@@ -912,18 +915,20 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 
         // save for next cycle
         prev_values_for_total_cpu = total_cpu_usage;
+    } else {
+        g_logger.LogError("failed to open %s", cgroup_stat_file.c_str());
     }
 
     // See
     //   https://www.kernel.org/doc/Documentation/cgroup-v2.txt
     //   https://medium.com/indeed-engineering/unthrottled-fixing-cpu-limits-in-the-cloud-a0995ede8e89
 
-    path = m_cgroup_cpuacct_kernel_path + "/cpu.stat";
-    if (file_or_dir_exists(path.c_str())) {
+    cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpu.stat";
+    if (file_or_dir_exists(cgroup_stat_file.c_str())) {
         /* Static data */
         static FILE* fp = 0;
         if (fp == 0) {
-            if ((fp = fopen(path.c_str(), "r")) == NULL) {
+            if ((fp = fopen(cgroup_stat_file.c_str(), "r")) == NULL) {
                 fp = 0;
             }
         } else {
@@ -948,6 +953,8 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
             if (print)
                 g_output.psubsection_end();
         }
+    } else {
+        g_logger.LogError("failed to open %s", cgroup_stat_file.c_str());
     }
 
     if (print)
