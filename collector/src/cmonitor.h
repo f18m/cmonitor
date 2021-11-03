@@ -224,6 +224,7 @@ public:
 
     void LogDebug(const char* line, ...) __attribute__((format(printf, 2, 3)));
     void LogError(const char* line, ...) __attribute__((format(printf, 2, 3)));
+    void LogErrorWithErrno(const char* line, ...) __attribute__((format(printf, 2, 3)));
 
 private:
     std::string m_strErrorFileName;

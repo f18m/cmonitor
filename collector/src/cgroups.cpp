@@ -115,7 +115,7 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
     snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d", pid);
     struct stat statbuf;
     if (stat(filename, &statbuf) != 0) {
-        g_logger.LogError("ERROR: failed to stat file %s", filename);
+        g_logger.LogErrorWithErrno("ERROR: failed to stat file %s", filename);
         return false;
     }
 
@@ -164,7 +164,7 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
     { /* process the statistic file for the process/thread */
         snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/stat", stat_file_prefix);
         if ((fp = fopen(filename, "r")) == NULL) {
-            g_logger.LogError("ERROR: failed to open file %s", filename);
+            g_logger.LogErrorWithErrno("ERROR: failed to open file %s", filename);
             return false;
         }
 
@@ -272,7 +272,7 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
 
         snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/statm", stat_file_prefix);
         if ((fp = fopen(filename, "r")) == NULL) {
-            g_logger.LogError("failed to open file %s", filename);
+            g_logger.LogErrorWithErrno("failed to open file %s", filename);
             return false;
         }
         size_t size = fread(buf, 1, MAX_PROC_CONTENT_LEN - 1, fp);
@@ -296,7 +296,7 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
 
         snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/status", stat_file_prefix);
         if ((fp = fopen(filename, "r")) == NULL) {
-            g_logger.LogError("failed to open file %s", filename);
+            g_logger.LogErrorWithErrno("failed to open file %s", filename);
             return false;
         }
         for (int i = 0;; i++) {

@@ -50,7 +50,7 @@ void CMonitorCollectorApp::proc_read_numeric_stats_from(
     DEBUGLOG_FUNCTION_START();
     sprintf(filename, "/proc/%s", statname);
     if ((fp = fopen(filename, "r")) == NULL) {
-        g_logger.LogError("Failed to open performance file %s", filename);
+        g_logger.LogErrorWithErrno("Failed to open performance file %s", filename);
         return;
     }
     sprintf(label, "proc_%s", statname);
@@ -238,7 +238,7 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
     g_logger.LogDebug("proc_stat(%.4f) max_cpu_count=%d\n", elapsed_sec, max_cpu_count);
     if (fp == 0) {
         if ((fp = fopen("/proc/stat", "r")) == NULL) {
-            g_logger.LogError("failed to open file /proc/stat");
+            g_logger.LogErrorWithErrno("failed to open file /proc/stat");
             fp = 0;
             return;
         }
@@ -402,7 +402,7 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields outpu
             disks_sampled = 0;
 
         if ((fp = fopen("/proc/diskstats", "r")) == NULL) {
-            g_logger.LogError("failed to open - /proc/diskstats");
+            g_logger.LogErrorWithErrno("failed to open - /proc/diskstats");
             return;
         }
     } else
@@ -549,8 +549,10 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_
                 }
             }
             pclose(pop);
-        } else
+        } else {
+            g_logger.LogErrorWithErrno("failed to list network devices using /sbin/ifconfig");
             interfaces_found = 0;
+        }
         // g_logger.LogDebug("DEBUG %ld intergaces\n", interfaces);
         previous = (netinfo*)calloc(sizeof(struct netinfo), interfaces_found);
 
@@ -582,7 +584,7 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_
             interfaces_found = 0;
 
         if ((fp = fopen("/proc/net/dev", "r")) == NULL) {
-            g_logger.LogError("failed to open - /proc/net/dev");
+            g_logger.LogErrorWithErrno("failed to open - /proc/net/dev");
             return;
         }
     } else
@@ -752,7 +754,7 @@ void CMonitorCollectorApp::proc_filesystems()
         // NOTE: /dev/loop* filesystems are not real filesystems - e.g. on Ubuntu they are used for SNAPs
         if (fs->mnt_fsname[0] == '/' && strncmp(fs->mnt_fsname, "/dev/loop", 9) != 0) {
             if (statfs(fs->mnt_dir, &vfs) != 0) {
-                g_logger.LogError("%s: statfs failed: %d\n", fs->mnt_dir, errno);
+                g_logger.LogErrorWithErrno("%s: statfs failed: %d\n", fs->mnt_dir, errno);
             }
             // g_logger.LogDebug("%s, mounted on %s:\n", fs->mnt_dir, fs->mnt_fsname);
 

@@ -318,6 +318,28 @@ void CMonitorLoggerUtils::LogError(const char* line, ...)
     }
 }
 
+void CMonitorLoggerUtils::LogErrorWithErrno(const char* line, ...)
+{
+    char currLogLine[256];
+
+    va_list args;
+    va_start(args, line);
+    vsnprintf(currLogLine, 255, line, args);
+    va_end(args);
+
+    if (!m_outputErr && !m_strErrorFileName.empty()) {
+        // apparently this is the first error happening: time to open the logfile for errors:
+        if ((m_outputErr = fopen(m_strErrorFileName.c_str(), "w")) == 0) {
+            exit(14);
+        }
+    }
+
+    if (m_outputErr) {
+        // errors always go in their dedicated file
+        fprintf(m_outputErr, "ERROR: %s\n", currLogLine);
+    }
+}
+
 //------------------------------------------------------------------------------
 // Command line functions
 //------------------------------------------------------------------------------
