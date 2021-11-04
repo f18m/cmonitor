@@ -10,6 +10,7 @@ addons:
     packages:
     - valgrind
     - python3
+    - libgtest-dev
 
 install: pip install j2cli
 
