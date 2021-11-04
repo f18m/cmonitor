@@ -22,6 +22,8 @@
 #include "output_frontend.h"
 #include "cmonitor.h"
 #include "influxdb.h"
+#include "logger.h"
+#include "utils.h"
 #include <algorithm>
 #include <assert.h>
 #include <netdb.h>

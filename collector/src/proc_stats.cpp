@@ -20,6 +20,8 @@
 
 #include "cmonitor.h"
 #include "output_frontend.h"
+#include "utils.h"
+#include "logger.h"
 #include <assert.h>
 #include <mntent.h>
 #include <sys/vfs.h>

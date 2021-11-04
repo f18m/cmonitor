@@ -20,7 +20,9 @@
  */
 
 #include "cmonitor.h"
+#include "logger.h"
 #include "output_frontend.h"
+#include "utils.h"
 #include <assert.h>
 #include <fstream>
 #include <pwd.h>

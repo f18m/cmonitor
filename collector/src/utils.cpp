@@ -18,7 +18,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cmonitor.h"
+#include "utils.h"
+#include "logger.h"
 #include <limits.h>
 #include <sstream>
 #include <sys/stat.h>

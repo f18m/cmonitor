@@ -46,6 +46,8 @@ OBJS = \
 HEADERS = \
     cmonitor.h \
     output_frontend.h \
+	utils.h \
+	logger.h \
     influxdb.h
     
 

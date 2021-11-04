@@ -34,9 +34,6 @@
 // Macros
 //------------------------------------------------------------------------------
 
-#define DEBUGLOG_FUNCTION_START()                                                                                      \
-    g_logger.LogDebug("%s() called at line %d of file %s\n", __func__, __LINE__, __FILE__);
-
 #define PROCESS_DEBUGGING_ADDRESSES_SIGNALS (0)
 
 //------------------------------------------------------------------------------
@@ -215,28 +212,6 @@ public:
 extern CMonitorCollectorAppConfig g_cfg;
 
 //------------------------------------------------------------------------------
-// Logging functions for this app
-//------------------------------------------------------------------------------
-
-class CMonitorLoggerUtils {
-public:
-    void init_error_output_file(const std::string& filenamePrefix);
-
-    void LogDebug(const char* line, ...) __attribute__((format(printf, 2, 3)));
-    void LogError(const char* line, ...) __attribute__((format(printf, 2, 3)));
-    void LogErrorWithErrno(const char* line, ...) __attribute__((format(printf, 2, 3)));
-
-private:
-    std::string m_strErrorFileName;
-
-    // output:
-    FILE* m_outputErr = nullptr;
-};
-
-// app-wide logger:
-extern CMonitorLoggerUtils g_logger;
-
-//------------------------------------------------------------------------------
 // The App object
 //------------------------------------------------------------------------------
 
@@ -337,22 +312,3 @@ private:
     // that's why we use std::multimap instead of a std::map
     std::multimap<uint64_t /* process score */, proc_topper_t> m_topper;
 };
-
-//------------------------------------------------------------------------------
-// String/File utilities
-//------------------------------------------------------------------------------
-
-unsigned int replace_string(std::string& str, const std::string& from, const std::string& to, bool allOccurrences);
-std::string to_lower(const std::string& orig_str);
-std::string trim_string(const std::string& s);
-void strip_spaces(char* s);
-bool string2int(const char* s, uint64_t& result);
-bool file_or_dir_exists(const char* filename);
-template <typename T> std::string stl_container2string(const T& par, const std::string& delim);
-std::vector<std::string> split_string_in_array(const std::string& str, char splitter);
-bool parse_string_with_multiple_ranges(const std::string& data, std::vector<int>& result);
-bool parse_string_with_multiple_ranges(const std::string& data, std::set<int>& result);
-bool search_integer(std::string filePath, uint64_t valueToSearch);
-bool read_integer(std::string filePath, uint64_t& value);
-bool read_integers_with_range_validation(
-    const std::string& filename, uint64_t lower_limit, uint64_t upper_limit, std::set<uint64_t>& cpus);

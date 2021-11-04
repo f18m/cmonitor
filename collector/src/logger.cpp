@@ -17,7 +17,9 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "logger.h"
 #include "cmonitor.h"
+#include "utils.h"
 #include <stdarg.h> /* va_list, va_start, va_arg, va_end */
 
 //------------------------------------------------------------------------------
