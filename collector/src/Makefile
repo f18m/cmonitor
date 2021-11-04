@@ -53,6 +53,12 @@ HEADERS = \
 
 # Targets
 
+all: $(OUT)
+	$(MAKE) -C tests
+
+test:
+	$(MAKE) -C tests test
+
 $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS)
 

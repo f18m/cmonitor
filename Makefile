@@ -19,7 +19,10 @@ all:
 	if [ -d "collector" ]; then	$(MAKE) -C collector CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) DOCKER_TAG=$(DOCKER_TAG) ; fi
 	if [ -d "tools" ]; then	$(MAKE) -C tools CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) ; fi
 	if [ -d "examples" ]; then	$(MAKE) -C examples CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) ; fi
-	
+
+test:
+	$(MAKE) -C collector test
+
 clean:
 	$(MAKE) -C collector clean
 	$(MAKE) -C tools clean
