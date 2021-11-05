@@ -54,7 +54,7 @@ HEADERS = \
 # Targets
 
 all: $(OUT)
-	$(MAKE) -C tests
+	$(MAKE) -C tests all
 
 test:
 	$(MAKE) -C tests test
@@ -64,6 +64,7 @@ $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 
 clean:
 	rm -f $(OUT) $(OBJS) *.err *.json *.log
+	$(MAKE) -C tests clean
 
 strip:
 	strip $(OUT)

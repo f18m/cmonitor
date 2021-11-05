@@ -15,7 +15,7 @@ CXXFLAGS+=-g -O2     # release mode; NOTE: without -g the creation of debuginfo 
 LDFLAGS+=-g -O2
 endif
 
-LDFLAGS+= -lgtest
+LIBRARIES+= -lgtest -lpthread
 
 ifeq ($(MUSL_BUILD),1)
 OUTDIR=../../bin/musl
@@ -39,7 +39,7 @@ test: $(OUT)
 	$(OUT)
 
 $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
-	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS)
+	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBRARIES)
 
 clean:
 	rm -f $(OUT) $(OBJS) *.err *.json *.log
