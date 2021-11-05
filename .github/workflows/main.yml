@@ -8,12 +8,11 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: make
+    - name: install deps
+      run: apt install libgtest-dev python3
+    - name: make all
       run: make
-    - name: make examples
-      run: make examples
