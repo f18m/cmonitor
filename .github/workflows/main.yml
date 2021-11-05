@@ -13,6 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install deps
-      run: apt install libgtest-dev python3
+      run: sudo apt install -y libgtest-dev python3
     - name: make all
       run: make
