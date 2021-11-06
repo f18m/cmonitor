@@ -49,3 +49,5 @@ bool search_integer(std::string filePath, uint64_t valueToSearch);
 bool read_integer(std::string filePath, uint64_t& value);
 bool read_integers_with_range_validation(
     const std::string& filename, uint64_t lower_limit, uint64_t upper_limit, std::set<uint64_t>& cpus);
+void proc_read_numeric_stats_from(const char* statname, const std::set<std::string>& allowedStatsNames);
+std::string get_hostname();

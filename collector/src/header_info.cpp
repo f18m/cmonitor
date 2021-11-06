@@ -18,7 +18,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cmonitor.h"
+#include "header_info.h"
 #include "output_frontend.h"
 #include "utils.h"
 #include "logger.h"
@@ -29,7 +29,7 @@
 #include <stdarg.h> /* va_list, va_start, va_arg, va_end */
 #include <sys/types.h>
 
-void CMonitorCollectorApp::file_read_one_stat(const char* file, const char* name)
+void CMonitorHeaderInfo::file_read_one_stat(const char* file, const char* name)
 {
     FILE* fp;
     char buf[1024 + 1];
@@ -44,7 +44,7 @@ void CMonitorCollectorApp::file_read_one_stat(const char* file, const char* name
     }
 }
 
-void CMonitorCollectorApp::header_identity()
+void CMonitorHeaderInfo::header_identity()
 {
     int i;
 
@@ -63,9 +63,9 @@ void CMonitorCollectorApp::header_identity()
     DEBUGLOG_FUNCTION_START();
 
     g_output.psection_start("identity");
-    get_hostname();
-    g_output.pstring("hostname", m_strHostname.c_str());
-    g_output.pstring("shorthostname", m_strShortHostname.c_str());
+    std::string strHostname = get_hostname();
+    g_output.pstring("hostname", strHostname.c_str());
+    g_output.pstring("shorthostname", strHostname.c_str());
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
@@ -142,7 +142,7 @@ void CMonitorCollectorApp::header_identity()
     g_output.psection_end();
 }
 
-void CMonitorCollectorApp::header_cmonitor_info(
+void CMonitorHeaderInfo::header_cmonitor_info(
     int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags)
 {
     /* user name and id */
@@ -189,7 +189,7 @@ void CMonitorCollectorApp::header_cmonitor_info(
     g_output.psection_end();
 }
 
-void CMonitorCollectorApp::header_etc_os_release()
+void CMonitorHeaderInfo::header_etc_os_release()
 {
     static FILE* fp = 0;
     char buf[1024 + 1];
@@ -224,7 +224,7 @@ void CMonitorCollectorApp::header_etc_os_release()
     g_output.psection_end();
 }
 
-void CMonitorCollectorApp::header_cpuinfo()
+void CMonitorHeaderInfo::header_cpuinfo()
 {
     static FILE* fp = 0;
     char buf[1024 + 1];
@@ -333,7 +333,7 @@ void CMonitorCollectorApp::header_cpuinfo()
     }
 }
 
-void CMonitorCollectorApp::header_meminfo()
+void CMonitorHeaderInfo::header_meminfo()
 {
     std::set<std::string> static_memory_stats; // that never change at runtime
     static_memory_stats.insert("MemTotal");
@@ -342,7 +342,7 @@ void CMonitorCollectorApp::header_meminfo()
     proc_read_numeric_stats_from("meminfo", static_memory_stats);
 }
 
-void CMonitorCollectorApp::header_version()
+void CMonitorHeaderInfo::header_version()
 {
     static FILE* fp = 0;
     char buf[1024 + 1];
@@ -366,7 +366,7 @@ void CMonitorCollectorApp::header_version()
     }
 }
 
-void CMonitorCollectorApp::header_lscpu()
+void CMonitorHeaderInfo::header_lscpu()
 {
     FILE* pop = 0;
     int data_col = 21;
@@ -449,7 +449,7 @@ void CMonitorCollectorApp::header_lscpu()
     pclose(pop);
 }
 
-void CMonitorCollectorApp::header_lshw()
+void CMonitorHeaderInfo::header_lshw()
 {
 #if 0
     FILE* pop = 0;
@@ -481,7 +481,7 @@ void CMonitorCollectorApp::header_lshw()
 #endif
 }
 
-void CMonitorCollectorApp::header_custom_metadata()
+void CMonitorHeaderInfo::header_custom_metadata()
 {
     g_output.psection_start("custom_metadata");
     for (const auto& entry : g_cfg.m_mapCustomMetadata)

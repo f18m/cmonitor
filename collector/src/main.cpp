@@ -21,6 +21,9 @@
 #include "output_frontend.h"
 #include "utils.h"
 #include "logger.h"
+#include "cgroups.h"
+#include "system.h"
+#include "header_info.h"
 #include <assert.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -40,6 +43,38 @@
 
 #define ADDITIONAL_HELP_COLUMN_START (40)
 
+
+//------------------------------------------------------------------------------
+// The App object
+//------------------------------------------------------------------------------
+
+class CMonitorCollectorApp {
+public:
+    CMonitorCollectorApp() { }
+
+    void init_defaults();
+    void parse_args(int argc, char** argv);
+    int run(int argc, char** argv);
+
+private:
+    void print_help();
+    void check_pid_file();
+    void get_timestamps(std::string& localTime, std::string& utcTime);
+    void psample_date_time(long loop);
+    double get_timestamp_sec();
+
+private:
+    //------------------------------------------------------------------------------
+    // Misc globals
+    //------------------------------------------------------------------------------
+    std::string m_strHostname; // full hostname for this machine
+    std::string m_strShortHostname; // short hostname for this machine
+
+    CMonitorHeaderInfo m_header_info_generator;
+    CMonitorCgroups m_cgroups_collector;
+    CMonitorSystem m_system_collector;
+};
+
 //------------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------------
@@ -48,6 +83,7 @@ CMonitorLoggerUtils g_logger;
 CMonitorCollectorAppConfig g_cfg;
 CMonitorCollectorApp g_app;
 bool g_bExiting = false;
+
 
 //------------------------------------------------------------------------------
 // Command Line Globals
@@ -522,27 +558,6 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
 // Application core functions
 //------------------------------------------------------------------------------
 
-std::string CMonitorCollectorApp::get_hostname()
-{
-    DEBUGLOG_FUNCTION_START();
-    if (!m_strHostname.empty())
-        return m_strHostname;
-
-    char hostname[1024];
-    if (gethostname(hostname, sizeof(hostname)) != 0)
-        m_strHostname = "unknown-hostname";
-    else
-        m_strHostname = hostname;
-
-    for (size_t i = 0; i < strlen(hostname); i++)
-        if (hostname[i] == '.')
-            break;
-        else
-            m_strShortHostname.push_back(hostname[i]);
-
-    return m_strHostname;
-}
-
 void CMonitorCollectorApp::get_timestamps(std::string& localTime, std::string& utcTime)
 {
     time_t timer; /* used to work out the time details*/
@@ -660,36 +675,42 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         (g_cfg.m_nCollectFlags & PK_CGROUP_BLKIO) || // force newline
         (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) || // force newline
         (g_cfg.m_nCollectFlags & PK_CGROUP_THREADS);
-    proc_stat(0, bCollectCGroupInfo, PF_NONE /* do not emit JSON data */);
-    proc_diskstats(0, PF_NONE /* do not emit JSON data */);
-    proc_net_dev(0, PF_NONE /* do not emit JSON data */);
+
+    //if (bCollectCGroupInfo)
+        // if cgropu monitoring is enabled we assume the user is interested in the CPU usage, computed from system-wide statistic files,
+        // only of the CPUs that can be used by the cgroup-under-monitor:
+        //m_system_collector.set_monitored_cpus(m_cgroups_collector.get_cgroup_cpus());
+
+    m_system_collector.proc_stat(0, PF_NONE /* do not emit JSON data */);
+    m_system_collector.proc_diskstats(0, PF_NONE /* do not emit JSON data */);
+    m_system_collector.proc_net_dev(0, PF_NONE /* do not emit JSON data */);
     if (bCollectCGroupInfo) {
-        cgroup_init();
+        m_cgroups_collector.cgroup_init();
 
         if (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT)
-            cgroup_proc_cpuacct(0, false /* do not emit JSON */);
+            m_cgroups_collector.cgroup_proc_cpuacct(0, false /* do not emit JSON */);
 
         if (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES)
-            cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */, false /* do not include threads */);
+            m_cgroups_collector.cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */, false /* do not include threads */);
         if (g_cfg.m_nCollectFlags & PK_CGROUP_THREADS)
-            cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */, true /* do include threads */);
+            m_cgroups_collector.cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */, true /* do include threads */);
     }
 
     double current_time = get_timestamp_sec();
 
     // write stuff that is present only in the very first sample (never changes):
     g_output.pheader_start();
-    header_identity();
-    header_cmonitor_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
-    header_etc_os_release();
-    header_version();
+    m_header_info_generator.header_identity();
+    m_header_info_generator.header_cmonitor_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
+    m_header_info_generator.header_etc_os_release();
+    m_header_info_generator.header_version();
     if (bCollectCGroupInfo)
-        cgroup_config(); // needs to run _BEFORE_ lscpu() and proc_cpuinfo()
-    header_lscpu();
-    header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
-    header_meminfo();
-    header_lshw();
-    header_custom_metadata();
+        m_cgroups_collector.cgroup_config(); // needs to run _BEFORE_ lscpu() and proc_cpuinfo()
+    m_header_info_generator.header_lscpu();
+    m_header_info_generator.header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
+    m_header_info_generator.header_meminfo();
+    m_header_info_generator.header_lshw();
+    m_header_info_generator.header_custom_metadata();
     g_output.push_header();
 
     /* first time just sleep(1) so the first snapshot has some real-ish data */
@@ -732,12 +753,12 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         // some stats are always collected, regardless of g_cfg.m_nCollectFlags
         psample_date_time(loop);
         // proc_uptime(); // not really useful!!
-        proc_loadavg();
+        m_system_collector.proc_loadavg();
 
         // baremetal stats:
 
         if (g_cfg.m_nCollectFlags & PK_BAREMETAL_CPU) {
-            proc_stat(elapsed, false /* collect from ALL cpus */, g_cfg.m_nOutputFields /* emit JSON */);
+            m_system_collector.proc_stat(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
         }
 
         if (g_cfg.m_nCollectFlags & PK_BAREMETAL_MEMORY) {
@@ -747,11 +768,11 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         }
 
         if (g_cfg.m_nCollectFlags & PK_BAREMETAL_NETWORK) {
-            proc_net_dev(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
+            m_system_collector.proc_net_dev(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
         }
 
         if (g_cfg.m_nCollectFlags & PK_BAREMETAL_DISK) {
-            proc_diskstats(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
+            m_system_collector.proc_diskstats(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
             // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
 
@@ -760,24 +781,24 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         if (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) {
             // do not list all CPU informations when cgroup mode is ON: don't put information
             // for CPUs outside current cgroup!
-            cgroup_proc_cpuacct(elapsed, true /* emit JSON */);
+            m_cgroups_collector.cgroup_proc_cpuacct(elapsed, true /* emit JSON */);
         }
 
         if (g_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) {
-            cgroup_proc_memory(charted_stats_from_cgroup_memory);
+            m_cgroups_collector.cgroup_proc_memory(charted_stats_from_cgroup_memory);
         }
         if (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) {
-            cgroup_proc_tasks(elapsed, g_cfg.m_nOutputFields /* emit JSON */, false /* do not include threads */);
+            m_cgroups_collector.cgroup_proc_tasks(elapsed, g_cfg.m_nOutputFields /* emit JSON */, false /* do not include threads */);
         }
         if (g_cfg.m_nCollectFlags & PK_CGROUP_THREADS) {
-            cgroup_proc_tasks(elapsed, g_cfg.m_nOutputFields /* emit JSON */, true /* do include threads */);
+            m_cgroups_collector.cgroup_proc_tasks(elapsed, g_cfg.m_nOutputFields /* emit JSON */, true /* do include threads */);
         }
 
         g_output.push_current_sample();
 
         if (g_bExiting)
             break; // graceful exit allows to produce a valid JSON on SIGTERM signals!
-        if (g_cfg.m_nSamples == SPECIAL_NUMSAMPLES_UNTIL_CGROUP_ALIVE && !cgroup_still_exists())
+        if (g_cfg.m_nSamples == SPECIAL_NUMSAMPLES_UNTIL_CGROUP_ALIVE && !m_cgroups_collector.cgroup_still_exists())
             break;
     }
 

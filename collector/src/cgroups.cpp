@@ -1,7 +1,5 @@
 /*
- * cgroups.cpp -- interacts with Linux control groups to allow
- *                njmon to monitor only the CPU/memory/disk resources
- *                that the current cgroup allows to use.
+ * cgroups.cpp -- code for collecting CGROUP statistics
  * Developer: Francesco Montorsi.
  * (C) Copyright 2018 Francesco Montorsi
 
@@ -19,7 +17,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cmonitor.h"
+#include "cgroups.h"
 #include "logger.h"
 #include "output_frontend.h"
 #include "utils.h"
@@ -488,10 +486,10 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
 }
 
 // ----------------------------------------------------------------------------------
-// CMonitorCollectorApp - Functions used by the cmonitor_collector engine
+// CMonitorCgroups - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
 
-void CMonitorCollectorApp::cgroup_init()
+void CMonitorCgroups::cgroup_init()
 {
     m_bCGroupsFound = false;
     m_cgroup_systemd_name = "N/A";
@@ -614,7 +612,7 @@ void CMonitorCollectorApp::cgroup_init()
         m_cgroup_memory_kernel_path.c_str());
 }
 
-bool CMonitorCollectorApp::cgroup_init_check_for_our_pid()
+bool CMonitorCgroups::cgroup_init_check_for_our_pid()
 {
     // CGROUP CHECKS
     // now if we got the right paths, we should be able to find our pid in all these cgroups
@@ -649,7 +647,7 @@ bool CMonitorCollectorApp::cgroup_init_check_for_our_pid()
     return found;
 }
 
-void CMonitorCollectorApp::cgroup_config()
+void CMonitorCgroups::cgroup_config()
 {
     if (!m_bCGroupsFound)
         return;
@@ -682,21 +680,21 @@ void CMonitorCollectorApp::cgroup_config()
     g_output.psection_end();
 }
 
-bool CMonitorCollectorApp::cgroup_still_exists()
+bool CMonitorCgroups::cgroup_still_exists()
 {
     return file_or_dir_exists(m_cgroup_memory_kernel_path.c_str()) && // force newline
         file_or_dir_exists(m_cgroup_cpuacct_kernel_path.c_str()) && // force newline
         file_or_dir_exists(m_cgroup_cpuset_kernel_path.c_str());
 }
 
-bool CMonitorCollectorApp::cgroup_is_allowed_cpu(int cpu)
+bool CMonitorCgroups::cgroup_is_allowed_cpu(int cpu)
 {
     if (!m_bCGroupsFound)
         return true; // allowed
     return m_cgroup_cpus.find(cpu) != m_cgroup_cpus.end();
 }
 
-void CMonitorCollectorApp::cgroup_proc_memory(const std::set<std::string>& allowedStatsNames)
+void CMonitorCgroups::cgroup_proc_memory(const std::set<std::string>& allowedStatsNames)
 {
     if (!m_bCGroupsFound)
         return;
@@ -752,7 +750,7 @@ void CMonitorCollectorApp::cgroup_proc_memory(const std::set<std::string>& allow
     g_output.psection_end();
 }
 
-void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
+void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 {
     if (!m_bCGroupsFound)
         return;
@@ -963,7 +961,7 @@ void CMonitorCollectorApp::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         g_output.psection_end();
 }
 
-bool CMonitorCollectorApp::cgroup_collect_pids(std::vector<pid_t>& pids)
+bool CMonitorCgroups::cgroup_collect_pids(std::vector<pid_t>& pids)
 {
     std::string path = m_cgroup_cpuacct_kernel_path + "/tasks";
     g_logger.LogDebug("Trying to read tasks inside the monitored cgroup from %s.\n", path.c_str());
@@ -990,7 +988,7 @@ bool CMonitorCollectorApp::cgroup_collect_pids(std::vector<pid_t>& pids)
     return true;
 }
 
-void CMonitorCollectorApp::cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads)
+void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads)
 {
     char str[256];
 

@@ -40,14 +40,17 @@ OBJS = \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/main.o \
     $(OUTDIR)/output_frontend.o \
-    $(OUTDIR)/proc_stats.o \
+    $(OUTDIR)/system.o \
     $(OUTDIR)/utils.o
 
 HEADERS = \
+	cgroups.h \
+	header_info.h \
+	logger.h \
     cmonitor.h \
     output_frontend.h \
+	system.h \
 	utils.h \
-	logger.h \
     influxdb.h
     
 

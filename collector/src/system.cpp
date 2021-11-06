@@ -1,6 +1,5 @@
 /*
- * proc_stats.cpp -- collects Linux performance data and
- *                   generates structured output measurements.
+ * system.cpp - code for collecting SYSTEM-level statistics (i.e. not cgroup-aware)
  * Developer: Nigel Griffiths.
  * (C) Copyright 2018 Nigel Griffiths
 
@@ -18,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cmonitor.h"
+#include "system.h"
 #include "output_frontend.h"
 #include "utils.h"
 #include "logger.h"
@@ -30,68 +29,8 @@
 #define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpu_count + 1.0)))
 #define DELTA_LOGICAL(stat) ((float)(stat - logical_cpu[cpuno].stat) / (float)elapsed_sec)
 
-/*
-Reads files in one of the 3 formats supported below:
 
-name number
-name: number
-name: number kB
-
-*/
-void CMonitorCollectorApp::proc_read_numeric_stats_from(
-    const char* statname, const std::set<std::string>& allowedStatsNames)
-{
-    FILE* fp = 0;
-    char line[1024];
-    char filename[1024];
-    char label[512];
-    char number[512];
-    int i;
-    int len;
-
-    DEBUGLOG_FUNCTION_START();
-    sprintf(filename, "/proc/%s", statname);
-    if ((fp = fopen(filename, "r")) == NULL) {
-        g_logger.LogErrorWithErrno("Failed to open performance file %s", filename);
-        return;
-    }
-    sprintf(label, "proc_%s", statname);
-    g_output.psection_start(label);
-    while (fgets(line, 1000, fp) != NULL) {
-        len = strlen(line);
-        bool is_kb = false;
-        for (i = 0; i < len; i++) {
-
-            // escape characters that we don't like in JSON output:
-            if (line[i] == '(')
-                line[i] = '_';
-            if (line[i] == ')')
-                line[i] = ' ';
-            if (line[i] == ':')
-                line[i] = ' ';
-            if (line[i] == '\n') {
-                line[i] = 0;
-                if (i > 3 && line[i - 2] == 'k' && line[i - 1] == 'B')
-                    is_kb = true;
-            }
-        }
-        sscanf(line, "%s %s", label, number);
-        // g_logger.LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr, atoll(numstr));
-
-        if (allowedStatsNames.empty() /* all stats must be put in output */
-            || allowedStatsNames.find(label) != allowedStatsNames.end()) {
-            long long num = atoll(number);
-            if (is_kb)
-                num *= 1000;
-
-            g_output.plong(label, num);
-        }
-    }
-    g_output.psection_end();
-    (void)fclose(fp);
-}
-
-void CMonitorCollectorApp::proc_stat_cpu_total(
+void CMonitorSystem::proc_stat_cpu_total(
     const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu, int max_cpu_count)
 {
     long long user;
@@ -150,8 +89,8 @@ void CMonitorCollectorApp::proc_stat_cpu_total(
     total_cpu.guestnice = guestnice;
 }
 
-int CMonitorCollectorApp::proc_stat_cpu_index(const char* cpu_data, double elapsed_sec, OutputFields output_opts,
-    cpu_specs_t* logical_cpu, bool onlyCgroupAllowedCpus)
+int CMonitorSystem::proc_stat_cpu_index(const char* cpu_data, double elapsed_sec, OutputFields output_opts,
+    cpu_specs_t* logical_cpu)
 {
     long long user;
     long long nice;
@@ -176,7 +115,7 @@ int CMonitorCollectorApp::proc_stat_cpu_index(const char* cpu_data, double elaps
 
     if (cpuno >= MAX_LOGICAL_CPU)
         return -1;
-    if (onlyCgroupAllowedCpus && !cgroup_is_allowed_cpu(cpuno))
+    if (!is_monitored_cpu(cpuno))
         return -1;
 
     if (output_opts != PF_NONE) {
@@ -221,7 +160,7 @@ int CMonitorCollectorApp::proc_stat_cpu_index(const char* cpu_data, double elaps
 /*
 read /proc/stat
 */
-void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedCpus, OutputFields output_opts)
+void CMonitorSystem::proc_stat(double elapsed_sec, OutputFields output_opts)
 {
     int count;
     long long value;
@@ -259,7 +198,7 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
                 // found a line like:
                 //    cpu1 90470 3217 30294 291392 17250 0 3242 0 0 0
 
-                int cpuno = proc_stat_cpu_index(&line[3], elapsed_sec, output_opts, logical_cpu, onlyCgroupAllowedCpus);
+                int cpuno = proc_stat_cpu_index(&line[3], elapsed_sec, output_opts, logical_cpu);
                 if (cpuno > max_cpu_count)
                     max_cpu_count = cpuno;
             }
@@ -305,7 +244,7 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
 /*
 read /proc/diskstats
 */
-void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields output_opts)
+void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts)
 {
     // please refer https://www.kernel.org/doc/Documentation/iostats.txt
 
@@ -501,7 +440,7 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields outpu
 /*
  read /proc/net/dev
  */
-void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_opts)
+void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
 {
     struct netinfo {
         char if_name[128];
@@ -668,7 +607,7 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_
 /*
  read /proc/uptime
 */
-void CMonitorCollectorApp::proc_uptime()
+void CMonitorSystem::proc_uptime()
 {
     static FILE* fp = 0;
     char buf[1024 + 1];
@@ -699,7 +638,7 @@ void CMonitorCollectorApp::proc_uptime()
     }
 }
 
-void CMonitorCollectorApp::proc_loadavg()
+void CMonitorSystem::proc_loadavg()
 {
     char buf[1024 + 1];
     int count;
@@ -743,7 +682,7 @@ void CMonitorCollectorApp::proc_loadavg()
     fclose(fp);
 }
 
-void CMonitorCollectorApp::proc_filesystems()
+void CMonitorSystem::proc_filesystems()
 {
     FILE* fp;
     struct mntent* fs;
