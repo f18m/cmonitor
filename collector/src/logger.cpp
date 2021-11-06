@@ -23,10 +23,16 @@
 #include <stdarg.h> /* va_list, va_start, va_arg, va_end */
 
 //------------------------------------------------------------------------------
+// Global static
+//------------------------------------------------------------------------------
+
+CMonitorLogger* CMonitorLogger::ms_pInstance = nullptr;
+
+//------------------------------------------------------------------------------
 // Logger functions
 //------------------------------------------------------------------------------
 
-void CMonitorLoggerUtils::init_error_output_file(const std::string& filenamePrefix)
+void CMonitorLogger::init_error_output_file(const std::string& filenamePrefix)
 {
     if (filenamePrefix == "stdout") {
         // open stderr as FILE*:
@@ -56,11 +62,11 @@ void CMonitorLoggerUtils::init_error_output_file(const std::string& filenamePref
     fflush(NULL);
 }
 
-void CMonitorLoggerUtils::LogDebug(const char* line, ...)
+void CMonitorLogger::LogDebug(const char* line, ...)
 {
     char currLogLine[256];
 
-    if (!g_cfg.m_bDebug)
+    if (!m_bDebugEnabled)
         return;
 
     va_list args;
@@ -75,7 +81,7 @@ void CMonitorLoggerUtils::LogDebug(const char* line, ...)
         printf("\n");
 }
 
-void CMonitorLoggerUtils::LogError(const char* line, ...)
+void CMonitorLogger::LogError(const char* line, ...)
 {
     char currLogLine[256];
 
@@ -97,7 +103,7 @@ void CMonitorLoggerUtils::LogError(const char* line, ...)
     }
 }
 
-void CMonitorLoggerUtils::LogErrorWithErrno(const char* line, ...)
+void CMonitorLogger::LogErrorWithErrno(const char* line, ...)
 {
     char currLogLine[256];
 

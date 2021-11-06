@@ -22,7 +22,7 @@ OUTDIR=../bin/glibc
 endif
 OUT=$(OUTDIR)/cmonitor_collector
 
-VALGRIND_LOGFILE_POSTFIX:=${OUT}-$(shell date +%F-%H%M%S)
+VALGRIND_LOGFILE_POSTFIX:=cmonitor_collector-$(shell date +%F-%H%M%S)
 VALGRIND_COMMON_OPTS:=--gen-suppressions=all --time-stamp=yes --error-limit=no
 
 ifeq ($(CMONITOR_ARGS),)

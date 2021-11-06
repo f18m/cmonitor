@@ -208,5 +208,22 @@ public:
     std::map<std::string, std::string> m_mapCustomMetadata; // --custom-metadata
 };
 
-// app-wide config settings:
-extern CMonitorCollectorAppConfig g_cfg;
+
+//------------------------------------------------------------------------------
+// CMonitorAppHelper
+//------------------------------------------------------------------------------
+
+class CMonitorOutputFrontend;
+class CMonitorAppHelper
+{
+public:
+    CMonitorAppHelper(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
+    {
+        m_pCfg = pCfg;
+        m_pOutput = pOutput;
+    }
+
+protected:
+    CMonitorCollectorAppConfig* m_pCfg;
+    CMonitorOutputFrontend* m_pOutput;
+};

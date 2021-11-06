@@ -35,9 +35,12 @@
 // The CMonitorHeaderInfo object
 //------------------------------------------------------------------------------
 
-class CMonitorHeaderInfo {
+class CMonitorHeaderInfo : public CMonitorAppHelper {
 public:
-    CMonitorHeaderInfo() { }
+    CMonitorHeaderInfo(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
+        : CMonitorAppHelper(pCfg, pOutput)
+    {
+    }
     
     //------------------------------------------------------------------------------
     // JSON header functions

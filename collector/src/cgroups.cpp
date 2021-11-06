@@ -98,7 +98,7 @@ const char* get_state(char n)
     }
 }
 
-bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts)
+bool CMonitorCgroups::cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts)
 {
 #define MAX_STAT_FILE_PREFIX_LEN 64
 #define MAX_PROC_FILENAME_LEN 128
@@ -115,7 +115,7 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
     snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d", pid);
     struct stat statbuf;
     if (stat(filename, &statbuf) != 0) {
-        g_logger.LogErrorWithErrno("ERROR: failed to stat file %s", filename);
+        CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to stat file %s", filename);
         return false;
     }
 
@@ -164,7 +164,7 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
     { /* process the statistic file for the process/thread */
         snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/stat", stat_file_prefix);
         if ((fp = fopen(filename, "r")) == NULL) {
-            g_logger.LogErrorWithErrno("ERROR: failed to open file %s", filename);
+            CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to open file %s", filename);
             return false;
         }
 
@@ -173,12 +173,12 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
         bool reached_eof = feof(fp);
         fclose(fp); // regardless of what happened, always close the file
         if (size == 0 || size >= MAX_PROC_CONTENT_LEN || io_error) {
-            g_logger.LogError(
+            CMonitorLogger::instance()->LogError(
                 "ERROR: procsinfo read returned = %zu assuming process stopped pid=%d errno=%d\n", size, pid, errno);
             return false;
         }
         if (!reached_eof) {
-            g_logger.LogError("ERROR: procsinfo read returned = %zu for pid=%d but did not reach EOF\n", size, pid);
+            CMonitorLogger::instance()->LogError("ERROR: procsinfo read returned = %zu for pid=%d but did not reach EOF\n", size, pid);
             return false;
         }
 
@@ -189,14 +189,14 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
         // see http://man7.org/linux/man-pages/man5/proc.5.html, search for /proc/[pid]/stat
         int ret = sscanf(buf, "%d (%s)", &pout->pi_pid, &pout->pi_comm[0]);
         if (ret != 2) {
-            g_logger.LogError("procsinfo sscanf returned = %d line=%s\n", ret, buf);
+            CMonitorLogger::instance()->LogError("procsinfo sscanf returned = %d line=%s\n", ret, buf);
             return false;
         }
         pout->pi_comm[strlen(pout->pi_comm) - 1] = 0;
 
         // never seen a case where inside /proc/<pid>/task/<pid>/stat you find mention of a pid != <pid>
         if (pout->pi_pid != pid) {
-            g_logger.LogError(
+            CMonitorLogger::instance()->LogError(
                 "ERROR: found pid=%d inside the filename=%s... unexpected mismatch\n", pout->pi_pid, filename);
             return false;
         }
@@ -207,7 +207,7 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
             if (buf[count] == ')' && buf[count + 1] == ' ')
                 break;
         if (count == size) {
-            g_logger.LogError("procsinfo failed to find end of command buf=%s\n", buf);
+            CMonitorLogger::instance()->LogError("procsinfo failed to find end of command buf=%s\n", buf);
             return false;
         }
         count++;
@@ -263,7 +263,7 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
             &pout->pi_delayacct_blkio_ticks /*42*/
         );
         if (ret != 40) {
-            g_logger.LogError("procsinfo sscanf wanted 40 returned = %d pid=%d line=%s\n", ret, pid, buf);
+            CMonitorLogger::instance()->LogError("procsinfo sscanf wanted 40 returned = %d pid=%d line=%s\n", ret, pid, buf);
             return false;
         }
     }
@@ -272,14 +272,14 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
 
         snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/statm", stat_file_prefix);
         if ((fp = fopen(filename, "r")) == NULL) {
-            g_logger.LogErrorWithErrno("failed to open file %s", filename);
+            CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename);
             return false;
         }
         size_t size = fread(buf, 1, MAX_PROC_CONTENT_LEN - 1, fp);
         fclose(fp); /* close it even if the read failed, the file could have been removed
                     between open & read i.e. the device driver does not behave like a file */
         if (size == 0) {
-            g_logger.LogError("failed to read file %s", filename);
+            CMonitorLogger::instance()->LogError("failed to read file %s", filename);
             return false;
         }
 
@@ -287,7 +287,7 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
             &pout->statm_size, &pout->statm_resident, &pout->statm_share, &pout->statm_trs, &pout->statm_lrs,
             &pout->statm_drs, &pout->statm_dt);
         if (ret != 7) {
-            g_logger.LogError("sscanf wanted 7 returned = %d line=%s\n", ret, buf);
+            CMonitorLogger::instance()->LogError("sscanf wanted 7 returned = %d line=%s\n", ret, buf);
             return false;
         }
     }
@@ -296,7 +296,7 @@ bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, O
 
         snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/status", stat_file_prefix);
         if ((fp = fopen(filename, "r")) == NULL) {
-            g_logger.LogErrorWithErrno("failed to open file %s", filename);
+            CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename);
             return false;
         }
         for (int i = 0;; i++) {
@@ -497,7 +497,7 @@ void CMonitorCgroups::cgroup_init()
     // ABSOLUTE PATH PREFIXES
 
     if (!get_cgroup_abs_path_prefix_for_this_pid("memory", m_cgroup_memory_kernel_path)) {
-        g_logger.LogError("Could not find the 'memory' cgroup path prefix. CGroup mode disabled.\n");
+        CMonitorLogger::instance()->LogError("Could not find the 'memory' cgroup path prefix. CGroup mode disabled.\n");
         return;
     }
 
@@ -509,32 +509,32 @@ void CMonitorCgroups::cgroup_init()
         cpuacct_controller_name = "cpuacct,cpu";
 
         if (!get_cgroup_abs_path_prefix_for_this_pid(cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
-            g_logger.LogError("Could not find the 'cpuacct' cgroup path prefix. CGroup mode disabled.\n");
+            CMonitorLogger::instance()->LogError("Could not find the 'cpuacct' cgroup path prefix. CGroup mode disabled.\n");
             return;
         }
     }
     if (!get_cgroup_abs_path_prefix_for_this_pid("cpuset", m_cgroup_cpuset_kernel_path)) {
-        g_logger.LogError("Could not find the 'cpuset' cgroup path prefix. CGroup mode disabled.\n");
+        CMonitorLogger::instance()->LogError("Could not find the 'cpuset' cgroup path prefix. CGroup mode disabled.\n");
         return;
     }
 
     // ACTUAL CGROUP PATHS
 
-    if (g_cfg.m_strCGroupName.empty() || g_cfg.m_strCGroupName == "self") {
+    if (m_pCfg->m_strCGroupName.empty() || m_pCfg->m_strCGroupName == "self") {
 
         // assume the user wants to monitor the same cgroup where cmonitor_collector is running:
 
-        g_logger.LogDebug("No cgroup name provided. Trying to autodetect my own cgroup.");
+        CMonitorLogger::instance()->LogDebug("No cgroup name provided. Trying to autodetect my own cgroup.");
 
         cgroup_paths_map_t cgroup_paths;
         if (!get_cgroup_paths_for_this_pid(cgroup_paths)) {
-            g_logger.LogDebug("Could not get the cgroup paths. CGroup mode disabled.\n");
+            CMonitorLogger::instance()->LogDebug("Could not get the cgroup paths. CGroup mode disabled.\n");
             return;
         }
 
-        g_logger.LogDebug("Found cpuset cgroup mounted at %s\n", m_cgroup_cpuset_kernel_path.c_str());
-        g_logger.LogDebug("Found cpuacct cgroup mounted at %s\n", m_cgroup_cpuacct_kernel_path.c_str());
-        g_logger.LogDebug("Found memory cgroup mounted at %s\n", m_cgroup_memory_kernel_path.c_str());
+        CMonitorLogger::instance()->LogDebug("Found cpuset cgroup mounted at %s\n", m_cgroup_cpuset_kernel_path.c_str());
+        CMonitorLogger::instance()->LogDebug("Found cpuacct cgroup mounted at %s\n", m_cgroup_cpuacct_kernel_path.c_str());
+        CMonitorLogger::instance()->LogDebug("Found memory cgroup mounted at %s\n", m_cgroup_memory_kernel_path.c_str());
 
         // NOTE: in case we're inside Docker or LXC we should be able to find ourselves inside the
         //       paths composed only by the ABS PREFIXES
@@ -547,33 +547,33 @@ void CMonitorCgroups::cgroup_init()
             m_cgroup_memory_kernel_path += "/" + cgroup_paths["memory"];
             m_cgroup_cpuacct_kernel_path += "/" + cgroup_paths[cpuacct_controller_name];
             m_cgroup_cpuset_kernel_path += "/" + cgroup_paths["cpuset"];
-            g_logger.LogDebug("Adjusting cpuset cgroup path to %s\n", m_cgroup_cpuset_kernel_path.c_str());
-            g_logger.LogDebug("Adjusting cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
-            g_logger.LogDebug("Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
+            CMonitorLogger::instance()->LogDebug("Adjusting cpuset cgroup path to %s\n", m_cgroup_cpuset_kernel_path.c_str());
+            CMonitorLogger::instance()->LogDebug("Adjusting cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
+            CMonitorLogger::instance()->LogDebug("Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
             if (cgroup_init_check_for_our_pid())
                 m_cgroup_systemd_name = cgroup_paths["name=systemd"];
         }
     } else {
         // verify the provided cgroup name is actually existing on disk:
-        g_logger.LogDebug("Cgroup name [%s] provided. Trying to detect the paths for the actual cgroups to monitor.",
+        CMonitorLogger::instance()->LogDebug("Cgroup name [%s] provided. Trying to detect the paths for the actual cgroups to monitor.",
             m_cgroup_memory_kernel_path.c_str());
-        m_cgroup_memory_kernel_path += "/" + g_cfg.m_strCGroupName;
-        m_cgroup_cpuacct_kernel_path += "/" + g_cfg.m_strCGroupName;
-        m_cgroup_cpuset_kernel_path += "/" + g_cfg.m_strCGroupName;
+        m_cgroup_memory_kernel_path += "/" + m_pCfg->m_strCGroupName;
+        m_cgroup_cpuacct_kernel_path += "/" + m_pCfg->m_strCGroupName;
+        m_cgroup_cpuset_kernel_path += "/" + m_pCfg->m_strCGroupName;
         if (!file_or_dir_exists(m_cgroup_memory_kernel_path.c_str())) {
-            g_logger.LogError("Cannot find the cgroup directory corresponding to the provided cgroup name: directory "
+            CMonitorLogger::instance()->LogError("Cannot find the cgroup directory corresponding to the provided cgroup name: directory "
                               "[%s] does not exist. CGroup mode disabled.\n",
                 m_cgroup_memory_kernel_path.c_str());
             return;
         }
 
-        m_cgroup_systemd_name = g_cfg.m_strCGroupName;
+        m_cgroup_systemd_name = m_pCfg->m_strCGroupName;
     }
 
     // READ LIMITS IMPOSED BY CGROUPS
 
     if (!read_integer(m_cgroup_memory_kernel_path + "/memory.limit_in_bytes", m_cgroup_memory_limit_bytes)) {
-        g_logger.LogError("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        CMonitorLogger::instance()->LogError("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
     // IMPORTANT: m_cgroup_memory_limit_bytes might assume some crazy high value like 9*10^6 GB
@@ -582,33 +582,33 @@ void CMonitorCgroups::cgroup_init()
         m_cgroup_memory_limit_bytes = UINT64_MAX;
 
     if (!read_from_system_cpu_for_current_cgroup(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
-        g_logger.LogError("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
+        CMonitorLogger::instance()->LogError("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
         return;
     }
     if (m_cgroup_memory_limit_bytes == 0) {
-        g_logger.LogError("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        CMonitorLogger::instance()->LogError("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
     if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_period_us", m_cgroup_cpuacct_period_us)) {
-        g_logger.LogError("Could not read the CPU period from 'cpuacct' cgroup. CGroup mode disabled.\n");
+        CMonitorLogger::instance()->LogError("Could not read the CPU period from 'cpuacct' cgroup. CGroup mode disabled.\n");
         return;
     }
 
     // IMPORTANT: m_cgroup_cpuacct_quota_us might assume the special value UINT64_MAX when "-1" is reported by the
     // cgroup controller... it just means "no limit"
     if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_quota_us", m_cgroup_cpuacct_quota_us)) {
-        g_logger.LogError("Could not read the CPU quota from 'cpuacct' cgroup. CGroup mode disabled.\n");
+        CMonitorLogger::instance()->LogError("Could not read the CPU quota from 'cpuacct' cgroup. CGroup mode disabled.\n");
         return;
     }
 
     // cpuset and memory cgroups found:
     m_bCGroupsFound = true;
-    g_logger.LogDebug("CGroup monitoring successfully enabled. CGroup name is %s\n", m_cgroup_systemd_name.c_str());
-    g_logger.LogDebug("Found cpuset cgroup limiting to CPUs %s, mounted at %s\n",
+    CMonitorLogger::instance()->LogDebug("CGroup monitoring successfully enabled. CGroup name is %s\n", m_cgroup_systemd_name.c_str());
+    CMonitorLogger::instance()->LogDebug("Found cpuset cgroup limiting to CPUs %s, mounted at %s\n",
         stl_container2string(m_cgroup_cpus, ",").c_str(), m_cgroup_cpuset_kernel_path.c_str());
-    g_logger.LogDebug("Found cpuacct cgroup limiting at %lu/%lu usecs mounted at %s\n", m_cgroup_cpuacct_quota_us,
+    CMonitorLogger::instance()->LogDebug("Found cpuacct cgroup limiting at %lu/%lu usecs mounted at %s\n", m_cgroup_cpuacct_quota_us,
         m_cgroup_cpuacct_period_us, m_cgroup_cpuacct_kernel_path.c_str());
-    g_logger.LogDebug("Found memory cgroup limiting to %luB, mounted at %s\n", m_cgroup_memory_limit_bytes,
+    CMonitorLogger::instance()->LogDebug("Found memory cgroup limiting to %luB, mounted at %s\n", m_cgroup_memory_limit_bytes,
         m_cgroup_memory_kernel_path.c_str());
 }
 
@@ -624,23 +624,23 @@ bool CMonitorCgroups::cgroup_init_check_for_our_pid()
     bool found = true;
 
     if (search_integer(m_cgroup_memory_kernel_path + "/tasks", uint64_t(ourPid)))
-        g_logger.LogDebug("Successfully found our PID %d in the 'memory' cgroup.\n", ourPid);
+        CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'memory' cgroup.\n", ourPid);
     else {
-        g_logger.LogDebug("Could not find our PID %d in the 'memory' cgroup.\n", ourPid);
+        CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'memory' cgroup.\n", ourPid);
         found = false;
     }
 
     if (search_integer(m_cgroup_cpuacct_kernel_path + "/tasks", uint64_t(ourPid)))
-        g_logger.LogDebug("Successfully found our PID %d in the 'cpuacct' cgroup.\n", ourPid);
+        CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'cpuacct' cgroup.\n", ourPid);
     else {
-        g_logger.LogDebug("Could not find our PID %d in the 'cpuacct' cgroup.\n", ourPid);
+        CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'cpuacct' cgroup.\n", ourPid);
         found = false;
     }
 
     if (search_integer(m_cgroup_cpuset_kernel_path + "/tasks", uint64_t(ourPid)))
-        g_logger.LogDebug("Successfully found our PID %d in the 'cpuset' cgroup.\n", ourPid);
+        CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'cpuset' cgroup.\n", ourPid);
     else {
-        g_logger.LogDebug("Could not find our PID %d in the 'cpuset' cgroup.\n", ourPid);
+        CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'cpuset' cgroup.\n", ourPid);
         found = false;
     }
 
@@ -652,32 +652,32 @@ void CMonitorCgroups::cgroup_config()
     if (!m_bCGroupsFound)
         return;
 
-    g_output.psection_start("cgroup_config");
+    m_pOutput->psection_start("cgroup_config");
 
     // the cgroup name
-    g_output.pstring("name", m_cgroup_systemd_name.c_str());
+    m_pOutput->pstring("name", m_cgroup_systemd_name.c_str());
 
     // the cgroup paths
-    g_output.pstring("memory_path", &m_cgroup_memory_kernel_path[0]);
-    g_output.pstring("cpuacct_path", &m_cgroup_cpuacct_kernel_path[0]);
-    g_output.pstring("cpuset_path", &m_cgroup_cpuset_kernel_path[0]);
+    m_pOutput->pstring("memory_path", &m_cgroup_memory_kernel_path[0]);
+    m_pOutput->pstring("cpuacct_path", &m_cgroup_cpuacct_kernel_path[0]);
+    m_pOutput->pstring("cpuset_path", &m_cgroup_cpuset_kernel_path[0]);
 
     // actual cgroup limits
     std::string tmp = stl_container2string(m_cgroup_cpus, ",");
-    g_output.pstring("cpus", &tmp[0]);
+    m_pOutput->pstring("cpus", &tmp[0]);
     if (m_cgroup_cpuacct_quota_us == UINT64_MAX)
-        g_output.pdouble("cpu_quota_perc", -1.0f);
+        m_pOutput->pdouble("cpu_quota_perc", -1.0f);
     else if (m_cgroup_cpuacct_period_us)
-        g_output.pdouble("cpu_quota_perc", (double)m_cgroup_cpuacct_quota_us / (double)m_cgroup_cpuacct_period_us);
+        m_pOutput->pdouble("cpu_quota_perc", (double)m_cgroup_cpuacct_quota_us / (double)m_cgroup_cpuacct_period_us);
     else
-        g_output.pdouble("cpu_quota_perc", 0.0);
+        m_pOutput->pdouble("cpu_quota_perc", 0.0);
 
     if (m_cgroup_memory_limit_bytes == UINT64_MAX)
-        g_output.pdouble("memory_limit_bytes", -1.0f);
+        m_pOutput->pdouble("memory_limit_bytes", -1.0f);
     else
-        g_output.plong("memory_limit_bytes", m_cgroup_memory_limit_bytes);
+        m_pOutput->plong("memory_limit_bytes", m_cgroup_memory_limit_bytes);
 
-    g_output.psection_end();
+    m_pOutput->psection_end();
 }
 
 bool CMonitorCgroups::cgroup_still_exists()
@@ -720,7 +720,7 @@ void CMonitorCgroups::cgroup_proc_memory(const std::set<std::string>& allowedSta
     } else
         rewind(fp);
 
-    g_output.psection_start("cgroup_memory_stats");
+    m_pOutput->psection_start("cgroup_memory_stats");
     while (fgets(line, 1000, fp) != NULL) {
         len = strlen(line);
         if (strncmp(line, "total_", 6) != 0)
@@ -741,13 +741,13 @@ void CMonitorCgroups::cgroup_proc_memory(const std::set<std::string>& allowedSta
 
         if (allowedStatsNames.empty() /* all stats must be put in output */
             || allowedStatsNames.find(label) != allowedStatsNames.end())
-            g_output.plong(label, value);
+            m_pOutput->plong(label, value);
     }
 
     if (read_integer(m_cgroup_memory_kernel_path + "/memory.failcnt", value))
-        g_output.plong("failcnt", value);
+        m_pOutput->plong("failcnt", value);
 
-    g_output.psection_end();
+    m_pOutput->psection_end();
 }
 
 void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
@@ -780,7 +780,7 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
     char label[512];
 
     if (print)
-        g_output.psection_start("cgroup_cpuacct_stats");
+        m_pOutput->psection_start("cgroup_cpuacct_stats");
 
     std::string cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
     cpuacct_utilisation total_cpu_usage = { 0 };
@@ -803,7 +803,7 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
             bValidData = false;
 
         if (bValidData) {
-            g_logger.LogDebug(
+            CMonitorLogger::instance()->LogDebug(
                 "Found cpuacct.usage_percpu_sys/user cgroups; computing CPU usage for %.2fsec delta time and %zu CPUs "
                 "(print=%d)\n",
                 elapsed_sec, counter_nsec_user_mode.size(), print);
@@ -823,7 +823,7 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
                  *     watch -n1 'grep cpu3 -A6 -B1 test.json | tail -20'
                  * produces cpu3 at 100%
                  */
-                g_logger.LogDebug(
+                CMonitorLogger::instance()->LogDebug(
                     "CPU %zu, current user=%lu, current sys=%lu, prev user=%lu, prev sys=%lu", // force newline
                     i, counter_nsec_user_mode[i], counter_nsec_sys_mode[i], prev_values[i].counter_nsec_user_mode,
                     prev_values[i].counter_nsec_sys_mode);
@@ -837,10 +837,10 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 
                     // output JSON counter
                     sprintf(label, "cpu%zu", i);
-                    g_output.psubsection_start(label);
-                    g_output.pdouble("user", cpuUserPercent);
-                    g_output.pdouble("sys", cpuSysPercent);
-                    g_output.psubsection_end();
+                    m_pOutput->psubsection_start(label);
+                    m_pOutput->pdouble("user", cpuUserPercent);
+                    m_pOutput->pdouble("sys", cpuSysPercent);
+                    m_pOutput->psubsection_end();
                 }
 
                 // maintain the total cpu usage counter
@@ -866,7 +866,7 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
             bValidData = false;
 
         if (bValidData) {
-            g_logger.LogDebug("Found data from cgroup cpuacct.usage_percpu");
+            CMonitorLogger::instance()->LogDebug("Found data from cgroup cpuacct.usage_percpu");
 
             for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
 
@@ -880,9 +880,9 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 
                     // output JSON counter
                     sprintf(label, "cpu%zu", i);
-                    g_output.psubsection_start(label);
-                    g_output.pdouble("user", cpuUserPercent);
-                    g_output.psubsection_end();
+                    m_pOutput->psubsection_start(label);
+                    m_pOutput->pdouble("user", cpuUserPercent);
+                    m_pOutput->psubsection_end();
                 }
 
                 // maintain the total cpu usage counter
@@ -907,16 +907,16 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
                 / (elapsed_sec * 1E9);
 
             // output JSON counter
-            g_output.psubsection_start("cpu_tot");
-            g_output.pdouble("user", cpuUserPercent);
-            g_output.pdouble("sys", cpuSysPercent);
-            g_output.psubsection_end();
+            m_pOutput->psubsection_start("cpu_tot");
+            m_pOutput->pdouble("user", cpuUserPercent);
+            m_pOutput->pdouble("sys", cpuSysPercent);
+            m_pOutput->psubsection_end();
         }
 
         // save for next cycle
         prev_values_for_total_cpu = total_cpu_usage;
     } else {
-        g_logger.LogError("failed to open %s", cgroup_stat_file.c_str());
+        CMonitorLogger::instance()->LogError("failed to open %s", cgroup_stat_file.c_str());
     }
 
     // See
@@ -938,7 +938,7 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         if (fp) {
 
             if (print)
-                g_output.psubsection_start("throttling");
+                m_pOutput->psubsection_start("throttling");
 
             static char line[8192];
             while (fgets(line, 1000, fp) != NULL) {
@@ -947,24 +947,24 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
                 sscanf(line, "%s %lu", label, &value);
 
                 if (print)
-                    g_output.plong(label, value);
+                    m_pOutput->plong(label, value);
             }
 
             if (print)
-                g_output.psubsection_end();
+                m_pOutput->psubsection_end();
         }
     } else {
-        g_logger.LogError("failed to open %s", cgroup_stat_file.c_str());
+        CMonitorLogger::instance()->LogError("failed to open %s", cgroup_stat_file.c_str());
     }
 
     if (print)
-        g_output.psection_end();
+        m_pOutput->psection_end();
 }
 
 bool CMonitorCgroups::cgroup_collect_pids(std::vector<pid_t>& pids)
 {
     std::string path = m_cgroup_cpuacct_kernel_path + "/tasks";
-    g_logger.LogDebug("Trying to read tasks inside the monitored cgroup from %s.\n", path.c_str());
+    CMonitorLogger::instance()->LogDebug("Trying to read tasks inside the monitored cgroup from %s.\n", path.c_str());
     if (!file_or_dir_exists(path.c_str()))
         return false;
 
@@ -983,7 +983,7 @@ bool CMonitorCgroups::cgroup_collect_pids(std::vector<pid_t>& pids)
             pids.push_back((pid_t)pid);
     }
 
-    g_logger.LogDebug("Found %zu PIDs/TIDs to monitor: %s.\n", pids.size(), stl_container2string(pids, ",").c_str());
+    CMonitorLogger::instance()->LogDebug("Found %zu PIDs/TIDs to monitor: %s.\n", pids.size(), stl_container2string(pids, ",").c_str());
 
     return true;
 }
@@ -1014,7 +1014,7 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
         cgroup_proc_procsinfo(all_pids[i], include_threads, &procData, output_opts);
 
         if (include_threads) {
-            // g_logger.LogDebug("Found thread %d %d", procData.pi_pid, procData.pi_tgid);
+            // CMonitorLogger::instance()->LogDebug("Found thread %d %d", procData.pi_pid, procData.pi_tgid);
             currDB.insert(std::make_pair(all_pids[i], procData));
         } else {
             // only the main thread has its PID == TGID...
@@ -1041,15 +1041,15 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
         m_topper.insert(std::make_pair(score, newEntry));
 
         // of the 40 fields of procsinfo_t we're mostly interested in user and system time:
-        g_logger.LogDebug("pid=%d: %s: utime=%lu, stime=%lu, score=%lu", pcurrent->pi_pid, pcurrent->pi_comm,
+        CMonitorLogger::instance()->LogDebug("pid=%d: %s: utime=%lu, stime=%lu, score=%lu", pcurrent->pi_pid, pcurrent->pi_comm,
             pcurrent->pi_utime, pcurrent->pi_stime, score);
-        // g_logger.LogDebug("PID=%lu -> score=%lu", current_entry.first, score);
+        // CMonitorLogger::instance()->LogDebug("PID=%lu -> score=%lu", current_entry.first, score);
     }
 
     if (m_topper.empty())
         return;
 
-    g_logger.LogDebug(
+    CMonitorLogger::instance()->LogDebug(
         "Tracking %zu/%zu processes/threads (include_threads=%d); min/max score found: %lu/%lu", // force
                                                                                                  // newline
         currDB.size(), all_pids.size(), include_threads, m_topper.begin()->first, m_topper.rbegin()->first);
@@ -1057,8 +1057,8 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
     // Now output all data for each process, starting from the minimal score PROCESS_SCORE_IGNORE_THRESHOLD
     static double ticks = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
     size_t nProcsOverThreshold = 0;
-    g_output.psection_start("cgroup_tasks");
-    for (auto entry = m_topper.lower_bound(g_cfg.m_nProcessScoreThreshold); entry != m_topper.end(); entry++) {
+    m_pOutput->psection_start("cgroup_tasks");
+    for (auto entry = m_topper.lower_bound(m_pCfg->m_nProcessScoreThreshold); entry != m_topper.end(); entry++) {
         uint64_t score = (*entry).first;
         const procsinfo_t* p = (*entry).second.current;
         const procsinfo_t* q = (*entry).second.prev;
@@ -1069,27 +1069,27 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
 #define COUNTDELTA(member) ((PREVIOUS(member) > CURRENT(member)) ? 0 : (CURRENT(member) - PREVIOUS(member)))
 
         sprintf(str, "pid_%ld", (long)CURRENT(pi_pid));
-        g_output.psubsection_start(str);
-        g_output.plong("cmon_score", score);
+        m_pOutput->psubsection_start(str);
+        m_pOutput->plong("cmon_score", score);
 
         /*
          * Process fields
          */
-        g_output.pstring("cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
-        g_output.plong("pid", CURRENT(pi_pid));
-        g_output.plong("ppid", CURRENT(pi_ppid));
-        g_output.plong("pgrp", CURRENT(pi_pgrp));
-        g_output.plong("priority", CURRENT(pi_priority));
-        g_output.plong("nice", CURRENT(pi_nice));
-        g_output.plong("session", CURRENT(pi_session));
-        g_output.plong("tty_nr", CURRENT(pi_tty_nr));
-        // g_output.phex("flags", CURRENT(pi_flags));
-        g_output.pstring("state", get_state(CURRENT(pi_state)));
-        g_output.plong("threads", CURRENT(pi_num_threads));
-        g_output.pdouble("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks);
-        g_output.plong("uid", CURRENT(uid));
+        m_pOutput->pstring("cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
+        m_pOutput->plong("pid", CURRENT(pi_pid));
+        m_pOutput->plong("ppid", CURRENT(pi_ppid));
+        m_pOutput->plong("pgrp", CURRENT(pi_pgrp));
+        m_pOutput->plong("priority", CURRENT(pi_priority));
+        m_pOutput->plong("nice", CURRENT(pi_nice));
+        m_pOutput->plong("session", CURRENT(pi_session));
+        m_pOutput->plong("tty_nr", CURRENT(pi_tty_nr));
+        // m_pOutput->phex("flags", CURRENT(pi_flags));
+        m_pOutput->pstring("state", get_state(CURRENT(pi_state)));
+        m_pOutput->plong("threads", CURRENT(pi_num_threads));
+        m_pOutput->pdouble("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks);
+        m_pOutput->plong("uid", CURRENT(uid));
         if (strlen(CURRENT(username)) > 0)
-            g_output.pstring("username", CURRENT(username));
+            m_pOutput->pstring("username", CURRENT(username));
 
         /*
          * CPU fields
@@ -1099,76 +1099,76 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
                  IOW there is no need to do any math to produce a percentage, just taking
                  the delta of the absolute, monotonic-increasing value and divide by the time
         */
-        g_output.pdouble("cpu_tot", (TIMEDELTA(pi_utime) + TIMEDELTA(pi_stime)) / elapsed_sec);
-        g_output.pdouble("cpu_usr", TIMEDELTA(pi_utime) / elapsed_sec);
-        g_output.pdouble("cpu_sys", TIMEDELTA(pi_stime) / elapsed_sec);
+        m_pOutput->pdouble("cpu_tot", (TIMEDELTA(pi_utime) + TIMEDELTA(pi_stime)) / elapsed_sec);
+        m_pOutput->pdouble("cpu_usr", TIMEDELTA(pi_utime) / elapsed_sec);
+        m_pOutput->pdouble("cpu_sys", TIMEDELTA(pi_stime) / elapsed_sec);
 
         // provide also the total, monotonically-increasing CPU time:
         // this is used by chart script to produce the "top of the topper" chart
-        g_output.pdouble("cpu_usr_total_secs", CURRENT(pi_utime) / ticks);
-        g_output.pdouble("cpu_sys_total_secs", CURRENT(pi_stime) / ticks);
-        g_output.plong("cpu_last", CURRENT(pi_last_cpu));
+        m_pOutput->pdouble("cpu_usr_total_secs", CURRENT(pi_utime) / ticks);
+        m_pOutput->pdouble("cpu_sys_total_secs", CURRENT(pi_stime) / ticks);
+        m_pOutput->plong("cpu_last", CURRENT(pi_last_cpu));
 
         /*
          * Memory fields
          */
         if (output_opts == PF_ALL) {
-            g_output.plong("mem_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
-            g_output.plong("mem_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
-            g_output.plong("mem_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
-            g_output.plong("mem_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
-            g_output.plong("mem_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("mem_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("mem_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("mem_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("mem_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("mem_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
         }
-        g_output.pdouble("mem_minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec);
-        g_output.pdouble("mem_major_fault", COUNTDELTA(pi_majflt) / elapsed_sec);
-        g_output.plong("mem_virtual_bytes", CURRENT(pi_vsize));
-        g_output.plong("mem_rss_bytes", CURRENT(pi_rss) * PAGESIZE_BYTES);
-        g_output.plong("mem_rss_limit", CURRENT(pi_rsslimit));
+        m_pOutput->pdouble("mem_minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec);
+        m_pOutput->pdouble("mem_major_fault", COUNTDELTA(pi_majflt) / elapsed_sec);
+        m_pOutput->plong("mem_virtual_bytes", CURRENT(pi_vsize));
+        m_pOutput->plong("mem_rss_bytes", CURRENT(pi_rss) * PAGESIZE_BYTES);
+        m_pOutput->plong("mem_rss_limit", CURRENT(pi_rsslimit));
 
         /*
          * Signal fields
          */
 #if PROCESS_DEBUGGING_ADDRESSES_SIGNALS
         /* NOT INCLUDED AS THEY ARE FOR DEBUGGING AND NOT PERFORMANCE TUNING */
-        g_output.phex("start_code", CURRENT(pi_start_code));
-        g_output.phex("end_code", CURRENT(pi_end_code));
-        g_output.phex("start_stack", CURRENT(pi_start_stack));
-        g_output.phex("esp_stack_pointer", CURRENT(pi_esp));
-        g_output.phex("eip_instruction_pointer", CURRENT(pi_eip));
-        g_output.phex("signal_pending", CURRENT(pi_signal_pending));
-        g_output.phex("signal_blocked", CURRENT(pi_signal_blocked));
-        g_output.phex("signal_ignore", CURRENT(pi_signal_ignore));
-        g_output.phex("signal_catch", CURRENT(pi_signal_catch));
-        g_output.phex("signal_exit", CURRENT(pi_signal_exit));
-        g_output.phex("wchan", CURRENT(pi_wchan));
+        m_pOutput->phex("start_code", CURRENT(pi_start_code));
+        m_pOutput->phex("end_code", CURRENT(pi_end_code));
+        m_pOutput->phex("start_stack", CURRENT(pi_start_stack));
+        m_pOutput->phex("esp_stack_pointer", CURRENT(pi_esp));
+        m_pOutput->phex("eip_instruction_pointer", CURRENT(pi_eip));
+        m_pOutput->phex("signal_pending", CURRENT(pi_signal_pending));
+        m_pOutput->phex("signal_blocked", CURRENT(pi_signal_blocked));
+        m_pOutput->phex("signal_ignore", CURRENT(pi_signal_ignore));
+        m_pOutput->phex("signal_catch", CURRENT(pi_signal_catch));
+        m_pOutput->phex("signal_exit", CURRENT(pi_signal_exit));
+        m_pOutput->phex("wchan", CURRENT(pi_wchan));
         /* NOT INCLUDED AS THEY ARE FOR DEBUGGING AND NOT PERFORMANCE TUNING */
 #endif
         if (output_opts == PF_ALL) {
-            g_output.plong("swap_pages", CURRENT(pi_swap_pages));
-            g_output.plong("child_swap_pages", CURRENT(pi_child_swap_pages));
-            g_output.plong("realtime_priority", CURRENT(pi_realtime_priority));
-            g_output.plong("sched_policy", CURRENT(pi_sched_policy));
+            m_pOutput->plong("swap_pages", CURRENT(pi_swap_pages));
+            m_pOutput->plong("child_swap_pages", CURRENT(pi_child_swap_pages));
+            m_pOutput->plong("realtime_priority", CURRENT(pi_realtime_priority));
+            m_pOutput->plong("sched_policy", CURRENT(pi_sched_policy));
         }
 
         /*
          * I/O fields
          */
-        g_output.pdouble("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
-        g_output.plong("io_rchar", TIMEDELTA(io_rchar) / elapsed_sec);
-        g_output.plong("io_wchar", TIMEDELTA(io_wchar) / elapsed_sec);
-        g_output.plong("io_read_bytes", TIMEDELTA(io_read_bytes) / elapsed_sec);
-        g_output.plong("io_write_bytes", TIMEDELTA(io_write_bytes) / elapsed_sec);
+        m_pOutput->pdouble("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
+        m_pOutput->plong("io_rchar", TIMEDELTA(io_rchar) / elapsed_sec);
+        m_pOutput->plong("io_wchar", TIMEDELTA(io_wchar) / elapsed_sec);
+        m_pOutput->plong("io_read_bytes", TIMEDELTA(io_read_bytes) / elapsed_sec);
+        m_pOutput->plong("io_write_bytes", TIMEDELTA(io_write_bytes) / elapsed_sec);
 
         // provide also the total, monotonically-increasing I/O time:
         // this is used by chart script to produce the "top of the topper" chart
-        g_output.plong("io_total_read", CURRENT(io_rchar));
-        g_output.plong("io_total_write", CURRENT(io_wchar));
+        m_pOutput->plong("io_total_read", CURRENT(io_rchar));
+        m_pOutput->plong("io_total_write", CURRENT(io_wchar));
 
-        g_output.psubsection_end();
+        m_pOutput->psubsection_end();
         nProcsOverThreshold++;
     }
-    g_output.psection_end();
+    m_pOutput->psection_end();
 
-    g_logger.LogDebug("%zu processes found over score threshold", nProcsOverThreshold);
+    CMonitorLogger::instance()->LogDebug("%zu processes found over score threshold", nProcsOverThreshold);
     m_topper.clear();
 }

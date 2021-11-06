@@ -23,21 +23,27 @@
 // Includes
 //------------------------------------------------------------------------------
 
+#include "cmonitor.h"
 #include <map>
 #include <set>
 #include <string.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
-#include "cmonitor.h"
 
 //------------------------------------------------------------------------------
-// The App object
+// The CMonitorCgroups object
 //------------------------------------------------------------------------------
 
-class CMonitorCgroups {
+class CMonitorOutputFrontend;
+class CMonitorLoggerUtils;
+
+class CMonitorCgroups : public CMonitorAppHelper {
 public:
-    CMonitorCgroups() { }
+    CMonitorCgroups(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
+        : CMonitorAppHelper(pCfg, pOutput)
+    {
+    }
 
     //------------------------------------------------------------------------------
     // CGroup functions
@@ -53,10 +59,10 @@ public:
     void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads);
     bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
-    std::set<uint64_t> get_cgroup_cpus() const
-    {
-        return m_cgroup_cpus;
-    }
+    std::set<uint64_t> get_cgroup_cpus() const { return m_cgroup_cpus; }
+
+private:
+    bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts);
 
 private:
     //------------------------------------------------------------------------------

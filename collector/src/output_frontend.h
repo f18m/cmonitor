@@ -66,6 +66,8 @@ public:
         m_json_pretty_print = false;
     }
 
+    ~CMonitorOutputFrontend();
+
     //------------------------------------------------------------------------------
     // setup API
     //------------------------------------------------------------------------------
@@ -206,5 +208,3 @@ private:
     unsigned int m_double = 0;
     unsigned int m_hex = 0;
 };
-
-extern CMonitorOutputFrontend g_output;

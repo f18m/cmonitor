@@ -35,26 +35,37 @@
 //------------------------------------------------------------------------------
 
 #define DEBUGLOG_FUNCTION_START()                                                                                      \
-    g_logger.LogDebug("%s() called at line %d of file %s\n", __func__, __LINE__, __FILE__);
+    CMonitorLogger::instance()->LogDebug("%s() called at line %d of file %s\n", __func__, __LINE__, __FILE__);
 
 //------------------------------------------------------------------------------
 // Logging functions for this app
 //------------------------------------------------------------------------------
 
-class CMonitorLoggerUtils {
+class CMonitorLogger {
 public:
+
+    static CMonitorLogger* instance()
+    {
+        if (!ms_pInstance)
+            ms_pInstance = new CMonitorLogger();
+        return ms_pInstance;
+    }
+
     void init_error_output_file(const std::string& filenamePrefix);
+    void enable_debug()
+    {
+        m_bDebugEnabled = true;
+    }
 
     void LogDebug(const char* line, ...) __attribute__((format(printf, 2, 3)));
     void LogError(const char* line, ...) __attribute__((format(printf, 2, 3)));
     void LogErrorWithErrno(const char* line, ...) __attribute__((format(printf, 2, 3)));
 
 private:
+    static CMonitorLogger* ms_pInstance;
     std::string m_strErrorFileName;
+    bool m_bDebugEnabled = false;
 
     // output:
     FILE* m_outputErr = nullptr;
 };
-
-// app-wide logger:
-extern CMonitorLoggerUtils g_logger;

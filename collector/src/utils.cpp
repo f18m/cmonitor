@@ -227,7 +227,7 @@ bool search_integer(std::string filePath, uint64_t valueToSearch)
 {
     FILE* stream = fopen(filePath.c_str(), "r");
     if (!stream) {
-        g_logger.LogDebug("Cannot open file [%s]", filePath.c_str());
+        CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", filePath.c_str());
         return false; // file does not exist or not readable
     }
 
@@ -235,7 +235,7 @@ bool search_integer(std::string filePath, uint64_t valueToSearch)
     char line[MAX_LINE_LEN];
     uint64_t value;
     while (fgets(line, MAX_LINE_LEN, stream) != NULL) {
-        // g_logger.LogDebug("Searching for %d into [%s]", valueToSearch, line);
+        // CMonitorLogger::instance()->LogDebug("Searching for %d into [%s]", valueToSearch, line);
         if (sscanf(line, "%lu", &value) == 1) {
             if (value == valueToSearch)
                 return true; // found!
@@ -250,7 +250,7 @@ bool read_integer(std::string filePath, uint64_t& value)
 {
     FILE* stream = fopen(filePath.c_str(), "r");
     if (!stream) {
-        g_logger.LogDebug("Cannot open file [%s]", filePath.c_str());
+        CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", filePath.c_str());
         return false; // file does not exist or not readable
     }
 
@@ -319,7 +319,7 @@ name: number kB
 
 */
 void proc_read_numeric_stats_from(
-    const char* statname, const std::set<std::string>& allowedStatsNames)
+    CMonitorOutputFrontend* pOutput, const char* statname, const std::set<std::string>& allowedStatsNames)
 {
     FILE* fp = 0;
     char line[1024];
@@ -332,11 +332,11 @@ void proc_read_numeric_stats_from(
     DEBUGLOG_FUNCTION_START();
     sprintf(filename, "/proc/%s", statname);
     if ((fp = fopen(filename, "r")) == NULL) {
-        g_logger.LogErrorWithErrno("Failed to open performance file %s", filename);
+        CMonitorLogger::instance()->LogErrorWithErrno("Failed to open performance file %s", filename);
         return;
     }
     sprintf(label, "proc_%s", statname);
-    g_output.psection_start(label);
+    pOutput->psection_start(label);
     while (fgets(line, 1000, fp) != NULL) {
         len = strlen(line);
         bool is_kb = false;
@@ -356,7 +356,7 @@ void proc_read_numeric_stats_from(
             }
         }
         sscanf(line, "%s %s", label, number);
-        // g_logger.LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr, atoll(numstr));
+        // CMonitorLogger::instance()->LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr, atoll(numstr));
 
         if (allowedStatsNames.empty() /* all stats must be put in output */
             || allowedStatsNames.find(label) != allowedStatsNames.end()) {
@@ -364,9 +364,9 @@ void proc_read_numeric_stats_from(
             if (is_kb)
                 num *= 1000;
 
-            g_output.plong(label, num);
+            pOutput->plong(label, num);
         }
     }
-    g_output.psection_end();
+    pOutput->psection_end();
     (void)fclose(fp);
 }

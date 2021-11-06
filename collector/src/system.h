@@ -35,9 +35,12 @@
 // The App object
 //------------------------------------------------------------------------------
 
-class CMonitorSystem {
+class CMonitorSystem : public CMonitorAppHelper {
 public:
-    CMonitorSystem() { }
+    CMonitorSystem(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
+        : CMonitorAppHelper(pCfg, pOutput)
+    {
+    }
 
     //------------------------------------------------------------------------------
     // Functions to collect /proc stats (baremetal)

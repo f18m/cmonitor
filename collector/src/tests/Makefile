@@ -25,7 +25,11 @@ endif
 OUT=$(OUTDIR)/unit_tests
 
 OBJS = \
-    $(OUTDIR)/tests_main.o
+    $(OUTDIR)/tests_main.o \
+    $(OUTDIR)/cgroups.o \
+    $(OUTDIR)/logger.o \
+    $(OUTDIR)/output_frontend.o \
+    $(OUTDIR)/utils.o
 
 HEADERS = \
     ../cmonitor.h
