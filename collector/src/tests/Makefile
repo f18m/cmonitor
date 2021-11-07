@@ -41,7 +41,7 @@ all: $(OUT)
 
 test: $(OUT)
 	@echo "Running unit test binary $(OUT)"
-	$(OUT)
+	sudo $(OUT)
 
 $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBRARIES)
