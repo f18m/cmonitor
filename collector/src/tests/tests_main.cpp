@@ -12,11 +12,28 @@
 std::string get_unit_test_abs_dir()
 {
     char buff[PATH_MAX + 1];
-    getcwd(buff, sizeof(buff));
+    if (getcwd(buff, sizeof(buff)) == NULL)
+        exit(123);
     char actualpath[PATH_MAX + 1];
     char* ptr = realpath(buff, actualpath);
 
     return std::string(ptr) + "/";
+}
+
+void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx)
+{
+    std::string orig_sample_abs_dir = get_unit_test_abs_dir() + kernel_test + "/sample" + std::to_string(sampleIdx);
+    std::string orig_sample_tarball = get_unit_test_abs_dir() + kernel_test + "/sample" + std::to_string(sampleIdx) + "/sample" + std::to_string(sampleIdx) + ".tar.gz";
+    std::string current_sample_abs_dir = get_unit_test_abs_dir() + kernel_test + "/current-sample";
+
+    char buff[1024];
+    snprintf(buff, 1024, "/usr/bin/tar -C %s -xf %s", orig_sample_abs_dir.c_str(), orig_sample_tarball.c_str());
+    printf("Executing now: %s\n", buff);
+    system(buff);
+
+    printf("Adjusting symlink %s\n", current_sample_abs_dir.c_str());
+    unlink(current_sample_abs_dir.c_str());
+    symlink(orig_sample_abs_dir.c_str(), current_sample_abs_dir.c_str());
 }
 
 TEST(CGroups, Read3Samples)
@@ -31,9 +48,9 @@ TEST(CGroups, Read3Samples)
     double elapsed_sec = 0.1;
     std::set<std::string> allowedStats;
 
-    // printf("fmon %s\n", get_unit_test_abs_dir().c_str());
     std::string kernel_test = "centos7-Linux-3.10.0-x86_64";
     std::string current_sample_abs_dir = get_unit_test_abs_dir() + kernel_test + "/current-sample";
+    prepare_sample_dir(kernel_test, 1);
 
     // allocate the class under test:
     CMonitorCgroups t(&cfg, &actual_output);
@@ -46,13 +63,18 @@ TEST(CGroups, Read3Samples)
     actual_output.pheader_start();
     actual_output.push_header();
     actual_output.psample_array_start();
-    for (unsigned int i = 0; i < 2; i++) {
-        // t.SetUnitTestMode("...$(root)/testing/centos7-Linux-3.10.0-x86_64/sample" + i);
+    for (unsigned int i = 0; i < 3; i++) {
+        printf("\n\n\n");
+        prepare_sample_dir(kernel_test, i+1);
+
         actual_output.psample_start();
         t.cgroup_proc_cpuacct(elapsed_sec, true /* emit JSON */);
         t.cgroup_proc_memory(allowedStats);
+
+        // FIXME FIXME: currently this method does not read from our unit test folder
         t.cgroup_proc_tasks(elapsed_sec, cfg.m_nOutputFields /* emit JSON */, false /* do not include threads */);
-        t.cgroup_proc_tasks(elapsed_sec, cfg.m_nOutputFields /* emit JSON */, true /* do include threads */);
+        //t.cgroup_proc_tasks(elapsed_sec, cfg.m_nOutputFields /* emit JSON */, true /* do include threads */);
+
         actual_output.push_current_sample();
     }
     actual_output.psample_array_end();

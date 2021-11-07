@@ -32,7 +32,8 @@ OBJS = \
     $(OUTDIR)/utils.o
 
 HEADERS = $(wildcard ../*.h)
-    
+
+TEST_KERNELS = centos7-Linux-3.10.0-x86_64
 
 # Targets
 
@@ -47,7 +48,10 @@ $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 
 clean:
 	rm -f $(OUT) $(OBJS) *.err *.json *.log
-
+	for kk in $(TEST_KERNELS); do \
+		rm -rf $$kk/sample*/proc $$kk/sample*/sys ; \
+		rm -f $$kk/current-sample ; \
+	done
 
 # Rules
 

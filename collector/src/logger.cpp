@@ -28,6 +28,8 @@
 
 CMonitorLogger* CMonitorLogger::ms_pInstance = nullptr;
 
+#define MAX_LOG_LINE_LEN 1024
+
 //------------------------------------------------------------------------------
 // Logger functions
 //------------------------------------------------------------------------------
@@ -64,14 +66,14 @@ void CMonitorLogger::init_error_output_file(const std::string& filenamePrefix)
 
 void CMonitorLogger::LogDebug(const char* line, ...)
 {
-    char currLogLine[256];
+    char currLogLine[MAX_LOG_LINE_LEN];
 
     if (!m_bDebugEnabled)
         return;
 
     va_list args;
     va_start(args, line);
-    vsnprintf(currLogLine, 255, line, args);
+    vsnprintf(currLogLine, MAX_LOG_LINE_LEN-1, line, args);
     va_end(args);
 
     // in debug mode stdout is still open, so we can printf:
@@ -85,10 +87,10 @@ void CMonitorLogger::LogError(const char* line, ...)
 {
     m_nErrors++;
 
-    char currLogLine[256];
+    char currLogLine[MAX_LOG_LINE_LEN];
     va_list args;
     va_start(args, line);
-    vsnprintf(currLogLine, 255, line, args);
+    vsnprintf(currLogLine, MAX_LOG_LINE_LEN-1, line, args);
     va_end(args);
 
     if (!m_outputErr && !m_strErrorFileName.empty()) {
@@ -104,7 +106,7 @@ void CMonitorLogger::LogError(const char* line, ...)
         
         size_t lastCh = strlen(currLogLine) - 1;
         if (currLogLine[lastCh] != '\n')
-            printf("\n");
+            fprintf(m_outputErr, "\n");
     }
 }
 
@@ -112,10 +114,10 @@ void CMonitorLogger::LogErrorWithErrno(const char* line, ...)
 {
     m_nErrors++;
 
-    char currLogLine[256];
+    char currLogLine[MAX_LOG_LINE_LEN];
     va_list args;
     va_start(args, line);
-    vsnprintf(currLogLine, 255, line, args);
+    vsnprintf(currLogLine, MAX_LOG_LINE_LEN-1, line, args);
     va_end(args);
 
     if (!m_outputErr && !m_strErrorFileName.empty()) {
