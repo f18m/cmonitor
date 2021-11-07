@@ -7,7 +7,7 @@ URL:            https://github.com/f18m/cmonitor
 Source0:        cmonitor-collector-__RPM_VERSION__.tar.gz
 
 # these are the requirements that we need on COPR builds:
-BuildRequires:  gcc-c++, make
+BuildRequires:  gcc-c++, make, gtest-devel
 # python3-pip works and gets installed but then it fails later for unknown reasons
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
