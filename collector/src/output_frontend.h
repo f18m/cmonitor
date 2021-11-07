@@ -59,11 +59,13 @@ typedef struct _influx_client_t influx_client_t;
 
 class CMonitorOutputFrontend {
 public:
-    CMonitorOutputFrontend()
+    CMonitorOutputFrontend(const std::string& json_file_prefix = "")
     {
         m_current_sections.reserve(16);
         m_onelevel_indent_string = ""; // using zero space for indentation is just to save disk space
         m_json_pretty_print = false;
+        if (!json_file_prefix.empty())
+            init_json_output_file(json_file_prefix);
     }
 
     ~CMonitorOutputFrontend();

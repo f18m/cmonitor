@@ -43,15 +43,7 @@ OBJS = \
     $(OUTDIR)/system.o \
     $(OUTDIR)/utils.o
 
-HEADERS = \
-	cgroups.h \
-	header_info.h \
-	logger.h \
-    cmonitor.h \
-    output_frontend.h \
-	system.h \
-	utils.h \
-    influxdb.h
+HEADERS = $(wildcard *.h)
     
 
 # Targets

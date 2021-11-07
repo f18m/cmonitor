@@ -83,8 +83,9 @@ void CMonitorLogger::LogDebug(const char* line, ...)
 
 void CMonitorLogger::LogError(const char* line, ...)
 {
-    char currLogLine[256];
+    m_nErrors++;
 
+    char currLogLine[256];
     va_list args;
     va_start(args, line);
     vsnprintf(currLogLine, 255, line, args);
@@ -99,14 +100,19 @@ void CMonitorLogger::LogError(const char* line, ...)
 
     if (m_outputErr) {
         // errors always go in their dedicated file
-        fprintf(m_outputErr, "ERROR: %s\n", currLogLine);
+        fprintf(m_outputErr, "ERROR: %s", currLogLine);
+        
+        size_t lastCh = strlen(currLogLine) - 1;
+        if (currLogLine[lastCh] != '\n')
+            printf("\n");
     }
 }
 
 void CMonitorLogger::LogErrorWithErrno(const char* line, ...)
 {
-    char currLogLine[256];
+    m_nErrors++;
 
+    char currLogLine[256];
     va_list args;
     va_start(args, line);
     vsnprintf(currLogLine, 255, line, args);

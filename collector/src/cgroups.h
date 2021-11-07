@@ -45,29 +45,31 @@ public:
     {
     }
 
-    //------------------------------------------------------------------------------
-    // CGroup functions
-    //------------------------------------------------------------------------------
+    // main setup
+    void cgroup_init(const std::string& cgroup_memory_abs_path = "", // force newline
+                    const std::string& cgroup_cpuacct_abs_path = "",  // force newline
+                    const std::string& cgroup_cpuset_abs_path = "");
 
-    void cgroup_init();
-    bool cgroup_init_check_for_our_pid();
-    void cgroup_config();
-    bool cgroup_is_allowed_cpu(int cpu);
-    bool cgroup_still_exists();
+    // one-shot configuration info
+    void output_config();
+
+    // collect & output cgroup stats
     void cgroup_proc_memory(const std::set<std::string>& allowedStatsNames);
     void cgroup_proc_cpuacct(double elapsed_sec, bool print);
     void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads);
-    bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
+    // misc helpers
+    bool cgroup_still_exists();
     std::set<uint64_t> get_cgroup_cpus() const { return m_cgroup_cpus; }
 
 private:
+    bool cgroup_init_check_for_our_pid();
     bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts);
+    bool cgroup_is_allowed_cpu(int cpu);
+    bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
 private:
-    //------------------------------------------------------------------------------
-    // CGroups variables
-    //------------------------------------------------------------------------------
+    // main switch that indicates if cgroup_init() was successful or not
     bool m_bCGroupsFound = false;
 
     // paths of cgroups for the cgroup to monitor (either our own cgroup or another one):

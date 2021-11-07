@@ -31,8 +31,7 @@ OBJS = \
     $(OUTDIR)/output_frontend.o \
     $(OUTDIR)/utils.o
 
-HEADERS = \
-    ../cmonitor.h
+HEADERS = $(wildcard ../*.h)
     
 
 # Targets
@@ -40,6 +39,7 @@ HEADERS = \
 all: $(OUT)
 
 test: $(OUT)
+	@echo "Running unit test binary $(OUT)"
 	$(OUT)
 
 $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk

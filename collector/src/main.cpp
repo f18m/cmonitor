@@ -56,9 +56,9 @@ bool g_bExiting = false;
 class CMonitorCollectorApp {
 public:
     CMonitorCollectorApp()
-        : m_header_info_generator(&m_cfg, &m_output),
-          m_cgroups_collector(&m_cfg, &m_output),
-          m_system_collector(&m_cfg, &m_output)
+        : m_header_info_generator(&m_cfg, &m_output)
+        , m_cgroups_collector(&m_cfg, &m_output)
+        , m_system_collector(&m_cfg, &m_output)
     {
     }
 
@@ -91,7 +91,6 @@ private:
     CMonitorCgroups m_cgroups_collector;
     CMonitorSystem m_system_collector;
 };
-
 
 //------------------------------------------------------------------------------
 // Command Line Globals
@@ -717,7 +716,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     m_header_info_generator.header_etc_os_release();
     m_header_info_generator.header_version();
     if (bCollectCGroupInfo)
-        m_cgroups_collector.cgroup_config(); // needs to run _BEFORE_ lscpu() and proc_cpuinfo()
+        m_cgroups_collector.output_config(); // needs to run _BEFORE_ lscpu() and proc_cpuinfo()
     m_header_info_generator.header_lscpu();
     m_header_info_generator
         .header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
@@ -749,7 +748,8 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     // else: leave empty
 
     // start actual data samples:
-    CMonitorLogger::instance()->LogDebug("Starting sampling of performance data; collect flags=%u", m_cfg.m_nCollectFlags);
+    CMonitorLogger::instance()->LogDebug(
+        "Starting sampling of performance data; collect flags=%u", m_cfg.m_nCollectFlags);
     m_output.psample_array_start();
     for (unsigned int loop = 0; m_cfg.m_nSamples == 0 || loop < m_cfg.m_nSamples; loop++) {
         if (loop != 0)
@@ -821,7 +821,8 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     m_output.psample_array_end();
     fflush(NULL);
 
-    CMonitorLogger::instance()->LogDebug("Exiting gracefully with return code 0");
+    CMonitorLogger::instance()->LogDebug("Exiting gracefully with return code 0. Logged %lu errors in this run.",
+        CMonitorLogger::instance()->get_num_errors());
     return 0;
 }
 

@@ -44,6 +44,7 @@
 class CMonitorLogger {
 public:
 
+    // access to the singleton instance
     static CMonitorLogger* instance()
     {
         if (!ms_pInstance)
@@ -56,6 +57,10 @@ public:
     {
         m_bDebugEnabled = true;
     }
+    uint64_t get_num_errors() const
+    {
+        return m_nErrors;
+    }
 
     void LogDebug(const char* line, ...) __attribute__((format(printf, 2, 3)));
     void LogError(const char* line, ...) __attribute__((format(printf, 2, 3)));
@@ -65,6 +70,7 @@ private:
     static CMonitorLogger* ms_pInstance;
     std::string m_strErrorFileName;
     bool m_bDebugEnabled = false;
+    uint64_t m_nErrors = 0;
 
     // output:
     FILE* m_outputErr = nullptr;
