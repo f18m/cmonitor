@@ -29,11 +29,14 @@ void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx)
     char buff[1024];
     snprintf(buff, 1024, "/usr/bin/tar -C %s -xf %s", orig_sample_abs_dir.c_str(), orig_sample_tarball.c_str());
     printf("Executing now: %s\n", buff);
-    system(buff);
+    int ret = system(buff);
+    if (WIFEXITED(ret) == false || WEXITSTATUS(ret) != 0)
+        exit(124);
 
     printf("Adjusting symlink %s\n", current_sample_abs_dir.c_str());
     unlink(current_sample_abs_dir.c_str());
-    symlink(orig_sample_abs_dir.c_str(), current_sample_abs_dir.c_str());
+    if (symlink(orig_sample_abs_dir.c_str(), current_sample_abs_dir.c_str()) != 0)
+        exit(125);
 }
 
 TEST(CGroups, Read3Samples)
