@@ -60,6 +60,7 @@ void run_cmonitor_on_tarball_samples(const std::string& kernel_under_test, const
     std::string result_json_file = get_unit_test_abs_dir() + kernel_under_test + "/result.json";
     std::string expected_json_file = get_unit_test_abs_dir() + kernel_under_test + "/expected.json";
     CMonitorOutputFrontend actual_output(result_json_file);
+    actual_output.enable_json_pretty_print();
 
     CMonitorCollectorAppConfig cfg;
     cfg.m_strCGroupName = cgroup_name;
