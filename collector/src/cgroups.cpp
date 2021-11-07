@@ -101,8 +101,8 @@ const char* get_state(char n)
 bool CMonitorCgroups::cgroup_proc_procsinfo(
     pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts)
 {
-#define MAX_STAT_FILE_PREFIX_LEN 1024
-#define MAX_PROC_FILENAME_LEN 1024
+#define MAX_STAT_FILE_PREFIX_LEN 1000
+#define MAX_PROC_FILENAME_LEN (MAX_STAT_FILE_PREFIX_LEN+64)
 #define MAX_PROC_CONTENT_LEN 4096
 
     FILE* fp = NULL;

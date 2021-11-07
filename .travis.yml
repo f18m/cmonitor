@@ -14,4 +14,4 @@ addons:
 
 install: pip install j2cli
 
-script: make && make examples
+script: make && make test

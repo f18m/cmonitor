@@ -16,3 +16,5 @@ jobs:
       run: sudo apt install -y libgtest-dev python3
     - name: make all
       run: make
+    - name: make test
+      run: make test
