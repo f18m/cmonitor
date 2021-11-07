@@ -1,13 +1,22 @@
+# compilation results
 collector/src/*.o
 collector/docker/cmonitor_collector
-collector/bin
+collector/bin/*
+
+# intermediate sample results
 examples/*/cmonitor_collector
 examples/*/example-load.sh
+
+# autogen from jinja2 templates
 tools/chart/cmonitor_chart.py
 tools/statistics/cmonitor_statistics.py
+
+# ides
 .cproject
 .project
 .pydevproject
 .settings
 .vscode
 
+# unit test results
+collector/src/tests/centos7-Linux-3.10.0-x86_64/result.json

@@ -48,7 +48,8 @@ public:
     // main setup
     void cgroup_init(const std::string& cgroup_memory_abs_path = "", // force newline
                     const std::string& cgroup_cpuacct_abs_path = "",  // force newline
-                    const std::string& cgroup_cpuset_abs_path = "");
+                    const std::string& cgroup_cpuset_abs_path = "",
+                    const std::string& proc_prefix_for_test = "");
 
     // one-shot configuration info
     void output_config();
@@ -77,6 +78,7 @@ private:
     std::string m_cgroup_memory_kernel_path;
     std::string m_cgroup_cpuacct_kernel_path;
     std::string m_cgroup_cpuset_kernel_path;
+    std::string m_proc_prefix; // used only during unit testing
 
     // limits read from the cgroups that apply to this process:
     uint64_t m_cgroup_memory_limit_bytes = 0;

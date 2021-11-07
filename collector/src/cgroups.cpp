@@ -98,10 +98,11 @@ const char* get_state(char n)
     }
 }
 
-bool CMonitorCgroups::cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts)
+bool CMonitorCgroups::cgroup_proc_procsinfo(
+    pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts)
 {
-#define MAX_STAT_FILE_PREFIX_LEN 64
-#define MAX_PROC_FILENAME_LEN 128
+#define MAX_STAT_FILE_PREFIX_LEN 1024
+#define MAX_PROC_FILENAME_LEN 1024
 #define MAX_PROC_CONTENT_LEN 4096
 
     FILE* fp = NULL;
@@ -112,7 +113,7 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(pid_t pid, bool include_threads, pro
     memset(pout, 0, sizeof(procsinfo_t));
 
     /* the statistic directory for the process */
-    snprintf(filename, MAX_PROC_FILENAME_LEN, "/proc/%d", pid);
+    snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/proc/%d", m_proc_prefix.c_str(), pid);
     struct stat statbuf;
     if (stat(filename, &statbuf) != 0) {
         CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to stat file %s", filename);
@@ -157,9 +158,9 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(pid_t pid, bool include_threads, pro
          we look at /proc/<pid>/<statistics-file>
     */
     if (include_threads)
-        snprintf(stat_file_prefix, MAX_STAT_FILE_PREFIX_LEN, "/proc/%d/task/%d/", pid, pid);
+        snprintf(stat_file_prefix, MAX_STAT_FILE_PREFIX_LEN, "%s/proc/%d/task/%d/", m_proc_prefix.c_str(), pid, pid);
     else
-        snprintf(stat_file_prefix, MAX_STAT_FILE_PREFIX_LEN, "/proc/%d/", pid);
+        snprintf(stat_file_prefix, MAX_STAT_FILE_PREFIX_LEN, "%s/proc/%d/", m_proc_prefix.c_str(), pid);
 
     { /* process the statistic file for the process/thread */
         snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/stat", stat_file_prefix);
@@ -178,7 +179,8 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(pid_t pid, bool include_threads, pro
             return false;
         }
         if (!reached_eof) {
-            CMonitorLogger::instance()->LogError("ERROR: procsinfo read returned = %zu for pid=%d but did not reach EOF\n", size, pid);
+            CMonitorLogger::instance()->LogError(
+                "ERROR: procsinfo read returned = %zu for pid=%d but did not reach EOF\n", size, pid);
             return false;
         }
 
@@ -263,7 +265,8 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(pid_t pid, bool include_threads, pro
             &pout->pi_delayacct_blkio_ticks /*42*/
         );
         if (ret != 40) {
-            CMonitorLogger::instance()->LogError("procsinfo sscanf wanted 40 returned = %d pid=%d line=%s\n", ret, pid, buf);
+            CMonitorLogger::instance()->LogError(
+                "procsinfo sscanf wanted 40 returned = %d pid=%d line=%s\n", ret, pid, buf);
             return false;
         }
     }
@@ -489,12 +492,15 @@ bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT
 // CMonitorCgroups - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
 
-void CMonitorCgroups::cgroup_init(const std::string& cgroup_memory_abs_path, // force newline
-                                    const std::string& cgroup_cpuacct_abs_path,  // force newline
-                                    const std::string& cgroup_cpuset_abs_path)
+void CMonitorCgroups::cgroup_init( // force newline
+    const std::string& cgroup_memory_abs_path, // force newline
+    const std::string& cgroup_cpuacct_abs_path, // force newline
+    const std::string& cgroup_cpuset_abs_path, // force newline
+    const std::string& proc_prefix_for_test)
 {
     m_bCGroupsFound = false;
     m_cgroup_systemd_name = "N/A";
+    m_proc_prefix = proc_prefix_for_test;
 
     // ABSOLUTE PATH PREFIXES
     // Typical examples (cgroup v1)
@@ -519,7 +525,8 @@ void CMonitorCgroups::cgroup_init(const std::string& cgroup_memory_abs_path, // 
         cpuacct_controller_name = "cpuacct,cpu";
 
         if (!get_cgroup_abs_path_prefix_for_this_pid(cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
-            CMonitorLogger::instance()->LogError("Could not find the 'cpuacct' cgroup path prefix. CGroup mode disabled.\n");
+            CMonitorLogger::instance()->LogError(
+                "Could not find the 'cpuacct' cgroup path prefix. CGroup mode disabled.\n");
             return;
         }
     }
@@ -545,9 +552,12 @@ void CMonitorCgroups::cgroup_init(const std::string& cgroup_memory_abs_path, // 
             return;
         }
 
-        CMonitorLogger::instance()->LogDebug("Found cpuset cgroup mounted at %s\n", m_cgroup_cpuset_kernel_path.c_str());
-        CMonitorLogger::instance()->LogDebug("Found cpuacct cgroup mounted at %s\n", m_cgroup_cpuacct_kernel_path.c_str());
-        CMonitorLogger::instance()->LogDebug("Found memory cgroup mounted at %s\n", m_cgroup_memory_kernel_path.c_str());
+        CMonitorLogger::instance()->LogDebug(
+            "Found cpuset cgroup mounted at %s\n", m_cgroup_cpuset_kernel_path.c_str());
+        CMonitorLogger::instance()->LogDebug(
+            "Found cpuacct cgroup mounted at %s\n", m_cgroup_cpuacct_kernel_path.c_str());
+        CMonitorLogger::instance()->LogDebug(
+            "Found memory cgroup mounted at %s\n", m_cgroup_memory_kernel_path.c_str());
 
         // NOTE: in case we're inside Docker or LXC we should be able to find ourselves inside the
         //       paths composed only by the ABS PREFIXES
@@ -560,32 +570,38 @@ void CMonitorCgroups::cgroup_init(const std::string& cgroup_memory_abs_path, // 
             m_cgroup_memory_kernel_path += "/" + cgroup_paths["memory"];
             m_cgroup_cpuacct_kernel_path += "/" + cgroup_paths[cpuacct_controller_name];
             m_cgroup_cpuset_kernel_path += "/" + cgroup_paths["cpuset"];
-            CMonitorLogger::instance()->LogDebug("Adjusting cpuset cgroup path to %s\n", m_cgroup_cpuset_kernel_path.c_str());
-            CMonitorLogger::instance()->LogDebug("Adjusting cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
-            CMonitorLogger::instance()->LogDebug("Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
+            CMonitorLogger::instance()->LogDebug(
+                "Adjusting cpuset cgroup path to %s\n", m_cgroup_cpuset_kernel_path.c_str());
+            CMonitorLogger::instance()->LogDebug(
+                "Adjusting cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
+            CMonitorLogger::instance()->LogDebug(
+                "Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
             if (cgroup_init_check_for_our_pid())
                 m_cgroup_systemd_name = cgroup_paths["name=systemd"];
         }
     } else {
-        CMonitorLogger::instance()->LogDebug("Cgroup name [%s] provided. Trying to detect the paths for the actual cgroups to monitor.",
+        CMonitorLogger::instance()->LogDebug(
+            "Cgroup name [%s] provided. Trying to detect the paths for the actual cgroups to monitor.",
             m_pCfg->m_strCGroupName.c_str());
 
         // assume that the provided cgroup is using the same absolute CGROUP prefix of this process...
-        // this should be pretty safe since in practice it means assuming that there is a single kernel folder like /sys/fs/cgroup/...
+        // this should be pretty safe since in practice it means assuming that there is a single kernel folder like
+        // /sys/fs/cgroup/...
         m_cgroup_memory_kernel_path += "/" + m_pCfg->m_strCGroupName;
         m_cgroup_cpuacct_kernel_path += "/" + m_pCfg->m_strCGroupName;
         m_cgroup_cpuset_kernel_path += "/" + m_pCfg->m_strCGroupName;
 
         // verify the provided cgroup name is actually existing on disk:
         if (!file_or_dir_exists(m_cgroup_memory_kernel_path.c_str())) {
-            CMonitorLogger::instance()->LogError("Cannot find the cgroup directory corresponding to the provided cgroup name: directory "
-                              "[%s] does not exist. CGroup mode disabled.",
+            CMonitorLogger::instance()->LogError(
+                "Cannot find the cgroup directory corresponding to the provided cgroup name: directory "
+                "[%s] does not exist. CGroup mode disabled.",
                 m_cgroup_memory_kernel_path.c_str());
             return;
         }
 
         m_cgroup_systemd_name = m_pCfg->m_strCGroupName;
-        
+
         CMonitorLogger::instance()->LogDebug("Set cpuset cgroup path to %s\n", m_cgroup_cpuset_kernel_path.c_str());
         CMonitorLogger::instance()->LogDebug("Set cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
         CMonitorLogger::instance()->LogDebug("Set memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
@@ -594,7 +610,8 @@ void CMonitorCgroups::cgroup_init(const std::string& cgroup_memory_abs_path, // 
     // READ LIMITS IMPOSED BY CGROUPS
 
     if (!read_integer(m_cgroup_memory_kernel_path + "/memory.limit_in_bytes", m_cgroup_memory_limit_bytes)) {
-        CMonitorLogger::instance()->LogError("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        CMonitorLogger::instance()->LogError(
+            "Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
     // IMPORTANT: m_cgroup_memory_limit_bytes might assume some crazy high value like 9*10^6 GB
@@ -607,30 +624,34 @@ void CMonitorCgroups::cgroup_init(const std::string& cgroup_memory_abs_path, // 
         return;
     }
     if (m_cgroup_memory_limit_bytes == 0) {
-        CMonitorLogger::instance()->LogError("Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        CMonitorLogger::instance()->LogError(
+            "Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
         return;
     }
     if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_period_us", m_cgroup_cpuacct_period_us)) {
-        CMonitorLogger::instance()->LogError("Could not read the CPU period from 'cpuacct' cgroup. CGroup mode disabled.\n");
+        CMonitorLogger::instance()->LogError(
+            "Could not read the CPU period from 'cpuacct' cgroup. CGroup mode disabled.\n");
         return;
     }
 
     // IMPORTANT: m_cgroup_cpuacct_quota_us might assume the special value UINT64_MAX when "-1" is reported by the
     // cgroup controller... it just means "no limit"
     if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_quota_us", m_cgroup_cpuacct_quota_us)) {
-        CMonitorLogger::instance()->LogError("Could not read the CPU quota from 'cpuacct' cgroup. CGroup mode disabled.\n");
+        CMonitorLogger::instance()->LogError(
+            "Could not read the CPU quota from 'cpuacct' cgroup. CGroup mode disabled.\n");
         return;
     }
 
     // cpuset and memory cgroups found:
     m_bCGroupsFound = true;
-    CMonitorLogger::instance()->LogDebug("CGroup monitoring successfully enabled. CGroup name is %s\n", m_cgroup_systemd_name.c_str());
+    CMonitorLogger::instance()->LogDebug(
+        "CGroup monitoring successfully enabled. CGroup name is %s\n", m_cgroup_systemd_name.c_str());
     CMonitorLogger::instance()->LogDebug("Found cpuset cgroup limiting to CPUs %s, mounted at %s\n",
         stl_container2string(m_cgroup_cpus, ",").c_str(), m_cgroup_cpuset_kernel_path.c_str());
-    CMonitorLogger::instance()->LogDebug("Found cpuacct cgroup limiting at %lu/%lu usecs mounted at %s\n", m_cgroup_cpuacct_quota_us,
-        m_cgroup_cpuacct_period_us, m_cgroup_cpuacct_kernel_path.c_str());
-    CMonitorLogger::instance()->LogDebug("Found memory cgroup limiting to %luB, mounted at %s\n", m_cgroup_memory_limit_bytes,
-        m_cgroup_memory_kernel_path.c_str());
+    CMonitorLogger::instance()->LogDebug("Found cpuacct cgroup limiting at %lu/%lu usecs mounted at %s\n",
+        m_cgroup_cpuacct_quota_us, m_cgroup_cpuacct_period_us, m_cgroup_cpuacct_kernel_path.c_str());
+    CMonitorLogger::instance()->LogDebug("Found memory cgroup limiting to %luB, mounted at %s\n",
+        m_cgroup_memory_limit_bytes, m_cgroup_memory_kernel_path.c_str());
 }
 
 bool CMonitorCgroups::cgroup_init_check_for_our_pid()
@@ -1004,7 +1025,8 @@ bool CMonitorCgroups::cgroup_collect_pids(std::vector<pid_t>& pids)
             pids.push_back((pid_t)pid);
     }
 
-    CMonitorLogger::instance()->LogDebug("Found %zu PIDs/TIDs to monitor: %s.\n", pids.size(), stl_container2string(pids, ",").c_str());
+    CMonitorLogger::instance()->LogDebug(
+        "Found %zu PIDs/TIDs to monitor: %s.\n", pids.size(), stl_container2string(pids, ",").c_str());
 
     return true;
 }
@@ -1062,8 +1084,8 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
         m_topper.insert(std::make_pair(score, newEntry));
 
         // of the 40 fields of procsinfo_t we're mostly interested in user and system time:
-        CMonitorLogger::instance()->LogDebug("pid=%d: %s: utime=%lu, stime=%lu, score=%lu", pcurrent->pi_pid, pcurrent->pi_comm,
-            pcurrent->pi_utime, pcurrent->pi_stime, score);
+        CMonitorLogger::instance()->LogDebug("pid=%d: %s: utime=%lu, stime=%lu, score=%lu", pcurrent->pi_pid,
+            pcurrent->pi_comm, pcurrent->pi_utime, pcurrent->pi_stime, score);
         // CMonitorLogger::instance()->LogDebug("PID=%lu -> score=%lu", current_entry.first, score);
     }
 
@@ -1096,7 +1118,8 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
         /*
          * Process fields
          */
-        m_pOutput->pstring("cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
+        m_pOutput->pstring(
+            "cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
         m_pOutput->plong("pid", CURRENT(pi_pid));
         m_pOutput->plong("ppid", CURRENT(pi_ppid));
         m_pOutput->plong("pgrp", CURRENT(pi_pgrp));

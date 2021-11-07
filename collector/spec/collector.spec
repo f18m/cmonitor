@@ -15,9 +15,9 @@ BuildRequires:  gcc-c++, make, gtest-devel
 %global debug_package %{nil}
 
 %description
-A Docker/LXC, database-free, lightweight container performance monitoring solution, perfect for ephemeral containers
-(e.g. containers used for DevOps automatic testing). Can also be used with InfluxDB and Grafana to monitor long-lived 
-containers in real-time.
+A Docker/LXC/Kubernetes, database-free, lightweight container performance monitoring solution, 
+perfect for ephemeral containers (e.g. containers used for DevOps automatic testing). 
+Can also be used with InfluxDB and Grafana.
 
 %prep
 %setup

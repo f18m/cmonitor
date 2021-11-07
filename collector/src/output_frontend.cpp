@@ -35,10 +35,18 @@
 // Init functions
 //------------------------------------------------------------------------------
 
-CMonitorOutputFrontend::~CMonitorOutputFrontend()
+void CMonitorOutputFrontend::close()
 {
+    if (m_outputJson)
+    {
+        fclose(m_outputJson);
+        m_outputJson = nullptr;
+    }
     if (m_influxdb_client_conn)
+    {
         delete m_influxdb_client_conn;
+        m_influxdb_client_conn = nullptr;
+    }
 }
 
 void CMonitorOutputFrontend::init_json_output_file(const std::string& filenamePrefix)
