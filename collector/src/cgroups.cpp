@@ -32,7 +32,6 @@
 // Constants
 // ----------------------------------------------------------------------------------
 
-#define MAX_LOGICAL_CPU (256)
 #define MIN_ELAPSED_SECS (0.1)
 #define PAGESIZE_BYTES (1024 * 4)
 #define GIGABYTE (1000ul * 1000ul * 1000ul)
@@ -452,36 +451,33 @@ bool read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<ui
     return read_integers_with_range_validation(kernelPath + "/cpuset.cpus", 0, INT32_MAX, cpus);
 }
 
-bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */)
+bool CMonitorCgroups::read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */)
 {
-    static unsigned int num_cpus = 0;
-    char line[8192];
-
     FILE* fp1 = 0;
     if ((fp1 = fopen(path.c_str(), "r")) == NULL)
         return false;
 
-    if (fgets(line, 1000, fp1) == NULL) {
+    if (fgets(m_buff, CGROUP_COLLECTOR_BUFF_SIZE, fp1) == NULL) {
         fclose(fp1);
         return false;
     }
 
     fclose(fp1);
 
-    std::vector<std::string> values = split_string_in_array(line, ' ');
-    if (num_cpus == 0) {
+    std::vector<std::string> values = split_string_in_array(m_buff, ' ');
+    if (m_num_cpus_cpuacct_cgroup == 0) {
         // first time we read the CPU stats
-        num_cpus = values.size();
+        m_num_cpus_cpuacct_cgroup = values.size();
     } else {
-        if (values.size() != num_cpus) {
+        if (values.size() != m_num_cpus_cpuacct_cgroup) {
             // error: we read a different number of CPUs compared to previous read
-            num_cpus = 0;
+            m_num_cpus_cpuacct_cgroup = 0;
             return false;
         }
     }
 
-    valuesINT.resize(num_cpus);
-    for (unsigned int i = 0; i < num_cpus; i++)
+    valuesINT.resize(m_num_cpus_cpuacct_cgroup);
+    for (unsigned int i = 0; i < m_num_cpus_cpuacct_cgroup; i++)
         if (!string2int(values[i].c_str(), valuesINT[i]))
             return false;
 
@@ -747,39 +743,35 @@ void CMonitorCgroups::cgroup_proc_memory(const std::set<std::string>& allowedSta
     //   https://www.kernel.org/doc/Documentation/cgroup-v2.txt
     int i, len;
     uint64_t value;
-
-    /* Static data */
-    static FILE* fp = 0;
-    static char line[8192];
     char label[512];
 
-    if (fp == 0) {
+    if (m_fp_memory_stats == 0) {
         std::string path = m_cgroup_memory_kernel_path + "/memory.stat";
-        if ((fp = fopen(path.c_str(), "r")) == NULL) {
-            fp = 0;
+        if ((m_fp_memory_stats = fopen(path.c_str(), "r")) == NULL) {
+            m_fp_memory_stats = 0;
             return;
         }
     } else
-        rewind(fp);
+        rewind(m_fp_memory_stats);
 
     m_pOutput->psection_start("cgroup_memory_stats");
-    while (fgets(line, 1000, fp) != NULL) {
-        len = strlen(line);
-        if (strncmp(line, "total_", 6) != 0)
+    while (fgets(m_buff, 1000, m_fp_memory_stats) != NULL) {
+        len = strlen(m_buff);
+        if (strncmp(m_buff, "total_", 6) != 0)
             continue; // skip NON-totals: collect only cgroup-total values
 
         for (i = 0; i < len; i++) {
-            if (line[i] == '(')
-                line[i] = '_';
-            if (line[i] == ')')
-                line[i] = ' ';
-            if (line[i] == ':')
-                line[i] = ' ';
-            if (line[i] == '\n')
-                line[i] = 0;
+            if (m_buff[i] == '(')
+                m_buff[i] = '_';
+            if (m_buff[i] == ')')
+                m_buff[i] = ' ';
+            if (m_buff[i] == ':')
+                m_buff[i] = ' ';
+            if (m_buff[i] == '\n')
+                m_buff[i] = 0;
         }
         value = 0;
-        sscanf(line, "%s %lu", label, &value);
+        sscanf(m_buff, "%s %lu", label, &value);
 
         if (allowedStatsNames.empty() /* all stats must be put in output */
             || allowedStatsNames.find(label) != allowedStatsNames.end())
@@ -810,14 +802,6 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
      *  https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/resource_management_guide/sec-cpuacct
      */
 
-    /* structure to recall previous values */
-    struct cpuacct_utilisation {
-        uint64_t counter_nsec_user_mode;
-        uint64_t counter_nsec_sys_mode;
-    };
-    static struct cpuacct_utilisation prev_values[MAX_LOGICAL_CPU] = { 0 };
-    static struct cpuacct_utilisation prev_values_for_total_cpu = { 0 };
-
     // non-static data:
     char label[512];
 
@@ -825,7 +809,7 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         m_pOutput->psection_start("cgroup_cpuacct_stats");
 
     std::string cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
-    cpuacct_utilisation total_cpu_usage = { 0 };
+    cpuacct_utilisation_t total_cpu_usage = { 0 };
     bool bValidData = true;
     if (file_or_dir_exists(cgroup_stat_file.c_str())) {
 
@@ -867,14 +851,14 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
                  */
                 CMonitorLogger::instance()->LogDebug(
                     "CPU %zu, current user=%lu, current sys=%lu, prev user=%lu, prev sys=%lu", // force newline
-                    i, counter_nsec_user_mode[i], counter_nsec_sys_mode[i], prev_values[i].counter_nsec_user_mode,
-                    prev_values[i].counter_nsec_sys_mode);
+                    i, counter_nsec_user_mode[i], counter_nsec_sys_mode[i], m_cpuacct_prev_values[i].counter_nsec_user_mode,
+                    m_cpuacct_prev_values[i].counter_nsec_sys_mode);
                 if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
                     double cpuUserPercent = // force newline
-                        100 * ((double)(counter_nsec_user_mode[i] - prev_values[i].counter_nsec_user_mode))
+                        100 * ((double)(counter_nsec_user_mode[i] - m_cpuacct_prev_values[i].counter_nsec_user_mode))
                         / (elapsed_sec * 1E9);
                     double cpuSysPercent = // force newline
-                        100 * ((double)(counter_nsec_sys_mode[i] - prev_values[i].counter_nsec_sys_mode))
+                        100 * ((double)(counter_nsec_sys_mode[i] - m_cpuacct_prev_values[i].counter_nsec_sys_mode))
                         / (elapsed_sec * 1E9);
 
                     // output JSON counter
@@ -890,8 +874,8 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
                 total_cpu_usage.counter_nsec_sys_mode += counter_nsec_sys_mode[i];
 
                 // save for next cycle
-                prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
-                prev_values[i].counter_nsec_sys_mode = counter_nsec_sys_mode[i];
+                m_cpuacct_prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
+                m_cpuacct_prev_values[i].counter_nsec_sys_mode = counter_nsec_sys_mode[i];
             }
         }
 
@@ -917,7 +901,7 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
                  */
                 if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
                     double cpuUserPercent = // force newline
-                        100 * ((double)(counter_nsec_user_mode[i] - prev_values[i].counter_nsec_user_mode))
+                        100 * ((double)(counter_nsec_user_mode[i] - m_cpuacct_prev_values[i].counter_nsec_user_mode))
                         / (elapsed_sec * 1E9);
 
                     // output JSON counter
@@ -931,7 +915,7 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
                 total_cpu_usage.counter_nsec_user_mode += counter_nsec_user_mode[i];
 
                 // save for next cycle
-                prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
+                m_cpuacct_prev_values[i].counter_nsec_user_mode = counter_nsec_user_mode[i];
             }
         }
     }
@@ -941,11 +925,11 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         if (print && elapsed_sec > MIN_ELAPSED_SECS) {
             double cpuUserPercent = // force newline
                 100
-                * ((double)(total_cpu_usage.counter_nsec_user_mode - prev_values_for_total_cpu.counter_nsec_user_mode))
+                * ((double)(total_cpu_usage.counter_nsec_user_mode - m_cpuacct_prev_values_for_total_cpu.counter_nsec_user_mode))
                 / (elapsed_sec * 1E9);
             double cpuSysPercent = // force newline
                 100
-                * ((double)(total_cpu_usage.counter_nsec_sys_mode - prev_values_for_total_cpu.counter_nsec_sys_mode))
+                * ((double)(total_cpu_usage.counter_nsec_sys_mode - m_cpuacct_prev_values_for_total_cpu.counter_nsec_sys_mode))
                 / (elapsed_sec * 1E9);
 
             // output JSON counter
@@ -956,7 +940,7 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         }
 
         // save for next cycle
-        prev_values_for_total_cpu = total_cpu_usage;
+        m_cpuacct_prev_values_for_total_cpu = total_cpu_usage;
     } else {
         CMonitorLogger::instance()->LogError("failed to open %s", cgroup_stat_file.c_str());
     }
@@ -967,27 +951,22 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
 
     cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpu.stat";
     if (file_or_dir_exists(cgroup_stat_file.c_str())) {
-        /* Static data */
-        static FILE* fp = 0;
-        if (fp == 0) {
-            if ((fp = fopen(cgroup_stat_file.c_str(), "r")) == NULL) {
-                fp = 0;
+        if (m_fp_cpuacct_stats == 0) {
+            if ((m_fp_cpuacct_stats = fopen(cgroup_stat_file.c_str(), "r")) == NULL) {
+                m_fp_cpuacct_stats = 0;
             }
         } else {
-            rewind(fp);
+            rewind(m_fp_cpuacct_stats);
         }
 
-        if (fp) {
-
+        if (m_fp_cpuacct_stats) {
             if (print)
                 m_pOutput->psubsection_start("throttling");
 
-            static char line[8192];
-            while (fgets(line, 1000, fp) != NULL) {
+            while (fgets(m_buff, 1000, m_fp_cpuacct_stats) != NULL) {
                 uint64_t value;
                 char label[512];
-                sscanf(line, "%s %lu", label, &value);
-
+                sscanf(m_buff, "%s %lu", label, &value);
                 if (print)
                     m_pOutput->plong(label, value);
             }

@@ -37,10 +37,10 @@ std::string get_file_string(const std::string& file)
 void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx)
 {
     std::string orig_sample_abs_dir = get_unit_test_abs_dir() + kernel_test + "/sample" + std::to_string(sampleIdx);
-    std::string orig_sample_tarball = get_unit_test_abs_dir() + kernel_test + "/sample" + std::to_string(sampleIdx)
-        + "/sample" + std::to_string(sampleIdx) + ".tar.gz";
+    std::string orig_sample_tarball = orig_sample_abs_dir + "/sample" + std::to_string(sampleIdx) + ".tar.gz";
     std::string current_sample_abs_dir = get_unit_test_abs_dir() + kernel_test + "/current-sample";
 
+    // decompress tarball
     char buff[1024];
     snprintf(buff, 1024, "/usr/bin/tar -C %s -xf %s", orig_sample_abs_dir.c_str(), orig_sample_tarball.c_str());
     printf("Executing now: %s\n", buff);

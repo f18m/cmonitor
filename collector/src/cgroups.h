@@ -38,11 +38,30 @@
 class CMonitorOutputFrontend;
 class CMonitorLoggerUtils;
 
+#define MAX_LOGICAL_CPU (256)
+#define CGROUP_COLLECTOR_BUFF_SIZE (8192)
+
+/* structure to save CPU utilization as reported by cpuacct cgroup */
+typedef struct {
+    uint64_t counter_nsec_user_mode;
+    uint64_t counter_nsec_sys_mode;
+} cpuacct_utilisation_t;
+
 class CMonitorCgroups : public CMonitorAppHelper {
 public:
     CMonitorCgroups(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
         : CMonitorAppHelper(pCfg, pOutput)
     {
+        memset(&m_cpuacct_prev_values[0], 0, MAX_LOGICAL_CPU*sizeof(cpuacct_utilisation_t));
+        memset(&m_cpuacct_prev_values_for_total_cpu, 0, sizeof(cpuacct_utilisation_t));
+    }
+
+    ~CMonitorCgroups()
+    {
+        if (m_fp_memory_stats)
+            fclose(m_fp_memory_stats);
+        if (m_fp_cpuacct_stats)
+            fclose(m_fp_cpuacct_stats);
     }
 
     // main setup
@@ -68,6 +87,7 @@ private:
     bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts);
     bool cgroup_is_allowed_cpu(int cpu);
     bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
+    bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */);
 
 private:
     // main switch that indicates if cgroup_init() was successful or not
@@ -78,13 +98,23 @@ private:
     std::string m_cgroup_memory_kernel_path;
     std::string m_cgroup_cpuacct_kernel_path;
     std::string m_cgroup_cpuset_kernel_path;
-    std::string m_proc_prefix; // used only during unit testing
+    std::string m_proc_prefix; // used only during unit testing to insert an arbitrary prefix in front of "/proc"
 
     // limits read from the cgroups that apply to this process:
     uint64_t m_cgroup_memory_limit_bytes = 0;
     std::set<uint64_t> m_cgroup_cpus;
     uint64_t m_cgroup_cpuacct_period_us = 0;
     uint64_t m_cgroup_cpuacct_quota_us = 0;
+
+    // configuration/status read from "cpuacct" cgroup
+    unsigned int m_num_cpus_cpuacct_cgroup = 0;
+    cpuacct_utilisation_t m_cpuacct_prev_values[MAX_LOGICAL_CPU];
+    cpuacct_utilisation_t m_cpuacct_prev_values_for_total_cpu;
+
+    // handles to stat files
+    FILE* m_fp_memory_stats = nullptr;
+    FILE* m_fp_cpuacct_stats = nullptr;
+    char m_buff[8192];
 
     //------------------------------------------------------------------------------
     // Process tracking
