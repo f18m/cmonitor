@@ -24,6 +24,7 @@ Table of contents of this README:
 - [cmonitor - lightweight container monitor](#cmonitor---lightweight-container-monitor)
   - [Features](#features)
   - [Yet-Another-Monitoring-Project?](#yet-another-monitoring-project)
+  - [Supported Linux Kernels](#supported-linux-kernels)
   - [How to install](#how-to-install)
     - [RPM](#rpm)
     - [Ubuntu](#ubuntu)
@@ -92,6 +93,22 @@ perfect for **ephemeral** containers (e.g. containers used for DevOps automatic 
 Moreover, cmonitor is the only tool (to the best of author's knowledge) that can collect CPU usage of multithreaded applications
 with per-thread granularity.
 
+## Supported Linux Kernels
+
+This project currently supports only cgroups v1. Work is in progress to support cgroups v2.
+However for the time being it means you can use `cmonitor-collector` utility on:
+* Fedora 30 and earlier releases
+* Ubuntu 21.04 and earlier releases
+* All other Linux distributions where the following command returns an empty response:
+
+```
+grep cgroup2 /proc/filesystems
+```
+
+Note that `cmonitor-collector` utility is currently unit-tested against:
+* Centos 7 Linux 3.10.0 kernel
+
+Other kernels will be tested in near future. Of course pull requests are welcome to extend coverage.
 
 ## How to install
 
