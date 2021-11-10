@@ -13,12 +13,12 @@
 ## TODO testing/documentation
 
 - Add tests on:
- 
    CMonitorSystem
+   -> challenge is it uses "lsblk" and "ifconfig" utilities, does not just read the filesystem!
    CMonitorHeaderInfo
-   -> more sampled data for CMonitorCGroup
-   -> more configurations for CMonitorCGroup
 
+- add more sampled data for CMonitorCGroup, for several kernels
+- test more configurations for CMonitorCGroup
 - Test deployment on supported Linux distributions
 - Add LXC examples
 
