@@ -49,8 +49,8 @@ uint64_t compute_proc_score(const procsinfo_t* current_stats, const procsinfo_t*
 
     // take the total time this process/task/thread has been scheduled in both USER and KERNEL space:
     uint64_t cputime_clock_ticks = 0;
-    if (current_stats->pi_utime > prev_stats->pi_utime && // force newline
-        current_stats->pi_stime > prev_stats->pi_stime) {
+    if (current_stats->pi_utime >= prev_stats->pi_utime && // force newline
+        current_stats->pi_stime >= prev_stats->pi_stime) {
         cputime_clock_ticks = // force newline
             (current_stats->pi_utime - prev_stats->pi_utime) + // userspace
             (current_stats->pi_stime - prev_stats->pi_stime); // kernelspace
@@ -101,7 +101,7 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(
     pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts)
 {
 #define MAX_STAT_FILE_PREFIX_LEN 1000
-#define MAX_PROC_FILENAME_LEN (MAX_STAT_FILE_PREFIX_LEN+64)
+#define MAX_PROC_FILENAME_LEN (MAX_STAT_FILE_PREFIX_LEN + 64)
 #define MAX_PROC_CONTENT_LEN 4096
 
     FILE* fp = NULL;
@@ -207,12 +207,12 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(
         for (count = 0; count < size; count++)
             if (buf[count] == ')' && buf[count + 1] == ' ')
                 break;
-        if (count == size) {
+        if (count >= size - 2) {
             CMonitorLogger::instance()->LogError("procsinfo failed to find end of command buf=%s\n", buf);
             return false;
         }
-        count++;
-        count++;
+        count++; // skip ')'
+        count++; // skip space after parentheses
 
         // see http://man7.org/linux/man-pages/man5/proc.5.html, search for /proc/[pid]/stat
         /* column 1 and 2 are handled above */
@@ -233,8 +233,9 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(
             &pout->pi_child_min_flt, /*11*/
             &pout->pi_majflt, /*12*/
             &pout->pi_child_maj_flt, /*13*/
-            &pout->pi_utime, /*14*/
-            &pout->pi_stime, /*15*/
+            &pout->pi_utime, /*14*/ // CPU time spent in user space
+                             &pout->pi_stime,
+            /*15*/ // CPU time spent in kernel space
             &pout->pi_child_utime, /*16*/
             &pout->pi_child_stime, /*17*/
             &pout->pi_priority, /*18*/
@@ -784,10 +785,13 @@ void CMonitorCgroups::cgroup_proc_memory(const std::set<std::string>& allowedSta
     m_pOutput->psection_end();
 }
 
-void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
+void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec)
 {
     if (!m_bCGroupsFound)
         return;
+
+    bool print = (m_num_cpuacct_samples_collected > 0);
+    m_num_cpuacct_samples_collected++;
 
     /* NOTE: newer distros have stats like
      *     /sys/fs/cgroup/cpu,cpuacct/cpuacct.usage_percpu_sys
@@ -851,8 +855,8 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
                  */
                 CMonitorLogger::instance()->LogDebug(
                     "CPU %zu, current user=%lu, current sys=%lu, prev user=%lu, prev sys=%lu", // force newline
-                    i, counter_nsec_user_mode[i], counter_nsec_sys_mode[i], m_cpuacct_prev_values[i].counter_nsec_user_mode,
-                    m_cpuacct_prev_values[i].counter_nsec_sys_mode);
+                    i, counter_nsec_user_mode[i], counter_nsec_sys_mode[i],
+                    m_cpuacct_prev_values[i].counter_nsec_user_mode, m_cpuacct_prev_values[i].counter_nsec_sys_mode);
                 if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
                     double cpuUserPercent = // force newline
                         100 * ((double)(counter_nsec_user_mode[i] - m_cpuacct_prev_values[i].counter_nsec_user_mode))
@@ -925,11 +929,13 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec, bool print)
         if (print && elapsed_sec > MIN_ELAPSED_SECS) {
             double cpuUserPercent = // force newline
                 100
-                * ((double)(total_cpu_usage.counter_nsec_user_mode - m_cpuacct_prev_values_for_total_cpu.counter_nsec_user_mode))
+                * ((double)(total_cpu_usage.counter_nsec_user_mode
+                    - m_cpuacct_prev_values_for_total_cpu.counter_nsec_user_mode))
                 / (elapsed_sec * 1E9);
             double cpuSysPercent = // force newline
                 100
-                * ((double)(total_cpu_usage.counter_nsec_sys_mode - m_cpuacct_prev_values_for_total_cpu.counter_nsec_sys_mode))
+                * ((double)(total_cpu_usage.counter_nsec_sys_mode
+                    - m_cpuacct_prev_values_for_total_cpu.counter_nsec_sys_mode))
                 / (elapsed_sec * 1E9);
 
             // output JSON counter
@@ -1017,6 +1023,11 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
     if (!m_bCGroupsFound)
         return;
 
+    if (m_num_tasks_samples_collected == 0)
+        output_opts = PF_NONE; // the first sample is used as bootstrap: we cannot generate any meaningful delta and
+                               // thus any meaningful output
+    m_num_tasks_samples_collected++;
+
     // swap databases
     m_pid_database_current_index = !m_pid_database_current_index;
     std::map<pid_t, procsinfo_t>& currDB = m_pid_databases[m_pid_database_current_index];
@@ -1046,42 +1057,60 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
         }
     }
 
-    if (output_opts == PF_NONE)
+    if (output_opts == PF_NONE) {
+        CMonitorLogger::instance()->LogDebug(
+            "Initialized process DB with %lu entries on this first sample. Not generating any output.\n",
+            currDB.size());
         return;
-
-    // Sort the processes by their "score" by inserting them into an ordered map
-    assert(m_topper.empty());
-    for (const auto& current_entry : currDB) {
-        const procsinfo_t* pcurrent = &current_entry.second;
-
-        // find the previous stats for this PID:
-        const procsinfo_t* pprev = &prevDB[current_entry.first /* pid */];
-
-        // compute the score
-        uint64_t score = compute_proc_score(pcurrent, pprev, elapsed_sec);
-        proc_topper_t newEntry = { .current = pcurrent, .prev = pprev };
-        m_topper.insert(std::make_pair(score, newEntry));
-
-        // of the 40 fields of procsinfo_t we're mostly interested in user and system time:
-        CMonitorLogger::instance()->LogDebug("pid=%d: %s: utime=%lu, stime=%lu, score=%lu", pcurrent->pi_pid,
-            pcurrent->pi_comm, pcurrent->pi_utime, pcurrent->pi_stime, score);
-        // CMonitorLogger::instance()->LogDebug("PID=%lu -> score=%lu", current_entry.first, score);
     }
 
-    if (m_topper.empty())
+    // Sort the processes by their "score" by inserting them into an ordered map
+    assert(m_topper_procs.empty());
+    CMonitorLogger::instance()->LogDebug(
+        "The current process DB has %lu entries, the DB storing previous statuses has %lu entries.\n",
+        currDB.size(), prevDB.size());
+
+    for (const auto& current_entry : currDB) {
+        pid_t current_pid = current_entry.first;
+        const procsinfo_t* pcurrent_status = &current_entry.second;
+
+        // find the previous stats for this PID:
+        auto itPrevStatus = prevDB.find(current_pid);
+        if (itPrevStatus != prevDB.end())
+        {
+            const procsinfo_t* pprev_status = &itPrevStatus->second;
+
+            // compute the score
+            uint64_t score = compute_proc_score(pcurrent_status, pprev_status, elapsed_sec);
+            proc_topper_t newEntry = { .current = pcurrent_status, .prev = pprev_status };
+            m_topper_procs.insert(std::make_pair(score, newEntry));
+
+            // of the 40 fields of procsinfo_t we're mostly interested in user and system time:
+            CMonitorLogger::instance()->LogDebug("pid=%d: %s: utime=%lu, stime=%lu, prev_utime=%lu, prev_stime=%lu, score=%lu",  // force newline
+                pcurrent_status->pi_pid, pcurrent_status->pi_comm, // force newline
+                pcurrent_status->pi_utime, pcurrent_status->pi_stime, // force newline
+                pprev_status->pi_utime, pprev_status->pi_stime, score);
+            // CMonitorLogger::instance()->LogDebug("PID=%lu -> score=%lu", current_entry.first, score);
+        }
+    }
+
+    if (m_topper_procs.empty())
         return;
 
     CMonitorLogger::instance()->LogDebug(
         "Tracking %zu/%zu processes/threads (include_threads=%d); min/max score found: %lu/%lu", // force
                                                                                                  // newline
-        currDB.size(), all_pids.size(), include_threads, m_topper.begin()->first, m_topper.rbegin()->first);
+        currDB.size(), all_pids.size(), include_threads, m_topper_procs.begin()->first, m_topper_procs.rbegin()->first);
 
     // Now output all data for each process, starting from the minimal score PROCESS_SCORE_IGNORE_THRESHOLD
     static double ticks = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
     size_t nProcsOverThreshold = 0;
     m_pOutput->psection_start("cgroup_tasks");
-    for (auto entry = m_topper.lower_bound(m_pCfg->m_nProcessScoreThreshold); entry != m_topper.end(); entry++) {
+    for (auto entry = m_topper_procs.lower_bound(m_pCfg->m_nProcessScoreThreshold); entry != m_topper_procs.end();
+         entry++) {
         uint64_t score = (*entry).first;
+
+        // note that the m_topper_procs map contains pointers to "currDB" and "prevDB"
         const procsinfo_t* p = (*entry).second.current;
         const procsinfo_t* q = (*entry).second.prev;
 
@@ -1118,18 +1147,18 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
          * CPU fields
          * NOTE: all CPU fields specify amount of time, measured in units of USER_HZ
                  (1/100ths of a second on most architectures); this means that if the
-                 _delta_ CPU value reported is 60 in mode X, then that mode took 60% of the CPU!
+                 _delta_ CPU value reported is 60 in USR/SYSTEM mode, then that mode took 60% of the CPU!
                  IOW there is no need to do any math to produce a percentage, just taking
-                 the delta of the absolute, monotonic-increasing value and divide by the time
+                 the delta of the absolute, monotonic-increasing value and divide by the elapsed time
         */
-        m_pOutput->pdouble("cpu_tot", (TIMEDELTA(pi_utime) + TIMEDELTA(pi_stime)) / elapsed_sec);
-        m_pOutput->pdouble("cpu_usr", TIMEDELTA(pi_utime) / elapsed_sec);
-        m_pOutput->pdouble("cpu_sys", TIMEDELTA(pi_stime) / elapsed_sec);
+        m_pOutput->pdouble("cpu_tot", (double)(TIMEDELTA(pi_utime) + TIMEDELTA(pi_stime)) / elapsed_sec);
+        m_pOutput->pdouble("cpu_usr", (double)TIMEDELTA(pi_utime) / elapsed_sec);
+        m_pOutput->pdouble("cpu_sys", (double)TIMEDELTA(pi_stime) / elapsed_sec);
 
         // provide also the total, monotonically-increasing CPU time:
         // this is used by chart script to produce the "top of the topper" chart
-        m_pOutput->pdouble("cpu_usr_total_secs", CURRENT(pi_utime) / ticks);
-        m_pOutput->pdouble("cpu_sys_total_secs", CURRENT(pi_stime) / ticks);
+        m_pOutput->pdouble("cpu_usr_total_secs", (double)CURRENT(pi_utime) / ticks);
+        m_pOutput->pdouble("cpu_sys_total_secs", (double)CURRENT(pi_stime) / ticks);
         m_pOutput->plong("cpu_last", CURRENT(pi_last_cpu));
 
         /*
@@ -1193,5 +1222,5 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
     m_pOutput->psection_end();
 
     CMonitorLogger::instance()->LogDebug("%zu processes found over score threshold", nProcsOverThreshold);
-    m_topper.clear();
+    m_topper_procs.clear();
 }

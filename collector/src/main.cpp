@@ -593,9 +593,16 @@ void CMonitorCollectorApp::get_timestamps(std::string& localTime, std::string& u
 
 double CMonitorCollectorApp::get_timestamp_sec()
 {
+#if 0
     struct timeval tv;
     gettimeofday(&tv, 0);
     return (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
+#else
+    struct timespec tv;
+    if (clock_gettime(CLOCK_MONOTONIC, &tv) == 0)
+        return (double)tv.tv_sec + (double)tv.tv_nsec * 1.0e-9;
+    return 0;
+#endif
 }
 
 void CMonitorCollectorApp::psample_date_time(long loop)
@@ -697,7 +704,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         m_cgroups_collector.cgroup_init();
 
         if (m_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT)
-            m_cgroups_collector.cgroup_proc_cpuacct(0, false /* do not emit JSON */);
+            m_cgroups_collector.cgroup_proc_cpuacct(0);
 
         if (m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES)
             m_cgroups_collector.cgroup_proc_tasks(
@@ -759,6 +766,8 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         /* calculate elapsed time to include sleep and data collection time */
         double previous_time = current_time;
         current_time = get_timestamp_sec();
+        if (current_time == 0)
+            continue;   // failed in getting current time...
         double elapsed = current_time - previous_time;
 
         m_output.psample_start();
@@ -794,7 +803,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         if (m_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) {
             // do not list all CPU informations when cgroup mode is ON: don't put information
             // for CPUs outside current cgroup!
-            m_cgroups_collector.cgroup_proc_cpuacct(elapsed, true /* emit JSON */);
+            m_cgroups_collector.cgroup_proc_cpuacct(elapsed);
         }
 
         if (m_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) {

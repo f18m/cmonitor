@@ -34,7 +34,7 @@ std::string get_file_string(const std::string& file)
     return std::string((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 }
 
-void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx)
+void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx, uint64_t& sample_timestamp_nsec)
 {
     std::string orig_sample_abs_dir = get_unit_test_abs_dir() + kernel_test + "/sample" + std::to_string(sampleIdx);
     std::string orig_sample_tarball = orig_sample_abs_dir + "/sample" + std::to_string(sampleIdx) + ".tar.gz";
@@ -48,31 +48,36 @@ void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx)
     if (WIFEXITED(ret) == false || WEXITSTATUS(ret) != 0)
         exit(124);
 
+    // update symlink current-sample -> sample{sampleIdx}
     printf("Adjusting symlink %s\n", current_sample_abs_dir.c_str());
     unlink(current_sample_abs_dir.c_str());
     if (symlink(orig_sample_abs_dir.c_str(), current_sample_abs_dir.c_str()) != 0)
         exit(125);
+
+    // read the timestamp for this sample
+    sample_timestamp_nsec = std::stoul(get_file_string(current_sample_abs_dir + "/sample-timestamp"));
 }
 
-void run_cmonitor_on_tarball_samples(const std::string& kernel_under_test, const std::string& cgroup_name)
+void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::string& kernel_under_test, const std::string& cgroup_name, bool include_threads, unsigned int nsamples)
 {
     // prepare AUX objects
-    std::string result_json_file = get_unit_test_abs_dir() + kernel_under_test + "/result.json";
-    std::string expected_json_file = get_unit_test_abs_dir() + kernel_under_test + "/expected.json";
+    std::string result_json_file = get_unit_test_abs_dir() + kernel_under_test + "/result-" + test_name + ".json";
+    std::string expected_json_file = get_unit_test_abs_dir() + kernel_under_test + "/expected-" + test_name + ".json";
     CMonitorOutputFrontend actual_output(result_json_file);
     actual_output.enable_json_pretty_print();
 
     CMonitorCollectorAppConfig cfg;
     cfg.m_strCGroupName = cgroup_name;
+    cfg.m_nProcessScoreThreshold = 0;
 
     CMonitorLogger::instance()->enable_debug();
     CMonitorLogger::instance()->init_error_output_file("stdout");
 
-    double elapsed_sec = 0.1;
     std::set<std::string> allowedStats;
 
     std::string current_sample_abs_dir = get_unit_test_abs_dir() + kernel_under_test + "/current-sample";
-    prepare_sample_dir(kernel_under_test, 1); // prepare before invoking cgroup_init()
+    uint64_t prev_ts;
+    prepare_sample_dir(kernel_under_test, 1, prev_ts); // prepare before invoking cgroup_init()
 
     // allocate the class under test:
     CMonitorCgroups t(&cfg, &actual_output);
@@ -86,17 +91,22 @@ void run_cmonitor_on_tarball_samples(const std::string& kernel_under_test, const
     actual_output.pheader_start();
     actual_output.push_header();
     actual_output.psample_array_start();
-    for (unsigned int i = 0; i < 3; i++) {
-        printf("\n** Processing sample %d\n", i + 1);
-        prepare_sample_dir(kernel_under_test, i + 1);
+    for (unsigned int i = 0; i < nsamples; i++) {
+        uint64_t curr_ts;
 
+        printf("\n** Processing sample %d\n", i + 1);
+        prepare_sample_dir(kernel_under_test, i + 1, curr_ts);
+        double elapsed_sec = (curr_ts - prev_ts)*(1e-9);
+        printf("Elapsed time: %.6fsec\n", elapsed_sec);
+
+        // finally run the code to test
         actual_output.psample_start();
-        t.cgroup_proc_cpuacct(elapsed_sec, true /* emit JSON */);
+        t.cgroup_proc_cpuacct(elapsed_sec);
         t.cgroup_proc_memory(allowedStats);
-        t.cgroup_proc_tasks(elapsed_sec, cfg.m_nOutputFields /* emit JSON */, false /* do not include threads */);
-        // t.cgroup_proc_tasks(elapsed_sec, cfg.m_nOutputFields /* emit JSON */, true /* do include threads */);
+        t.cgroup_proc_tasks(elapsed_sec, cfg.m_nOutputFields /* emit JSON */, include_threads /* do not include threads */);
 
         actual_output.push_current_sample();
+        prev_ts = curr_ts;
     }
     actual_output.psample_array_end();
     actual_output.close();
@@ -110,11 +120,23 @@ void run_cmonitor_on_tarball_samples(const std::string& kernel_under_test, const
     ASSERT_EQ(result_json_str, expected_json_str);
 }
 
-TEST(CGroups, centos7_Linux_3_10_0)
+TEST(CGroups, centos7_Linux_3_10_0_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
+        "nothreads", // force newline
         "centos7-Linux-3.10.0-x86_64", // force newline
-        "docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2");
+        "docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
+        false /* no threads */,
+        4 /* nsamples */);
+}
+TEST(CGroups, centos7_Linux_3_10_0_withthreads)
+{
+    run_cmonitor_on_tarball_samples( // force newline
+        "withthreads", // force newline
+        "centos7-Linux-3.10.0-x86_64", // force newline
+        "docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
+        true /* with threads */,
+        4 /* nsamples */);
 }
 
 //------------------------------------------------------------------------------

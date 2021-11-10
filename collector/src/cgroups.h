@@ -75,7 +75,7 @@ public:
 
     // collect & output cgroup stats
     void cgroup_proc_memory(const std::set<std::string>& allowedStatsNames);
-    void cgroup_proc_cpuacct(double elapsed_sec, bool print);
+    void cgroup_proc_cpuacct(double elapsed_sec);
     void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads);
 
     // misc helpers
@@ -111,18 +111,23 @@ private:
     cpuacct_utilisation_t m_cpuacct_prev_values[MAX_LOGICAL_CPU];
     cpuacct_utilisation_t m_cpuacct_prev_values_for_total_cpu;
 
+    // counters of how many times each cgroup_proc_*() main API has been invoked
+    unsigned int m_num_memory_samples_collected = 0;
+    unsigned int m_num_cpuacct_samples_collected = 0;
+    unsigned int m_num_tasks_samples_collected = 0;
+
     // handles to stat files
     FILE* m_fp_memory_stats = nullptr;
     FILE* m_fp_cpuacct_stats = nullptr;
-    char m_buff[8192];
 
-    //------------------------------------------------------------------------------
     // Process tracking
-    //------------------------------------------------------------------------------
     std::map<pid_t, procsinfo_t> m_pid_databases[2];
     unsigned int m_pid_database_current_index = 0; // will be alternatively 0 and 1
 
     // it's possible, even if unlikely, for 2 PIDs to have identical process score...
     // that's why we use std::multimap instead of a std::map
-    std::multimap<uint64_t /* process score */, proc_topper_t> m_topper;
+    std::multimap<uint64_t /* process score */, proc_topper_t> m_topper_procs;
+
+    // buffer used for reading stats files or for other processing
+    char m_buff[8192];
 };

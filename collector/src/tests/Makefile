@@ -49,8 +49,9 @@ $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 clean:
 	rm -f $(OUT) $(OBJS) *.err *.json *.log
 	for kk in $(TEST_KERNELS); do \
-		rm -rf $$kk/sample*/proc $$kk/sample*/sys ; \
+		rm -rf $$kk/sample*/proc $$kk/sample*/sys $$kk/sample*/sample-timestamp ; \
 		rm -f $$kk/current-sample ; \
+		rm -f $$kk/result-*.json ; \
 	done
 
 # Rules
