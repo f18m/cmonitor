@@ -19,11 +19,8 @@ tools/statistics/cmonitor_statistics.py
 .vscode
 
 # unit test results
-collector/src/tests/centos7-Linux-3.10.0-x86_64/result.json
+collector/src/tests/centos7-Linux-3.10.0-x86_64/result*.json
 collector/src/tests/centos7-Linux-3.10.0-x86_64/current-sample
-collector/src/tests/centos7-Linux-3.10.0-x86_64/sample1/proc/
-collector/src/tests/centos7-Linux-3.10.0-x86_64/sample1/sys/
-collector/src/tests/centos7-Linux-3.10.0-x86_64/sample2/proc/
-collector/src/tests/centos7-Linux-3.10.0-x86_64/sample2/sys/
-collector/src/tests/centos7-Linux-3.10.0-x86_64/sample3/proc/
-collector/src/tests/centos7-Linux-3.10.0-x86_64/sample3/sys/
+collector/src/tests/centos7-Linux-3.10.0-x86_64/sample*/proc/
+collector/src/tests/centos7-Linux-3.10.0-x86_64/sample*/sys/
+collector/src/tests/centos7-Linux-3.10.0-x86_64/sample*/sample-timestamp
