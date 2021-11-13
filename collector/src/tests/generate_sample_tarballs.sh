@@ -11,7 +11,7 @@ docker_name=${2:-userapp}
 process_name=${3:-redis-server}
 nsamples=${4:-4}
 ninterval_sec=${5:-5}
-redis_load_generator=../../../../examples/example_load_redis.py
+redis_load_generator=../../../examples/example_load_redis.py
 
 
 function copy_all_cgroup_folders()
@@ -108,6 +108,9 @@ if [[ "$output_folder" = "" ]]; then
     echo "At least the output folder name is required"
     exit 2
 fi
+
+# we need abs path
+output_folder="$(readlink -f $output_folder)"
 
 # get some information that won't change across samples
 cgroup="$(docker ps -aq --no-trunc -f "name=$docker_name")"
