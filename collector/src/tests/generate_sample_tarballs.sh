@@ -2,12 +2,15 @@
 
 # main inputs of this script, can be provided by CLI
 # Usage:
-#  this_script.sh  <docker-name> <name-main-process-inside-docker> <nsamples>
+#  this_script.sh <output-folder> [docker-name] [name-main-process-inside-docker] [nsamples] [sampling_interval_sec]
 #
-docker_name=${1:-userapp}
-process_name=${2:-redis-server}
-nsamples=${3:-4}
-ninterval_sec=${4:-5}
+
+# CLI option parsing
+output_folder=${1:-}
+docker_name=${2:-userapp}
+process_name=${3:-redis-server}
+nsamples=${4:-4}
+ninterval_sec=${5:-5}
 redis_load_generator=../../../../examples/example_load_redis.py
 
 
@@ -96,6 +99,16 @@ function generate_sample_tarball()
     popd
 }
 
+
+
+
+## MAIN ##
+
+if [[ "$output_folder" = "" ]]; then
+    echo "At least the output folder name is required"
+    exit 2
+fi
+
 # get some information that won't change across samples
 cgroup="$(docker ps -aq --no-trunc -f "name=$docker_name")"
 pids_to_save="$(ps -T -o tid --no-headers -C ${process_name})"
@@ -106,13 +119,13 @@ pkill example_load_re
 # generate each sample
 for nsample in $(seq 1 $nsamples); do
     echo "** Generating tarball for the ${nsample}-th sample of process=${process_name} inside docker named=${docker_name}"
-    generate_sample_tarball $(pwd)/sample${nsample}/sample${nsample}.tar.gz
+    generate_sample_tarball $output_folder/sample${nsample}/sample${nsample}.tar.gz
 
     if [[ "$nsample" == "2" ]]; then
         # immediately after sample#2 is produced, put artificial load on Redis
         for i in $(seq 1 20); do
             echo "Spawning instance $i of the simple Redis load application" 
-            ${redis_load_generator} ${docker_name} &
+            ${redis_load_generator} ${docker_name} constant-load &
         done
     elif [[ "$nsample" == "3" ]]; then
         # immediately after sample#3 is produced, remove artificial load on Redis
