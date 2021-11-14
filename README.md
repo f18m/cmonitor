@@ -97,6 +97,7 @@ with per-thread granularity.
 
 This project currently supports only cgroups v1. Work is in progress to support cgroups v2.
 However for the time being it means you can use `cmonitor-collector` utility on:
+* Centos 7 and Centos 8 
 * Fedora 30 and earlier releases
 * Ubuntu 21.04 and earlier releases
 * All other Linux distributions where the following command returns an empty response:
@@ -106,7 +107,8 @@ grep cgroup2 /proc/filesystems
 ```
 
 Note that `cmonitor-collector` utility is currently unit-tested against:
-* Centos 7 Linux 3.10.0 kernel
+* Centos 7 (Linux kernel v3.10.0)
+* Ubuntu 20.04 (Linux kernel v5.4.0)
 
 Other kernels will be tested in near future. Of course pull requests are welcome to extend coverage.
 
@@ -231,21 +233,28 @@ Example results:
 #### Monitoring a Docker container launching cmonitor_collector on the baremetal
 
 In this case you can simply install cmonitor as RPM or APT package following instructions in [How to install](#section-id-65)
-and then launch the cmonitor_collector utility as any other Linux daemon, specifying the name of the cgroup associated with
+and then launch the `cmonitor_collector` utility as any other Linux daemon, specifying the name of the cgroup associated with
 the docker container to monitor.
+Finding out the cgroup associated with a Docker container can require some detailed information about your OS / runtime configuration;
+for example you should know whether you're using cgroups v1 or v2 and which Docker cgroup driver are you using (cgroupfs or systemd);
+please see the [official Docker page](https://docs.docker.com/config/containers/runmetrics/#find-the-cgroup-for-a-given-container)
+for more details.
 In the following example a [Redis](https://hub.docker.com/_/redis) docker container is launched with the name 'userapp' and its
-CPU, memory, network and disk usage are monitored launching a cmonitor_collector instance:
+CPU, memory, network and disk usage are monitored launching a `cmonitor_collector` instance:
 
 ```
 docker run --name userapp --detach redis:latest
 
 DOCKER_ID=$(docker ps -aq --no-trunc -f "name=userapp")
 
+CGROUP_NAME=docker/${DOCKER_ID}                       # when 'cgroupfs' driver is in use
+CGROUP_NAME=system.slice/docker-${DOCKER_ID}.scope    # when 'systemd' driver is in use
+
 # here we exploit the following fact: the cgroup of each Docker container 
-# is always named 'docker/container-ID'
+# is always named 'docker/container-ID'... at least when using Moby engine
 cmonitor_collector \
    --num-samples=until-cgroup-alive \
-   --cgroup-name=docker/${DOCKER_ID} \
+   --cgroup-name=${CGROUP_NAME} \
    --collect=cgroup_threads,cgroup_cpu,cgroup_memory --score-threshold=0 \
    --custom-metadata=cmonitor_chart_name:userapp \
    --sampling-interval=3 \
@@ -444,4 +453,4 @@ This fork supports only Linux x86_64 architectures; support for AIX/PowerPC (pre
 
 ## License
 
-Just like the [original project](http://nmon.sourceforge.net), this project is licensed under [GNU GPL 
+Just like the [original project](http://nmon.sourceforge.net), this project is licensed under [GNU GPL 2.0](LICENSE)
