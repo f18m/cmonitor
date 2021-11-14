@@ -91,8 +91,8 @@ private:
 
 private:
     // main switch that indicates if cgroup_init() was successful or not
-    bool m_bCGroupsFound = false;
-
+    CGroupDetected m_nCGroupsFound = CG_NONE;
+    
     // paths of cgroups for the cgroup to monitor (either our own cgroup or another one):
     std::string m_cgroup_systemd_name;
     std::string m_cgroup_memory_kernel_path;
