@@ -33,7 +33,9 @@ OBJS = \
 
 HEADERS = $(wildcard ../*.h)
 
-TEST_KERNELS = centos7-Linux-3.10.0-x86_64
+TEST_KERNELS = \
+	centos7-Linux-3.10.0-x86_64 \
+	ubuntu20.04-Linux-5.4.0-x86_64
 
 # Targets
 

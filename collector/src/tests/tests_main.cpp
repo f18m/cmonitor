@@ -58,7 +58,8 @@ void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx, uint64_
     sample_timestamp_nsec = std::stoul(get_file_string(current_sample_abs_dir + "/sample-timestamp"));
 }
 
-void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::string& kernel_under_test, const std::string& cgroup_name, bool include_threads, unsigned int nsamples)
+void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::string& kernel_under_test,
+    const std::string& cgroup_name, bool include_threads, unsigned int nsamples)
 {
     // prepare AUX objects
     std::string result_json_file = get_unit_test_abs_dir() + kernel_under_test + "/result-" + test_name + ".json";
@@ -96,14 +97,15 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
 
         printf("\n** Processing sample %d\n", i + 1);
         prepare_sample_dir(kernel_under_test, i + 1, curr_ts);
-        double elapsed_sec = (curr_ts - prev_ts)*(1e-9);
+        double elapsed_sec = (curr_ts - prev_ts) * (1e-9);
         printf("Elapsed time: %.6fsec\n", elapsed_sec);
 
         // finally run the code to test
         actual_output.psample_start();
         t.cgroup_proc_cpuacct(elapsed_sec);
         t.cgroup_proc_memory(allowedStats);
-        t.cgroup_proc_tasks(elapsed_sec, cfg.m_nOutputFields /* emit JSON */, include_threads /* do not include threads */);
+        t.cgroup_proc_tasks(
+            elapsed_sec, cfg.m_nOutputFields /* emit JSON */, include_threads /* do not include threads */);
 
         actual_output.push_current_sample();
         prev_ts = curr_ts;
@@ -125,8 +127,7 @@ TEST(CGroups, centos7_Linux_3_10_0_nothreads)
     run_cmonitor_on_tarball_samples( // force newline
         "nothreads", // force newline
         "centos7-Linux-3.10.0-x86_64", // force newline
-        "docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
-        false /* no threads */,
+        "docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2", false /* no threads */,
         4 /* nsamples */);
 }
 TEST(CGroups, centos7_Linux_3_10_0_withthreads)
@@ -134,8 +135,23 @@ TEST(CGroups, centos7_Linux_3_10_0_withthreads)
     run_cmonitor_on_tarball_samples( // force newline
         "withthreads", // force newline
         "centos7-Linux-3.10.0-x86_64", // force newline
-        "docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
-        true /* with threads */,
+        "docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2", true /* with threads */,
+        4 /* nsamples */);
+}
+TEST(CGroups, ubuntu2004_Linux_5_4_0_nothreads)
+{
+    run_cmonitor_on_tarball_samples( // force newline
+        "nothreads", // force newline
+        "ubuntu20.04-Linux-5.4.0-x86_64", // force newline
+        "docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a", false /* with threads */,
+        4 /* nsamples */);
+}
+TEST(CGroups, ubuntu2004_Linux_5_4_0_withthreads)
+{
+    run_cmonitor_on_tarball_samples( // force newline
+        "withthreads", // force newline
+        "ubuntu20.04-Linux-5.4.0-x86_64", // force newline
+        "docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a", true /* with threads */,
         4 /* nsamples */);
 }
 

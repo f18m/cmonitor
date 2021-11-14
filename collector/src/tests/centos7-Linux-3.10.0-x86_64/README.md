@@ -23,7 +23,8 @@ Sample#2:
  Immediately after this sample is produced, Redis server is loaded with a lot of commands to increase its CPU usage
 
 Sample#3: 
- this sample will reveal that since last sample Redis has used close to 90-100% CPU usage in user/kernel space.
+ this sample will reveal that since last sample Redis has used close to 90% CPU usage in user/kernel space (90% being
+ the max allowed cpu usage in its cpuacct cgroup).
  Immediately after this sample is produced, Redis server load is removed.
 
 Sample#4: 
