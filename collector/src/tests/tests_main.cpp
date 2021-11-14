@@ -90,6 +90,7 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
 
     // start feeding fixed, test data
     actual_output.pheader_start();
+    t.output_config();
     actual_output.push_header();
     actual_output.psample_array_start();
     for (unsigned int i = 0; i < nsamples; i++) {

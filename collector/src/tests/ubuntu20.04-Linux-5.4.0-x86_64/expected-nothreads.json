@@ -1,5 +1,14 @@
 {
     "header": {
+        "cgroup_config": {
+            "name": "docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a",
+            "memory_path": "/home/fmontorsi/git/cmonitor/collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64/current-sample/sys/fs/cgroup/memory/docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a",
+            "cpuacct_path": "/home/fmontorsi/git/cmonitor/collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64/current-sample/sys/fs/cgroup/cpu,cpuacct/docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a",
+            "cpuset_path": "/home/fmontorsi/git/cmonitor/collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64/current-sample/sys/fs/cgroup/cpuset/docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a",
+            "cpus": "0,1",
+            "cpu_quota_perc": 0.900,
+            "memory_limit_bytes": 10485760
+        }
     },
     "samples": [
     {
