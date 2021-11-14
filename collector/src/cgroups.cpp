@@ -43,6 +43,20 @@ typedef std::map<std::string /* controller type */, std::string /* path */> cgro
 // C++ Helper functions
 // ----------------------------------------------------------------------------------
 
+std::string CGroupDetected2string(CGroupDetected k)
+{
+    switch (k) {
+    case CG_NONE:
+        return "none";
+    case CG_VERSION1:
+        return "v1";
+    case CG_VERSION2:
+        return "v2";
+    default:
+        return "";
+    }
+}
+
 uint64_t compute_proc_score(const procsinfo_t* current_stats, const procsinfo_t* prev_stats, double elapsed_secs)
 {
     static double ticks_per_sec = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
@@ -706,8 +720,9 @@ void CMonitorCgroups::output_config()
 
     m_pOutput->psection_start("cgroup_config");
 
-    // the cgroup name
+    // the cgroup name & version
     m_pOutput->pstring("name", m_cgroup_systemd_name.c_str());
+    m_pOutput->pstring("version", CGroupDetected2string(m_nCGroupsFound).c_str());
 
     // the cgroup paths
     m_pOutput->pstring("memory_path", &m_cgroup_memory_kernel_path[0]);

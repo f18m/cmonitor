@@ -2,6 +2,7 @@
     "header": {
         "cgroup_config": {
             "name": "docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a",
+            "version": "v1",
             "memory_path": "/removed-unit-test-data-location/sys/fs/cgroup/memory/docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a",
             "cpuacct_path": "/removed-unit-test-data-location/sys/fs/cgroup/cpu,cpuacct/docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a",
             "cpuset_path": "/removed-unit-test-data-location/sys/fs/cgroup/cpuset/docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a",

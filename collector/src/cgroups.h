@@ -32,20 +32,40 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
-// The CMonitorCgroups object
+// Constants
 //------------------------------------------------------------------------------
 
-class CMonitorOutputFrontend;
-class CMonitorLoggerUtils;
 
 #define MAX_LOGICAL_CPU (256)
 #define CGROUP_COLLECTOR_BUFF_SIZE (8192)
+
+enum CGroupDetected {
+    CG_NONE, // force newline
+    CG_VERSION1, // force newline
+    CG_VERSION2 // force newline
+};
+
+std::string CGroupDetected2string(CGroupDetected k);
+
+
+//------------------------------------------------------------------------------
+// Types
+//------------------------------------------------------------------------------
 
 /* structure to save CPU utilization as reported by cpuacct cgroup */
 typedef struct {
     uint64_t counter_nsec_user_mode;
     uint64_t counter_nsec_sys_mode;
 } cpuacct_utilisation_t;
+
+
+
+//------------------------------------------------------------------------------
+// The CMonitorCgroups object
+//------------------------------------------------------------------------------
+
+class CMonitorOutputFrontend;
+class CMonitorLoggerUtils;
 
 class CMonitorCgroups : public CMonitorAppHelper {
 public:

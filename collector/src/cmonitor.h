@@ -74,12 +74,6 @@ enum OutputFields {
     PF_USED_BY_CHART_SCRIPT_ONLY // force newline
 };
 
-enum CGroupDetected {
-    CG_NONE, // force newline
-    CG_VERSION1, // force newline
-    CG_VERSION2 // force newline
-};
-
 //------------------------------------------------------------------------------
 // Types
 //------------------------------------------------------------------------------
