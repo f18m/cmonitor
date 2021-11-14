@@ -5,6 +5,7 @@
 #include "../cgroups.h"
 #include "../logger.h"
 #include "../output_frontend.h"
+#include "../utils.h"
 #include <fstream>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -117,8 +118,16 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
     // make sure no errors have been found in the processing of files so far
     ASSERT_EQ(CMonitorLogger::instance()->get_num_errors(), 0);
 
-    // now compare produced JSON with expected JSON
+    // now read back the resulting JSON... but hide/mask-out the precise location of the unit testing data;
+    // that's because on the developer machine this will be an absolute path like
+    //     /home/youruser/myprojects/git/cmonitor/collector/src/tests/centos7-Linux-3.10.0-x86_64/
+    // while in the CI/CD pipeline it will be something like:
+    //     /home/runner/work/cmonitor/cmonitor/collector/src/tests/centos7-Linux-3.10.0-x86_64/
     std::string result_json_str = get_file_string(result_json_file);
+    replace_string(
+        result_json_str, current_sample_abs_dir, "/removed-unit-test-data-location", true /* allOccurrences */);
+
+    // now compare produced JSON with expected JSON
     std::string expected_json_str = get_file_string(expected_json_file);
     ASSERT_EQ(result_json_str, expected_json_str);
 }

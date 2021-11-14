@@ -2,9 +2,9 @@
     "header": {
         "cgroup_config": {
             "name": "docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
-            "memory_path": "/home/fmontorsi/git/cmonitor/collector/src/tests/centos7-Linux-3.10.0-x86_64/current-sample/sys/fs/cgroup/memory/docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
-            "cpuacct_path": "/home/fmontorsi/git/cmonitor/collector/src/tests/centos7-Linux-3.10.0-x86_64/current-sample/sys/fs/cgroup/cpu,cpuacct/docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
-            "cpuset_path": "/home/fmontorsi/git/cmonitor/collector/src/tests/centos7-Linux-3.10.0-x86_64/current-sample/sys/fs/cgroup/cpuset/docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
+            "memory_path": "/removed-unit-test-data-location/sys/fs/cgroup/memory/docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
+            "cpuacct_path": "/removed-unit-test-data-location/sys/fs/cgroup/cpu,cpuacct/docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
+            "cpuset_path": "/removed-unit-test-data-location/sys/fs/cgroup/cpuset/docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
             "cpus": "0,1",
             "cpu_quota_perc": 0.900,
             "memory_limit_bytes": 10485760
