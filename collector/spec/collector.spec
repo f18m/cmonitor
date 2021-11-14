@@ -7,7 +7,7 @@ URL:            https://github.com/f18m/cmonitor
 Source0:        cmonitor-collector-__RPM_VERSION__.tar.gz
 
 # these are the requirements that we need on COPR builds:
-BuildRequires:  gcc-c++, make
+BuildRequires:  gcc-c++, make, gtest-devel
 # python3-pip works and gets installed but then it fails later for unknown reasons
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
@@ -15,9 +15,9 @@ BuildRequires:  gcc-c++, make
 %global debug_package %{nil}
 
 %description
-A Docker/LXC, database-free, lightweight container performance monitoring solution, perfect for ephemeral containers
-(e.g. containers used for DevOps automatic testing). Can also be used with InfluxDB and Grafana to monitor long-lived 
-containers in real-time.
+A Docker/LXC/Kubernetes, database-free, lightweight container performance monitoring solution, 
+perfect for ephemeral containers (e.g. containers used for DevOps automatic testing). 
+Can also be used with InfluxDB and Grafana.
 
 %prep
 %setup

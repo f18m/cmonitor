@@ -22,7 +22,7 @@ OUTDIR=../bin/glibc
 endif
 OUT=$(OUTDIR)/cmonitor_collector
 
-VALGRIND_LOGFILE_POSTFIX:=${OUT}-$(shell date +%F-%H%M%S)
+VALGRIND_LOGFILE_POSTFIX:=cmonitor_collector-$(shell date +%F-%H%M%S)
 VALGRIND_COMMON_OPTS:=--gen-suppressions=all --time-stamp=yes --error-limit=no
 
 ifeq ($(CMONITOR_ARGS),)
@@ -40,22 +40,26 @@ OBJS = \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/main.o \
     $(OUTDIR)/output_frontend.o \
-    $(OUTDIR)/proc_stats.o \
+    $(OUTDIR)/system.o \
     $(OUTDIR)/utils.o
 
-HEADERS = \
-    cmonitor.h \
-    output_frontend.h \
-    influxdb.h
+HEADERS = $(wildcard *.h)
     
 
 # Targets
+
+all: $(OUT)
+	$(MAKE) -C tests all
+
+test:
+	$(MAKE) -C tests test
 
 $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS)
 
 clean:
 	rm -f $(OUT) $(OBJS) *.err *.json *.log
+	$(MAKE) -C tests clean
 
 strip:
 	strip $(OUT)

@@ -15,6 +15,9 @@ include $(ROOT_DIR)/Constants.mk
 
 all:
 	$(MAKE) -C src RPM_VERSION=$(CMONITOR_VERSION) RPM_RELEASE=$(CMONITOR_RELEASE)
+
+test: 
+	$(MAKE) -C src test
 	
 clean:
 	$(MAKE) -C src clean

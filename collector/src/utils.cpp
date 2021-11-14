@@ -18,7 +18,9 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cmonitor.h"
+#include "utils.h"
+#include "logger.h"
+#include "output_frontend.h"
 #include <limits.h>
 #include <sstream>
 #include <sys/stat.h>
@@ -225,7 +227,7 @@ bool search_integer(std::string filePath, uint64_t valueToSearch)
 {
     FILE* stream = fopen(filePath.c_str(), "r");
     if (!stream) {
-        g_logger.LogDebug("Cannot open file [%s]", filePath.c_str());
+        CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", filePath.c_str());
         return false; // file does not exist or not readable
     }
 
@@ -233,7 +235,7 @@ bool search_integer(std::string filePath, uint64_t valueToSearch)
     char line[MAX_LINE_LEN];
     uint64_t value;
     while (fgets(line, MAX_LINE_LEN, stream) != NULL) {
-        // g_logger.LogDebug("Searching for %d into [%s]", valueToSearch, line);
+        // CMonitorLogger::instance()->LogDebug("Searching for %d into [%s]", valueToSearch, line);
         if (sscanf(line, "%lu", &value) == 1) {
             if (value == valueToSearch)
                 return true; // found!
@@ -248,7 +250,7 @@ bool read_integer(std::string filePath, uint64_t& value)
 {
     FILE* stream = fopen(filePath.c_str(), "r");
     if (!stream) {
-        g_logger.LogDebug("Cannot open file [%s]", filePath.c_str());
+        CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", filePath.c_str());
         return false; // file does not exist or not readable
     }
 
@@ -286,4 +288,85 @@ bool read_integers_with_range_validation(
     }
 
     return true;
+}
+
+std::string get_hostname()
+{
+    DEBUGLOG_FUNCTION_START();
+    std::string ret;
+
+    char hostname[1024];
+    if (gethostname(hostname, sizeof(hostname)) != 0)
+        ret = "unknown-hostname";
+    else
+        ret = hostname;
+
+    for (size_t i = 0; i < strlen(hostname); i++)
+        if (hostname[i] == '.')
+            break;
+        else
+            ret.push_back(hostname[i]);
+
+    return ret;
+}
+
+/*
+Reads files in one of the 3 formats supported below:
+
+name number
+name: number
+name: number kB
+
+*/
+void proc_read_numeric_stats_from(
+    CMonitorOutputFrontend* pOutput, const char* statname, const std::set<std::string>& allowedStatsNames)
+{
+    FILE* fp = 0;
+    char line[1024];
+    char filename[1024];
+    char label[512];
+    char number[512];
+    int i;
+    int len;
+
+    DEBUGLOG_FUNCTION_START();
+    sprintf(filename, "/proc/%s", statname);
+    if ((fp = fopen(filename, "r")) == NULL) {
+        CMonitorLogger::instance()->LogErrorWithErrno("Failed to open performance file %s", filename);
+        return;
+    }
+    sprintf(label, "proc_%s", statname);
+    pOutput->psection_start(label);
+    while (fgets(line, 1000, fp) != NULL) {
+        len = strlen(line);
+        bool is_kb = false;
+        for (i = 0; i < len; i++) {
+
+            // escape characters that we don't like in JSON output:
+            if (line[i] == '(')
+                line[i] = '_';
+            if (line[i] == ')')
+                line[i] = ' ';
+            if (line[i] == ':')
+                line[i] = ' ';
+            if (line[i] == '\n') {
+                line[i] = 0;
+                if (i > 3 && line[i - 2] == 'k' && line[i - 1] == 'B')
+                    is_kb = true;
+            }
+        }
+        sscanf(line, "%s %s", label, number);
+        // CMonitorLogger::instance()->LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr, atoll(numstr));
+
+        if (allowedStatsNames.empty() /* all stats must be put in output */
+            || allowedStatsNames.find(label) != allowedStatsNames.end()) {
+            long long num = atoll(number);
+            if (is_kb)
+                num *= 1000;
+
+            pOutput->plong(label, num);
+        }
+    }
+    pOutput->psection_end();
+    (void)fclose(fp);
 }

@@ -34,9 +34,6 @@
 // Macros
 //------------------------------------------------------------------------------
 
-#define DEBUGLOG_FUNCTION_START()                                                                                      \
-    g_logger.LogDebug("%s() called at line %d of file %s\n", __func__, __LINE__, __FILE__);
-
 #define PROCESS_DEBUGGING_ADDRESSES_SIGNALS (0)
 
 //------------------------------------------------------------------------------
@@ -217,148 +214,22 @@ public:
     std::map<std::string, std::string> m_mapCustomMetadata; // --custom-metadata
 };
 
-// app-wide config settings:
-extern CMonitorCollectorAppConfig g_cfg;
 
 //------------------------------------------------------------------------------
-// Logging functions for this app
+// CMonitorAppHelper
 //------------------------------------------------------------------------------
 
-class CMonitorLoggerUtils {
+class CMonitorOutputFrontend;
+class CMonitorAppHelper
+{
 public:
-    void init_error_output_file(const std::string& filenamePrefix);
+    CMonitorAppHelper(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
+    {
+        m_pCfg = pCfg;
+        m_pOutput = pOutput;
+    }
 
-    void LogDebug(const char* line, ...) __attribute__((format(printf, 2, 3)));
-    void LogError(const char* line, ...) __attribute__((format(printf, 2, 3)));
-    void LogErrorWithErrno(const char* line, ...) __attribute__((format(printf, 2, 3)));
-
-private:
-    std::string m_strErrorFileName;
-
-    // output:
-    FILE* m_outputErr = nullptr;
+protected:
+    CMonitorCollectorAppConfig* m_pCfg;
+    CMonitorOutputFrontend* m_pOutput;
 };
-
-// app-wide logger:
-extern CMonitorLoggerUtils g_logger;
-
-//------------------------------------------------------------------------------
-// The App object
-//------------------------------------------------------------------------------
-
-class CMonitorCollectorApp {
-public:
-    CMonitorCollectorApp() { }
-
-    void init_defaults();
-    void parse_args(int argc, char** argv);
-    int run(int argc, char** argv);
-
-private:
-    void print_help();
-    void check_pid_file();
-    std::string get_hostname();
-    void get_timestamps(std::string& localTime, std::string& utcTime);
-    void file_read_one_stat(const char* file, const char* name);
-    void proc_read_numeric_stats_from(const char* statname, const std::set<std::string>& allowedStatsNames);
-    void psample_date_time(long loop);
-    double get_timestamp_sec();
-
-    //------------------------------------------------------------------------------
-    // JSON header functions
-    //------------------------------------------------------------------------------
-
-    void header_identity();
-    void header_cmonitor_info(
-        int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags);
-    void header_etc_os_release();
-    void header_cpuinfo();
-    void header_version();
-    void header_lscpu();
-    void header_lshw();
-    void header_meminfo();
-    void header_custom_metadata();
-
-    //------------------------------------------------------------------------------
-    // CGroup functions
-    //------------------------------------------------------------------------------
-
-    void cgroup_init();
-    bool cgroup_init_check_for_our_pid();
-    void cgroup_config();
-    bool cgroup_is_allowed_cpu(int cpu);
-    bool cgroup_still_exists();
-    void cgroup_proc_memory(const std::set<std::string>& allowedStatsNames);
-    void cgroup_proc_cpuacct(double elapsed_sec, bool print);
-    void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads);
-    bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
-
-    //------------------------------------------------------------------------------
-    // Functions to collect /proc stats (baremetal)
-    //------------------------------------------------------------------------------
-
-    void proc_stat(double elapsed, bool onlyCgroupAllowedCpus, OutputFields output_opts);
-    void proc_stat_cpu_total(const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu,
-        int max_cpu_count); // utility of proc_stat()
-    int proc_stat_cpu_index(const char* cpu_data, double elapsed_sec, OutputFields output_opts,
-        cpu_specs_t* logical_cpu, bool onlyCgroupAllowedCpus);
-
-    void proc_diskstats(double elapsed, OutputFields output_opts);
-    void proc_net_dev(double elapsed, OutputFields output_opts);
-    void proc_loadavg();
-    void proc_filesystems();
-    void proc_uptime();
-
-private:
-    //------------------------------------------------------------------------------
-    // Misc globals
-    //------------------------------------------------------------------------------
-    std::string m_strHostname; // full hostname for this machine
-    std::string m_strShortHostname; // short hostname for this machine
-
-    //------------------------------------------------------------------------------
-    // CGroups variables
-    //------------------------------------------------------------------------------
-    CGroupDetected m_nCGroupsFound = CG_NONE;
-
-    // paths of cgroups for the cgroup to monitor (either our own cgroup or another one):
-    std::string m_cgroup_systemd_name;
-    std::string m_cgroup_memory_kernel_path;
-    std::string m_cgroup_cpuacct_kernel_path;
-    std::string m_cgroup_cpuset_kernel_path;
-
-    // limits read from the cgroups that apply to this process:
-    uint64_t m_cgroup_memory_limit_bytes = 0;
-    std::set<uint64_t> m_cgroup_cpus;
-    uint64_t m_cgroup_cpuacct_period_us = 0;
-    uint64_t m_cgroup_cpuacct_quota_us = 0;
-
-    //------------------------------------------------------------------------------
-    // Process tracking
-    //------------------------------------------------------------------------------
-    std::map<pid_t, procsinfo_t> m_pid_databases[2];
-    unsigned int m_pid_database_current_index = 0; // will be alternatively 0 and 1
-
-    // it's possible, even if unlikely, for 2 PIDs to have identical process score...
-    // that's why we use std::multimap instead of a std::map
-    std::multimap<uint64_t /* process score */, proc_topper_t> m_topper;
-};
-
-//------------------------------------------------------------------------------
-// String/File utilities
-//------------------------------------------------------------------------------
-
-unsigned int replace_string(std::string& str, const std::string& from, const std::string& to, bool allOccurrences);
-std::string to_lower(const std::string& orig_str);
-std::string trim_string(const std::string& s);
-void strip_spaces(char* s);
-bool string2int(const char* s, uint64_t& result);
-bool file_or_dir_exists(const char* filename);
-template <typename T> std::string stl_container2string(const T& par, const std::string& delim);
-std::vector<std::string> split_string_in_array(const std::string& str, char splitter);
-bool parse_string_with_multiple_ranges(const std::string& data, std::vector<int>& result);
-bool parse_string_with_multiple_ranges(const std::string& data, std::set<int>& result);
-bool search_integer(std::string filePath, uint64_t valueToSearch);
-bool read_integer(std::string filePath, uint64_t& value);
-bool read_integers_with_range_validation(
-    const std::string& filename, uint64_t lower_limit, uint64_t upper_limit, std::set<uint64_t>& cpus);

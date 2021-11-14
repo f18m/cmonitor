@@ -17,8 +17,13 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "cgroups.h"
 #include "cmonitor.h"
+#include "header_info.h"
+#include "logger.h"
 #include "output_frontend.h"
+#include "system.h"
+#include "utils.h"
 #include <assert.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -42,10 +47,50 @@
 // Globals
 //------------------------------------------------------------------------------
 
-CMonitorLoggerUtils g_logger;
-CMonitorCollectorAppConfig g_cfg;
-CMonitorCollectorApp g_app;
 bool g_bExiting = false;
+
+//------------------------------------------------------------------------------
+// The App object
+//------------------------------------------------------------------------------
+
+class CMonitorCollectorApp {
+public:
+    CMonitorCollectorApp()
+        : m_header_info_generator(&m_cfg, &m_output)
+        , m_cgroups_collector(&m_cfg, &m_output)
+        , m_system_collector(&m_cfg, &m_output)
+    {
+    }
+
+    void init_defaults();
+    void parse_args(int argc, char** argv);
+    int run(int argc, char** argv);
+
+private:
+    void print_help();
+    void check_pid_file();
+    void get_timestamps(std::string& localTime, std::string& utcTime);
+    void psample_date_time(long loop);
+    double get_timestamp_sec();
+
+private:
+    //------------------------------------------------------------------------------
+    // Configuration from CLI
+    //------------------------------------------------------------------------------
+    CMonitorCollectorAppConfig m_cfg;
+
+    //------------------------------------------------------------------------------
+    // Output channel
+    //------------------------------------------------------------------------------
+    CMonitorOutputFrontend m_output;
+
+    //------------------------------------------------------------------------------
+    // Stats collectors
+    //------------------------------------------------------------------------------
+    CMonitorHeaderInfo m_header_info_generator;
+    CMonitorCgroups m_cgroups_collector;
+    CMonitorSystem m_system_collector;
+};
 
 //------------------------------------------------------------------------------
 // Command Line Globals
@@ -326,7 +371,7 @@ void CMonitorCollectorApp::print_help()
 void CMonitorCollectorApp::init_defaults()
 {
     if (getenv("CMONITOR_SECRET"))
-        g_cfg.m_strRemoteSecret = getenv("CMONITOR_SECRET");
+        m_cfg.m_strRemoteSecret = getenv("CMONITOR_SECRET");
 
     // output file names
     get_hostname();
@@ -340,9 +385,9 @@ void CMonitorCollectorApp::init_defaults()
     tim->tm_mon += 1; /* because it is 0 to 11 */
 
     char filename[1024];
-    sprintf(filename, "%s_%02d%02d%02d_%02d%02d", m_strShortHostname.c_str(), tim->tm_year, tim->tm_mon, tim->tm_mday,
+    sprintf(filename, "%s_%02d%02d%02d_%02d%02d", get_hostname().c_str(), tim->tm_year, tim->tm_mon, tim->tm_mday,
         tim->tm_hour, tim->tm_min);
-    g_cfg.m_strOutputFilenamePrefix = filename;
+    m_cfg.m_strOutputFilenamePrefix = filename;
 }
 
 void CMonitorCollectorApp::parse_args(int argc, char** argv)
@@ -370,49 +415,49 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             switch (c) {
             // Data sampling options
             case 's':
-                if (!string2int(optarg, g_cfg.m_nSamplingInterval)) {
+                if (!string2int(optarg, m_cfg.m_nSamplingInterval)) {
                     printf("Unrecognized sampling interval: %s\n", optarg);
                     exit(51);
                 }
-                if (g_cfg.m_nSamplingInterval == 0) // safety check
-                    g_cfg.m_nSamplingInterval = 1;
+                if (m_cfg.m_nSamplingInterval == 0) // safety check
+                    m_cfg.m_nSamplingInterval = 1;
                 break;
             case 'c':
                 if (strcmp(optarg, "until-cgroup-alive") == 0)
-                    g_cfg.m_nSamples = SPECIAL_NUMSAMPLES_UNTIL_CGROUP_ALIVE;
+                    m_cfg.m_nSamples = SPECIAL_NUMSAMPLES_UNTIL_CGROUP_ALIVE;
                 else {
-                    if (!string2int(optarg, g_cfg.m_nSamples)) {
+                    if (!string2int(optarg, m_cfg.m_nSamples)) {
                         printf("Unrecognized number of samples to collect: %s\n", optarg);
                         exit(51);
                     }
                 }
                 break;
             case 'k':
-                g_cfg.m_bAllowMultipleInstances = true;
+                m_cfg.m_bAllowMultipleInstances = true;
                 break;
             case 'C': {
                 std::vector<std::string> tokens = split_string_in_array(optarg, ',');
-                g_cfg.m_nCollectFlags = 0;
+                m_cfg.m_nCollectFlags = 0;
                 for (auto token : tokens) {
                     PerformanceKpiFamily k = string2PerformanceKpiFamily(token);
                     if (k == PK_INVALID) {
                         printf("Unrecognized performance statistics family provided: %s\n", token.c_str());
                         exit(51);
                     }
-                    g_cfg.m_nCollectFlags |= k;
+                    m_cfg.m_nCollectFlags |= k;
                 }
             } break;
             case 'e':
-                g_cfg.m_nOutputFields = PF_ALL;
+                m_cfg.m_nOutputFields = PF_ALL;
                 break;
             case 'F':
-                g_cfg.m_bForeground = true;
+                m_cfg.m_bForeground = true;
                 break;
             case 'g':
-                g_cfg.m_strCGroupName = optarg;
+                m_cfg.m_strCGroupName = optarg;
                 break;
             case 't':
-                if (!string2int(optarg, g_cfg.m_nProcessScoreThreshold)) {
+                if (!string2int(optarg, m_cfg.m_nProcessScoreThreshold)) {
                     printf("Unrecognized score threshold: %s\n", optarg);
                     exit(51);
                 }
@@ -428,40 +473,40 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
                     exit(51);
                 }
 
-                g_cfg.m_mapCustomMetadata.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
+                m_cfg.m_mapCustomMetadata.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
             } break;
 
                 // Local data saving options
             case 'm':
-                g_cfg.m_strOutputDir = optarg;
+                m_cfg.m_strOutputDir = optarg;
                 break;
             case 'f': {
-                g_cfg.m_strOutputFilenamePrefix = optarg;
+                m_cfg.m_strOutputFilenamePrefix = optarg;
 
                 // if the filename contains the JSON extension, remove it
-                size_t nchars = g_cfg.m_strOutputFilenamePrefix.size();
-                if (nchars > 5 && g_cfg.m_strOutputFilenamePrefix.substr(nchars - 5) == ".json")
-                    g_cfg.m_strOutputFilenamePrefix = g_cfg.m_strOutputFilenamePrefix.substr(0, nchars - 5);
+                size_t nchars = m_cfg.m_strOutputFilenamePrefix.size();
+                if (nchars > 5 && m_cfg.m_strOutputFilenamePrefix.substr(nchars - 5) == ".json")
+                    m_cfg.m_strOutputFilenamePrefix = m_cfg.m_strOutputFilenamePrefix.substr(0, nchars - 5);
             } break;
             case 'P':
-                g_output.enable_json_pretty_print();
+                m_output.enable_json_pretty_print();
                 break;
 
                 // Remote data collector options
             case 'i':
-                g_cfg.m_strRemoteAddress = optarg;
+                m_cfg.m_strRemoteAddress = optarg;
                 break;
             case 'p':
-                if (!string2int(optarg, g_cfg.m_nRemotePort)) {
+                if (!string2int(optarg, m_cfg.m_nRemotePort)) {
                     printf("Unrecognized remote port: %s\n", optarg);
                     exit(51);
                 }
                 break;
             case 'X':
-                g_cfg.m_strRemoteSecret = optarg;
+                m_cfg.m_strRemoteSecret = optarg;
                 break;
             case 'D':
-                g_cfg.m_strRemoteDatabaseName = optarg;
+                m_cfg.m_strRemoteDatabaseName = optarg;
                 break;
 
             // help
@@ -470,8 +515,8 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
                 exit(0);
                 break;
             case 'd':
-                g_cfg.m_bDebug = true;
-                g_cfg.m_bForeground = true; // stay in foreground!
+                m_cfg.m_bDebug = true;
+                m_cfg.m_bForeground = true; // stay in foreground!
                 break;
             case 'h':
                 print_help();
@@ -498,16 +543,16 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
 
     // check arguments we just parsed:
 
-    if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort <= 0) {
+    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort <= 0) {
         printf("Option --remote-ip=%s provided but the --remote-port option was not provided\n",
-            g_cfg.m_strRemoteAddress.c_str());
+            m_cfg.m_strRemoteAddress.c_str());
         exit(52);
     }
-    if (g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort > 0) {
-        printf("Option --remote-port=%lu provided but the --remote-ip option was not provided\n", g_cfg.m_nRemotePort);
+    if (m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort > 0) {
+        printf("Option --remote-port=%lu provided but the --remote-ip option was not provided\n", m_cfg.m_nRemotePort);
         exit(53);
     }
-    if ((g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) && (g_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {
+    if ((m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) && (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {
         printf("If --collect=cgroup_threads is provided, it is not required to provide --collect=cgroup_processes "
                "since implicitly statistics for all processes will already be collected\n");
         exit(54);
@@ -519,27 +564,6 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
 //------------------------------------------------------------------------------
 // Application core functions
 //------------------------------------------------------------------------------
-
-std::string CMonitorCollectorApp::get_hostname()
-{
-    DEBUGLOG_FUNCTION_START();
-    if (!m_strHostname.empty())
-        return m_strHostname;
-
-    char hostname[1024];
-    if (gethostname(hostname, sizeof(hostname)) != 0)
-        m_strHostname = "unknown-hostname";
-    else
-        m_strHostname = hostname;
-
-    for (size_t i = 0; i < strlen(hostname); i++)
-        if (hostname[i] == '.')
-            break;
-        else
-            m_strShortHostname.push_back(hostname[i]);
-
-    return m_strHostname;
-}
 
 void CMonitorCollectorApp::get_timestamps(std::string& localTime, std::string& utcTime)
 {
@@ -569,9 +593,16 @@ void CMonitorCollectorApp::get_timestamps(std::string& localTime, std::string& u
 
 double CMonitorCollectorApp::get_timestamp_sec()
 {
+#if 0
     struct timeval tv;
     gettimeofday(&tv, 0);
     return (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
+#else
+    struct timespec tv;
+    if (clock_gettime(CLOCK_MONOTONIC, &tv) == 0)
+        return (double)tv.tv_sec + (double)tv.tv_nsec * 1.0e-9;
+    return 0;
+#endif
 }
 
 void CMonitorCollectorApp::psample_date_time(long loop)
@@ -581,11 +612,11 @@ void CMonitorCollectorApp::psample_date_time(long loop)
     std::string localTime, utcTime;
     get_timestamps(localTime, utcTime);
 
-    g_output.psection_start("timestamp");
-    g_output.pstring("datetime", localTime.c_str());
-    g_output.pstring("UTC", utcTime.c_str());
-    g_output.plong("sample_index", loop);
-    g_output.psection_end();
+    m_output.psection_start("timestamp");
+    m_output.pstring("datetime", localTime.c_str());
+    m_output.pstring("UTC", utcTime.c_str());
+    m_output.plong("sample_index", loop);
+    m_output.psection_end();
 }
 
 void CMonitorCollectorApp::check_pid_file()
@@ -608,31 +639,33 @@ void CMonitorCollectorApp::check_pid_file()
 int CMonitorCollectorApp::run(int argc, char** argv)
 {
     // if only one instance allowed, do the check:
-    if (!g_cfg.m_bAllowMultipleInstances)
+    if (!m_cfg.m_bAllowMultipleInstances)
         check_pid_file();
 
-    if (!g_cfg.m_strOutputDir.empty()) {
-        if (chdir(g_cfg.m_strOutputDir.c_str()) == -1) {
+    if (!m_cfg.m_strOutputDir.empty()) {
+        if (chdir(m_cfg.m_strOutputDir.c_str()) == -1) {
             perror("Change Directory failed");
-            fprintf(stderr, "Directory attempted was: %s\n", g_cfg.m_strOutputDir.c_str());
+            fprintf(stderr, "Directory attempted was: %s\n", m_cfg.m_strOutputDir.c_str());
             exit(11);
         } else {
-            printf("Changed to directory: %s\n", g_cfg.m_strOutputDir.c_str());
+            printf("Changed to directory: %s\n", m_cfg.m_strOutputDir.c_str());
         }
     }
 
     // init debug/error channels:
-    g_logger.init_error_output_file(g_cfg.m_strOutputFilenamePrefix);
+    CMonitorLogger::instance()->init_error_output_file(m_cfg.m_strOutputFilenamePrefix);
+    if (m_cfg.m_bDebug)
+        CMonitorLogger::instance()->enable_debug();
 
     // init the output channels:
-    g_output.init_json_output_file(g_cfg.m_strOutputFilenamePrefix);
-    if (!g_cfg.m_strRemoteAddress.empty() && g_cfg.m_nRemotePort != 0) {
+    m_output.init_json_output_file(m_cfg.m_strOutputFilenamePrefix);
+    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort != 0) {
         /* We are attempting sending the data remotely */
-        g_output.init_influxdb_connection(g_cfg.m_strRemoteAddress, g_cfg.m_nRemotePort, g_cfg.m_strRemoteDatabaseName);
+        m_output.init_influxdb_connection(m_cfg.m_strRemoteAddress, m_cfg.m_nRemotePort, m_cfg.m_strRemoteDatabaseName);
     }
 
-    if (!g_cfg.m_bForeground) {
-        assert(!g_cfg.m_bDebug); // in debug mode we enable foreground mode!
+    if (!m_cfg.m_bForeground) {
+        assert(!m_cfg.m_bDebug); // in debug mode we enable foreground mode!
 
         /* disconnect from terminal */
         printf("cmonitor_collector will now run in background, collecting data as requested.\n");
@@ -641,7 +674,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
             exit(0); /* parent returns OK */
         }
 
-        g_logger.LogDebug("Running in daemon process:\n");
+        CMonitorLogger::instance()->LogDebug("Running in daemon process:\n");
 
         // close default file descriptors
         close(STDIN_FILENO);
@@ -653,51 +686,60 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 
     // init incremental stats (don't write yet anything!)
     bool bCollectCGroupInfo = // force newline
-        (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) || // force newline
-        (g_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) || // force newline
-        (g_cfg.m_nCollectFlags & PK_CGROUP_BLKIO) || // force newline
-        (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) || // force newline
-        (g_cfg.m_nCollectFlags & PK_CGROUP_THREADS);
-    proc_stat(0, bCollectCGroupInfo, PF_NONE /* do not emit JSON data */);
-    proc_diskstats(0, PF_NONE /* do not emit JSON data */);
-    proc_net_dev(0, PF_NONE /* do not emit JSON data */);
+        (m_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) || // force newline
+        (m_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) || // force newline
+        (m_cfg.m_nCollectFlags & PK_CGROUP_BLKIO) || // force newline
+        (m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) || // force newline
+        (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS);
+
+    // if (bCollectCGroupInfo)
+    // if cgropu monitoring is enabled we assume the user is interested in the CPU usage, computed from system-wide
+    // statistic files, only of the CPUs that can be used by the cgroup-under-monitor:
+    // m_system_collector.set_monitored_cpus(m_cgroups_collector.get_cgroup_cpus());
+
+    m_system_collector.proc_stat(0, PF_NONE /* do not emit JSON data */);
+    m_system_collector.proc_diskstats(0, PF_NONE /* do not emit JSON data */);
+    m_system_collector.proc_net_dev(0, PF_NONE /* do not emit JSON data */);
     if (bCollectCGroupInfo) {
-        cgroup_init();
+        m_cgroups_collector.cgroup_init();
 
-        if (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT)
-            cgroup_proc_cpuacct(0, false /* do not emit JSON */);
+        if (m_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT)
+            m_cgroups_collector.cgroup_proc_cpuacct(0);
 
-        if (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES)
-            cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */, false /* do not include threads */);
-        if (g_cfg.m_nCollectFlags & PK_CGROUP_THREADS)
-            cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */, true /* do include threads */);
+        if (m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES)
+            m_cgroups_collector.cgroup_proc_tasks(
+                0, PF_NONE /* do not emit JSON */, false /* do not include threads */);
+        if (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)
+            m_cgroups_collector.cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */, true /* do include threads */);
     }
 
     double current_time = get_timestamp_sec();
 
     // write stuff that is present only in the very first sample (never changes):
-    g_output.pheader_start();
-    header_identity();
-    header_cmonitor_info(argc, argv, g_cfg.m_nSamplingInterval, g_cfg.m_nSamples, g_cfg.m_nCollectFlags);
-    header_etc_os_release();
-    header_version();
+    m_output.pheader_start();
+    m_header_info_generator.header_identity();
+    m_header_info_generator.header_cmonitor_info(
+        argc, argv, m_cfg.m_nSamplingInterval, m_cfg.m_nSamples, m_cfg.m_nCollectFlags);
+    m_header_info_generator.header_etc_os_release();
+    m_header_info_generator.header_version();
     if (bCollectCGroupInfo)
-        cgroup_config(); // needs to run _BEFORE_ lscpu() and proc_cpuinfo()
-    header_lscpu();
-    header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
-    header_meminfo();
-    header_lshw();
-    header_custom_metadata();
-    g_output.push_header();
+        m_cgroups_collector.output_config(); // needs to run _BEFORE_ lscpu() and proc_cpuinfo()
+    m_header_info_generator.header_lscpu();
+    m_header_info_generator
+        .header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
+    m_header_info_generator.header_meminfo();
+    m_header_info_generator.header_lshw();
+    m_header_info_generator.header_custom_metadata();
+    m_output.push_header();
 
     /* first time just sleep(1) so the first snapshot has some real-ish data */
-    if (g_cfg.m_nSamplingInterval <= 60)
-        sleep(g_cfg.m_nSamplingInterval);
+    if (m_cfg.m_nSamplingInterval <= 60)
+        sleep(m_cfg.m_nSamplingInterval);
     else
         sleep(60); /* if a long time between snapshot do a quick one now so we have one in the bank */
 
     std::set<std::string> charted_stats_from_meminfo;
-    if (g_cfg.m_nOutputFields == PF_USED_BY_CHART_SCRIPT_ONLY) {
+    if (m_cfg.m_nOutputFields == PF_USED_BY_CHART_SCRIPT_ONLY) {
         charted_stats_from_meminfo.insert("MemTotal");
         charted_stats_from_meminfo.insert("MemFree");
         charted_stats_from_meminfo.insert("Cached");
@@ -705,7 +747,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     // else: leave empty
 
     std::set<std::string> charted_stats_from_cgroup_memory;
-    if (g_cfg.m_nOutputFields == PF_USED_BY_CHART_SCRIPT_ONLY) {
+    if (m_cfg.m_nOutputFields == PF_USED_BY_CHART_SCRIPT_ONLY) {
         charted_stats_from_cgroup_memory.insert("total_cache");
         charted_stats_from_cgroup_memory.insert("total_rss");
         charted_stats_from_cgroup_memory.insert("failcnt");
@@ -713,77 +755,83 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     // else: leave empty
 
     // start actual data samples:
-    g_logger.LogDebug("Starting sampling of performance data; collect flags=%u", g_cfg.m_nCollectFlags);
-    g_output.psample_array_start();
-    for (unsigned int loop = 0; g_cfg.m_nSamples == 0 || loop < g_cfg.m_nSamples; loop++) {
+    CMonitorLogger::instance()->LogDebug(
+        "Starting sampling of performance data; collect flags=%u", m_cfg.m_nCollectFlags);
+    m_output.psample_array_start();
+    for (unsigned int loop = 0; m_cfg.m_nSamples == 0 || loop < m_cfg.m_nSamples; loop++) {
         if (loop != 0)
-            sleep(g_cfg.m_nSamplingInterval);
-        g_logger.LogDebug("Starting sample %u/%lu", loop, g_cfg.m_nSamples);
+            sleep(m_cfg.m_nSamplingInterval);
+        CMonitorLogger::instance()->LogDebug("Starting sample %u/%lu", loop, m_cfg.m_nSamples);
 
         /* calculate elapsed time to include sleep and data collection time */
         double previous_time = current_time;
         current_time = get_timestamp_sec();
+        if (current_time == 0)
+            continue;   // failed in getting current time...
         double elapsed = current_time - previous_time;
 
-        g_output.psample_start();
+        m_output.psample_start();
 
-        // some stats are always collected, regardless of g_cfg.m_nCollectFlags
+        // some stats are always collected, regardless of m_cfg.m_nCollectFlags
         psample_date_time(loop);
         // proc_uptime(); // not really useful!!
-        proc_loadavg();
+        m_system_collector.proc_loadavg();
 
         // baremetal stats:
 
-        if (g_cfg.m_nCollectFlags & PK_BAREMETAL_CPU) {
-            proc_stat(elapsed, false /* collect from ALL cpus */, g_cfg.m_nOutputFields /* emit JSON */);
+        if (m_cfg.m_nCollectFlags & PK_BAREMETAL_CPU) {
+            m_system_collector.proc_stat(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
         }
 
-        if (g_cfg.m_nCollectFlags & PK_BAREMETAL_MEMORY) {
-            proc_read_numeric_stats_from("meminfo", charted_stats_from_meminfo);
-            if (g_cfg.m_nOutputFields == PF_ALL)
-                proc_read_numeric_stats_from("vmstat", std::set<std::string>());
+        if (m_cfg.m_nCollectFlags & PK_BAREMETAL_MEMORY) {
+            proc_read_numeric_stats_from(&m_output, "meminfo", charted_stats_from_meminfo);
+            if (m_cfg.m_nOutputFields == PF_ALL)
+                proc_read_numeric_stats_from(&m_output, "vmstat", std::set<std::string>());
         }
 
-        if (g_cfg.m_nCollectFlags & PK_BAREMETAL_NETWORK) {
-            proc_net_dev(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
+        if (m_cfg.m_nCollectFlags & PK_BAREMETAL_NETWORK) {
+            m_system_collector.proc_net_dev(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
         }
 
-        if (g_cfg.m_nCollectFlags & PK_BAREMETAL_DISK) {
-            proc_diskstats(elapsed, g_cfg.m_nOutputFields /* emit JSON */);
+        if (m_cfg.m_nCollectFlags & PK_BAREMETAL_DISK) {
+            m_system_collector.proc_diskstats(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
             // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
 
         // cgroup stats:
 
-        if (g_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) {
+        if (m_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) {
             // do not list all CPU informations when cgroup mode is ON: don't put information
             // for CPUs outside current cgroup!
-            cgroup_proc_cpuacct(elapsed, true /* emit JSON */);
+            m_cgroups_collector.cgroup_proc_cpuacct(elapsed);
         }
 
-        if (g_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) {
-            cgroup_proc_memory(charted_stats_from_cgroup_memory);
+        if (m_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) {
+            m_cgroups_collector.cgroup_proc_memory(charted_stats_from_cgroup_memory);
         }
-        if (g_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) {
-            cgroup_proc_tasks(elapsed, g_cfg.m_nOutputFields /* emit JSON */, false /* do not include threads */);
+        if (m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) {
+            m_cgroups_collector.cgroup_proc_tasks(
+                elapsed, m_cfg.m_nOutputFields /* emit JSON */, false /* do not include threads */);
         }
-        if (g_cfg.m_nCollectFlags & PK_CGROUP_THREADS) {
-            cgroup_proc_tasks(elapsed, g_cfg.m_nOutputFields /* emit JSON */, true /* do include threads */);
+        if (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS) {
+            m_cgroups_collector.cgroup_proc_tasks(
+                elapsed, m_cfg.m_nOutputFields /* emit JSON */, true /* do include threads */);
         }
 
-        g_output.push_current_sample();
+        m_output.push_current_sample();
 
         if (g_bExiting)
             break; // graceful exit allows to produce a valid JSON on SIGTERM signals!
-        if (g_cfg.m_nSamples == SPECIAL_NUMSAMPLES_UNTIL_CGROUP_ALIVE && !cgroup_still_exists())
+        if (m_cfg.m_nSamples == SPECIAL_NUMSAMPLES_UNTIL_CGROUP_ALIVE && !m_cgroups_collector.cgroup_still_exists())
             break;
     }
 
     /* finish-of */
-    g_output.psample_array_end();
+    m_output.psample_array_end();
     fflush(NULL);
 
-    g_logger.LogDebug("Exiting gracefully with return code 0");
+    CMonitorLogger::instance()->LogDebug("Exiting gracefully with return code 0. Logged %lu errors in this run.",
+        CMonitorLogger::instance()->get_num_errors());
     return 0;
 }
 
@@ -794,12 +842,11 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 int main(int argc, char** argv)
 {
     // init defaults (can be overridden by cmd line options):
-
-    g_app.init_defaults();
+    CMonitorCollectorApp app;
+    app.init_defaults();
 
     // parse cmd line:
-
-    g_app.parse_args(argc, argv);
+    app.parse_args(argc, argv);
 
     signal(SIGTERM, interrupt);
     signal(SIGINT, interrupt);
@@ -807,6 +854,5 @@ int main(int argc, char** argv)
     signal(SIGUSR2, interrupt);
 
     // run:
-
-    return g_app.run(argc, argv);
+    return app.run(argc, argv);
 }

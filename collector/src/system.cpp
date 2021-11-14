@@ -1,6 +1,5 @@
 /*
- * proc_stats.cpp -- collects Linux performance data and
- *                   generates structured output measurements.
+ * system.cpp - code for collecting SYSTEM-level statistics (i.e. not cgroup-aware)
  * Developer: Nigel Griffiths.
  * (C) Copyright 2018 Nigel Griffiths
 
@@ -18,8 +17,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cmonitor.h"
+#include "system.h"
 #include "output_frontend.h"
+#include "utils.h"
+#include "logger.h"
 #include <assert.h>
 #include <mntent.h>
 #include <sys/vfs.h>
@@ -28,68 +29,8 @@
 #define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpu_count + 1.0)))
 #define DELTA_LOGICAL(stat) ((float)(stat - logical_cpu[cpuno].stat) / (float)elapsed_sec)
 
-/*
-Reads files in one of the 3 formats supported below:
 
-name number
-name: number
-name: number kB
-
-*/
-void CMonitorCollectorApp::proc_read_numeric_stats_from(
-    const char* statname, const std::set<std::string>& allowedStatsNames)
-{
-    FILE* fp = 0;
-    char line[1024];
-    char filename[1024];
-    char label[512];
-    char number[512];
-    int i;
-    int len;
-
-    DEBUGLOG_FUNCTION_START();
-    sprintf(filename, "/proc/%s", statname);
-    if ((fp = fopen(filename, "r")) == NULL) {
-        g_logger.LogErrorWithErrno("Failed to open performance file %s", filename);
-        return;
-    }
-    sprintf(label, "proc_%s", statname);
-    g_output.psection_start(label);
-    while (fgets(line, 1000, fp) != NULL) {
-        len = strlen(line);
-        bool is_kb = false;
-        for (i = 0; i < len; i++) {
-
-            // escape characters that we don't like in JSON output:
-            if (line[i] == '(')
-                line[i] = '_';
-            if (line[i] == ')')
-                line[i] = ' ';
-            if (line[i] == ':')
-                line[i] = ' ';
-            if (line[i] == '\n') {
-                line[i] = 0;
-                if (i > 3 && line[i - 2] == 'k' && line[i - 1] == 'B')
-                    is_kb = true;
-            }
-        }
-        sscanf(line, "%s %s", label, number);
-        // g_logger.LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr, atoll(numstr));
-
-        if (allowedStatsNames.empty() /* all stats must be put in output */
-            || allowedStatsNames.find(label) != allowedStatsNames.end()) {
-            long long num = atoll(number);
-            if (is_kb)
-                num *= 1000;
-
-            g_output.plong(label, num);
-        }
-    }
-    g_output.psection_end();
-    (void)fclose(fp);
-}
-
-void CMonitorCollectorApp::proc_stat_cpu_total(
+void CMonitorSystem::proc_stat_cpu_total(
     const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu, int max_cpu_count)
 {
     long long user;
@@ -113,28 +54,28 @@ void CMonitorCollectorApp::proc_stat_cpu_total(
         return;
 
     if (output_opts != PF_NONE) {
-        g_output.psubsection_start("cpu_total");
+        m_pOutput->psubsection_start("cpu_total");
         switch (output_opts) {
         case PF_NONE:
             assert(0);
             break;
         case PF_ALL:
         case PF_USED_BY_CHART_SCRIPT_ONLY:
-            g_output.pdouble("user", DELTA_TOTAL(user)); /* incrementing counter */
-            g_output.pdouble("nice", DELTA_TOTAL(nice)); /* incrementing counter */
-            g_output.pdouble("sys", DELTA_TOTAL(sys)); /* incrementing counter */
-            g_output.pdouble("idle", DELTA_TOTAL(idle)); /* incrementing counter */
-            /*			g_output.pdouble("DEBUG IDLE idle: %lld %lld %lld\n", total_cpu.idle,
+            m_pOutput->pdouble("user", DELTA_TOTAL(user)); /* incrementing counter */
+            m_pOutput->pdouble("nice", DELTA_TOTAL(nice)); /* incrementing counter */
+            m_pOutput->pdouble("sys", DELTA_TOTAL(sys)); /* incrementing counter */
+            m_pOutput->pdouble("idle", DELTA_TOTAL(idle)); /* incrementing counter */
+            /*			m_pOutput->pdouble("DEBUG IDLE idle: %lld %lld %lld\n", total_cpu.idle,
              * idle, idle-total_cpu.idle); */
-            g_output.pdouble("iowait", DELTA_TOTAL(iowait)); /* incrementing counter */
-            g_output.pdouble("hardirq", DELTA_TOTAL(hardirq)); /* incrementing counter */
-            g_output.pdouble("softirq", DELTA_TOTAL(softirq)); /* incrementing counter */
-            g_output.pdouble("steal", DELTA_TOTAL(steal)); /* incrementing counter */
-            g_output.pdouble("guest", DELTA_TOTAL(guest)); /* incrementing counter */
-            g_output.pdouble("guestnice", DELTA_TOTAL(guestnice)); /* incrementing counter */
+            m_pOutput->pdouble("iowait", DELTA_TOTAL(iowait)); /* incrementing counter */
+            m_pOutput->pdouble("hardirq", DELTA_TOTAL(hardirq)); /* incrementing counter */
+            m_pOutput->pdouble("softirq", DELTA_TOTAL(softirq)); /* incrementing counter */
+            m_pOutput->pdouble("steal", DELTA_TOTAL(steal)); /* incrementing counter */
+            m_pOutput->pdouble("guest", DELTA_TOTAL(guest)); /* incrementing counter */
+            m_pOutput->pdouble("guestnice", DELTA_TOTAL(guestnice)); /* incrementing counter */
             break;
         }
-        g_output.psubsection_end();
+        m_pOutput->psubsection_end();
     }
     total_cpu.user = user;
     total_cpu.nice = nice;
@@ -148,8 +89,8 @@ void CMonitorCollectorApp::proc_stat_cpu_total(
     total_cpu.guestnice = guestnice;
 }
 
-int CMonitorCollectorApp::proc_stat_cpu_index(const char* cpu_data, double elapsed_sec, OutputFields output_opts,
-    cpu_specs_t* logical_cpu, bool onlyCgroupAllowedCpus)
+int CMonitorSystem::proc_stat_cpu_index(const char* cpu_data, double elapsed_sec, OutputFields output_opts,
+    cpu_specs_t* logical_cpu)
 {
     long long user;
     long long nice;
@@ -174,13 +115,13 @@ int CMonitorCollectorApp::proc_stat_cpu_index(const char* cpu_data, double elaps
 
     if (cpuno >= MAX_LOGICAL_CPU)
         return -1;
-    if (onlyCgroupAllowedCpus && !cgroup_is_allowed_cpu(cpuno))
+    if (!is_monitored_cpu(cpuno))
         return -1;
 
     if (output_opts != PF_NONE) {
         char label[512];
         sprintf(label, "cpu%d", cpuno);
-        g_output.psubsection_start(label);
+        m_pOutput->psubsection_start(label);
 
         switch (output_opts) {
         case PF_NONE:
@@ -188,19 +129,19 @@ int CMonitorCollectorApp::proc_stat_cpu_index(const char* cpu_data, double elaps
             break;
         case PF_ALL:
         case PF_USED_BY_CHART_SCRIPT_ONLY:
-            g_output.pdouble("user", DELTA_LOGICAL(user)); /* counter */
-            g_output.pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
-            g_output.pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
-            g_output.pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
-            g_output.pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
-            g_output.pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
-            g_output.pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
-            g_output.pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
-            g_output.pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
-            g_output.pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
+            m_pOutput->pdouble("user", DELTA_LOGICAL(user)); /* counter */
+            m_pOutput->pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
+            m_pOutput->pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
+            m_pOutput->pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
+            m_pOutput->pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
+            m_pOutput->pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
+            m_pOutput->pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
+            m_pOutput->pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
+            m_pOutput->pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
+            m_pOutput->pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
             break;
         }
-        g_output.psubsection_end();
+        m_pOutput->psubsection_end();
     }
     logical_cpu[cpuno].user = user;
     logical_cpu[cpuno].nice = nice;
@@ -219,7 +160,7 @@ int CMonitorCollectorApp::proc_stat_cpu_index(const char* cpu_data, double elaps
 /*
 read /proc/stat
 */
-void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedCpus, OutputFields output_opts)
+void CMonitorSystem::proc_stat(double elapsed_sec, OutputFields output_opts)
 {
     int count;
     long long value;
@@ -235,10 +176,10 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
     static cpu_specs_t logical_cpu[MAX_LOGICAL_CPU];
 
     DEBUGLOG_FUNCTION_START();
-    g_logger.LogDebug("proc_stat(%.4f) max_cpu_count=%d\n", elapsed_sec, max_cpu_count);
+    CMonitorLogger::instance()->LogDebug("proc_stat(%.4f) max_cpu_count=%d\n", elapsed_sec, max_cpu_count);
     if (fp == 0) {
         if ((fp = fopen("/proc/stat", "r")) == NULL) {
-            g_logger.LogErrorWithErrno("failed to open file /proc/stat");
+            CMonitorLogger::instance()->LogErrorWithErrno("failed to open file /proc/stat");
             fp = 0;
             return;
         }
@@ -246,7 +187,7 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
         rewind(fp);
 
     if (output_opts != PF_NONE)
-        g_output.psection_start("stat");
+        m_pOutput->psection_start("stat");
 
     while (fgets(line, 1000, fp) != NULL) {
         if (!strncmp(line, "cpu", 3)) {
@@ -257,7 +198,7 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
                 // found a line like:
                 //    cpu1 90470 3217 30294 291392 17250 0 3242 0 0 0
 
-                int cpuno = proc_stat_cpu_index(&line[3], elapsed_sec, output_opts, logical_cpu, onlyCgroupAllowedCpus);
+                int cpuno = proc_stat_cpu_index(&line[3], elapsed_sec, output_opts, logical_cpu);
                 if (cpuno > max_cpu_count)
                     max_cpu_count = cpuno;
             }
@@ -266,8 +207,8 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
             count = sscanf(&line[5], "%lld", &value); /* counter */
             if (count == 1) {
                 if (output_opts != PF_NONE) {
-                    g_output.psubsection_start("counters");
-                    g_output.pdouble("ctxt", ((double)(value - old_ctxt) / elapsed_sec));
+                    m_pOutput->psubsection_start("counters");
+                    m_pOutput->pdouble("ctxt", ((double)(value - old_ctxt) / elapsed_sec));
                 }
                 old_ctxt = value;
             }
@@ -275,35 +216,35 @@ void CMonitorCollectorApp::proc_stat(double elapsed_sec, bool onlyCgroupAllowedC
             value = 0;
             count = sscanf(&line[6], "%lld", &value); /* seconds since boot */
             if (output_opts != PF_NONE)
-                g_output.plong("btime", value);
+                m_pOutput->plong("btime", value);
         } else if (!strncmp(line, "processes", 9)) {
             value = 0;
             count = sscanf(&line[10], "%lld", &value); /* counter  actually forks */
             if (output_opts != PF_NONE)
-                g_output.pdouble("processes_forks", ((double)(value - old_processes) / elapsed_sec));
+                m_pOutput->pdouble("processes_forks", ((double)(value - old_processes) / elapsed_sec));
             old_processes = value;
         } else if (!strncmp(line, "procs_running", 13)) {
             value = 0;
             count = sscanf(&line[14], "%lld", &value);
             if (output_opts != PF_NONE)
-                g_output.plong("procs_running", value);
+                m_pOutput->plong("procs_running", value);
         } else if (!strncmp(line, "procs_blocked", 13)) {
             value = 0;
             count = sscanf(&line[14], "%lld", &value);
             if (output_opts != PF_NONE) {
-                g_output.plong("procs_blocked", value);
-                g_output.psubsection_end();
+                m_pOutput->plong("procs_blocked", value);
+                m_pOutput->psubsection_end();
             }
         }
     }
     if (output_opts != PF_NONE)
-        g_output.psection_end();
+        m_pOutput->psection_end();
 }
 
 /*
 read /proc/diskstats
 */
-void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields output_opts)
+void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts)
 {
     // please refer https://www.kernel.org/doc/Documentation/iostats.txt
 
@@ -364,15 +305,15 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields outpu
                     tmpstr[0] = 0;
                     if (fgets(tmpstr, 127, pop) == NULL)
                         break;
-                    // g_logger.LogDebug("DEBUG %ld disks - %s\n", disks, tmpstr);
+                    // CMonitorLogger::instance()->LogDebug("DEBUG %ld disks - %s\n", disks, tmpstr);
                 }
             }
             pclose(pop);
         } else {
-            g_logger.LogErrorWithErrno("failed to list number of disks using 'lsblk'");
+            CMonitorLogger::instance()->LogErrorWithErrno("failed to list number of disks using 'lsblk'");
             disks_found = 0;
         }
-        // g_logger.LogDebug("DEBUG %ld disks\n", disks);
+        // CMonitorLogger::instance()->LogDebug("DEBUG %ld disks\n", disks);
         previous = (diskinfo*)calloc(sizeof(struct diskinfo), disks_found);
 
         pop = popen("lsblk --nodeps --output NAME,TYPE --raw 2>/dev/null", "r");
@@ -390,11 +331,11 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields outpu
                             tmpstr[j] = 0;
 
                     if (strncmp(tmpstr, "loop", 4) != 0) {
-                        // g_logger.LogDebug("DEBUG saved %ld %s disk name\n", i, previous[i].dk_name);
+                        // CMonitorLogger::instance()->LogDebug("DEBUG saved %ld %s disk name\n", i, previous[i].dk_name);
                         strcpy(previous[disks_sampled].dk_name, tmpstr);
                         disks_sampled++;
                     } else {
-                        g_logger.LogDebug("Discarding disk %s\n", tmpstr);
+                        CMonitorLogger::instance()->LogDebug("Discarding disk %s\n", tmpstr);
                         /* loop**** disks are not real */
                     }
                 }
@@ -404,18 +345,18 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields outpu
             disks_sampled = 0;
 
         if ((fp = fopen("/proc/diskstats", "r")) == NULL) {
-            g_logger.LogErrorWithErrno("failed to open - /proc/diskstats");
+            CMonitorLogger::instance()->LogErrorWithErrno("failed to open - /proc/diskstats");
             return;
         }
     } else
         rewind(fp);
 
     if (output_opts != PF_NONE)
-        g_output.psection_start("disks");
+        m_pOutput->psection_start("disks");
     while (fgets(buf, 1024, fp) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
 
-        // g_logger.LogDebug("DISKSTATS: \"%s\"", buf);
+        // CMonitorLogger::instance()->LogDebug("DISKSTATS: \"%s\"", buf);
 
         /* zero the data ready for reading */
         bzero(&current, sizeof(struct diskinfo));
@@ -436,7 +377,7 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields outpu
             current.dk_rmsec = 0;
             current.dk_rmerge = 0;
         } else if (dk_stats != 14)
-            g_logger.LogError("disk sscanf wanted 14 but returned=%d line=%s\n", dk_stats, buf);
+            CMonitorLogger::instance()->LogError("disk sscanf wanted 14 but returned=%d line=%s\n", dk_stats, buf);
 
         current.dk_rkb /= 2; /* convert from sectors to Kbyte, keeping in mind that 1 sector = 512 bytes = 1/2 Kbyte */
         current.dk_wkb /= 2;
@@ -450,11 +391,11 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields outpu
         current.dk_time /= 10.0; /* in milli-seconds to make it up to 100%, 1000/100 = 10 */
 
         for (i = 0; i < disks_found; i++) {
-            // g_logger.LogDebug("DEBUG disks new %s old %s\n", current.dk_name, previous[i].dk_name);
+            // CMonitorLogger::instance()->LogDebug("DEBUG disks new %s old %s\n", current.dk_name, previous[i].dk_name);
             if (!strcmp(current.dk_name, previous[i].dk_name)) {
 
                 if (!filtered_out && output_opts != PF_NONE) {
-                    g_output.psubsection_start(current.dk_name);
+                    m_pOutput->psubsection_start(current.dk_name);
 
                     switch (output_opts) {
                     case PF_NONE:
@@ -462,30 +403,30 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields outpu
                         break;
 
                     case PF_ALL:
-                        g_output.pdouble("reads", (current.dk_reads - previous[i].dk_reads) / elapsed_sec);
-                        g_output.pdouble("rmerge", (current.dk_rmerge - previous[i].dk_rmerge) / elapsed_sec);
-                        g_output.pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed_sec);
-                        g_output.pdouble("rmsec", (current.dk_rmsec - previous[i].dk_rmsec) / elapsed_sec);
+                        m_pOutput->pdouble("reads", (current.dk_reads - previous[i].dk_reads) / elapsed_sec);
+                        m_pOutput->pdouble("rmerge", (current.dk_rmerge - previous[i].dk_rmerge) / elapsed_sec);
+                        m_pOutput->pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed_sec);
+                        m_pOutput->pdouble("rmsec", (current.dk_rmsec - previous[i].dk_rmsec) / elapsed_sec);
 
-                        g_output.pdouble("writes", (current.dk_writes - previous[i].dk_writes) / elapsed_sec);
-                        g_output.pdouble("wmerge", (current.dk_wmerge - previous[i].dk_wmerge) / elapsed_sec);
-                        g_output.pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed_sec);
-                        g_output.pdouble("wmsec", (current.dk_wmsec - previous[i].dk_wmsec) / elapsed_sec);
+                        m_pOutput->pdouble("writes", (current.dk_writes - previous[i].dk_writes) / elapsed_sec);
+                        m_pOutput->pdouble("wmerge", (current.dk_wmerge - previous[i].dk_wmerge) / elapsed_sec);
+                        m_pOutput->pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed_sec);
+                        m_pOutput->pdouble("wmsec", (current.dk_wmsec - previous[i].dk_wmsec) / elapsed_sec);
 
-                        g_output.plong("inflight", current.dk_inflight);
-                        g_output.pdouble("time", (current.dk_time - previous[i].dk_time) / elapsed_sec);
-                        g_output.pdouble("backlog", (current.dk_backlog - previous[i].dk_backlog) / elapsed_sec);
-                        g_output.pdouble("xfers", (current.dk_xfers - previous[i].dk_xfers) / elapsed_sec);
-                        g_output.plong("bsize", current.dk_bsize);
+                        m_pOutput->plong("inflight", current.dk_inflight);
+                        m_pOutput->pdouble("time", (current.dk_time - previous[i].dk_time) / elapsed_sec);
+                        m_pOutput->pdouble("backlog", (current.dk_backlog - previous[i].dk_backlog) / elapsed_sec);
+                        m_pOutput->pdouble("xfers", (current.dk_xfers - previous[i].dk_xfers) / elapsed_sec);
+                        m_pOutput->plong("bsize", current.dk_bsize);
                         break;
 
                     case PF_USED_BY_CHART_SCRIPT_ONLY:
-                        g_output.pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed_sec);
-                        g_output.pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed_sec);
+                        m_pOutput->pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed_sec);
+                        m_pOutput->pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed_sec);
                         break;
                     }
 
-                    g_output.psubsection_end();
+                    m_pOutput->psubsection_end();
                 }
                 memcpy(&previous[i], &current, sizeof(struct diskinfo));
                 break; /* once found stop searching */
@@ -493,13 +434,13 @@ void CMonitorCollectorApp::proc_diskstats(double elapsed_sec, OutputFields outpu
         }
     }
     if (output_opts != PF_NONE)
-        g_output.psection_end();
+        m_pOutput->psection_end();
 }
 
 /*
  read /proc/net/dev
  */
-void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_opts)
+void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
 {
     struct netinfo {
         char if_name[128];
@@ -547,15 +488,15 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_
                     tmpstr[0] = 0;
                     if (fgets(tmpstr, 1024, pop) == NULL)
                         break;
-                    // g_logger.LogDebug("DEBUG %ld interfaces - %s\n", interfaces, tmpstr);
+                    // CMonitorLogger::instance()->LogDebug("DEBUG %ld interfaces - %s\n", interfaces, tmpstr);
                 }
             }
             pclose(pop);
         } else {
-            g_logger.LogErrorWithErrno("failed to list network devices using /sbin/ifconfig");
+            CMonitorLogger::instance()->LogErrorWithErrno("failed to list network devices using /sbin/ifconfig");
             interfaces_found = 0;
         }
-        // g_logger.LogDebug("DEBUG %ld intergaces\n", interfaces);
+        // CMonitorLogger::instance()->LogDebug("DEBUG %ld intergaces\n", interfaces);
         previous = (netinfo*)calloc(sizeof(struct netinfo), interfaces_found);
 
         pop = popen("/sbin/ifconfig -s 2>/dev/null", "r");
@@ -577,7 +518,7 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_
                         interfaces_sampled++;
                     } else {
                         /* veth**** interfaces are not real */
-                        g_logger.LogDebug("Discarding net interface %s\n", tmpstr);
+                        CMonitorLogger::instance()->LogDebug("Discarding net interface %s\n", tmpstr);
                     }
                 }
             }
@@ -586,7 +527,7 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_
             interfaces_found = 0;
 
         if ((fp = fopen("/proc/net/dev", "r")) == NULL) {
-            g_logger.LogErrorWithErrno("failed to open /proc/net/dev");
+            CMonitorLogger::instance()->LogErrorWithErrno("failed to open /proc/net/dev");
             return;
         }
     } else
@@ -601,7 +542,7 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_
         return; /* throw away the header line */
 
     if (output_opts != PF_NONE)
-        g_output.psection_start("network_interfaces");
+        m_pOutput->psection_start("network_interfaces");
     while (fgets(buf, 1024, fp) != NULL) {
         strip_spaces(buf);
 
@@ -612,46 +553,46 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_
             &current.if_oerrs, &current.if_odrop, &current.if_ofifo, &current.if_ocolls, &current.if_ocarrier);
 
         if (ret != 16) {
-            g_logger.LogError("net sscanf wanted 16 returned = %d line=%s\n", ret, (char*)buf);
+            CMonitorLogger::instance()->LogError("net sscanf wanted 16 returned = %d line=%s\n", ret, (char*)buf);
         } else {
             for (i = 0; i < interfaces_found; i++) {
-                // g_logger.LogDebug("DEBUG: i=%ld current.if_name=%s, previous=%s interfaces=%ld\n", i,
+                // CMonitorLogger::instance()->LogDebug("DEBUG: i=%ld current.if_name=%s, previous=%s interfaces=%ld\n", i,
                 // *current.if_name, previous[i].if_name, interfaces);
                 if (!strcmp(current.if_name, previous[i].if_name)) {
 
                     if (output_opts != PF_NONE) {
-                        g_output.psubsection_start(current.if_name);
+                        m_pOutput->psubsection_start(current.if_name);
                         switch (output_opts) {
                         case PF_NONE:
                             assert(0);
                             break;
 
                         case PF_ALL:
-                            g_output.pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed_sec);
-                            g_output.pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
-                            g_output.pdouble("ierrs", (current.if_ierrs - previous[i].if_ierrs) / elapsed_sec);
-                            g_output.pdouble("idrop", (current.if_idrop - previous[i].if_idrop) / elapsed_sec);
-                            g_output.pdouble("ififo", (current.if_ififo - previous[i].if_ififo) / elapsed_sec);
-                            g_output.pdouble("iframe", (current.if_iframe - previous[i].if_iframe) / elapsed_sec);
+                            m_pOutput->pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed_sec);
+                            m_pOutput->pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
+                            m_pOutput->pdouble("ierrs", (current.if_ierrs - previous[i].if_ierrs) / elapsed_sec);
+                            m_pOutput->pdouble("idrop", (current.if_idrop - previous[i].if_idrop) / elapsed_sec);
+                            m_pOutput->pdouble("ififo", (current.if_ififo - previous[i].if_ififo) / elapsed_sec);
+                            m_pOutput->pdouble("iframe", (current.if_iframe - previous[i].if_iframe) / elapsed_sec);
 
-                            g_output.pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed_sec);
-                            g_output.pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
-                            g_output.pdouble("oerrs", (current.if_oerrs - previous[i].if_oerrs) / elapsed_sec);
-                            g_output.pdouble("odrop", (current.if_odrop - previous[i].if_odrop) / elapsed_sec);
-                            g_output.pdouble("ofifo", (current.if_ofifo - previous[i].if_ofifo) / elapsed_sec);
+                            m_pOutput->pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed_sec);
+                            m_pOutput->pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
+                            m_pOutput->pdouble("oerrs", (current.if_oerrs - previous[i].if_oerrs) / elapsed_sec);
+                            m_pOutput->pdouble("odrop", (current.if_odrop - previous[i].if_odrop) / elapsed_sec);
+                            m_pOutput->pdouble("ofifo", (current.if_ofifo - previous[i].if_ofifo) / elapsed_sec);
 
-                            g_output.pdouble("ocolls", (current.if_ocolls - previous[i].if_ocolls) / elapsed_sec);
-                            g_output.pdouble("ocarrier", (current.if_ocarrier - previous[i].if_ocarrier) / elapsed_sec);
+                            m_pOutput->pdouble("ocolls", (current.if_ocolls - previous[i].if_ocolls) / elapsed_sec);
+                            m_pOutput->pdouble("ocarrier", (current.if_ocarrier - previous[i].if_ocarrier) / elapsed_sec);
                             break;
 
                         case PF_USED_BY_CHART_SCRIPT_ONLY:
-                            g_output.pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed_sec);
-                            g_output.pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed_sec);
-                            g_output.pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
-                            g_output.pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
+                            m_pOutput->pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed_sec);
+                            m_pOutput->pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed_sec);
+                            m_pOutput->pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
+                            m_pOutput->pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
                             break;
                         }
-                        g_output.psubsection_end();
+                        m_pOutput->psubsection_end();
                     }
                     memcpy(&previous[i], &current, sizeof(struct netinfo));
                     break; /* once found stop searching */
@@ -660,13 +601,13 @@ void CMonitorCollectorApp::proc_net_dev(double elapsed_sec, OutputFields output_
         }
     }
     if (output_opts != PF_NONE)
-        g_output.psection_end();
+        m_pOutput->psection_end();
 }
 
 /*
  read /proc/uptime
 */
-void CMonitorCollectorApp::proc_uptime()
+void CMonitorSystem::proc_uptime()
 {
     static FILE* fp = 0;
     char buf[1024 + 1];
@@ -686,18 +627,18 @@ void CMonitorCollectorApp::proc_uptime()
     if (fgets(buf, 1024, fp) != NULL) {
         count = sscanf(buf, "%lld", &value);
         if (count == 1) {
-            g_output.psection_start("proc_uptime");
-            g_output.plong("total_seconds", value);
+            m_pOutput->psection_start("proc_uptime");
+            m_pOutput->plong("total_seconds", value);
             days = value / 60 / 60 / 24;
             hours = (value - (days * 60 * 60 * 24)) / 60 / 60;
-            g_output.plong("days", days);
-            g_output.plong("hours", hours);
-            g_output.psection_end();
+            m_pOutput->plong("days", days);
+            m_pOutput->plong("hours", hours);
+            m_pOutput->psection_end();
         }
     }
 }
 
-void CMonitorCollectorApp::proc_loadavg()
+void CMonitorSystem::proc_loadavg()
 {
     char buf[1024 + 1];
     int count;
@@ -730,18 +671,18 @@ void CMonitorCollectorApp::proc_loadavg()
 
         count = sscanf(buf, "%f %f %f", &load_avg_1min, &load_avg_5min, &load_avg_15min);
         if (count == 3) {
-            g_output.psection_start("proc_loadavg");
-            g_output.pdouble("load_avg_1min", load_avg_1min);
-            g_output.pdouble("load_avg_5min", load_avg_5min);
-            g_output.pdouble("load_avg_15min", load_avg_15min);
-            g_output.psection_end();
+            m_pOutput->psection_start("proc_loadavg");
+            m_pOutput->pdouble("load_avg_1min", load_avg_1min);
+            m_pOutput->pdouble("load_avg_5min", load_avg_5min);
+            m_pOutput->pdouble("load_avg_15min", load_avg_15min);
+            m_pOutput->psection_end();
         }
     }
 
     fclose(fp);
 }
 
-void CMonitorCollectorApp::proc_filesystems()
+void CMonitorSystem::proc_filesystems()
 {
     FILE* fp;
     struct mntent* fs;
@@ -749,42 +690,42 @@ void CMonitorCollectorApp::proc_filesystems()
 
     DEBUGLOG_FUNCTION_START();
     if ((fp = setmntent("/etc/mtab", "r")) == NULL)
-        g_logger.LogError("setmntent(\"/etc/mtab\", \"r\") failed");
+        CMonitorLogger::instance()->LogError("setmntent(\"/etc/mtab\", \"r\") failed");
 
-    g_output.psection_start("filesystems");
+    m_pOutput->psection_start("filesystems");
     while ((fs = getmntent(fp)) != NULL) {
         // NOTE: /dev/loop* filesystems are not real filesystems - e.g. on Ubuntu they are used for SNAPs
         if (fs->mnt_fsname[0] == '/' && strncmp(fs->mnt_fsname, "/dev/loop", 9) != 0) {
             if (statfs(fs->mnt_dir, &vfs) != 0) {
-                g_logger.LogErrorWithErrno("%s: statfs failed: %d\n", fs->mnt_dir, errno);
+                CMonitorLogger::instance()->LogErrorWithErrno("%s: statfs failed: %d\n", fs->mnt_dir, errno);
             }
-            // g_logger.LogDebug("%s, mounted on %s:\n", fs->mnt_dir, fs->mnt_fsname);
+            // CMonitorLogger::instance()->LogDebug("%s, mounted on %s:\n", fs->mnt_dir, fs->mnt_fsname);
 
-            g_output.psubsection_start(fs->mnt_fsname);
-            g_output.pstring("fs_dir", fs->mnt_dir);
-            g_output.pstring("fs_type", fs->mnt_type);
-            g_output.pstring("fs_opts", fs->mnt_opts);
+            m_pOutput->psubsection_start(fs->mnt_fsname);
+            m_pOutput->pstring("fs_dir", fs->mnt_dir);
+            m_pOutput->pstring("fs_type", fs->mnt_type);
+            m_pOutput->pstring("fs_opts", fs->mnt_opts);
 
-            g_output.plong("fs_freqs", fs->mnt_freq);
-            g_output.plong("fs_passno", fs->mnt_passno);
-            g_output.plong("fs_bsize", vfs.f_bsize);
-            g_output.plong("fs_size_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024);
-            g_output.plong("fs_free_mb", (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024);
-            g_output.plong(
+            m_pOutput->plong("fs_freqs", fs->mnt_freq);
+            m_pOutput->plong("fs_passno", fs->mnt_passno);
+            m_pOutput->plong("fs_bsize", vfs.f_bsize);
+            m_pOutput->plong("fs_size_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024);
+            m_pOutput->plong("fs_free_mb", (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024);
+            m_pOutput->plong(
                 "fs_used_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024 - (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024);
-            g_output.pdouble(
+            m_pOutput->pdouble(
                 "fs_full_percent", ((double)vfs.f_blocks - (double)vfs.f_bfree) / (double)vfs.f_blocks * (double)100.0);
             /*
-             * g_output.pdouble("fs_full_percent", ((vfs.f_blocks * vfs.f_bsize) - (vfs.f_bfree * vfs.f_bsize) ) /
+             * m_pOutput->pdouble("fs_full_percent", ((vfs.f_blocks * vfs.f_bsize) - (vfs.f_bfree * vfs.f_bsize) ) /
              *					(vfs.f_blocks * vfs.f_bsize) * 100.00);
              */
-            g_output.plong("fs_avail", (vfs.f_bavail * vfs.f_bsize) / 1024 / 1024);
-            g_output.plong("fs_files", vfs.f_files);
-            g_output.plong("fs_files_free", vfs.f_ffree);
-            g_output.plong("fs_namelength", vfs.f_namelen);
-            g_output.psubsection_end();
+            m_pOutput->plong("fs_avail", (vfs.f_bavail * vfs.f_bsize) / 1024 / 1024);
+            m_pOutput->plong("fs_files", vfs.f_files);
+            m_pOutput->plong("fs_files_free", vfs.f_ffree);
+            m_pOutput->plong("fs_namelength", vfs.f_namelen);
+            m_pOutput->psubsection_end();
         }
     }
-    g_output.psection_end();
+    m_pOutput->psection_end();
     endmntent(fp);
 }

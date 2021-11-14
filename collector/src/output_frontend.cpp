@@ -22,21 +22,32 @@
 #include "output_frontend.h"
 #include "cmonitor.h"
 #include "influxdb.h"
+#include "logger.h"
+#include "utils.h"
 #include <algorithm>
 #include <assert.h>
 #include <netdb.h>
 #include <sys/time.h>
 #include <unistd.h>
 
-//------------------------------------------------------------------------------
-// Globals
-//------------------------------------------------------------------------------
-
-CMonitorOutputFrontend g_output;
 
 //------------------------------------------------------------------------------
 // Init functions
 //------------------------------------------------------------------------------
+
+void CMonitorOutputFrontend::close()
+{
+    if (m_outputJson)
+    {
+        fclose(m_outputJson);
+        m_outputJson = nullptr;
+    }
+    if (m_influxdb_client_conn)
+    {
+        delete m_influxdb_client_conn;
+        m_influxdb_client_conn = nullptr;
+    }
+}
 
 void CMonitorOutputFrontend::init_json_output_file(const std::string& filenamePrefix)
 {
@@ -48,7 +59,7 @@ void CMonitorOutputFrontend::init_json_output_file(const std::string& filenamePr
         }
     } else if (filenamePrefix == "none") {
         m_outputJson = nullptr;
-        g_logger.LogDebug("Disabled JSON generation (filename prefix = none)");
+        CMonitorLogger::instance()->LogDebug("Disabled JSON generation (filename prefix = none)");
         printf("Disabling JSON file generation (collected data will be available only via InfluxDB, if IP/port is "
                "provided)\n");
     } else {
@@ -106,7 +117,7 @@ void CMonitorOutputFrontend::init_influxdb_connection(
     m_influxdb_client_conn->usr = strdup("usr"); // force newline
     m_influxdb_client_conn->pwd = strdup("pwd"); // force newline
 
-    g_logger.LogDebug("init_influxdb_connection() initialized InfluxDB connection to %s:%d",
+    CMonitorLogger::instance()->LogDebug("init_influxdb_connection() initialized InfluxDB connection to %s:%d",
         m_influxdb_client_conn->host, m_influxdb_client_conn->port);
 }
 
@@ -114,7 +125,7 @@ void CMonitorOutputFrontend::enable_json_pretty_print()
 {
     m_onelevel_indent_string = "    ";
     m_json_pretty_print = true;
-    g_logger.LogDebug("Enabling pretty printing of the JSON");
+    CMonitorLogger::instance()->LogDebug("Enabling pretty printing of the JSON");
 }
 
 //------------------------------------------------------------------------------
@@ -175,7 +186,7 @@ std::string CMonitorOutputFrontend::generate_influxdb_line(
     // format data according to the InfluxDB "line protocol":
     // see https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/
 
-    g_logger.LogDebug("generate_influxdb_line() generating measurement: %s\n", meas_name.c_str());
+    CMonitorLogger::instance()->LogDebug("generate_influxdb_line() generating measurement: %s\n", meas_name.c_str());
 
     std::string ret;
     ret.reserve(1024);
@@ -267,7 +278,7 @@ void CMonitorOutputFrontend::push_current_sections_to_influxdb(bool is_header)
         if (!m_influxdb_tagset.empty())
             m_influxdb_tagset.pop_back();
 
-        g_logger.LogDebug(
+        CMonitorLogger::instance()->LogDebug(
             "push_current_sections_to_influxdb() generated tagset for InfluxDB:\n %s\n", m_influxdb_tagset.c_str());
 
     } else {
@@ -302,7 +313,7 @@ void CMonitorOutputFrontend::push_current_sections_to_influxdb(bool is_header)
         }
 
         size_t num_measurements = get_current_sample_measurements();
-        g_logger.LogDebug(
+        CMonitorLogger::instance()->LogDebug(
             "push_current_sections_to_influxdb() pushing to InfluxDB %zu measurements for timestamp: %s\n",
             num_measurements, ts_nsec_str);
 
@@ -434,7 +445,7 @@ void CMonitorOutputFrontend::push_current_sections_to_json(bool is_header)
     }
 
     size_t num_measurements = get_current_sample_measurements();
-    g_logger.LogDebug(
+    CMonitorLogger::instance()->LogDebug(
         "push_current_sections_to_json() writing on the JSON output %lu measurements\n", num_measurements);
 }
 

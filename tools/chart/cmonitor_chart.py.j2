@@ -921,7 +921,8 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
     topN_process_pids_list = sorted(process_dict, key=sort_key, reverse=True)
 
     # truncate to first N:
-    topN_process_pids_list = topN_process_pids_list[0:numProcsToShow]
+    if numProcsToShow>0:
+        topN_process_pids_list = topN_process_pids_list[0:numProcsToShow]
 
     mem_divider, mem_unit = choose_byte_divider(max_mem_bytes)
     io_divider, io_unit = choose_byte_divider(max_io_bytes)
@@ -1729,7 +1730,9 @@ def load_json_data(infile):
     return entry
 
 
-def main_process_file(infile, outfile):
+def main_process_file(cfg):
+    infile = cfg["input_json"]
+    outfile = config["output_html"]
     start_time = time.time()
 
     # load the JSON
@@ -1803,7 +1806,7 @@ def main_process_file(infile, outfile):
     # cgroup stats:
     web = generate_cgroup_cpus(web, jheader, jdata, cgroup_logical_cpus_indexes)
     web = generate_cgroup_memory(web, jheader, jdata)
-    web = generate_cgroup_topN_procs(web, jheader, jdata)
+    web = generate_cgroup_topN_procs(web, jheader, jdata, config["top_scorer"])
     web.endHtmlHead(generate_config_js(jheader))
 
     if verbose:
@@ -1857,12 +1860,12 @@ def usage():
     print("Main options:")
     print("  -h, --help                 (this help)")
     print("  -v, --verbose              Be verbose.")
-    print("      --version              Print version and exit.")
     print("  -o, --output=<file.html>   The name of the output HTML file.")
-    print(
-        "  -u, --utc                  Plot data using UTC timestamps instead of local timezone"
-    )
+    print("  -u, --utc                  Plot data using UTC timestamps instead of local timezone.")
+    print("  -t, --top-scorer=N         Plot the N most-CPU-hungry processes/threads. Default is 20. Zero means plot all.")
+    print("      --version              Print version and exit.")
     sys.exit(0)
+
 
 
 def parse_command_line():
@@ -1870,8 +1873,8 @@ def parse_command_line():
     try:
         opts, remaining_args = getopt.getopt(
             sys.argv[1:],
-            "hvvu",
-            ["help", "verbose", "version", "output=", "input=", "utc"],
+            "hvvut",
+            ["help", "verbose", "version", "output=", "input=", "utc", "top-scorer="],
         )
     except getopt.GetoptError as err:
         # print help information and exit:
@@ -1882,6 +1885,7 @@ def parse_command_line():
     global g_datetime_field
     input_json = ""
     output_html = ""
+    top_scorer = 20
     for o, a in opts:
         if o in ("-i", "--input"):
             input_json = a
@@ -1895,6 +1899,12 @@ def parse_command_line():
             g_datetime_field = (
                 "UTC"  # instead of default 'datetime' which means local timezone
             )
+        elif o in ("-t", "--top-scorer"):
+            try:
+                top_scorer = int(a)
+            except:
+                print("Invalid argument for --top-scorer. Provide a number.")
+                sys.exit(1)
         elif o in ("--version"):
             print("{}".format(VERSION_STRING))
             sys.exit(0)
@@ -1917,7 +1927,7 @@ def parse_command_line():
     if not os.path.isabs(input_json):
         abs_input_json = os.path.join(os.getcwd(), input_json)
 
-    return {"input_json": input_json, "output_html": output_html}
+    return {"input_json": input_json, "output_html": output_html, "top_scorer": top_scorer}
 
 
 # =======================================================================================================
@@ -1926,4 +1936,4 @@ def parse_command_line():
 
 if __name__ == "__main__":
     config = parse_command_line()
-    main_process_file(config["input_json"], config["output_html"])
+    main_process_file(config)

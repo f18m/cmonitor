@@ -17,14 +17,24 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "logger.h"
 #include "cmonitor.h"
+#include "utils.h"
 #include <stdarg.h> /* va_list, va_start, va_arg, va_end */
+
+//------------------------------------------------------------------------------
+// Global static
+//------------------------------------------------------------------------------
+
+CMonitorLogger* CMonitorLogger::ms_pInstance = nullptr;
+
+#define MAX_LOG_LINE_LEN 1024
 
 //------------------------------------------------------------------------------
 // Logger functions
 //------------------------------------------------------------------------------
 
-void CMonitorLoggerUtils::init_error_output_file(const std::string& filenamePrefix)
+void CMonitorLogger::init_error_output_file(const std::string& filenamePrefix)
 {
     if (filenamePrefix == "stdout") {
         // open stderr as FILE*:
@@ -54,16 +64,16 @@ void CMonitorLoggerUtils::init_error_output_file(const std::string& filenamePref
     fflush(NULL);
 }
 
-void CMonitorLoggerUtils::LogDebug(const char* line, ...)
+void CMonitorLogger::LogDebug(const char* line, ...)
 {
-    char currLogLine[256];
+    char currLogLine[MAX_LOG_LINE_LEN];
 
-    if (!g_cfg.m_bDebug)
+    if (!m_bDebugEnabled)
         return;
 
     va_list args;
     va_start(args, line);
-    vsnprintf(currLogLine, 255, line, args);
+    vsnprintf(currLogLine, MAX_LOG_LINE_LEN-1, line, args);
     va_end(args);
 
     // in debug mode stdout is still open, so we can printf:
@@ -73,13 +83,14 @@ void CMonitorLoggerUtils::LogDebug(const char* line, ...)
         printf("\n");
 }
 
-void CMonitorLoggerUtils::LogError(const char* line, ...)
+void CMonitorLogger::LogError(const char* line, ...)
 {
-    char currLogLine[256];
+    m_nErrors++;
 
+    char currLogLine[MAX_LOG_LINE_LEN];
     va_list args;
     va_start(args, line);
-    vsnprintf(currLogLine, 255, line, args);
+    vsnprintf(currLogLine, MAX_LOG_LINE_LEN-1, line, args);
     va_end(args);
 
     if (!m_outputErr && !m_strErrorFileName.empty()) {
@@ -91,17 +102,22 @@ void CMonitorLoggerUtils::LogError(const char* line, ...)
 
     if (m_outputErr) {
         // errors always go in their dedicated file
-        fprintf(m_outputErr, "ERROR: %s\n", currLogLine);
+        fprintf(m_outputErr, "ERROR: %s", currLogLine);
+        
+        size_t lastCh = strlen(currLogLine) - 1;
+        if (currLogLine[lastCh] != '\n')
+            fprintf(m_outputErr, "\n");
     }
 }
 
-void CMonitorLoggerUtils::LogErrorWithErrno(const char* line, ...)
+void CMonitorLogger::LogErrorWithErrno(const char* line, ...)
 {
-    char currLogLine[256];
+    m_nErrors++;
 
+    char currLogLine[MAX_LOG_LINE_LEN];
     va_list args;
     va_start(args, line);
-    vsnprintf(currLogLine, 255, line, args);
+    vsnprintf(currLogLine, MAX_LOG_LINE_LEN-1, line, args);
     va_end(args);
 
     if (!m_outputErr && !m_strErrorFileName.empty()) {

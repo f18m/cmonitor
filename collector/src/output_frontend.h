@@ -59,11 +59,18 @@ typedef struct _influx_client_t influx_client_t;
 
 class CMonitorOutputFrontend {
 public:
-    CMonitorOutputFrontend()
+    CMonitorOutputFrontend(const std::string& json_file_prefix = "")
     {
         m_current_sections.reserve(16);
         m_onelevel_indent_string = ""; // using zero space for indentation is just to save disk space
         m_json_pretty_print = false;
+        if (!json_file_prefix.empty())
+            init_json_output_file(json_file_prefix);
+    }
+
+    ~CMonitorOutputFrontend()
+    {
+        close();
     }
 
     //------------------------------------------------------------------------------
@@ -73,6 +80,7 @@ public:
     void init_json_output_file(const std::string& filenamePrefix);
     void init_influxdb_connection(const std::string& hostname, unsigned int port, const std::string& dbname);
     void enable_json_pretty_print();
+    void close();
 
     //------------------------------------------------------------------------------
     // Sample/Section/Subsection
@@ -206,5 +214,3 @@ private:
     unsigned int m_double = 0;
     unsigned int m_hex = 0;
 };
-
-extern CMonitorOutputFrontend g_output;
