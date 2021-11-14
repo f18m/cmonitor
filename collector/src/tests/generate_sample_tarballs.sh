@@ -11,10 +11,26 @@ docker_name=${2:-userapp}
 process_name=${3:-redis-server}
 nsamples=${4:-4}
 ninterval_sec=${5:-5}
+
+# Globals
 redis_load_generator=../../../examples/example_load_redis.py
+cgroups_ver=1
+
+function detect_cgroups_version()
+{
+    if [ -d /sys/fs/cgroup/memory/docker/${cgroup}/ ]; then
+       echo "Detected cgroups v1 with cgroupfs driver"
+       cgroups_ver=1
+    else
+       echo "Detected cgroups v2 with systemd driver"
+       cgroups_ver=2
+    fi
 
 
-function copy_all_cgroup_folders()
+    # NOTE: we miss the combinations cgroupsv1/systemd driver and cgroupsv2/cgroupfs driver
+}
+
+function copy_all_cgroup_folders_v1()
 {
     for dir_to_copy in \
         /sys/fs/cgroup/memory/docker/${cgroup}/ \
@@ -30,6 +46,14 @@ function copy_all_cgroup_folders()
         # cp instead is capable:
         cp -ar ${dir_to_copy}/* /tmp/cmonitor-temp/${dir_to_copy} 2>/dev/null
     done
+}
+
+function copy_all_cgroup_folder_v2()
+{
+    dir_to_copy=/sys/fs/cgroup/system.slice/docker-${cgroup}.scope/
+    echo "Copying ${dir_to_copy}"
+    mkdir -p /tmp/cmonitor-temp/${dir_to_copy}
+    cp -ar ${dir_to_copy}/* /tmp/cmonitor-temp/${dir_to_copy} 2>/dev/null
 }
 
 function copy_all_proc_files_SLOW()
@@ -89,7 +113,12 @@ function generate_sample_tarball()
     date +"%s%N" >/tmp/cmonitor-temp/sample-timestamp
 
     # generate, as fast as possible, a perfect copy of /sys/fs/cgroup and /proc hierarchies
-    copy_all_cgroup_folders
+    if [ "$cgroups_ver" = "1" ]; then
+        copy_all_cgroup_folders_v1
+    else
+        copy_all_cgroup_folder_v2
+    fi
+
     copy_selected_proc_files
 
     echo "Generating ${output_sample}"
@@ -118,6 +147,9 @@ pids_to_save="$(ps -T -o tid --no-headers -C ${process_name})"
 
 # make sure load generator is stopped
 pkill example_load_re
+
+
+detect_cgroups_version
 
 # generate each sample
 for nsample in $(seq 1 $nsamples); do
