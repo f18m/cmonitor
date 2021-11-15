@@ -84,8 +84,7 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
     // allocate the class under test:
     CMonitorCgroups t(&cfg, &actual_output);
     t.cgroup_init( // force newline
-        current_sample_abs_dir,
-        current_sample_abs_dir);
+        current_sample_abs_dir, current_sample_abs_dir);
 
     // start feeding fixed, test data
     actual_output.pheader_start();
@@ -103,7 +102,7 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
         // finally run the code to test
         actual_output.psample_start();
         t.cgroup_proc_cpuacct(elapsed_sec);
-        t.cgroup_proc_memory(allowedStats);
+        t.cgroup_proc_memory(allowedStats, allowedStats);
         t.cgroup_proc_tasks(
             elapsed_sec, cfg.m_nOutputFields /* emit JSON */, include_threads /* do not include threads */);
 
@@ -129,7 +128,6 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
     std::string expected_json_str = get_file_string(expected_json_file);
     ASSERT_EQ(result_json_str, expected_json_str);
 }
-
 
 #if 0
 TEST(CGroups, centos7_Linux_3_10_0_nothreads)
@@ -170,8 +168,8 @@ TEST(CGroups, fedora35_Linux_5_14_17_withthreads)
     run_cmonitor_on_tarball_samples( // force newline
         "withthreads", // force newline
         "fedora35-Linux-5.14.17-x86_64", // force newline
-        "sys/fs/cgroup/system.slice/docker-573203c86cacbab444fed316a0e25aa9f017144cd3def79a91684d1a63c51419.scope/", true /* with threads */,
-        4 /* nsamples */);
+        "sys/fs/cgroup/system.slice/docker-573203c86cacbab444fed316a0e25aa9f017144cd3def79a91684d1a63c51419.scope/",
+        true /* with threads */, 4 /* nsamples */);
 }
 #endif
 

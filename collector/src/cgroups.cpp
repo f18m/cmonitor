@@ -597,11 +597,13 @@ void CMonitorCgroups::cgroup_init( // force newline
             m_cgroup_memory_kernel_path = cgroup_prefix_for_test + "/sys/fs/cgroup/memory"; // force newline
             m_cgroup_cpuacct_kernel_path = cgroup_prefix_for_test + "/sys/fs/cgroup/cpu,cpuacct"; // force newline
             m_cgroup_cpuset_kernel_path = cgroup_prefix_for_test + "/sys/fs/cgroup/cpuset"; // force newline
+            m_nCGroupsFound = CG_VERSION1;
         } else {
             // assume we're unit testing cgroups v2
             m_cgroup_memory_kernel_path = cgroup_prefix_for_test;
             m_cgroup_cpuacct_kernel_path = cgroup_prefix_for_test;
             m_cgroup_cpuset_kernel_path = cgroup_prefix_for_test;
+            m_nCGroupsFound = CG_VERSION2;
         }
 
     } else if (are_cgroups_v2_enabled(cgroupsv2_basepath)) {
@@ -714,8 +716,21 @@ void CMonitorCgroups::cgroup_init( // force newline
         CMonitorLogger::instance()->LogDebug("Set memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
     }
 
+    switch (m_nCGroupsFound) {
+    case CG_NONE:
+        break;
+    case CG_VERSION1:
+        cgroup_v1_read_limits();
+        break;
+    case CG_VERSION2:
+        cgroup_v2_read_limits();
+        break;
+    }
+}
+
+void CMonitorCgroups::cgroup_v1_read_limits()
+{
     // READ LIMITS IMPOSED BY CGROUPS
-    // FIXME we need to split by v1 and v2
 
     if (!read_integer(m_cgroup_memory_kernel_path + "/memory.limit_in_bytes", m_cgroup_memory_limit_bytes)) {
         CMonitorLogger::instance()->LogError(
@@ -733,7 +748,7 @@ void CMonitorCgroups::cgroup_init( // force newline
         m_nCGroupsFound = CG_NONE;
         return;
     }
-    
+
     if (!read_from_system_cpu_for_current_cgroup(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
         CMonitorLogger::instance()->LogError("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
         m_nCGroupsFound = CG_NONE;
@@ -752,6 +767,46 @@ void CMonitorCgroups::cgroup_init( // force newline
     if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_quota_us", m_cgroup_cpuacct_quota_us)) {
         CMonitorLogger::instance()->LogError(
             "Could not read the CPU quota from 'cpuacct' cgroup. CGroup mode disabled.\n");
+        m_nCGroupsFound = CG_NONE;
+        return;
+    }
+
+    // cpuset and memory cgroups found:
+    CMonitorLogger::instance()->LogDebug(
+        "CGroup monitoring successfully enabled. CGroup name is %s\n", m_cgroup_systemd_name.c_str());
+    CMonitorLogger::instance()->LogDebug("Found cpuset cgroup limiting to CPUs %s, mounted at %s\n",
+        stl_container2string(m_cgroup_cpus, ",").c_str(), m_cgroup_cpuset_kernel_path.c_str());
+    CMonitorLogger::instance()->LogDebug("Found cpuacct cgroup limiting at %lu/%lu usecs mounted at %s\n",
+        m_cgroup_cpuacct_quota_us, m_cgroup_cpuacct_period_us, m_cgroup_cpuacct_kernel_path.c_str());
+    CMonitorLogger::instance()->LogDebug("Found memory cgroup limiting to %luB, mounted at %s\n",
+        m_cgroup_memory_limit_bytes, m_cgroup_memory_kernel_path.c_str());
+}
+
+void CMonitorCgroups::cgroup_v2_read_limits()
+{
+    // READ LIMITS IMPOSED BY CGROUPS
+
+    // FIXME: m_cgroup_memory_limit_bytes might assume the special value "max" reported by the
+    // cgroup controller... it just means "no limit"... we need to handle that using UINT64_MAX
+    if (!read_integer(m_cgroup_memory_kernel_path + "/memory.max", m_cgroup_memory_limit_bytes)) {
+        CMonitorLogger::instance()->LogError(
+            "Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        m_nCGroupsFound = CG_NONE;
+        return;
+    }
+
+    if (!read_from_system_cpu_for_current_cgroup(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
+        CMonitorLogger::instance()->LogError("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
+        m_nCGroupsFound = CG_NONE;
+        return;
+    }
+
+    // FIXME: m_cgroup_cpuacct_quota_us might assume the special value "max" reported by the
+    // cgroup controller... it just means "no limit"... we need to handle that using UINT64_MAX
+    if (!read_two_integers(
+            m_cgroup_cpuacct_kernel_path + "/cpu.max", m_cgroup_cpuacct_quota_us, m_cgroup_cpuacct_period_us)) {
+        CMonitorLogger::instance()->LogError(
+            "Could not read the CPU period from 'cpuacct' cgroup. CGroup mode disabled.\n");
         m_nCGroupsFound = CG_NONE;
         return;
     }
@@ -850,7 +905,8 @@ bool CMonitorCgroups::cgroup_is_allowed_cpu(int cpu)
     return m_cgroup_cpus.find(cpu) != m_cgroup_cpus.end();
 }
 
-void CMonitorCgroups::cgroup_proc_memory(const std::set<std::string>& allowedStatsNames)
+void CMonitorCgroups::cgroup_proc_memory(
+    const std::set<std::string>& allowedStatsNames_v1, const std::set<std::string>& allowedStatsNames_v2)
 {
     if (m_nCGroupsFound == CG_NONE)
         return;
@@ -872,11 +928,16 @@ void CMonitorCgroups::cgroup_proc_memory(const std::set<std::string>& allowedSta
     } else
         rewind(m_fp_memory_stats);
 
+    const std::set<std::string>& allowedStatsNames
+        = (m_nCGroupsFound == CG_VERSION1) ? allowedStatsNames_v1 : allowedStatsNames_v2;
+
     m_pOutput->psection_start("cgroup_memory_stats");
     while (fgets(m_buff, 1000, m_fp_memory_stats) != NULL) {
         len = strlen(m_buff);
-        if (strncmp(m_buff, "total_", 6) != 0)
-            continue; // skip NON-totals: collect only cgroup-total values
+
+        if (m_nCGroupsFound == CG_VERSION1)
+            if (strncmp(m_buff, "total_", 6) != 0)
+                continue; // skip NON-totals: collect only cgroup-total values
 
         for (i = 0; i < len; i++) {
             if (m_buff[i] == '(')

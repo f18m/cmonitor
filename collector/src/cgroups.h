@@ -35,7 +35,6 @@
 // Constants
 //------------------------------------------------------------------------------
 
-
 #define MAX_LOGICAL_CPU (256)
 #define CGROUP_COLLECTOR_BUFF_SIZE (8192)
 
@@ -47,7 +46,6 @@ enum CGroupDetected {
 
 std::string CGroupDetected2string(CGroupDetected k);
 
-
 //------------------------------------------------------------------------------
 // Types
 //------------------------------------------------------------------------------
@@ -57,8 +55,6 @@ typedef struct {
     uint64_t counter_nsec_user_mode;
     uint64_t counter_nsec_sys_mode;
 } cpuacct_utilisation_t;
-
-
 
 //------------------------------------------------------------------------------
 // The CMonitorCgroups object
@@ -72,7 +68,7 @@ public:
     CMonitorCgroups(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
         : CMonitorAppHelper(pCfg, pOutput)
     {
-        memset(&m_cpuacct_prev_values[0], 0, MAX_LOGICAL_CPU*sizeof(cpuacct_utilisation_t));
+        memset(&m_cpuacct_prev_values[0], 0, MAX_LOGICAL_CPU * sizeof(cpuacct_utilisation_t));
         memset(&m_cpuacct_prev_values_for_total_cpu, 0, sizeof(cpuacct_utilisation_t));
     }
 
@@ -86,14 +82,14 @@ public:
 
     // main setup
     // NOTE: arguments are used only during unit testing
-    void cgroup_init(const std::string& cgroup_prefix_for_test = "",
-                    const std::string& proc_prefix_for_test = "");
+    void cgroup_init(const std::string& cgroup_prefix_for_test = "", const std::string& proc_prefix_for_test = "");
 
     // one-shot configuration info
     void output_config();
 
     // collect & output cgroup stats
-    void cgroup_proc_memory(const std::set<std::string>& allowedStatsNames);
+    void cgroup_proc_memory(
+        const std::set<std::string>& allowedStatsNames_v1, const std::set<std::string>& allowedStatsNames_v2);
     void cgroup_proc_cpuacct(double elapsed_sec);
     void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads);
 
@@ -108,10 +104,13 @@ private:
     bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
     bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */);
 
+    void cgroup_v1_read_limits();
+    void cgroup_v2_read_limits();
+
 private:
     // main switch that indicates if cgroup_init() was successful or not
     CGroupDetected m_nCGroupsFound = CG_NONE;
-    
+
     // paths of cgroups for the cgroup to monitor (either our own cgroup or another one):
     std::string m_cgroup_systemd_name;
     std::string m_cgroup_memory_kernel_path;

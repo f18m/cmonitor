@@ -262,9 +262,30 @@ bool read_integer(std::string filePath, uint64_t& value)
     return bRet;
 }
 
+bool read_two_integers(std::string filePath, uint64_t& value1, uint64_t& value2)
+{
+    FILE* stream = fopen(filePath.c_str(), "r");
+    if (!stream) {
+        CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", filePath.c_str());
+        return false; // file does not exist or not readable
+    }
+
+    // read a single integer from the file
+    value1 = value2 = 0;
+    bool bRet = fscanf(stream, "%lu %lu", &value1, &value2) == 2;
+    fclose(stream);
+
+    return bRet;
+}
+
 bool read_integers_with_range_validation(
     const std::string& filename, uint64_t lower_limit, uint64_t upper_limit, std::set<uint64_t>& cpus)
 {
+    // this function reads integers from a file expressed as
+    //  - plain numbers written in base 10
+    //  - ranges: two numbers separed by "-"
+    // separated by commas.
+
     FILE* stream = fopen(filename.c_str(), "r");
     if (!stream)
         return false; // file does not exist, try next path
@@ -356,7 +377,8 @@ void proc_read_numeric_stats_from(
             }
         }
         sscanf(line, "%s %s", label, number);
-        // CMonitorLogger::instance()->LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr, atoll(numstr));
+        // CMonitorLogger::instance()->LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr,
+        // atoll(numstr));
 
         if (allowedStatsNames.empty() /* all stats must be put in output */
             || allowedStatsNames.find(label) != allowedStatsNames.end()) {

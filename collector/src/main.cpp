@@ -746,11 +746,14 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     }
     // else: leave empty
 
-    std::set<std::string> charted_stats_from_cgroup_memory;
+    std::set<std::string> charted_stats_from_cgroup_memory_v1, charted_stats_from_cgroup_memory_v2;
     if (m_cfg.m_nOutputFields == PF_USED_BY_CHART_SCRIPT_ONLY) {
-        charted_stats_from_cgroup_memory.insert("total_cache");
-        charted_stats_from_cgroup_memory.insert("total_rss");
-        charted_stats_from_cgroup_memory.insert("failcnt");
+        // cgroups v1
+        charted_stats_from_cgroup_memory_v1.insert("total_cache");
+        charted_stats_from_cgroup_memory_v1.insert("total_rss");
+        charted_stats_from_cgroup_memory_v1.insert("failcnt");
+        // cgroups v2
+        charted_stats_from_cgroup_memory_v2.insert("anon");
     }
     // else: leave empty
 
@@ -767,7 +770,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         double previous_time = current_time;
         current_time = get_timestamp_sec();
         if (current_time == 0)
-            continue;   // failed in getting current time...
+            continue; // failed in getting current time...
         double elapsed = current_time - previous_time;
 
         m_output.psample_start();
@@ -807,7 +810,8 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         }
 
         if (m_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) {
-            m_cgroups_collector.cgroup_proc_memory(charted_stats_from_cgroup_memory);
+            m_cgroups_collector.cgroup_proc_memory(
+                charted_stats_from_cgroup_memory_v1, charted_stats_from_cgroup_memory_v2);
         }
         if (m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) {
             m_cgroups_collector.cgroup_proc_tasks(
