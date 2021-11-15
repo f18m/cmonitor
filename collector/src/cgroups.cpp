@@ -905,6 +905,48 @@ bool CMonitorCgroups::cgroup_is_allowed_cpu(int cpu)
     return m_cgroup_cpus.find(cpu) != m_cgroup_cpus.end();
 }
 
+size_t CMonitorCgroups::cgroup_proc_memory_dump_flat_keyed(
+    const std::string& path, const std::set<std::string>& allowedStatsNames)
+{
+    size_t nread = 0;
+    FILE* fp_memory_stats;
+    if ((fp_memory_stats = fopen(path.c_str(), "r")) == NULL)
+        return nread;
+
+    while (fgets(m_buff, 1000, fp_memory_stats) != NULL) {
+        size_t len = strlen(m_buff);
+
+        if (m_nCGroupsFound == CG_VERSION1)
+            if (strncmp(m_buff, "total_", 6) != 0)
+                continue; // skip NON-totals: collect only cgroup-total values
+
+        for (size_t i = 0; i < len; i++) {
+            if (m_buff[i] == '(')
+                m_buff[i] = '_';
+            if (m_buff[i] == ')')
+                m_buff[i] = ' ';
+            if (m_buff[i] == ':')
+                m_buff[i] = ' ';
+            if (m_buff[i] == '\n')
+                m_buff[i] = 0;
+        }
+
+        uint64_t value = 0;
+        char label[512];
+        if (sscanf(m_buff, "%s %lu", label, &value) == 2) {
+            if (allowedStatsNames.empty() /* all stats must be put in output */
+                || allowedStatsNames.find(label) != allowedStatsNames.end()) {
+                m_pOutput->plong(label, value);
+                nread++;
+            }
+        }
+    }
+
+    fclose(fp_memory_stats);
+
+    return nread;
+}
+
 void CMonitorCgroups::cgroup_proc_memory(
     const std::set<std::string>& allowedStatsNames_v1, const std::set<std::string>& allowedStatsNames_v2)
 {
@@ -915,50 +957,29 @@ void CMonitorCgroups::cgroup_proc_memory(
     //   https://lwn.net/Articles/529927/
     //   https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt
     //   https://www.kernel.org/doc/Documentation/cgroup-v2.txt
-    int i, len;
-    uint64_t value;
-    char label[512];
-
-    if (m_fp_memory_stats == 0) {
-        std::string path = m_cgroup_memory_kernel_path + "/memory.stat";
-        if ((m_fp_memory_stats = fopen(path.c_str(), "r")) == NULL) {
-            m_fp_memory_stats = 0;
-            return;
-        }
-    } else
-        rewind(m_fp_memory_stats);
 
     const std::set<std::string>& allowedStatsNames
         = (m_nCGroupsFound == CG_VERSION1) ? allowedStatsNames_v1 : allowedStatsNames_v2;
-
     m_pOutput->psection_start("cgroup_memory_stats");
-    while (fgets(m_buff, 1000, m_fp_memory_stats) != NULL) {
-        len = strlen(m_buff);
 
-        if (m_nCGroupsFound == CG_VERSION1)
-            if (strncmp(m_buff, "total_", 6) != 0)
-                continue; // skip NON-totals: collect only cgroup-total values
+    cgroup_proc_memory_dump_flat_keyed(m_cgroup_memory_kernel_path + "/memory.stat", allowedStatsNames);
 
-        for (i = 0; i < len; i++) {
-            if (m_buff[i] == '(')
-                m_buff[i] = '_';
-            if (m_buff[i] == ')')
-                m_buff[i] = ' ';
-            if (m_buff[i] == ':')
-                m_buff[i] = ' ';
-            if (m_buff[i] == '\n')
-                m_buff[i] = 0;
-        }
-        value = 0;
-        sscanf(m_buff, "%s %lu", label, &value);
+    uint64_t value;
+    switch (m_nCGroupsFound) {
+    case CG_VERSION1:
+        if (read_integer(m_cgroup_memory_kernel_path + "/memory.failcnt", value))
+            m_pOutput->plong("failcnt", value);
+        break;
 
-        if (allowedStatsNames.empty() /* all stats must be put in output */
-            || allowedStatsNames.find(label) != allowedStatsNames.end())
-            m_pOutput->plong(label, value);
+    case CG_VERSION2:
+        if (read_integer(m_cgroup_memory_kernel_path + "/memory.current", value))
+            m_pOutput->plong("current", value);
+        cgroup_proc_memory_dump_flat_keyed(m_cgroup_memory_kernel_path + "/memory.events", allowedStatsNames);
+        break;
+
+    case CG_NONE:
+        break;
     }
-
-    if (read_integer(m_cgroup_memory_kernel_path + "/memory.failcnt", value))
-        m_pOutput->plong("failcnt", value);
 
     m_pOutput->psection_end();
 }

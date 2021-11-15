@@ -74,8 +74,6 @@ public:
 
     ~CMonitorCgroups()
     {
-        if (m_fp_memory_stats)
-            fclose(m_fp_memory_stats);
         if (m_fp_cpuacct_stats)
             fclose(m_fp_cpuacct_stats);
     }
@@ -107,6 +105,8 @@ private:
     void cgroup_v1_read_limits();
     void cgroup_v2_read_limits();
 
+    size_t cgroup_proc_memory_dump_flat_keyed(const std::string& path, const std::set<std::string>& allowedStatsNames);
+
 private:
     // main switch that indicates if cgroup_init() was successful or not
     CGroupDetected m_nCGroupsFound = CG_NONE;
@@ -135,7 +135,6 @@ private:
     unsigned int m_num_tasks_samples_collected = 0;
 
     // handles to stat files
-    FILE* m_fp_memory_stats = nullptr;
     FILE* m_fp_cpuacct_stats = nullptr;
 
     // Process tracking
