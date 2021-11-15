@@ -85,9 +85,8 @@ public:
     }
 
     // main setup
-    void cgroup_init(const std::string& cgroup_memory_abs_path = "", // force newline
-                    const std::string& cgroup_cpuacct_abs_path = "",  // force newline
-                    const std::string& cgroup_cpuset_abs_path = "",
+    // NOTE: arguments are used only during unit testing
+    void cgroup_init(const std::string& cgroup_prefix_for_test = "",
                     const std::string& proc_prefix_for_test = "");
 
     // one-shot configuration info

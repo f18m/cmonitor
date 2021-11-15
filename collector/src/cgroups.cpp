@@ -403,7 +403,67 @@ bool get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT)
 }
 
 /* static */
-bool get_cgroup_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std::string& cgroup_pathOUT)
+bool are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
+{
+    /*
+     *
+     * ABOUT /proc/%d/cgroup:
+     *   See http://man7.org/linux/man-pages/man7/cgroups.7.html, look for "/proc/[pid]/cgroup (since Linux 2.6.24)"
+     *   Each line is composed by:
+     *                     hierarchy-ID:controller-list:cgroup-path
+     *   The problem is that this file does not provide you the FULL cgroup path, which depends on where exactly that
+     *   cgroup has been mounted.
+     *
+     * ABOUT /proc/%d/mounts:
+     *   See http://man7.org/linux/man-pages/man5/fstab.5.html
+     *   Each line is composed by:
+     *                     fs_spec  fs_file  fs_vfstype  fs_mntops  fs_freq  fs_passno
+     *   We are interested into the lines that provide the "cgroup" or "cgroup2" fs_spec
+     *
+     *   For cgroups v1:
+     *     under LXC:
+     *       cgroup /sys/fs/cgroup/cpuset/lxc/container1-main cgroup rw,nosuid,nodev,noexec,relatime,cpuset 0 0
+     *     under Docker:
+     *       cgroup /sys/fs/cgroup/cpuset cgroup ro,nosuid,nodev,noexec,relatime,cpuset 0 0
+     *   the second string fs_file (/sys/fs/cgroup/cpuset/lxc/container1-main or /sys/fs/cgroup/cpuset) tells you where
+     * to find all the current value of that cgroup; the fourth string fs_mntops contains the indication of the cgroup
+     * type (e.g. cpuset)
+     *
+     *   For cgroups v2:
+     *     under Docker:
+     *      cgroup2 /sys/fs/cgroup cgroup2 rw,seclabel,nosuid,nodev,noexec,relatime,nsdelegate 0 0
+     *
+     */
+    std::ifstream inputf("/proc/self/mounts");
+    if (!inputf.is_open())
+        return false; // cannot read the cgroup information!
+
+    std::string line;
+    while (std::getline(inputf, line)) {
+        // cout << line << '\n';
+        std::vector<std::string> tuple = split_string_in_array(line, ' ');
+        if (tuple.size() != 6)
+            return false; // invalid format
+
+        std::string fs_spec = tuple[0];
+        std::string fs_file = tuple[1];
+        std::string fs_vfstype = tuple[2];
+        // std::string fs_mntops = tuple[3];
+
+        if (fs_spec == "cgroup2" && fs_vfstype == "cgroup2") {
+            // found the "cgroup type" that belongs to cgroups v2... note that in this "if" branch the "cgroup_type"
+            // is not used: cgroupsv2, also known as "unified cgroup hierarchy", will have a single path for the whole
+            // cgroup, instead of having multiple ones for each different "cgroup_type"
+            cgroup_pathOUT = fs_file;
+            return true;
+        }
+    }
+
+    return false; // cgroup name not found
+}
+
+/* static */
+bool get_cgroup_v1_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std::string& cgroup_pathOUT)
 {
     /*
      *
@@ -451,7 +511,7 @@ bool get_cgroup_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std
         std::string fs_mntops = tuple[3];
 
         if (fs_spec == "cgroup" && fs_vfstype == "cgroup" && fs_mntops.find(cgroup_type) != std::string::npos) {
-            // found the right "cgroup type"
+            // found the "cgroup type" that belongs to cgroups v1
 
             if (fs_file.empty() || fs_file == "/") {
                 // !!this process is NOT running under any cgroup!!
@@ -461,9 +521,6 @@ bool get_cgroup_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std
                 cgroup_pathOUT = fs_file;
                 return true;
             }
-        } else if (fs_spec == "cgroup2" && fs_vfstype == "cgroup2") {
-            cgroup_pathOUT = fs_file;
-            return true;
         }
     }
 
@@ -514,55 +571,79 @@ bool CMonitorCgroups::read_cpuacct_line(const std::string& path, std::vector<uin
 // ----------------------------------------------------------------------------------
 
 void CMonitorCgroups::cgroup_init( // force newline
-    const std::string& cgroup_memory_abs_path, // force newline
-    const std::string& cgroup_cpuacct_abs_path, // force newline
-    const std::string& cgroup_cpuset_abs_path, // force newline
+    const std::string& cgroup_prefix_for_test, // force newline
     const std::string& proc_prefix_for_test)
 {
     m_nCGroupsFound = CG_NONE;
     m_cgroup_systemd_name = "N/A";
     m_proc_prefix = proc_prefix_for_test;
 
-    // FIXME: cgroups v2: all paths are different
-    //
-
     // ABSOLUTE PATH PREFIXES
     // Typical examples (cgroup v1)
     //    m_cgroup_memory_kernel_path   = /sys/fs/cgroup/memory/
     //    m_cgroup_cpuacct_kernel_path  = /sys/fs/cgroup/cpu,cpuacct/     or     /sys/fs/cgroup/cpuacct,cpu/
     //    m_cgroup_cpuset_kernel_path   = /sys/fs/cgroup/cpuset/
+    // Typical examples (cgroup v2)
+    //    m_cgroup_memory_kernel_path = m_cgroup_cpuacct_kernel_path = m_cgroup_cpuset_kernel_path =
+    //    /sys/fs/cgroup/system.slice/
 
-    if (!cgroup_memory_abs_path.empty())
-        m_cgroup_memory_kernel_path = cgroup_memory_abs_path;
-    else if (!get_cgroup_abs_path_prefix_for_this_pid("memory", m_cgroup_memory_kernel_path)) {
-        CMonitorLogger::instance()->LogError("Could not find the 'memory' cgroup path prefix. CGroup mode disabled.\n");
-        return;
-    }
-
+    std::string cgroupsv2_basepath;
     std::string cpuacct_controller_name = "cpu,cpuacct";
-    if (!cgroup_cpuacct_abs_path.empty())
-        m_cgroup_cpuacct_kernel_path = cgroup_cpuacct_abs_path;
-    else if (!get_cgroup_abs_path_prefix_for_this_pid(cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
+    if (!cgroup_prefix_for_test.empty()) {
 
-        // on some Linux distributions, the name of the cgroup has the "cpu" and "cpuacct" names inverted..
-        // retry inverting the order:
-        cpuacct_controller_name = "cpuacct,cpu";
+        std::string dir = cgroup_prefix_for_test + "/sys/fs/cgroup/memory";
+        if (file_or_dir_exists(dir.c_str())) {
+            // assume we're unit testing cgroups v1
+            m_cgroup_memory_kernel_path = cgroup_prefix_for_test + "/sys/fs/cgroup/memory"; // force newline
+            m_cgroup_cpuacct_kernel_path = cgroup_prefix_for_test + "/sys/fs/cgroup/cpu,cpuacct"; // force newline
+            m_cgroup_cpuset_kernel_path = cgroup_prefix_for_test + "/sys/fs/cgroup/cpuset"; // force newline
+        } else {
+            // assume we're unit testing cgroups v2
+            m_cgroup_memory_kernel_path = cgroup_prefix_for_test;
+            m_cgroup_cpuacct_kernel_path = cgroup_prefix_for_test;
+            m_cgroup_cpuset_kernel_path = cgroup_prefix_for_test;
+        }
 
-        if (!get_cgroup_abs_path_prefix_for_this_pid(cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
+    } else if (are_cgroups_v2_enabled(cgroupsv2_basepath)) {
+        m_nCGroupsFound = CG_VERSION2;
+
+        m_cgroup_memory_kernel_path = cgroupsv2_basepath;
+        m_cgroup_cpuacct_kernel_path = cgroupsv2_basepath;
+        m_cgroup_cpuset_kernel_path = cgroupsv2_basepath;
+    } else {
+        // try to detect cgroups v1
+        m_nCGroupsFound = CG_VERSION1;
+
+        if (!get_cgroup_v1_abs_path_prefix_for_this_pid("memory", m_cgroup_memory_kernel_path)) {
             CMonitorLogger::instance()->LogError(
-                "Could not find the 'cpuacct' cgroup path prefix. CGroup mode disabled.\n");
+                "Could not find the 'memory' cgroup path prefix. CGroup mode disabled.\n");
+            m_nCGroupsFound = CG_NONE;
+            return;
+        }
+
+        if (!get_cgroup_v1_abs_path_prefix_for_this_pid(cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
+
+            // on some Linux distributions, the name of the cgroup has the "cpu" and "cpuacct" names inverted..
+            // retry inverting the order:
+            cpuacct_controller_name = "cpuacct,cpu";
+
+            if (!get_cgroup_v1_abs_path_prefix_for_this_pid(cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
+                CMonitorLogger::instance()->LogError(
+                    "Could not find the 'cpuacct' cgroup path prefix. CGroup mode disabled.\n");
+                m_nCGroupsFound = CG_NONE;
+                return;
+            }
+        }
+
+        if (!get_cgroup_v1_abs_path_prefix_for_this_pid("cpuset", m_cgroup_cpuset_kernel_path)) {
+            CMonitorLogger::instance()->LogError(
+                "Could not find the 'cpuset' cgroup path prefix. CGroup mode disabled.\n");
+            m_nCGroupsFound = CG_NONE;
             return;
         }
     }
 
-    if (!cgroup_cpuset_abs_path.empty())
-        m_cgroup_cpuset_kernel_path = cgroup_cpuset_abs_path;
-    else if (!get_cgroup_abs_path_prefix_for_this_pid("cpuset", m_cgroup_cpuset_kernel_path)) {
-        CMonitorLogger::instance()->LogError("Could not find the 'cpuset' cgroup path prefix. CGroup mode disabled.\n");
-        return;
-    }
-
-    // ACTUAL CGROUP PATHS
+    // NOW DETECT ACTUAL CGROUP PATHS TO MONITOR
 
     if (m_pCfg->m_strCGroupName.empty() || m_pCfg->m_strCGroupName == "self") {
 
@@ -573,6 +654,7 @@ void CMonitorCgroups::cgroup_init( // force newline
         cgroup_paths_map_t cgroup_paths;
         if (!get_cgroup_paths_for_this_pid(cgroup_paths)) {
             CMonitorLogger::instance()->LogDebug("Could not get the cgroup paths. CGroup mode disabled.\n");
+            m_nCGroupsFound = CG_NONE;
             return;
         }
 
@@ -621,6 +703,7 @@ void CMonitorCgroups::cgroup_init( // force newline
                 "Cannot find the cgroup directory corresponding to the provided cgroup name: directory "
                 "[%s] does not exist. CGroup mode disabled.",
                 m_cgroup_memory_kernel_path.c_str());
+            m_nCGroupsFound = CG_NONE;
             return;
         }
 
@@ -632,29 +715,35 @@ void CMonitorCgroups::cgroup_init( // force newline
     }
 
     // READ LIMITS IMPOSED BY CGROUPS
+    // FIXME we need to split by v1 and v2
 
     if (!read_integer(m_cgroup_memory_kernel_path + "/memory.limit_in_bytes", m_cgroup_memory_limit_bytes)) {
         CMonitorLogger::instance()->LogError(
             "Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        m_nCGroupsFound = CG_NONE;
         return;
     }
     // IMPORTANT: m_cgroup_memory_limit_bytes might assume some crazy high value like 9*10^6 GB
     //            that means "no limit"
     if (m_cgroup_memory_limit_bytes > MEMORY_LIMIT_MAX_VALUE)
         m_cgroup_memory_limit_bytes = UINT64_MAX;
-
-    if (!read_from_system_cpu_for_current_cgroup(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
-        CMonitorLogger::instance()->LogError("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
-        return;
-    }
     if (m_cgroup_memory_limit_bytes == 0) {
         CMonitorLogger::instance()->LogError(
             "Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
+        m_nCGroupsFound = CG_NONE;
         return;
     }
+    
+    if (!read_from_system_cpu_for_current_cgroup(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
+        CMonitorLogger::instance()->LogError("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
+        m_nCGroupsFound = CG_NONE;
+        return;
+    }
+
     if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_period_us", m_cgroup_cpuacct_period_us)) {
         CMonitorLogger::instance()->LogError(
             "Could not read the CPU period from 'cpuacct' cgroup. CGroup mode disabled.\n");
+        m_nCGroupsFound = CG_NONE;
         return;
     }
 
@@ -663,11 +752,11 @@ void CMonitorCgroups::cgroup_init( // force newline
     if (!read_integer(m_cgroup_cpuacct_kernel_path + "/cpu.cfs_quota_us", m_cgroup_cpuacct_quota_us)) {
         CMonitorLogger::instance()->LogError(
             "Could not read the CPU quota from 'cpuacct' cgroup. CGroup mode disabled.\n");
+        m_nCGroupsFound = CG_NONE;
         return;
     }
 
     // cpuset and memory cgroups found:
-    m_nCGroupsFound = CG_VERSION1;
     CMonitorLogger::instance()->LogDebug(
         "CGroup monitoring successfully enabled. CGroup name is %s\n", m_cgroup_systemd_name.c_str());
     CMonitorLogger::instance()->LogDebug("Found cpuset cgroup limiting to CPUs %s, mounted at %s\n",
@@ -861,9 +950,9 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec)
             bValidData = false;
 
         if (bValidData) {
-            CMonitorLogger::instance()->LogDebug(
-                "Found cpuacct.usage_percpu_sys/user cgroups; computing CPU usage for %.2fsec delta time and %zu CPUs "
-                "(print=%d)\n",
+            CMonitorLogger::instance()->LogDebug("Found cpuacct.usage_percpu_sys/user cgroups; computing CPU usage "
+                                                 "for %.2fsec delta time and %zu CPUs "
+                                                 "(print=%d)\n",
                 elapsed_sec, counter_nsec_user_mode.size(), print);
 
             for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
@@ -1032,8 +1121,8 @@ bool CMonitorCgroups::cgroup_collect_pids(std::vector<pid_t>& pids)
     std::string line;
     while (std::getline(inputf, line)) {
         uint64_t pid;
-        // this PID is actually a TID (thread ID) most of the time... because in the kernel process/thread distinction
-        // is much less strong than userspace: they're all tasks
+        // this PID is actually a TID (thread ID) most of the time... because in the kernel process/thread
+        // distinction is much less strong than userspace: they're all tasks
         if (string2int(line.c_str(), pid))
             pids.push_back((pid_t)pid);
     }
@@ -1095,8 +1184,8 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
     // Sort the processes by their "score" by inserting them into an ordered map
     assert(m_topper_procs.empty());
     CMonitorLogger::instance()->LogDebug(
-        "The current process DB has %lu entries, the DB storing previous statuses has %lu entries.\n",
-        currDB.size(), prevDB.size());
+        "The current process DB has %lu entries, the DB storing previous statuses has %lu entries.\n", currDB.size(),
+        prevDB.size());
 
     for (const auto& current_entry : currDB) {
         pid_t current_pid = current_entry.first;
@@ -1104,8 +1193,7 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
 
         // find the previous stats for this PID:
         auto itPrevStatus = prevDB.find(current_pid);
-        if (itPrevStatus != prevDB.end())
-        {
+        if (itPrevStatus != prevDB.end()) {
             const procsinfo_t* pprev_status = &itPrevStatus->second;
 
             // compute the score
@@ -1114,7 +1202,8 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
             m_topper_procs.insert(std::make_pair(score, newEntry));
 
             // of the 40 fields of procsinfo_t we're mostly interested in user and system time:
-            CMonitorLogger::instance()->LogDebug("pid=%d: %s: utime=%lu, stime=%lu, prev_utime=%lu, prev_stime=%lu, score=%lu",  // force newline
+            CMonitorLogger::instance()->LogDebug(
+                "pid=%d: %s: utime=%lu, stime=%lu, prev_utime=%lu, prev_stime=%lu, score=%lu", // force newline
                 pcurrent_status->pi_pid, pcurrent_status->pi_comm, // force newline
                 pcurrent_status->pi_utime, pcurrent_status->pi_stime, // force newline
                 pprev_status->pi_utime, pprev_status->pi_stime, score);
