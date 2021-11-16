@@ -171,6 +171,16 @@ std::vector<std::string> split_string_in_array(const std::string& str, char spli
     return tokens;
 }
 
+bool split_string_on_first_separator(const std::string& str, char separator, std::string& before, std::string& after)
+{
+    size_t sep_position = str.find(separator);
+    if (sep_position == std::string::npos)
+        return false;
+    before = str.substr(0, sep_position);
+    after = str.substr(sep_position + 1);
+    return true;
+}
+
 bool parse_string_with_multiple_ranges(const std::string& data, std::vector<uint64_t>& result)
 {
     // here we support strings containing a combination of

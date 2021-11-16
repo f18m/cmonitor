@@ -5,6 +5,9 @@
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/../..)
 
+# IMPORTANT: we do require c++11, i.e. GCC 4.8.1 or higher;
+#            Centos7 which is one of the oldest-supported distributions provides gcc 4.8.5 so we
+#            cannot move to e.g. c++14/17/20 yet
 CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 -DVERSION_STRING=\"$(RPM_VERSION)-$(RPM_RELEASE)\"
 
 ifeq ($(DEBUG),1)

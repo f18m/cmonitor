@@ -906,20 +906,24 @@ bool CMonitorCgroups::cgroup_is_allowed_cpu(int cpu)
 }
 
 size_t CMonitorCgroups::cgroup_proc_memory_dump_flat_keyed(
-    const std::string& path, const std::set<std::string>& allowedStatsNames)
+    const std::string& path, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix)
 {
     size_t nread = 0;
     FILE* fp_memory_stats;
     if ((fp_memory_stats = fopen(path.c_str(), "r")) == NULL)
         return nread;
 
+    std::string label, value_str;
     while (fgets(m_buff, 1000, fp_memory_stats) != NULL) {
-        size_t len = strlen(m_buff);
 
         if (m_nCGroupsFound == CG_VERSION1)
             if (strncmp(m_buff, "total_", 6) != 0)
                 continue; // skip NON-totals: collect only cgroup-total values
 
+        size_t len = strlen(m_buff);
+        if (m_buff[len - 1] == '\n')
+            m_buff[len - 1] = 0;
+#if 0 // in both cgroups v1 and cgroups v2 the "memory" controller will never generate 'special' characters
         for (size_t i = 0; i < len; i++) {
             if (m_buff[i] == '(')
                 m_buff[i] = '_';
@@ -927,16 +931,14 @@ size_t CMonitorCgroups::cgroup_proc_memory_dump_flat_keyed(
                 m_buff[i] = ' ';
             if (m_buff[i] == ':')
                 m_buff[i] = ' ';
-            if (m_buff[i] == '\n')
-                m_buff[i] = 0;
         }
+#endif
 
         uint64_t value = 0;
-        char label[512];
-        if (sscanf(m_buff, "%s %lu", label, &value) == 2) {
+        if (split_string_on_first_separator(m_buff, ' ', label, value_str) && string2int(value_str.c_str(), value)) {
             if (allowedStatsNames.empty() /* all stats must be put in output */
                 || allowedStatsNames.find(label) != allowedStatsNames.end()) {
-                m_pOutput->plong(label, value);
+                m_pOutput->plong((label_prefix + label).c_str(), value);
                 nread++;
             }
         }
@@ -950,6 +952,8 @@ size_t CMonitorCgroups::cgroup_proc_memory_dump_flat_keyed(
 void CMonitorCgroups::cgroup_proc_memory(
     const std::set<std::string>& allowedStatsNames_v1, const std::set<std::string>& allowedStatsNames_v2)
 {
+    uint64_t value;
+
     if (m_nCGroupsFound == CG_NONE)
         return;
 
@@ -958,13 +962,18 @@ void CMonitorCgroups::cgroup_proc_memory(
     //   https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt
     //   https://www.kernel.org/doc/Documentation/cgroup-v2.txt
 
-    const std::set<std::string>& allowedStatsNames
-        = (m_nCGroupsFound == CG_VERSION1) ? allowedStatsNames_v1 : allowedStatsNames_v2;
     m_pOutput->psection_start("cgroup_memory_stats");
 
-    cgroup_proc_memory_dump_flat_keyed(m_cgroup_memory_kernel_path + "/memory.stat", allowedStatsNames);
+    if (m_nCGroupsFound == CG_VERSION2)
+        // list as first value the main "current" KPI
+        if (read_integer(m_cgroup_memory_kernel_path + "/memory.current", value))
+            m_pOutput->plong("stat.current", value);
 
-    uint64_t value;
+    // dump main memory statistics file
+    const std::set<std::string>& allowedStatsNames
+        = (m_nCGroupsFound == CG_VERSION1) ? allowedStatsNames_v1 : allowedStatsNames_v2;
+    cgroup_proc_memory_dump_flat_keyed(m_cgroup_memory_kernel_path + "/memory.stat", allowedStatsNames, "stat.");
+
     switch (m_nCGroupsFound) {
     case CG_VERSION1:
         if (read_integer(m_cgroup_memory_kernel_path + "/memory.failcnt", value))
@@ -972,9 +981,8 @@ void CMonitorCgroups::cgroup_proc_memory(
         break;
 
     case CG_VERSION2:
-        if (read_integer(m_cgroup_memory_kernel_path + "/memory.current", value))
-            m_pOutput->plong("current", value);
-        cgroup_proc_memory_dump_flat_keyed(m_cgroup_memory_kernel_path + "/memory.events", allowedStatsNames);
+        cgroup_proc_memory_dump_flat_keyed(
+            m_cgroup_memory_kernel_path + "/memory.events", allowedStatsNames, "events.");
         break;
 
     case CG_NONE:

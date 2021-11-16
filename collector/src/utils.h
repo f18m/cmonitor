@@ -45,6 +45,7 @@ bool string2int(const char* s, uint64_t& result);
 bool file_or_dir_exists(const char* filename);
 template <typename T> std::string stl_container2string(const T& par, const std::string& delim);
 std::vector<std::string> split_string_in_array(const std::string& str, char splitter);
+bool split_string_on_first_separator(const std::string& str, char separator, std::string& before, std::string& after);
 bool parse_string_with_multiple_ranges(const std::string& data, std::vector<int>& result);
 bool parse_string_with_multiple_ranges(const std::string& data, std::set<int>& result);
 bool search_integer(std::string filePath, uint64_t valueToSearch);

@@ -105,7 +105,8 @@ private:
     void cgroup_v1_read_limits();
     void cgroup_v2_read_limits();
 
-    size_t cgroup_proc_memory_dump_flat_keyed(const std::string& path, const std::set<std::string>& allowedStatsNames);
+    size_t cgroup_proc_memory_dump_flat_keyed(
+        const std::string& path, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix);
 
 private:
     // main switch that indicates if cgroup_init() was successful or not
