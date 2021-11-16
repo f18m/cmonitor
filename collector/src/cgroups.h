@@ -31,10 +31,11 @@
 #include <unistd.h>
 #include <vector>
 
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 // Constants
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 
+#define MIN_ELAPSED_SECS (0.1)
 #define MAX_LOGICAL_CPU (256)
 #define CGROUP_COLLECTOR_BUFF_SIZE (8192)
 
@@ -107,6 +108,8 @@ private:
 
     size_t cgroup_proc_memory_dump_flat_keyed(
         const std::string& path, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix);
+
+    bool read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<uint64_t>& cpus);
 
 private:
     // main switch that indicates if cgroup_init() was successful or not
