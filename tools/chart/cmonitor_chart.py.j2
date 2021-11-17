@@ -860,7 +860,7 @@ def generate_config_js(jheader):
     return config_str
 
 
-def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
+def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20, thread_filter=""):
     # if process data was not collected, just return:
     if "cgroup_tasks" not in jdata[0]:
         return web
@@ -874,10 +874,12 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
     for sample in jdata:
         try:
             for process in sample["cgroup_tasks"]:
-
                 # parse data from JSON
                 entry = sample["cgroup_tasks"][process]
                 cmd = entry["cmd"]
+                # filter by thread name if there is a filter
+                if thread_filter and thread_filter not in cmd:
+                    continue
                 cputime = entry["cpu_usr_total_secs"] + entry["cpu_sys_total_secs"]
                 iobytes = entry["io_total_read"] + entry["io_total_write"]
                 membytes = entry[
@@ -921,7 +923,7 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20):
     topN_process_pids_list = sorted(process_dict, key=sort_key, reverse=True)
 
     # truncate to first N:
-    if numProcsToShow>0:
+    if numProcsToShow > 0:
         topN_process_pids_list = topN_process_pids_list[0:numProcsToShow]
 
     mem_divider, mem_unit = choose_byte_divider(max_mem_bytes)
@@ -1806,7 +1808,9 @@ def main_process_file(cfg):
     # cgroup stats:
     web = generate_cgroup_cpus(web, jheader, jdata, cgroup_logical_cpus_indexes)
     web = generate_cgroup_memory(web, jheader, jdata)
-    web = generate_cgroup_topN_procs(web, jheader, jdata, config["top_scorer"])
+    web = generate_cgroup_topN_procs(
+        web, jheader, jdata, config["top_scorer"], config["thread_filter"]
+    )
     web.endHtmlHead(generate_config_js(jheader))
 
     if verbose:
@@ -1861,11 +1865,17 @@ def usage():
     print("  -h, --help                 (this help)")
     print("  -v, --verbose              Be verbose.")
     print("  -o, --output=<file.html>   The name of the output HTML file.")
-    print("  -u, --utc                  Plot data using UTC timestamps instead of local timezone.")
-    print("  -t, --top-scorer=N         Plot the N most-CPU-hungry processes/threads. Default is 20. Zero means plot all.")
+    print(
+        "  -u, --utc                  Plot data using UTC timestamps instead of local timezone."
+    )
+    print(
+        "  -t, --top-scorer=N         Plot the N most-CPU-hungry processes/threads. Default is 20. Zero means plot all."
+    )
+    print(
+        "  -f, --filter=<tname>       Plot only the threads filtered by the selected substring . Default is None."
+    )
     print("      --version              Print version and exit.")
     sys.exit(0)
-
 
 
 def parse_command_line():
@@ -1874,7 +1884,16 @@ def parse_command_line():
         opts, remaining_args = getopt.getopt(
             sys.argv[1:],
             "hvvut",
-            ["help", "verbose", "version", "output=", "input=", "utc", "top-scorer="],
+            [
+                "help",
+                "verbose",
+                "version",
+                "output=",
+                "input=",
+                "utc",
+                "top-scorer=",
+                "filter=",
+            ],
         )
     except getopt.GetoptError as err:
         # print help information and exit:
@@ -1886,6 +1905,7 @@ def parse_command_line():
     input_json = ""
     output_html = ""
     top_scorer = 20
+    thread_filter = ""
     for o, a in opts:
         if o in ("-i", "--input"):
             input_json = a
@@ -1905,6 +1925,8 @@ def parse_command_line():
             except:
                 print("Invalid argument for --top-scorer. Provide a number.")
                 sys.exit(1)
+        elif o in ("-f", "--filter"):
+            thread_filter = a
         elif o in ("--version"):
             print("{}".format(VERSION_STRING))
             sys.exit(0)
@@ -1927,7 +1949,12 @@ def parse_command_line():
     if not os.path.isabs(input_json):
         abs_input_json = os.path.join(os.getcwd(), input_json)
 
-    return {"input_json": input_json, "output_html": output_html, "top_scorer": top_scorer}
+    return {
+        "input_json": input_json,
+        "output_html": output_html,
+        "top_scorer": top_scorer,
+        "thread_filter": thread_filter,
+    }
 
 
 # =======================================================================================================
