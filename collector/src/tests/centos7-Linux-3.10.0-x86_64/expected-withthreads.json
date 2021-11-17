@@ -2,7 +2,7 @@
     "header": {
         "cgroup_config": {
             "name": "docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
-            "version": "v1",
+            "version": "1",
             "memory_path": "/removed-unit-test-data-location/sys/fs/cgroup/memory/docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
             "cpuacct_path": "/removed-unit-test-data-location/sys/fs/cgroup/cpu,cpuacct/docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
             "cpuset_path": "/removed-unit-test-data-location/sys/fs/cgroup/cpuset/docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2",
@@ -14,20 +14,20 @@
     "samples": [
     {
         "cgroup_memory_stats": {
-            "total_cache": 4096,
-            "total_rss": 2535424,
-            "total_rss_huge": 0,
-            "total_mapped_file": 0,
-            "total_swap": 0,
-            "total_pgpgin": 0,
-            "total_pgpgout": 0,
-            "total_pgfault": 0,
-            "total_pgmajfault": 0,
-            "total_inactive_anon": 53248,
-            "total_active_anon": 2482176,
-            "total_inactive_file": 4096,
-            "total_active_file": 0,
-            "total_unevictable": 0,
+            "stat.cache": 4096,
+            "stat.rss": 2535424,
+            "stat.rss_huge": 0,
+            "stat.mapped_file": 0,
+            "stat.swap": 0,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.pgfault": 0,
+            "stat.pgmajfault": 0,
+            "stat.inactive_anon": 53248,
+            "stat.active_anon": 2482176,
+            "stat.inactive_file": 4096,
+            "stat.active_file": 0,
+            "stat.unevictable": 0,
             "failcnt": 0
         }
     },
@@ -39,31 +39,31 @@
             "cpu1": {
                 "user": 0.092
             },
-            "cpu_tot": {
-                "user": 0.147,
-                "sys": 0.000
-            },
             "throttling": {
                 "nr_periods": 1451579,
                 "nr_throttled": 1434,
                 "throttled_time": 2451357043
+            },
+            "cpu_tot": {
+                "user": 0.147,
+                "sys": 0.000
             }
         },
         "cgroup_memory_stats": {
-            "total_cache": 4096,
-            "total_rss": 2535424,
-            "total_rss_huge": 0,
-            "total_mapped_file": 0,
-            "total_swap": 0,
-            "total_pgpgin": 0,
-            "total_pgpgout": 0,
-            "total_pgfault": 0,
-            "total_pgmajfault": 0,
-            "total_inactive_anon": 53248,
-            "total_active_anon": 2482176,
-            "total_inactive_file": 4096,
-            "total_active_file": 0,
-            "total_unevictable": 0,
+            "stat.cache": 4096,
+            "stat.rss": 2486272,
+            "stat.rss_huge": 0,
+            "stat.mapped_file": 0,
+            "stat.swap": 0,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.pgfault": 0,
+            "stat.pgmajfault": 0,
+            "stat.inactive_anon": 4096,
+            "stat.active_anon": 2482176,
+            "stat.inactive_file": 4096,
+            "stat.active_file": 0,
+            "stat.unevictable": 0,
             "failcnt": 0
         },
         "cgroup_tasks": {
@@ -247,31 +247,31 @@
             "cpu1": {
                 "user": 0.000
             },
-            "cpu_tot": {
-                "user": 83.797,
-                "sys": 0.000
-            },
             "throttling": {
                 "nr_periods": 1451579,
                 "nr_throttled": 1434,
                 "throttled_time": 2451357043
+            },
+            "cpu_tot": {
+                "user": 83.797,
+                "sys": 0.000
             }
         },
         "cgroup_memory_stats": {
-            "total_cache": 4096,
-            "total_rss": 2535424,
-            "total_rss_huge": 0,
-            "total_mapped_file": 0,
-            "total_swap": 0,
-            "total_pgpgin": 0,
-            "total_pgpgout": 0,
-            "total_pgfault": 0,
-            "total_pgmajfault": 0,
-            "total_inactive_anon": 53248,
-            "total_active_anon": 2482176,
-            "total_inactive_file": 4096,
-            "total_active_file": 0,
-            "total_unevictable": 0,
+            "stat.cache": 4096,
+            "stat.rss": 2568192,
+            "stat.rss_huge": 0,
+            "stat.mapped_file": 0,
+            "stat.swap": 0,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.pgfault": 0,
+            "stat.pgmajfault": 0,
+            "stat.inactive_anon": 4096,
+            "stat.active_anon": 2564096,
+            "stat.inactive_file": 4096,
+            "stat.active_file": 0,
+            "stat.unevictable": 0,
             "failcnt": 0
         },
         "cgroup_tasks": {
@@ -455,31 +455,31 @@
             "cpu1": {
                 "user": 0.118
             },
-            "cpu_tot": {
-                "user": 2.424,
-                "sys": 0.000
-            },
             "throttling": {
                 "nr_periods": 1451579,
                 "nr_throttled": 1434,
                 "throttled_time": 2451357043
+            },
+            "cpu_tot": {
+                "user": 2.424,
+                "sys": 0.000
             }
         },
         "cgroup_memory_stats": {
-            "total_cache": 4096,
-            "total_rss": 2535424,
-            "total_rss_huge": 0,
-            "total_mapped_file": 0,
-            "total_swap": 0,
-            "total_pgpgin": 0,
-            "total_pgpgout": 0,
-            "total_pgfault": 0,
-            "total_pgmajfault": 0,
-            "total_inactive_anon": 53248,
-            "total_active_anon": 2482176,
-            "total_inactive_file": 4096,
-            "total_active_file": 0,
-            "total_unevictable": 0,
+            "stat.cache": 4096,
+            "stat.rss": 2568192,
+            "stat.rss_huge": 0,
+            "stat.mapped_file": 0,
+            "stat.swap": 0,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.pgfault": 0,
+            "stat.pgmajfault": 0,
+            "stat.inactive_anon": 16384,
+            "stat.active_anon": 2551808,
+            "stat.inactive_file": 4096,
+            "stat.active_file": 0,
+            "stat.unevictable": 0,
             "failcnt": 0
         },
         "cgroup_tasks": {

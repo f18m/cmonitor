@@ -47,9 +47,9 @@ std::string CGroupDetected2string(CGroupDetected k)
     case CG_NONE:
         return "none";
     case CG_VERSION1:
-        return "v1";
+        return "1";
     case CG_VERSION2:
-        return "v2";
+        return "2";
     default:
         return "";
     }

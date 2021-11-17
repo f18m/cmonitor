@@ -2,12 +2,12 @@
     "header": {
         "cgroup_config": {
             "name": "sys/fs/cgroup/system.slice/docker-573203c86cacbab444fed316a0e25aa9f017144cd3def79a91684d1a63c51419.scope/",
-            "version": "v2",
+            "version": "2",
             "memory_path": "/removed-unit-test-data-location/sys/fs/cgroup/system.slice/docker-573203c86cacbab444fed316a0e25aa9f017144cd3def79a91684d1a63c51419.scope/",
             "cpuacct_path": "/removed-unit-test-data-location/sys/fs/cgroup/system.slice/docker-573203c86cacbab444fed316a0e25aa9f017144cd3def79a91684d1a63c51419.scope/",
             "cpuset_path": "/removed-unit-test-data-location/sys/fs/cgroup/system.slice/docker-573203c86cacbab444fed316a0e25aa9f017144cd3def79a91684d1a63c51419.scope/",
             "cpus": "0,1",
-            "cpu_quota_perc": 0.900000,
+            "cpu_quota_perc": 0.900,
             "memory_limit_bytes": 10485760
         }
     },
@@ -70,8 +70,8 @@
                 "throttled_usec": 0
             },
             "cpu_tot": {
-                "user": 0.000000,
-                "sys": 0.224208
+                "user": 0.000,
+                "sys": 0.224
             }
         },
         "cgroup_memory_stats": {
@@ -131,8 +131,8 @@
                 "throttled_usec": 0
             },
             "cpu_tot": {
-                "user": 0.000000,
-                "sys": 21.426594
+                "user": 0.000,
+                "sys": 21.427
             }
         },
         "cgroup_memory_stats": {
@@ -192,8 +192,8 @@
                 "throttled_usec": 0
             },
             "cpu_tot": {
-                "user": 0.000000,
-                "sys": 4.970304
+                "user": 0.000,
+                "sys": 4.970
             }
         },
         "cgroup_memory_stats": {

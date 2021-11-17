@@ -758,8 +758,8 @@ def cgroup_get_memory_limit(jheader, jdata):
         cgroup_limit_bytes = jheader["cgroup_config"]["memory_limit_bytes"]
 
     system_total_bytes = (
-        jdata[0]["cgroup_memory_stats"]["total_cache"]
-        + jdata[0]["cgroup_memory_stats"]["total_rss"]
+        jdata[0]["cgroup_memory_stats"]["stat.cache"]
+        + jdata[0]["cgroup_memory_stats"]["stat.rss"]
     )
 
     if cgroup_limit_bytes == -1:
@@ -1488,8 +1488,8 @@ def generate_cgroup_memory(web, jheader, jdata):
             continue  # skip first sample
 
         try:
-            mu = s["cgroup_memory_stats"]["total_rss"]
-            mc = s["cgroup_memory_stats"]["total_cache"]
+            mu = s["cgroup_memory_stats"]["stat.rss"]
+            mc = s["cgroup_memory_stats"]["stat.cache"]
             mfail = s["cgroup_memory_stats"]["failcnt"]
             cgroup_memory_stats.addRow(
                 [

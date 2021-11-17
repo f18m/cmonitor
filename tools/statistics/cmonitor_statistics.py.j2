@@ -109,11 +109,11 @@ class CmonitorStatistics:
             return self.cpu_throttle.dump_json()
 
         def insert_memory_stats(self, stats: dict, sample_index: int) -> None:
-            if "total_rss" in stats:
-                self.memory.insert_stat(stats["total_rss"])
+            if "stat.rss" in stats:
+                self.memory.insert_stat(stats["stat.rss"])
             else:
                 print(
-                    f"WARNING: The JSON file provided does not contain the 'total_rss' measurement for sample #{sample_index}. Skipping this sample."
+                    f"WARNING: The JSON file provided does not contain the 'stat.rss' measurement for sample #{sample_index}. Skipping this sample."
                 )
             if "failcnt" in stats:
                 self.memory_failcnt.insert_stat(stats["failcnt"])

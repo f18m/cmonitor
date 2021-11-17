@@ -35,6 +35,22 @@ std::string get_file_string(const std::string& file)
     return std::string((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 }
 
+void write_file_string(const std::string& filename, const std::string& str)
+{
+    std::ofstream out(filename);
+    out << str;
+    out.close();
+}
+
+unsigned int replace_string_in_file(const std::string& filename, const std::string& from, const std::string& to, bool allOccurrences)
+{
+    std::string contents_str = get_file_string(filename);
+    unsigned int noccurrences = replace_string(contents_str, from, to, allOccurrences);
+    write_file_string(filename, contents_str);
+
+    return noccurrences;
+}
+
 void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx, uint64_t& sample_timestamp_nsec)
 {
     std::string orig_sample_abs_dir = get_unit_test_abs_dir() + kernel_test + "/sample" + std::to_string(sampleIdx);
@@ -115,21 +131,21 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
     // make sure no errors have been found in the processing of files so far
     ASSERT_EQ(CMonitorLogger::instance()->get_num_errors(), 0);
 
-    // now read back the resulting JSON... but hide/mask-out the precise location of the unit testing data;
+    // now before reading back the resulting JSON hide/mask-out the precise location of the unit testing data;
     // that's because on the developer machine this will be an absolute path like
     //     /home/youruser/myprojects/git/cmonitor/collector/src/tests/centos7-Linux-3.10.0-x86_64/
     // while in the CI/CD pipeline it will be something like:
     //     /home/runner/work/cmonitor/cmonitor/collector/src/tests/centos7-Linux-3.10.0-x86_64/
-    std::string result_json_str = get_file_string(result_json_file);
-    replace_string(
-        result_json_str, current_sample_abs_dir, "/removed-unit-test-data-location", true /* allOccurrences */);
+    replace_string_in_file(
+        result_json_file, current_sample_abs_dir, "/removed-unit-test-data-location", true /* allOccurrences */);
 
     // now compare produced JSON with expected JSON
+    std::string result_json_str = get_file_string(result_json_file);
     std::string expected_json_str = get_file_string(expected_json_file);
     ASSERT_EQ(result_json_str, expected_json_str);
 }
 
-#if 0
+#if 1
 TEST(CGroups, centos7_Linux_3_10_0_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
@@ -162,7 +178,7 @@ TEST(CGroups, ubuntu2004_Linux_5_4_0_withthreads)
         "docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a", true /* with threads */,
         4 /* nsamples */);
 }
-#else
+#endif
 TEST(CGroups, fedora35_Linux_5_14_17_withthreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
@@ -171,7 +187,6 @@ TEST(CGroups, fedora35_Linux_5_14_17_withthreads)
         "sys/fs/cgroup/system.slice/docker-573203c86cacbab444fed316a0e25aa9f017144cd3def79a91684d1a63c51419.scope/",
         true /* with threads */, 4 /* nsamples */);
 }
-#endif
 
 //------------------------------------------------------------------------------
 // main

@@ -44,13 +44,19 @@ size_t CMonitorCgroups::cgroup_proc_memory_dump_flat_keyed(
     uint64_t value = 0;
     while (fgets(m_buff, 1000, fp_memory_stats) != NULL) {
 
+        char* pstart = m_buff;
         if (m_nCGroupsFound == CG_VERSION1)
+        {
             if (strncmp(m_buff, "total_", 6) != 0)
                 continue; // skip NON-totals: collect only cgroup-total values
+            
+            // forget about the total_ prefix to make cgroups v1 stat names more similar to those of cgroups v2
+            pstart = &m_buff[6];
+        }
 
-        size_t len = strlen(m_buff);
-        if (m_buff[len - 1] == '\n')
-            m_buff[len - 1] = 0;
+        size_t len = strlen(pstart);
+        if (pstart[len - 1] == '\n')
+            pstart[len - 1] = 0;
 #if 0 // in both cgroups v1 and cgroups v2 the "memory" controller will never generate 'special' characters
         for (size_t i = 0; i < len; i++) {
             if (m_buff[i] == '(')
@@ -62,7 +68,7 @@ size_t CMonitorCgroups::cgroup_proc_memory_dump_flat_keyed(
         }
 #endif
 
-        if (split_label_value(m_buff, ' ', label, value)) {
+        if (split_label_value(pstart, ' ', label, value)) {
             if (allowedStatsNames.empty() /* all stats must be put in output */
                 || allowedStatsNames.find(label) != allowedStatsNames.end()) {
                 m_pOutput->plong((label_prefix + label).c_str(), value);
