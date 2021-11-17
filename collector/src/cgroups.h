@@ -97,19 +97,25 @@ public:
     std::set<uint64_t> get_cgroup_cpus() const { return m_cgroup_cpus; }
 
 private:
+    // cgroups config
     bool cgroup_init_check_for_our_pid();
-    bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts);
-    bool cgroup_is_allowed_cpu(int cpu);
-    bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
-    bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */);
-
     void cgroup_v1_read_limits();
     void cgroup_v2_read_limits();
 
+    // cgroup processes
+    bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts);
+    bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
+
+    // cpuacct and cpuset cgroups
+    bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */);
+    bool cgroup_proc_cpuacct_v1_counters_by_cpu(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
+    bool cgroup_proc_cpuacct_v2_counters(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
+    bool cgroup_is_allowed_cpu(int cpu);
+    bool read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<uint64_t>& cpus);
+
+    // memory cgroups
     size_t cgroup_proc_memory_dump_flat_keyed(
         const std::string& path, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix);
-
-    bool read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<uint64_t>& cpus);
 
 private:
     // main switch that indicates if cgroup_init() was successful or not

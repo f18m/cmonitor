@@ -106,30 +106,13 @@ bool get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT)
 bool are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
 {
     /*
-     *
-     * ABOUT /proc/%d/cgroup:
-     *   See http://man7.org/linux/man-pages/man7/cgroups.7.html, look for "/proc/[pid]/cgroup (since Linux 2.6.24)"
-     *   Each line is composed by:
-     *                     hierarchy-ID:controller-list:cgroup-path
-     *   The problem is that this file does not provide you the FULL cgroup path, which depends on where exactly that
-     *   cgroup has been mounted.
-     *
      * ABOUT /proc/%d/mounts:
      *   See http://man7.org/linux/man-pages/man5/fstab.5.html
      *   Each line is composed by:
      *                     fs_spec  fs_file  fs_vfstype  fs_mntops  fs_freq  fs_passno
      *   We are interested into the lines that provide the "cgroup" or "cgroup2" fs_spec
      *
-     *   For cgroups v1:
-     *     under LXC:
-     *       cgroup /sys/fs/cgroup/cpuset/lxc/container1-main cgroup rw,nosuid,nodev,noexec,relatime,cpuset 0 0
-     *     under Docker:
-     *       cgroup /sys/fs/cgroup/cpuset cgroup ro,nosuid,nodev,noexec,relatime,cpuset 0 0
-     *   the second string fs_file (/sys/fs/cgroup/cpuset/lxc/container1-main or /sys/fs/cgroup/cpuset) tells you where
-     * to find all the current value of that cgroup; the fourth string fs_mntops contains the indication of the cgroup
-     * type (e.g. cpuset)
-     *
-     *   For cgroups v2:
+     *   Example contents for proc/%d/mounts when using cgroups v2:
      *     under Docker:
      *      cgroup2 /sys/fs/cgroup cgroup2 rw,seclabel,nosuid,nodev,noexec,relatime,nsdelegate 0 0
      *

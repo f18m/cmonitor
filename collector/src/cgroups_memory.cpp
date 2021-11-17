@@ -40,7 +40,8 @@ size_t CMonitorCgroups::cgroup_proc_memory_dump_flat_keyed(
     if ((fp_memory_stats = fopen(path.c_str(), "r")) == NULL)
         return nread;
 
-    std::string label, value_str;
+    std::string label;
+    uint64_t value = 0;
     while (fgets(m_buff, 1000, fp_memory_stats) != NULL) {
 
         if (m_nCGroupsFound == CG_VERSION1)
@@ -61,8 +62,7 @@ size_t CMonitorCgroups::cgroup_proc_memory_dump_flat_keyed(
         }
 #endif
 
-        uint64_t value = 0;
-        if (split_string_on_first_separator(m_buff, ' ', label, value_str) && string2int(value_str.c_str(), value)) {
+        if (split_label_value(m_buff, ' ', label, value)) {
             if (allowedStatsNames.empty() /* all stats must be put in output */
                 || allowedStatsNames.find(label) != allowedStatsNames.end()) {
                 m_pOutput->plong((label_prefix + label).c_str(), value);

@@ -181,6 +181,12 @@ bool split_string_on_first_separator(const std::string& str, char separator, std
     return true;
 }
 
+bool split_label_value(const std::string& str, char separator, std::string& label, uint64_t& value)
+{
+    std::string value_str;
+    return split_string_on_first_separator(str, separator, label, value_str) && string2int(value_str.c_str(), value);
+}
+
 bool parse_string_with_multiple_ranges(const std::string& data, std::vector<uint64_t>& result)
 {
     // here we support strings containing a combination of

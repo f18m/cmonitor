@@ -41,8 +41,10 @@ bool CMonitorCgroups::read_from_system_cpu_for_current_cgroup(std::string kernel
 bool CMonitorCgroups::read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */)
 {
     FILE* fp1 = 0;
-    if ((fp1 = fopen(path.c_str(), "r")) == NULL)
+    if ((fp1 = fopen(path.c_str(), "r")) == NULL) {
+        CMonitorLogger::instance()->LogError("failed to open %s", path.c_str());
         return false;
+    }
 
     if (fgets(m_buff, CGROUP_COLLECTOR_BUFF_SIZE, fp1) == NULL) {
         fclose(fp1);
@@ -90,6 +92,61 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec)
     bool print = (m_num_cpuacct_samples_collected > 0);
     m_num_cpuacct_samples_collected++;
 
+    if (print)
+        m_pOutput->psection_start("cgroup_cpuacct_stats");
+
+    cpuacct_utilisation_t total_cpu_usage = { 0 };
+    bool bValidData = false;
+    switch (m_nCGroupsFound) {
+    case CG_VERSION1:
+        // emit per-CPU information since cgroups v1 provide such granularity
+        // from these, we also compute the TOTAL cpu usages
+        bValidData = cgroup_proc_cpuacct_v1_counters_by_cpu(print, elapsed_sec, total_cpu_usage);
+        break;
+
+    case CG_VERSION2:
+        // with cgroups v2, there is no more per-cpu usage reported, we just have
+        // the total aggregated cpu usage break down in kernel/user space
+        bValidData = cgroup_proc_cpuacct_v2_counters(print, elapsed_sec, total_cpu_usage);
+        break;
+
+    case CG_NONE:
+        assert(0);
+        return;
+    }
+
+    // emit aggregated counter across all cpus
+    if (bValidData) {
+        if (print && elapsed_sec > MIN_ELAPSED_SECS) {
+            double cpuUserPercent = // force newline
+                100
+                * ((double)(total_cpu_usage.counter_nsec_user_mode
+                    - m_cpuacct_prev_values_for_total_cpu.counter_nsec_user_mode))
+                / (elapsed_sec * 1E9);
+            double cpuSysPercent = // force newline
+                100
+                * ((double)(total_cpu_usage.counter_nsec_sys_mode
+                    - m_cpuacct_prev_values_for_total_cpu.counter_nsec_sys_mode))
+                / (elapsed_sec * 1E9);
+
+            // output JSON counter
+            m_pOutput->psubsection_start("cpu_tot");
+            m_pOutput->pdouble("user", cpuUserPercent);
+            m_pOutput->pdouble("sys", cpuSysPercent);
+            m_pOutput->psubsection_end();
+        }
+
+        // save for next cycle
+        m_cpuacct_prev_values_for_total_cpu = total_cpu_usage;
+    }
+
+    if (print)
+        m_pOutput->psection_end();
+}
+
+bool CMonitorCgroups::cgroup_proc_cpuacct_v1_counters_by_cpu(
+    bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage)
+{
     /* NOTE: newer distros have stats like
      *     /sys/fs/cgroup/cpu,cpuacct/cpuacct.usage_percpu_sys
      *     /sys/fs/cgroup/cpu,cpuacct/cpuacct.usage_percpu_user
@@ -103,14 +160,9 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec)
      *  https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/resource_management_guide/sec-cpuacct
      */
 
-    // non-static data:
     char label[512];
 
-    if (print)
-        m_pOutput->psection_start("cgroup_cpuacct_stats");
-
     std::string cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
-    cpuacct_utilisation_t total_cpu_usage = { 0 };
     bool bValidData = true;
     if (file_or_dir_exists(cgroup_stat_file.c_str())) {
 
@@ -221,41 +273,18 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec)
         }
     }
 
-    // emit aggregated counter across all cpus
-    if (bValidData) {
-        if (print && elapsed_sec > MIN_ELAPSED_SECS) {
-            double cpuUserPercent = // force newline
-                100
-                * ((double)(total_cpu_usage.counter_nsec_user_mode
-                    - m_cpuacct_prev_values_for_total_cpu.counter_nsec_user_mode))
-                / (elapsed_sec * 1E9);
-            double cpuSysPercent = // force newline
-                100
-                * ((double)(total_cpu_usage.counter_nsec_sys_mode
-                    - m_cpuacct_prev_values_for_total_cpu.counter_nsec_sys_mode))
-                / (elapsed_sec * 1E9);
-
-            // output JSON counter
-            m_pOutput->psubsection_start("cpu_tot");
-            m_pOutput->pdouble("user", cpuUserPercent);
-            m_pOutput->pdouble("sys", cpuSysPercent);
-            m_pOutput->psubsection_end();
-        }
-
-        // save for next cycle
-        m_cpuacct_prev_values_for_total_cpu = total_cpu_usage;
-    } else {
-        CMonitorLogger::instance()->LogError("failed to open %s", cgroup_stat_file.c_str());
-    }
-
-    // See
-    //   https://www.kernel.org/doc/Documentation/cgroup-v2.txt
+    // Provide throttling statistics; in cgroups v1 these are:
+    //   nr_periods <num>
+    //   nr_throttled <num>
+    //   throttled_time <num_in_nanosecs>
+    // Interesting reads:
     //   https://medium.com/indeed-engineering/unthrottled-fixing-cpu-limits-in-the-cloud-a0995ede8e89
 
     cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpu.stat";
     if (file_or_dir_exists(cgroup_stat_file.c_str())) {
         if (m_fp_cpuacct_stats == 0) {
             if ((m_fp_cpuacct_stats = fopen(cgroup_stat_file.c_str(), "r")) == NULL) {
+                CMonitorLogger::instance()->LogError("failed to open %s", cgroup_stat_file.c_str());
                 m_fp_cpuacct_stats = 0;
             }
         } else {
@@ -281,6 +310,72 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec)
         CMonitorLogger::instance()->LogError("failed to open %s", cgroup_stat_file.c_str());
     }
 
-    if (print)
-        m_pOutput->psection_end();
+    return bValidData;
+}
+
+bool CMonitorCgroups::cgroup_proc_cpuacct_v2_counters(
+    bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage)
+{
+    // see https://www.kernel.org/doc/Documentation/cgroup-v2.txt
+
+    std::string cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpu.stat";
+    if (!file_or_dir_exists(cgroup_stat_file.c_str())) {
+        total_cpu_usage.counter_nsec_sys_mode = 0;
+        total_cpu_usage.counter_nsec_user_mode = 0;
+        return false;
+    }
+
+    if (m_fp_cpuacct_stats == 0) {
+        if ((m_fp_cpuacct_stats = fopen(cgroup_stat_file.c_str(), "r")) == NULL) {
+            CMonitorLogger::instance()->LogError("failed to open %s", cgroup_stat_file.c_str());
+            m_fp_cpuacct_stats = 0;
+        }
+    } else {
+        rewind(m_fp_cpuacct_stats);
+    }
+
+    unsigned int nFoundCpuUsageValues = 0;
+    if (m_fp_cpuacct_stats) {
+
+        if (print)
+            m_pOutput->psubsection_start("throttling");
+
+        std::string label;
+        uint64_t value;
+        while (fgets(m_buff, 1000, m_fp_cpuacct_stats) != NULL) {
+
+            size_t len = strlen(m_buff);
+            if (m_buff[len - 1] == '\n')
+                m_buff[len - 1] = 0;
+
+            if (split_label_value(m_buff, ' ', label, value)) {
+                // save for later any info about CPU usage...
+                if (label == "usage_usec")
+                    continue; // skip this, it's obtained as user_usec+system_usec
+                if (label == "user_usec") {
+                    total_cpu_usage.counter_nsec_user_mode = value * 1000;
+                    nFoundCpuUsageValues++;
+                    continue;
+                }
+                if (label == "system_usec") {
+                    total_cpu_usage.counter_nsec_sys_mode = value * 1000;
+                    nFoundCpuUsageValues++;
+                    continue;
+                }
+
+                // emit immediately all informations about throttling...
+                if (print)
+                    m_pOutput->plong(label.c_str(), value);
+            }
+        }
+
+        if (print)
+            m_pOutput->psubsection_end();
+    }
+
+    // FIXME: just to get unit tests successful
+    fclose(m_fp_cpuacct_stats);
+    m_fp_cpuacct_stats = 0;
+
+    return nFoundCpuUsageValues == 2;
 }
