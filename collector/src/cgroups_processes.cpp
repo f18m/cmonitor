@@ -343,9 +343,8 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(
 // CMonitorCgroups - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
 
-bool CMonitorCgroups::cgroup_collect_pids(std::vector<pid_t>& pids)
+bool CMonitorCgroups::cgroup_collect_pids(const std::string& path, std::vector<pid_t>& pids)
 {
-    std::string path = m_cgroup_cpuacct_kernel_path + "/tasks";
     CMonitorLogger::instance()->LogDebug("Trying to read tasks inside the monitored cgroup from %s.\n", path.c_str());
     if (!file_or_dir_exists(path.c_str()))
         return false;
@@ -390,8 +389,35 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
 
     // collect all PIDs for current cgroup
     std::vector<pid_t> all_pids;
-    if (!cgroup_collect_pids(all_pids))
+    switch (m_nCGroupsFound) {
+    case CG_VERSION1:
+        // in cgroups v1 all TIDs are available in the cgroup file named "tasks"
+        // of course here we're assuming that the "tasks" under the cpuacct cgroup are the ones
+        // the user is interested to monitor... in theory the "tasks" under other controllers like "memory"
+        // might be different; in practice with Docker/LXC/Kube that does not happen
+        if (!cgroup_collect_pids(m_cgroup_cpuacct_kernel_path + "/tasks", all_pids))
+            return;
+        break;
+
+    case CG_VERSION2:
+        // with cgroups v2, there are 2 different files that contain PIDs/TIDs so we can just
+        // read the right file up-front based on 'include_threads':
+        if (include_threads)
+        {
+            if (!cgroup_collect_pids(m_cgroup_cpuacct_kernel_path + "/cgroup.threads", all_pids))
+                return;
+        }
+        else
+        {
+            if (!cgroup_collect_pids(m_cgroup_cpuacct_kernel_path + "/cgroup.procs", all_pids))
+                return;
+        }
+        break;
+
+    case CG_NONE:
+        assert(0);
         return;
+    }
 
     // get new fresh processes data and update current database:
     currDB.clear();

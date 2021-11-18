@@ -2,7 +2,11 @@
 
 - Start using "fmt-devel" to get very fast formatting support, see https://github.com/fmtlib/fmt
   since the collector is mostly dealing with string/integer operations
-- Write Gbenchmark to compare FILE* fopen() with open() syscall, since buffering is not interesting to our usecase
+- Write Gbenchmark to compare 
+   * FILE* fopen() 
+   * open() syscall
+   * std::ifstream
+  since buffering is not interesting to our usecase... currently collector is using all of 3 solutions above
   could not find any on the web!
 - Add 'blkio' cgroup data collection
 - Add support for UDP data tx to InfluxDB

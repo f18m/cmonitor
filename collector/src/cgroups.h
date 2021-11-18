@@ -104,7 +104,7 @@ private:
 
     // cgroup processes
     bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts);
-    bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
+    bool cgroup_collect_pids(const std::string& file, std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
     // cpuacct and cpuset cgroups
     bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */);
