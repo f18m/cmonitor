@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Monitoring data for host modcentos7-build3</title>
+  <style>
+     html,body { height:85%; }
+     body { background-color: #eaeaea; }
+     h3 { margin: 0px; }
+     ul { margin: 0 0 0 0;padding-left: 20px; }
+     button { margin-bottom: 3px; }
+     #monitored_system_span { background-color: white; color: red; padding: 4px; }
+     #button_table { width:100%; border-collapse: collapse; }
+     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
+     #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
+     #chart_master_inner_p { font-size: x-large; }
+     #bottom_div { float:left; max-width: 40%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #bottom_about_div { float:right; max-width: 15%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #bottom_div h3 { font-size: medium; }
+     #bottom_div li { font-size: smaller; }
+     #bottom_about_div h3 { font-size: medium; }
+     #bottom_about_div li { font-size: smaller; }
+     #bottom_table_val { font-family: monospace; }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript">
+/* Load GoogleCharts: */
+google.load("visualization", "1.1", {packages:["corechart"]});
+google.setOnLoadCallback(setup_button_click_handlers);
+
+/* The global chart object: */
+var g_chart = null;
+
+/* Currently selected data & options: */
+var g_current_data = null;
+var g_current_options = null;
+
+/* The global window showing the configuration of all collected data: */
+var g_configWindow = null;
+
+/* Create a trigger for window resize that will redraw current chart */
+var g_window_resize_timer = null;
+window.addEventListener('resize', function(e){
+  if (g_window_resize_timer) 
+    clearTimeout(g_window_resize_timer);
+
+  g_window_resize_timer = setTimeout(function() {
+    if (g_current_data && g_current_options)
+      g_chart.draw(g_current_data, g_current_options);
+  }, 500);
+});
+
+/* Utility function used with combobox controls: */
+function call_function_named(func_name) {
+  eval(func_name + "()");
+}
+
+/* Utility function used to clear main graph: */
+function clear_chart() {
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+}
+

@@ -758,16 +758,20 @@ def cgroup_get_memory_limit(jheader, jdata):
         cgroup_limit_bytes = jheader["cgroup_config"]["memory_limit_bytes"]
 
     if jheader["cgroup_config"]["version"] == 1:
+        # cgroups v1
         system_total_bytes = (
             jdata[0]["cgroup_memory_stats"]["stat.cache"]
             + jdata[0]["cgroup_memory_stats"]["stat.rss"]
         )
     else:
         # cgroups v2
-        system_total_bytes = (
-            jdata[0]["cgroup_memory_stats"]["stat.cache"]
-            + jdata[0]["cgroup_memory_stats"]["stat.rss"]
-        )
+        if "proc_meminfo" in jheader:
+            system_total_bytes = jheader["proc_meminfo"]["MemTotal"]
+        else:
+            # we have no clue what will be the "max memory" to plot (unless we do full scanning of all samples,
+            # which of course is very slow)... so we assume that twice of memory used by first sample will be
+            # a good approx:
+            system_total_bytes = jdata[0]["cgroup_memory_stats"]["stat.current"] * 2
 
     if cgroup_limit_bytes == -1:
         divider, unit = choose_byte_divider(system_total_bytes)
@@ -1487,6 +1491,8 @@ def generate_cgroup_memory(web, jheader, jdata):
         ["Timestamp", "Used", "Cached (DiskRead)", "Alloc Failures", "Limit"]
     )
 
+    ver = jheader["cgroup_config"]["version"]
+
     mem_limit_bytes, divider, unit = cgroup_get_memory_limit(jheader, jdata)
 
     n_invalid_samples = 0
@@ -1495,9 +1501,15 @@ def generate_cgroup_memory(web, jheader, jdata):
             continue  # skip first sample
 
         try:
-            mu = s["cgroup_memory_stats"]["stat.rss"]
-            mc = s["cgroup_memory_stats"]["stat.cache"]
-            mfail = s["cgroup_memory_stats"]["failcnt"]
+            if ver == 1:
+                mu = s["cgroup_memory_stats"]["stat.rss"]
+                mc = s["cgroup_memory_stats"]["stat.cache"]
+                mfail = s["cgroup_memory_stats"]["failcnt"]
+            else:
+                # cgroups v2
+                mu = s["cgroup_memory_stats"]["stat.anon"]
+                mc = s["cgroup_memory_stats"]["stat.file"]
+                mfail = s["cgroup_memory_stats"]["events.oom_kill"]
             cgroup_memory_stats.addRow(
                 [
                     s["timestamp"][g_datetime_field],
