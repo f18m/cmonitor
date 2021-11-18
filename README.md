@@ -95,22 +95,17 @@ with per-thread granularity.
 
 ## Supported Linux Kernels
 
-This project currently supports only cgroups v1. Work is in progress to support cgroups v2.
-However for the time being it means you can use `cmonitor-collector` utility on:
-* Centos 7 and Centos 8 
-* Fedora 30 and earlier releases
-* Ubuntu 21.04 and earlier releases
-* All other Linux distributions where the following command returns an empty response:
-
-```
-grep cgroup2 /proc/filesystems
-```
+Since version 2.0 this project supports both cgroups v1 and cgroups v2.
+This means that the "cmonitor_collector" utility can run on any Linux kernel regardless of its version and its boot options 
+(since boot options may alter the cgroups technology in use).
 
 Note that `cmonitor-collector` utility is currently unit-tested against:
 * Centos 7 (Linux kernel v3.10.0)
 * Ubuntu 20.04 (Linux kernel v5.4.0)
+* Fedora 35 (Linux kernel v5.14.17)
 
 Other kernels will be tested in near future. Of course pull requests are welcome to extend coverage.
+See [tests folder](collector/src/tests) for more details.
 
 ## How to install
 

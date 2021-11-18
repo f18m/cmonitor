@@ -73,77 +73,6 @@ bool CMonitorCgroups::read_cpuacct_line(const std::string& path, std::vector<uin
     return true;
 }
 
-// ----------------------------------------------------------------------------------
-// CMonitorCgroups - Functions used by the cmonitor_collector engine
-// ----------------------------------------------------------------------------------
-
-bool CMonitorCgroups::cgroup_is_allowed_cpu(int cpu)
-{
-    if (m_nCGroupsFound == CG_NONE)
-        return true; // allowed
-    return m_cgroup_cpus.find(cpu) != m_cgroup_cpus.end();
-}
-
-void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec)
-{
-    if (m_nCGroupsFound == CG_NONE)
-        return;
-
-    bool print = (m_num_cpuacct_samples_collected > 0);
-    m_num_cpuacct_samples_collected++;
-
-    if (print)
-        m_pOutput->psection_start("cgroup_cpuacct_stats");
-
-    cpuacct_utilisation_t total_cpu_usage = { 0 };
-    bool bValidData = false;
-    switch (m_nCGroupsFound) {
-    case CG_VERSION1:
-        // emit per-CPU information since cgroups v1 provide such granularity
-        // from these, we also compute the TOTAL cpu usages
-        bValidData = cgroup_proc_cpuacct_v1_counters_by_cpu(print, elapsed_sec, total_cpu_usage);
-        break;
-
-    case CG_VERSION2:
-        // with cgroups v2, there is no more per-cpu usage reported, we just have
-        // the total aggregated cpu usage break down in kernel/user space
-        bValidData = cgroup_proc_cpuacct_v2_counters(print, elapsed_sec, total_cpu_usage);
-        break;
-
-    case CG_NONE:
-        assert(0);
-        return;
-    }
-
-    // emit aggregated counter across all cpus
-    if (bValidData) {
-        if (print && elapsed_sec > MIN_ELAPSED_SECS) {
-            double cpuUserPercent = // force newline
-                100
-                * ((double)(total_cpu_usage.counter_nsec_user_mode
-                    - m_cpuacct_prev_values_for_total_cpu.counter_nsec_user_mode))
-                / (elapsed_sec * 1E9);
-            double cpuSysPercent = // force newline
-                100
-                * ((double)(total_cpu_usage.counter_nsec_sys_mode
-                    - m_cpuacct_prev_values_for_total_cpu.counter_nsec_sys_mode))
-                / (elapsed_sec * 1E9);
-
-            // output JSON counter
-            m_pOutput->psubsection_start("cpu_tot");
-            m_pOutput->pdouble("user", cpuUserPercent);
-            m_pOutput->pdouble("sys", cpuSysPercent);
-            m_pOutput->psubsection_end();
-        }
-
-        // save for next cycle
-        m_cpuacct_prev_values_for_total_cpu = total_cpu_usage;
-    }
-
-    if (print)
-        m_pOutput->psection_end();
-}
-
 bool CMonitorCgroups::cgroup_proc_cpuacct_v1_counters_by_cpu(
     bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage)
 {
@@ -378,4 +307,77 @@ bool CMonitorCgroups::cgroup_proc_cpuacct_v2_counters(
     m_fp_cpuacct_stats = 0;
 
     return nFoundCpuUsageValues == 2;
+}
+
+// ----------------------------------------------------------------------------------
+// CMonitorCgroups - Functions used by the cmonitor_collector engine
+// ----------------------------------------------------------------------------------
+
+bool CMonitorCgroups::cgroup_is_allowed_cpu(int cpu)
+{
+    if (m_nCGroupsFound == CG_NONE)
+        return true; // allowed
+    return m_cgroup_cpus.find(cpu) != m_cgroup_cpus.end();
+}
+
+void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec)
+{
+    if (m_nCGroupsFound == CG_NONE)
+        return;
+
+    DEBUGLOG_FUNCTION_START();
+
+    bool print = (m_num_cpuacct_samples_collected > 0);
+    m_num_cpuacct_samples_collected++;
+
+    if (print)
+        m_pOutput->psection_start("cgroup_cpuacct_stats");
+
+    cpuacct_utilisation_t total_cpu_usage = { 0 };
+    bool bValidData = false;
+    switch (m_nCGroupsFound) {
+    case CG_VERSION1:
+        // emit per-CPU information since cgroups v1 provide such granularity
+        // from these, we also compute the TOTAL cpu usages
+        bValidData = cgroup_proc_cpuacct_v1_counters_by_cpu(print, elapsed_sec, total_cpu_usage);
+        break;
+
+    case CG_VERSION2:
+        // with cgroups v2, there is no more per-cpu usage reported, we just have
+        // the total aggregated cpu usage break down in kernel/user space
+        bValidData = cgroup_proc_cpuacct_v2_counters(print, elapsed_sec, total_cpu_usage);
+        break;
+
+    case CG_NONE:
+        assert(0);
+        return;
+    }
+
+    // emit aggregated counter across all cpus
+    if (bValidData) {
+        if (print && elapsed_sec > MIN_ELAPSED_SECS) {
+            double cpuUserPercent = // force newline
+                100
+                * ((double)(total_cpu_usage.counter_nsec_user_mode
+                    - m_cpuacct_prev_values_for_total_cpu.counter_nsec_user_mode))
+                / (elapsed_sec * 1E9);
+            double cpuSysPercent = // force newline
+                100
+                * ((double)(total_cpu_usage.counter_nsec_sys_mode
+                    - m_cpuacct_prev_values_for_total_cpu.counter_nsec_sys_mode))
+                / (elapsed_sec * 1E9);
+
+            // output JSON counter
+            m_pOutput->psubsection_start("cpu_tot");
+            m_pOutput->pdouble("user", cpuUserPercent);
+            m_pOutput->pdouble("sys", cpuSysPercent);
+            m_pOutput->psubsection_end();
+        }
+
+        // save for next cycle
+        m_cpuacct_prev_values_for_total_cpu = total_cpu_usage;
+    }
+
+    if (print)
+        m_pOutput->psection_end();
 }

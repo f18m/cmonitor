@@ -339,10 +339,6 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(
     return true;
 }
 
-// ----------------------------------------------------------------------------------
-// CMonitorCgroups - Functions used by the cmonitor_collector engine
-// ----------------------------------------------------------------------------------
-
 bool CMonitorCgroups::cgroup_collect_pids(const std::string& path, std::vector<pid_t>& pids)
 {
     CMonitorLogger::instance()->LogDebug("Trying to read tasks inside the monitored cgroup from %s.\n", path.c_str());
@@ -352,8 +348,6 @@ bool CMonitorCgroups::cgroup_collect_pids(const std::string& path, std::vector<p
     std::ifstream inputf(path);
     if (!inputf.is_open())
         return false; // cannot read the cgroup information!
-
-    DEBUGLOG_FUNCTION_START();
 
     std::string line;
     while (std::getline(inputf, line)) {
@@ -370,12 +364,18 @@ bool CMonitorCgroups::cgroup_collect_pids(const std::string& path, std::vector<p
     return true;
 }
 
+// ----------------------------------------------------------------------------------
+// CMonitorCgroups - Functions used by the cmonitor_collector engine
+// ----------------------------------------------------------------------------------
+
 void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads)
 {
     char str[256];
 
     if (m_nCGroupsFound == CG_NONE)
         return;
+
+    DEBUGLOG_FUNCTION_START();
 
     if (m_num_tasks_samples_collected == 0)
         output_opts = PF_NONE; // the first sample is used as bootstrap: we cannot generate any meaningful delta and

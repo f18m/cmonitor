@@ -13,6 +13,9 @@
 #include <malloc.h>
 #include <sstream> //std::stringstream
 
+//------------------------------------------------------------------------------
+// GTest helpers
+//------------------------------------------------------------------------------
 std::string get_unit_test_abs_dir()
 {
     static std::string ret;
@@ -145,7 +148,9 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
     ASSERT_EQ(result_json_str, expected_json_str);
 }
 
-#if 1
+//------------------------------------------------------------------------------
+// unit tests on cgroups v1
+//------------------------------------------------------------------------------
 TEST(CGroups, centos7_Linux_3_10_0_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
@@ -162,6 +167,7 @@ TEST(CGroups, centos7_Linux_3_10_0_withthreads)
         "docker/5ccb1395eef093a837e302c52f8cb633cc276ea7d697151ecc34187db571a3b2", true /* with threads */,
         4 /* nsamples */);
 }
+
 TEST(CGroups, ubuntu2004_Linux_5_4_0_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
@@ -178,7 +184,19 @@ TEST(CGroups, ubuntu2004_Linux_5_4_0_withthreads)
         "docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a", true /* with threads */,
         4 /* nsamples */);
 }
-#endif
+
+//------------------------------------------------------------------------------
+// unit tests on cgroups v2
+//------------------------------------------------------------------------------
+
+TEST(CGroups, fedora35_Linux_5_14_17_nothreads)
+{
+    run_cmonitor_on_tarball_samples( // force newline
+        "nothreads", // force newline
+        "fedora35-Linux-5.14.17-x86_64", // force newline
+        "sys/fs/cgroup/system.slice/docker-573203c86cacbab444fed316a0e25aa9f017144cd3def79a91684d1a63c51419.scope/",
+        false /* with threads */, 4 /* nsamples */);
+}
 TEST(CGroups, fedora35_Linux_5_14_17_withthreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
@@ -187,6 +205,8 @@ TEST(CGroups, fedora35_Linux_5_14_17_withthreads)
         "sys/fs/cgroup/system.slice/docker-573203c86cacbab444fed316a0e25aa9f017144cd3def79a91684d1a63c51419.scope/",
         true /* with threads */, 4 /* nsamples */);
 }
+
+
 
 //------------------------------------------------------------------------------
 // main

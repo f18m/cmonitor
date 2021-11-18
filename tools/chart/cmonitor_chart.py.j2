@@ -757,10 +757,17 @@ def cgroup_get_memory_limit(jheader, jdata):
         # IMPORTANT: this value could be -1 if there's no limit
         cgroup_limit_bytes = jheader["cgroup_config"]["memory_limit_bytes"]
 
-    system_total_bytes = (
-        jdata[0]["cgroup_memory_stats"]["stat.cache"]
-        + jdata[0]["cgroup_memory_stats"]["stat.rss"]
-    )
+    if jheader["cgroup_config"]["version"] == 1:
+        system_total_bytes = (
+            jdata[0]["cgroup_memory_stats"]["stat.cache"]
+            + jdata[0]["cgroup_memory_stats"]["stat.rss"]
+        )
+    else:
+        # cgroups v2
+        system_total_bytes = (
+            jdata[0]["cgroup_memory_stats"]["stat.cache"]
+            + jdata[0]["cgroup_memory_stats"]["stat.rss"]
+        )
 
     if cgroup_limit_bytes == -1:
         divider, unit = choose_byte_divider(system_total_bytes)

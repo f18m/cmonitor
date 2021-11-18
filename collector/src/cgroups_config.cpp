@@ -218,6 +218,8 @@ void CMonitorCgroups::cgroup_init( // force newline
     const std::string& cgroup_prefix_for_test, // force newline
     const std::string& proc_prefix_for_test)
 {
+    DEBUGLOG_FUNCTION_START();
+
     m_nCGroupsFound = CG_NONE;
     m_cgroup_systemd_name = "N/A";
     m_proc_prefix = proc_prefix_for_test;

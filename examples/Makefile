@@ -30,11 +30,12 @@ distclean: clean
 
 #
 # baremetal1 example:
-#  example of graph generated with the performance stats collected from a physical (baremetal) server running Ubuntu 18.04
+#  example of graph generated with the performance stats collected from a physical (baremetal) server running Centos7
 #
 
 regen_baremetal1:
 	@echo "Launching load simulator to have some CPU at 100% and so on..."
+	@-pkill example-load.sh # if any
 	./example-load.sh &
 	@echo "Regenerating example JSON... this will take about 10minutes (60 samples every 10secs)."
 	@$(CMONITOR_COLLECTOR) \

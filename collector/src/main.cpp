@@ -749,11 +749,11 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     std::set<std::string> charted_stats_from_cgroup_memory_v1, charted_stats_from_cgroup_memory_v2;
     if (m_cfg.m_nOutputFields == PF_USED_BY_CHART_SCRIPT_ONLY) {
         // cgroups v1
-        charted_stats_from_cgroup_memory_v1.insert("total_cache");
-        charted_stats_from_cgroup_memory_v1.insert("total_rss");
+        charted_stats_from_cgroup_memory_v1.insert("stat.cache");
+        charted_stats_from_cgroup_memory_v1.insert("stat.rss");
         charted_stats_from_cgroup_memory_v1.insert("failcnt");
         // cgroups v2
-        charted_stats_from_cgroup_memory_v2.insert("anon");
+        charted_stats_from_cgroup_memory_v2.insert("stat.anon");
     }
     // else: leave empty
 

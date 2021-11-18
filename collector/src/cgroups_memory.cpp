@@ -35,21 +35,22 @@
 size_t CMonitorCgroups::cgroup_proc_memory_dump_flat_keyed(
     const std::string& path, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix)
 {
-    size_t nread = 0;
+    size_t nread = 0, ndiscarded = 0;
     FILE* fp_memory_stats;
-    if ((fp_memory_stats = fopen(path.c_str(), "r")) == NULL)
+    if ((fp_memory_stats = fopen(path.c_str(), "r")) == NULL) {
+        CMonitorLogger::instance()->LogError("Cannot open file [%s]", path.c_str());
         return nread;
+    }
 
     std::string label;
     uint64_t value = 0;
     while (fgets(m_buff, 1000, fp_memory_stats) != NULL) {
 
         char* pstart = m_buff;
-        if (m_nCGroupsFound == CG_VERSION1)
-        {
+        if (m_nCGroupsFound == CG_VERSION1) {
             if (strncmp(m_buff, "total_", 6) != 0)
                 continue; // skip NON-totals: collect only cgroup-total values
-            
+
             // forget about the total_ prefix to make cgroups v1 stat names more similar to those of cgroups v2
             pstart = &m_buff[6];
         }
@@ -69,13 +70,21 @@ size_t CMonitorCgroups::cgroup_proc_memory_dump_flat_keyed(
 #endif
 
         if (split_label_value(pstart, ' ', label, value)) {
+            // add label prefix before filtering
+            label = label_prefix + label;
+
+            // apply KPI filter
             if (allowedStatsNames.empty() /* all stats must be put in output */
                 || allowedStatsNames.find(label) != allowedStatsNames.end()) {
-                m_pOutput->plong((label_prefix + label).c_str(), value);
+                m_pOutput->plong(label.c_str(), value);
                 nread++;
-            }
+            } else
+                ndiscarded++;
         }
     }
+
+    CMonitorLogger::instance()->LogDebug(
+        "For memory controller %s read=%zu discarded=%zu kpis", path.c_str(), nread, ndiscarded);
 
     fclose(fp_memory_stats);
 
@@ -93,6 +102,8 @@ void CMonitorCgroups::cgroup_proc_memory(
 
     if (m_nCGroupsFound == CG_NONE)
         return;
+
+    DEBUGLOG_FUNCTION_START();
 
     // See
     //   https://lwn.net/Articles/529927/
