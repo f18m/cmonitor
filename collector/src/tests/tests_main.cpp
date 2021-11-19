@@ -9,13 +9,15 @@
 #include <fstream>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <linux/limits.h>
 #include <malloc.h>
 #include <sstream> //std::stringstream
 
 //------------------------------------------------------------------------------
 // GTest helpers
 //------------------------------------------------------------------------------
+
+#define PATH_MAX (4096)
+
 std::string get_unit_test_abs_dir()
 {
     static std::string ret;
@@ -214,9 +216,10 @@ TEST(CGroups, fedora35_Linux_5_14_17_withthreads)
 
 int main(int argc, char* argv[])
 {
+#ifdef __GLIBC__ 
     // Make uses of freed and uninitialized memory known.
     mallopt(M_PERTURB, 42);
-
+#endif
     // RUN ALL GTESTS
     testing::InitGoogleTest(&argc, argv);
     if (RUN_ALL_TESTS() != 0)

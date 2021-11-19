@@ -50,7 +50,12 @@ regen_baremetal1:
 	@gzip -f baremetal1.json
 
 #
-# NOTE: baremetal2 is a real-world example and thus cannot be regenerated just like others
+# NOTE: baremetal2 is a real-world example and thus cannot be regenerated automatically just like others;
+#       however here's a quick guide on how to do that on a real server:
+#
+#   - git clone cmonitor repo
+#   - make -j -C collector
+#   - collector/bin/glibc/cmonitor_collector --sampling-interval=10 --num-samples=1440 --output-filename baremetal2
 #
 
 
