@@ -68,10 +68,7 @@ public:
             init_json_output_file(json_file_prefix);
     }
 
-    ~CMonitorOutputFrontend()
-    {
-        close();
-    }
+    ~CMonitorOutputFrontend() { close(); }
 
     //------------------------------------------------------------------------------
     // setup API
@@ -194,7 +191,8 @@ private:
 private:
     // Structured measurements generated so far for last sample:
     std::vector<CMonitorOutputSection> m_current_sections;
-    CMonitorMeasurementVector* m_current_meas_list = nullptr;
+    CMonitorMeasurementVector* m_current_meas_list
+        = nullptr; // pointer to current CMonitorMeasurementVector inside m_current_sections
 
     // InfluxDB internals
     influx_client_t* m_influxdb_client_conn = nullptr;

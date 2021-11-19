@@ -2,6 +2,8 @@
 # Makefile to regenerate example data
 # 
 TOPDIR=..
+
+
 EXAMPLE_JSON_FILES=\
 	baremetal1.json.gz \
 	baremetal2.json.gz \
@@ -30,11 +32,12 @@ distclean: clean
 
 #
 # baremetal1 example:
-#  example of graph generated with the performance stats collected from a physical (baremetal) server running Ubuntu 18.04
+#  example of graph generated with the performance stats collected from a physical (baremetal) server running Centos7
 #
 
 regen_baremetal1:
 	@echo "Launching load simulator to have some CPU at 100% and so on..."
+	@-pkill example-load.sh # if any
 	./example-load.sh &
 	@echo "Regenerating example JSON... this will take about 10minutes (60 samples every 10secs)."
 	@$(CMONITOR_COLLECTOR) \
@@ -44,12 +47,17 @@ regen_baremetal1:
 		--output-filename baremetal1 \
 		--foreground \
 		--debug
-	@pkill example-load
-	@jq -e . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED !!!" ; exit 10 )
+	@pkill example-load || true
+	@jq -e . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED" ; exit 10 )
 	@gzip -f baremetal1.json
 
 #
-# NOTE: baremetal2 is a real-world example and thus cannot be regenerated just like others
+# NOTE: baremetal2 is a real-world example and thus cannot be regenerated automatically just like others;
+#       however here's a quick guide on how to do that on a real server:
+#
+#   - git clone cmonitor repo
+#   - make -j -C collector
+#   - collector/bin/glibc/cmonitor_collector --sampling-interval=10 --num-samples=1440 --output-filename baremetal2
 #
 
 
@@ -81,6 +89,17 @@ DOCKER_EXAMPLE_CPU_QUOTA:=0.9
 DOCKER_EXAMPLE_MEMORY_LIMIT:=10m
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f .)
 
+ifeq ($(PODMAN),)
+# by default assume Moby Docker is in use; provide PODMAN=1 to instead assume podman implementation is in use
+PODMAN:=0
+endif
+
+ifeq ($(PODMAN),0)
+CGROUP_NAME=docker/$$(docker ps --no-trunc -aqf name=userapp)
+else
+CGROUP_NAME=machine.slice/libpod-$$(docker ps --no-trunc -aqf name=userapp).scope/container/
+endif
+
 regen_docker_userapp:
 	-docker stop userapp >/dev/null 2>&1
 	-pkill example_load_re >/dev/null 2>&1
@@ -110,7 +129,7 @@ regen_docker_userapp:
 		--collect=cgroup_cpu,cgroup_memory,cgroup_threads \
 		--foreground \
 		--output-filename=docker-userapp.json \
-		--cgroup-name=docker/$$(docker ps --no-trunc -aqf name=userapp) \
+		--cgroup-name=$(CGROUP_NAME) \
 		--score-threshold=0 \
 		--custom-metadata="cmonitor_chart_name:userapp (Redis docker)"
 	pkill example_load_re

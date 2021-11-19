@@ -129,7 +129,7 @@ cmonitor_musl: # build cmonitor inside a Docker from Alpine distro, to build a c
 	#        for docker builds, we strip them away to reduce docker size:
 	docker run --rm -it -v "${ROOT_DIR}":"/opt/src" -e "MUSL_BUILD=1" \
 		radupopescu/musl-builder \
-		sh -c "cd /opt/src/collector && gcc --version && make clean && make && make strip"
+		sh -c "cd /opt/src/collector && apk add gtest-dev && gcc --version && make clean && make -j && make strip"
 
 docker_image: cmonitor_musl
 	@cp -fv bin/musl/cmonitor_collector docker

@@ -31,15 +31,25 @@
 #include <unistd.h>
 #include <vector>
 
-//------------------------------------------------------------------------------
-// The CMonitorCgroups object
-//------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
+// Constants
+// ----------------------------------------------------------------------------------
 
-class CMonitorOutputFrontend;
-class CMonitorLoggerUtils;
-
+#define MIN_ELAPSED_SECS (0.1)
 #define MAX_LOGICAL_CPU (256)
 #define CGROUP_COLLECTOR_BUFF_SIZE (8192)
+
+enum CGroupDetected {
+    CG_NONE, // force newline
+    CG_VERSION1, // force newline
+    CG_VERSION2 // force newline
+};
+
+std::string CGroupDetected2string(CGroupDetected k);
+
+//------------------------------------------------------------------------------
+// Types
+//------------------------------------------------------------------------------
 
 /* structure to save CPU utilization as reported by cpuacct cgroup */
 typedef struct {
@@ -47,34 +57,38 @@ typedef struct {
     uint64_t counter_nsec_sys_mode;
 } cpuacct_utilisation_t;
 
+//------------------------------------------------------------------------------
+// The CMonitorCgroups object
+//------------------------------------------------------------------------------
+
+class CMonitorOutputFrontend;
+class CMonitorLoggerUtils;
+
 class CMonitorCgroups : public CMonitorAppHelper {
 public:
     CMonitorCgroups(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
         : CMonitorAppHelper(pCfg, pOutput)
     {
-        memset(&m_cpuacct_prev_values[0], 0, MAX_LOGICAL_CPU*sizeof(cpuacct_utilisation_t));
+        memset(&m_cpuacct_prev_values[0], 0, MAX_LOGICAL_CPU * sizeof(cpuacct_utilisation_t));
         memset(&m_cpuacct_prev_values_for_total_cpu, 0, sizeof(cpuacct_utilisation_t));
     }
 
     ~CMonitorCgroups()
     {
-        if (m_fp_memory_stats)
-            fclose(m_fp_memory_stats);
         if (m_fp_cpuacct_stats)
             fclose(m_fp_cpuacct_stats);
     }
 
     // main setup
-    void cgroup_init(const std::string& cgroup_memory_abs_path = "", // force newline
-                    const std::string& cgroup_cpuacct_abs_path = "",  // force newline
-                    const std::string& cgroup_cpuset_abs_path = "",
-                    const std::string& proc_prefix_for_test = "");
+    // NOTE: arguments are used only during unit testing
+    void cgroup_init(const std::string& cgroup_prefix_for_test = "", const std::string& proc_prefix_for_test = "");
 
     // one-shot configuration info
     void output_config();
 
     // collect & output cgroup stats
-    void cgroup_proc_memory(const std::set<std::string>& allowedStatsNames);
+    void cgroup_proc_memory(
+        const std::set<std::string>& allowedStatsNames_v1, const std::set<std::string>& allowedStatsNames_v2);
     void cgroup_proc_cpuacct(double elapsed_sec);
     void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads);
 
@@ -83,15 +97,29 @@ public:
     std::set<uint64_t> get_cgroup_cpus() const { return m_cgroup_cpus; }
 
 private:
+    // cgroups config
     bool cgroup_init_check_for_our_pid();
+    void cgroup_v1_read_limits();
+    void cgroup_v2_read_limits();
+
+    // cgroup processes
     bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts);
-    bool cgroup_is_allowed_cpu(int cpu);
-    bool cgroup_collect_pids(std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
+    bool cgroup_collect_pids(const std::string& file, std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
+
+    // cpuacct and cpuset cgroups
     bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */);
+    bool cgroup_proc_cpuacct_v1_counters_by_cpu(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
+    bool cgroup_proc_cpuacct_v2_counters(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
+    bool cgroup_is_allowed_cpu(int cpu);
+    bool read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<uint64_t>& cpus);
+
+    // memory cgroups
+    size_t cgroup_proc_memory_dump_flat_keyed(
+        const std::string& path, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix);
 
 private:
     // main switch that indicates if cgroup_init() was successful or not
-    bool m_bCGroupsFound = false;
+    CGroupDetected m_nCGroupsFound = CG_NONE;
 
     // paths of cgroups for the cgroup to monitor (either our own cgroup or another one):
     std::string m_cgroup_systemd_name;
@@ -117,7 +145,6 @@ private:
     unsigned int m_num_tasks_samples_collected = 0;
 
     // handles to stat files
-    FILE* m_fp_memory_stats = nullptr;
     FILE* m_fp_cpuacct_stats = nullptr;
 
     // Process tracking

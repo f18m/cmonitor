@@ -30,20 +30,17 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-
 //------------------------------------------------------------------------------
 // Init functions
 //------------------------------------------------------------------------------
 
 void CMonitorOutputFrontend::close()
 {
-    if (m_outputJson)
-    {
+    if (m_outputJson) {
         fclose(m_outputJson);
         m_outputJson = nullptr;
     }
-    if (m_influxdb_client_conn)
-    {
+    if (m_influxdb_client_conn) {
         delete m_influxdb_client_conn;
         m_influxdb_client_conn = nullptr;
     }
@@ -582,9 +579,11 @@ void CMonitorOutputFrontend::plong(const char* name, long long value)
     m_long++;
     assert(m_current_meas_list);
 
-    char buff[128];
-    snprintf(buff, sizeof(buff), "%lld", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, buff, true));
+    // according to
+    //   https://www.zverovich.net/2020/06/13/fast-int-to-string-revisited.html
+    // fmt::format_int	would be the fastest way to convert integers but it's not in C++20 gcc STL yet
+    // so we use std::to_string which is slower but it's c++11 standard
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, std::to_string(value).c_str(), true));
 }
 
 void CMonitorOutputFrontend::pdouble(const char* name, double value)
@@ -592,6 +591,7 @@ void CMonitorOutputFrontend::pdouble(const char* name, double value)
     m_double++;
     assert(m_current_meas_list);
 
+    // with std::to_string() you cannot specify the accuracy (how many decimal digits)
     char buff[128];
     snprintf(buff, sizeof(buff), "%.3f", value);
     m_current_meas_list->push_back(CMonitorOutputMeasurement(name, buff, true));

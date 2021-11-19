@@ -63,7 +63,7 @@ function clear_chart() {
 }
 
 function draw_graph1() {
-  var deflated_data_base64_graph1 = 'eNqtlsFqwzAMQH9l+NSBCZYVRfFugx33B6WHjoZRaLcdymCM/ftsK4WkxaltGkhaxHvCUmST9fpXnX6+BvWkdtvTcNofB6XVYfs2HHzo5Rz60+r1c7t7/n5/WMFx//GoJgG6DIBENnodM6yssaDBaNtro3uN5Om2cUwamj48/N8kzCWw8zBF2Dbgb5NEW8hHMR8NpXETwFbw9GJbLmBdZNlTnb+tTZIE2SRmk1KVrLILjwWWC1g3YdmSmVzRTDXEaag2sdoMXeiaXirjpdKc5gLWRZZsDgtQAmMJLOXZHJTz0XFHZi3BQgmMJTBFuGvd9MoyudqU0jtjLmeMb0wo1IpYK0p7aLYbwknHs4hpfQiTSfgeScZ58UzPs56HMwrT3T6f5+Ui1orjTMUBLFS5XpUGwVwKaewswstpCO6TBu+TRloJsR3znXajHcTVppuY7mp3Y0L0v1ArYq04fjAlxyVtcrXpokmUeJkL7YFqE6tN6RBxeZ3A9ar0qPeUvEFOsxYKWCxgpfI+vmH5RG3TMJfAY3WksTF2mUW4Zjf/7MimPQ==\n';
+  var deflated_data_base64_graph1 = 'eNql1s1KAzEQB/BXkT1VCEsymWRnvQkefYPSQ6WLFFr1UAQR391kZoVuS2KSLj2F37+dydd2vf7uTl8fU/fQ7ban6bQ/Tp3qDtuX6RCGnv6GflT3/L7dPX6+3q3Mcf92350NuMsBIyMbteZvWIEGo0z4jIqUAYUUOPZ2cAr6wenzB5XpR5eMOs1RBI4usxwdMlm4IYs3ZD1nPbdLOJ4/PgzpdJLaklbFaXK9VbbXXLJ2SQrlFMupZwqh8oDZDmlMNdhIb7hYAxOShmsy6SC0BrE1KLPgFztcxy4h5iDTJLUmQabHXRULUmwmCc1JbE7KDFlwRZpqtJ1nQl9VxefJZPaYhfYotkfnQ+PKNNVolMkA5vY/DDUYa7C0iIK5ashsZqQq7qTJgS8SFJ7RUKWxSkufIxfuGGdmxVG5Rr7bfbiNgh0CtWkJxRKLpWdpYfE2ijE+jpkgtQaNNKyhoDoDFRYr7Nx2pBQopiWVSpgXkn+feEchZBYT6jjWcWnQMR95STCjqUbzRTz0OvyV0VxIhkI5xXLqmYbtjfz+dBlKxRSlLR9pvPd8WkKxxEu5+QUCDnoV\n';
   var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
   var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
   var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
@@ -87,7 +87,7 @@ function draw_graph1() {
 }
 
 function draw_graph2() {
-  var deflated_data_base64_graph2 = 'eNqFlbuKHTEMht9lqgSM0MWyrdR5g5DqsMWGTBHYhZA9zRLy7vHlbDm/q4GZD/Ppt6S53f4e9/ff5/Hl+Pl8P++/Xs8jHS/PP86X/urrx6t/6fj+dv7pn769v93P1+Mp3ebXT8oqSThpS5xaMv98pEzVPPElUzujRhoFQDEPYpdrJktngkzAOdk6I0ylBICGtTiZNQBN7aDMSGloVwoBjA9tUTI2AA1vJgbElM4UDWTtU7pRLqAyH9JaSdslFElmYeZ+jcyoSUu9RhxXFWn4OrmCM4atFGoKVERWj0VFJU1hIasGoBlz61AAqK4uY88AerR0BozKLiC1VVljdMyQVqGK7kKHdCNBWetwtkZaAWSyJgO1j9mKUa4nI9b2gNXP3YGJWASD7sjblNfayOS5AGimzBSKoNka1gtHQrHGtDYA+SNmYzRgti6MGeS8Vkc/qYGe9m3Uvo26PzdR96dtCd8Sj19KKYCJdaX1eskP3b2v7IVlbyxr+jwbgj4SRnXpXnktDZJApc+l0dchW0ZUXYNcMqRm2LV3PaLm4sh9b4yGfvoPKgDbWQ==\n';
+  var deflated_data_base64_graph2 = 'eNqFlc1qIzEQhN9lTrsgmv7TX877BiEnk4PDzmHBgWXjiwn77pFa9jE14NP4o1UqlUqn0+d2vf3dt6ft9/m6X/+871vaLue3/TI+/Xp8+p+2l4/93/jr+fZx3d+313SKf38oqyQZv55aEk3efm6JiRN/i2QeSCPtDUE6IKOeHUE+IC3UakFUGZQwda+IarGg9O9HWZrKnWrtgJnCM/VSAeMHJlkqixA0ZSrWRl0cQDI1W6HsSLRM1ZUYLSfhtoxJcL2pXDNlRVBI76QZGTmVi5BXSE3lhaRAyJcJVSBV4ni5w+ONnIwQdOSC3bWbGqIi5EqdkSwL8cQNMZHxETuG662MG4wmH2bT9Ri5J5xRCrzEVclQcxSK2MgT8jsfq45GUcYZj0YZq1VHbq9GKSO+UFMoJwON4tEo0qiwA0jXxWNHk3wlroI75Y9aAUSIdmrAJl+l4tRNEKQBWYOTPB4D7oqgcn8M0NakHe4tGsWoGTRbV602cHV9NYqMBKDNRaFYJ+9wVFs+ocONPinkhgbZqsKc0amsNhmOF6T80ScVKo8+aWSGDs/Xc18ZQuv9ccj40iQ89/f6BZ1Z5d0=\n';
   var deflated_data_binary_graph2 = window.atob(deflated_data_base64_graph2);
   var inflated_data_graph2 = JSON.parse(pako.inflate(deflated_data_binary_graph2, { to: 'string' }));
   var data_graph2 = google.visualization.arrayToDataTable(inflated_data_graph2);
@@ -111,7 +111,7 @@ function draw_graph2() {
 }
 
 function draw_graph3() {
-  var deflated_data_base64_graph3 = 'eNqFlb1qHTEQhd9lqwTEoPnTT+q8gUl1ceGQLQI2hPg2JuTdLY32lnu2Eux+jM4cHY1ut3/b/ePPvn3bfr3c9/vvt31L2+vLz/11fPr++PQ/bT/e97/j19PH+31/257TLf5+kSycOCdpKaeW1L9uSYW01JRPoTogI8kNMH0W6iQVQMYDYiWTAiAdUKaiQJFN2WykzQE0ZfOQ1NFuU7d0qtbPIZ+6xak50ORTt2YyWGkKl+FAVwCFcFJBu03dnZqd2t0TL5MKA2aKFqac7ZwJs8eJyDkyFSuPtso50yNFLqAMHwEp6gBaAeHGgAmfybkCJmxuVCqCItdKuQBIeIWoqwLoYXUFVotHbxkQde3lqEpfVTLQrHy1k0agSb0DxldTiiJ2KM4G3In5YUa9glON+aGNxBGkR+wF6LZLn2N6YKJfEX7pseslcdw+BjcrBsbwhYHBMTDUR25OQzHWKdh8eMcACoPJWgeMx3jqZoCp67LzueyxTtlcKLeCZPOKITsqxY8bqEj5Gh19jF8EheN1aEcNxvAwps7IzpgeI/qcIaXr/Or5kzfXi1zPta5A2flLPdfjXdSG4hJDZDRYZPr+/AnJc98n\n';
+  var deflated_data_base64_graph3 = 'eNp9lb2KHTEMhd9lqgSMsH4s26nzBiHVZYsNmSKwCyF7myXk3SPLs+U9MJXnIH0jHZ+53f4e9/ff5/Hl+Pl8P++/Xs+jHC/PP86XOPr6cfSvHN/fzj/x6tv72/18PZ7KLd9+kipcOJ5ZRmEpNj4fpRJ7L/WhqNUQCVNvjlSyVE7GilS2VKQVNvQQ8STtsOFi79RkPBQFyWpn8YEKRIucG8l0ILJdCRZKbqExgeaiHqgXL+xBbh2JcuDRzWAp2/0MMfEF3hsSba9UNMjFPal1QyLZkxQTpLIcQceixS2NpqOvkwXOI9aCVFr3DNTQEDS9EvAdrUbTLIPqQG7RpKfBaH+64I2jIYK3ur2g0AuW8HHdEbstdg32jtjN9xIN35ltdq1opBkvpmE+5JqMl1gixxlQLXh24oqwMl8i0NqEXAteKvX62IKWARNYHUgkL4UPBhrbmwG31DJdZML7bhkvGilsiCjzJRLPJyqVAeNU20Ai21QOK/n1b5iKVHlPNdjRpDJjnKSiUWXGjKiE0OVCF29I9ZGNgmyQGRPunEiUEWPUFFHp9TdyaLtMGA0Ho7FnwPDaIBpoJkxEWoPDsise2zSkuv5J0hFXRozEonWpnv4DUwLrtw==\n';
   var deflated_data_binary_graph3 = window.atob(deflated_data_base64_graph3);
   var inflated_data_graph3 = JSON.parse(pako.inflate(deflated_data_binary_graph3, { to: 'string' }));
   var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
@@ -135,7 +135,7 @@ function draw_graph3() {
 }
 
 function draw_graph4() {
-  var deflated_data_base64_graph4 = 'eNp9Vk2rE0EQ/C97Uhja6a/58KpHDwp6Cjk8MWggzyeyHkT87/bkIaRn03sIu9l0Zba6umrmcPizrL9/nJbXy5eH9bSeH09LWi4Pn08Xe/T2/6O/aXl3fjyvrz78elofrOLjt59P63o5f/9qX968/5SfL7gc0+EKe0GZMGFO1FJOLbG+XFLPkNP4CFTWxARcaoiotwhioF4MSLmFiO7XyIr2DKiGCMFbRAfGkpBBqIQIvkVghlK63RYOeYhjjgrMLaEANw0hnnoHyfZzHx0IIY57hY44gFV6hFDHHU2LzIkUmoZU1JEfH84gO0t46gK96VBSOocQT72BFOsWMMUv5ZhTBWrNpGwSqN4T+lax6ni3giHAaw5UaiKEnCUC6NynMSgUVTvKCko1MVqTSgRwjLFAI7VxVwpXQJy81Gsbg15YQ4gnbRJUtltsGCK82s0QPREo1hBRJzNllQEsNYbMHhdJzJBLiCCcxTBfdOawnqdetSxXuWsoNznmVlttQuw2rHe8G6Apbi+l8QKONTfLtOsCOWTNOEWImWLnjZgn7dDyg80aPURsZtx4c2yhekeFLKEKPssHVRtxC5Aajp9sdB590riep3BSKdccoJCzj3LK0KnsddXnuPkNUXfr+xR+te3W6ywy59258/lt7cm2r+zVe0fb/7c+bIphMmm9IwKGKusdldkSUIK5tutGZVGTDMP6zZZlydp6WL6ZassKkbB8PqOU8iwzh4g+TV0dp4ECuZWYMt6xGmq8BvIdQOaYNeoddzLF9VOAqbA53HjHncKN1Haaw3FOCSHb5LYEwLwD8NEN2MfBc7gohui0zWWW2BLjWqekLLYDmSckOmWOqxf92qhrh1s85z7AxfK7jn4V4uPxH8dweH8=\n';
+  var deflated_data_base64_graph4 = 'eNp9Vk2LU0EQ/C/vpDC00x/z5VWPHhT0tOxhxeAGdl2ReBDxv1uTRUxP6AcJSV6mmK7uqpq5ufm9nX59P2yvty93p8Pp+HjY0vZw9/nwgEdv/z36k7Z3x8fj6dWHn0+nO6z4eP/j6XR6OH77ih9v3n/Kzx+83aabM+yFZOHEeI3UE0uy/nJLI1NO/99cW7i+5Mv1nWT0JEyt1BgilxClUSxJJWONIXYJweLeahLSvFNYvYRwpmENf5K2ncq6r4xHTY2K9AChybE3am0kMTRMQ4QjX2hUVFXQthoibJ0IdtjZoC7LGRsI9RECHGnpNNgm6x5XxI62ViqGf6haiyGOd6PckqAq29nEz5yxybkui5mw4y4Fo5vcW4kRnvwgKfNbPD3HnJmslTSoNIshjnmFOMqcoJjEEFv627igv20PUr0S8xizAaPG3RKvdqh3GBoCqcQYXfmrzNmSWtxj9X4XGrlguiQtlov6DlDuU5m5x7JX73dQz6BInWOF6WJ3bckYZcX0LV95cXLf8a6sACQRx7xtNXsWlAm3xMSt+kQpk7eR7SWKI84Kn0xraY6HWK6Ym8JYsex9ykuejoe4mDmG2FJWMzyHY3JMZYn5CgPbOSzGDhdPnxQxjwJbjuxlPudBo+azVVoIkCW8slXkRO0cImxxVkMUQSxh3NlV0s/8ihPVfNDDgB0jQbiYxTR4OeCG8vRWHfEuPumNtDekXi49Rpi/Q+Qhk0rd2aOuV4hyvkIMjSFXFxsIzCyeh496pa7oOEmO5+GTHnnVEY4dm8TUfdIjfEo7n0K1xBDPfUzW51NOYvn6qMdMKuriEQN8zqOzitSgojETXY65Up6VsmOqJeQxeFyGEEY74rpK+TbJT3nFg/Qx30lVpvrLzlhsudUiGmaLy7AYslxwTObZIC3m4rMeXDhzEohS6+3tX4E5hjk=\n';
   var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
   var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
   var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
@@ -159,7 +159,7 @@ function draw_graph4() {
 }
 
 function draw_graph5() {
-  var deflated_data_base64_graph5 = 'eNqd1EFLxDAQhuG/suS0QiiZmUyTeFtcPHkSPJU91G3AYhcXWw8i/nej1MuC2H6nwJS3kIchTfNhpvdzNtema6c89adsrBnaxzyU0f539GnNw5i78ummPT7lbrPd9+PzfW67qzLbDcPLcXPb9sPbax7L4K4/9ZM52ObnD1t2TJac5WidjVa0RFxJYld76ypXpuQqHzXUfzYBaNL6xhPQCNAABh4w8ICBAgYKGChgoICBzgZRYuBFTbK0PpH1ia5Pwvpkvn7QOi69/Xz9kEKolzYCNAo0gAABG8DACjCwAwwsAV8aOO9SvSRMF+BLQyE0FDRUNAxomEBVT2goaKhoiG6OR3EUxVEUR1EcRXEUwyknoaGgoaJhQEMcB9YhmIdgH4KBCHuVv09YiGEhhoUYFmJ4h+RfocMXZK3Bfw==\n';
+  var deflated_data_base64_graph5 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lEKLU1OAUs6JyRmpKQoaLpnF2UGpiSmaQDHHnJz8ZAW3xMyc0qLUYqCAT2ZuZolSrE4sANgbHsc=\n';
   var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
   var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
   var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
@@ -192,7 +192,7 @@ function draw_graph5() {
 }
 
 function draw_graph6() {
-  var deflated_data_base64_graph6 = 'eNptjtELgjAQxv8V2VPBWsO5tNd86kHqpSeJYXqWsTnYJFh/fRopOTw4OL7vft9dnqNUK1W0FcIoPV+CrlHQj8ftKcgOgza5GShtXHBwHVh0xTkyUDV2Y8G8wCDMYrJP6F9FONqRiDHG93i2G6wYj1kcsjXCnIec04jQIfDWaFFKbUHUjey/oIR+2zN+fMKX+ELXorauLT180kd6t0TL4u1EbcA/PukjHfv0E1QhpS7F7S66R/XHe86YkMwSrh8M8W75\n';
+  var deflated_data_base64_graph6 = 'eNptjssKgzAQRX9Fsmohtb41W111Ie2mK5HgY2xTEgOJFOzXV1uRal0MDPdw7kyWoUQKUbQ1wii5XI2OCRjW0/FspPGYzTQFIVVvxH0HGuU4Qwpqpg8a1BMUwq5vkgh7jumQiJAQL7Cxc0M7sNw9wr5vEduxTGusKJmkFZcaaMP4cHeIP7MCXz2wt/RCNrTRfVut7DmfZGdL5sWrp42C9ek5n+S/xx8gCs5lRcsb7e71j74iU4G3KMjf4VJrSg==\n';
   var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
   var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
@@ -216,7 +216,7 @@ function draw_graph6() {
 }
 
 function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNqllktr3DAUhf9K8SoB1bVelpR1l90UuhuC8cxoEhdPHDxuYVr633sV4pIrUzh2FoOwNR9XPvdxtNv9LqbrcyzuimM7xak7x0IUfbuPPb36PL/6I4ov3bmbPn39MUwt/ePb4zhMU989PdDDGI/d5eMljj/j+OFGW6ed0re0se+G5tAPl9icuj6+bnk7b7XDqTldrk+Heaeed/r217U5jfEf49LO93hu+344NPuHZno8znv+trgXu5fD3qhKSSErobyohBc6HSNUZSXST4fSOjE/vf7+i1qG1mXwEmbdW1a50vgaZsNb1ujSuICyRrK4iuLiLJNKytIEA7NMKxVIKwuzTCvj6XthrQzTSjuKq1DWyow1eH4tL6uK4sJaWbs4Mx7XZXENrrMNW+s5CF5WktCAono7yoSS9LHBoqhbfKtC0ZAd2MDnlcuKgqPKvPsC2n3E8u5LVeFhlk8qT0rB6KKgLCyVkouB4WCWSWUMDQy4kJXNyxE/ssuz63CWS0UzDlZZL5WqYTZvPrOCtQsW7j69LCo8blhkF9aK25/2a0Yctz/l12hl7OaZwd1PKtx1Q+Z+VBorjszd7yVFcHoz93NrZLabbwohdz+3oosy87P4aKaVSWVsGZyDWT7WKbsBRplSJBTqfrTm9mechtmw9WqTlJKZE8Fun2Cdw0HisN3aCwl278gwt0FDOV4Bcx9cM+3SurkP05rfruALR1rd1umRVi5YjV/4Uz9JAL7/C1CFGBI=\n';
+  var deflated_data_base64_graph7 = 'eNqllsFu2zAMhl9l8KkFNNeUaFnaecddBuwWFIaTKK0Hpx4cb0A27N3HeDFQyi1AOUB8sJTPEn+R/LXZ/MnG84+Qfcr2zRjG9hgylXXNNnQ09Hke+quyL+2xHR++/uzHhv7x7Xnox7FrX57oZQj79vTxFIZfYfhwZyqwhbmn8W3b17uuP4X60Hbh/4yFeabpD/XhdH7ZXSf0PNE1v8/1YQgzMX3rezg2Xdfv6u1TPT7vr1N4nz2qzbTPO11oUEA/r5wCrdAS54u8UJfHFDlYo+bX6/M+7F7DbzzvkmURLYsO5bBewPI9l/ga1i73rpTDdrFyAszUAoK9FKbwFrtGMcvk0gWxXsxytZBYK2aZWKBz742YZVoZm2Ml3zMwsbAkuJLDXC2fcMQE4wKWHxPw5KpIa5DDbnVaU4IUN2SI1qtLmWCMj8omwItqrJwcZoKVJsdSDhsumCHBtBxmgqHNvU2AMYrZV/KCNLwi07qIYYIh0lHJV0YumE5o2QQzwTz1EbleiHFRyVsB90aqZp/QR7g3TjUlj5jbI5okrSN7dFQWchZvCLmMGxhW8gbG3VFDQm4id8dpYTGqV9cTRuYICV0A1frcQm6OJe1ZvmVYtnq5zNwbpxsMyGFcnR0Ye+Ol1SfEzC9eVE1ie8PIG1OaD8bWmBayxhtC5tZYUmqWCSG76OKGcpY7I0ASqxf1ZOQwv0nQwtbJYZ5ekNQFuDGSt8nvbRgbIyQYI0bGeLlupjQvjG3iDcEe/wFUiR+N\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
@@ -240,7 +240,7 @@ function draw_graph7() {
 }
 
 function draw_graph8() {
-  var deflated_data_base64_graph8 = 'eNqNls2OEzEQhF8FzWlXGiT3n+3mzFusVlGSnUDQLEFJhLQg3h27TeCEKsrByvhLq8vVrsnT08/p+vZtmT5ML9vrcj2+LtM8rdvdsrZHH2+Pfs3TeXk5Xt5flvP35fzuQaxIYXls8O542uzX02XZHI7r8mer2m1rezpsDpe3r/vbTr7trNsfb5vDefn7m9J3viyv23U97Te7T5vr55fbXn2cnuen6OiBE9NMaeY6p7nO0ttQqVmpfY/Pf9HeliapJhDt3bCrOa7qDTUp6rCqUq/KqVKCaJdFyY0Mol2WkHvFDXRZVpO6QrTL0py4OkKty9KSJWG0y5JmqVeIhls1iRaIlqia2hhA1EdVNWCsz2GW1iKQlCALlYrIrok6aogscaZe0fH73BWxaakKFYVRXooniMb8idc7UAv57MwQDaNyhZPS0DDKifBRMYX9RRmeQISWeWl5AdGQlZUNo3GtklmGsnjIaq0KnKohizhDCyIE2ZgKPKwIwYZWwehwKxfBDUQIOt1xWBGCmtu8wgYiBCW7pwLRMYTZDfYaIUgk5nBcIgTFNCXYa4SgZBOBMxAhqNUynoEIQcls+HJHCKqbJ2jBCMHmgYAG2tpl5dQubIZoRIYLugRtHTFIVhiiIwer5gLRMEuzJdwqjXBPhIawsyPeyTlhNvxq/wYYtxth2HLb9Y66421cpeK6EYd9DAquG3mo7ozex30drhW5Y2oiEUUolTvqRnZkclI8YkNbZf5X9/k3tLZUSw==\n';
+  var deflated_data_base64_graph8 = 'eNqNld2K2zAQhV+l+GoXXND8Sup13yIsxkmcNsXblCQU0tJ3rzRyoDdlRHJlfR7maM4c73a/h/vjxzJ8Go7zfbmf35dhHNZ5v6zl0efnoz/jcF2O59vH23L9uVw/vFAEDfRa2P35Mh3Wy22ZTud1aScKz5P5cppOt8f3w3aAz4N1/vWYTtfl+YbV+ra8z+t6OUz7L9P963E74tfhbdxZMy8YEEYo/zymEXBkLe+RsEIcQ/v9n02FZRF0SQm1KiOxX1WqJCIFIJ9lq0uxPHZZU8YpcQdblQFkjOqwpUe7MIzBR6syRALx0SoMEoqKi1ZdubrHJdu8NHF2UaiyRCNE9tk2scQx+axNjERCR92qjOvIwGerNkIB8eti1YaQA3Wwpg0BO2aGVZsUL+YOtrmRQ/YHjFWbZtUOM5BpKxsR/DsjtBmnos5nbW4K2FO3aiu7ruD7gZL1QEF9+3LTxqh+D1y1QUg9G8xVGyuHjn5bPiqGDq9bPiLEkP1+LSGFcgr+LCwhOTL2sFtC5uR73RKSNWYNPmvaWLKbpmwJyVE0k4vatqmQ+ChbmHJ2w4zHtmshid9rlRUBVKKLWkSWXMiSfNbsCBSgo+5mx3ILPrt91KIbe9wiEiBSUn8OwVjI2deGzY5BwZ8ENjuqJl+bRaTmKB33axEJxeXqs9S0xRT8WVhEIiGD3y+1uUUG37ykm9ERfbatGmj0Z9wikoopfatbRJa1iKFj2Zo2Cv98it/+ArANW8M=\n';
   var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
   var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
   var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
@@ -264,7 +264,7 @@ function draw_graph8() {
 }
 
 function draw_graph9() {
-  var deflated_data_base64_graph9 = 'eNq1ltFKwzAUhl9l9GqDOHKSnKX1ThCvfIMxSrdlWsmstFWY4rvbivVmKRSa/6qH89Ovga85nO32K2kvby65TY5F69ry7BKR+GLvfNe6H1rfInksz2XbZXfeV4fFQ1H699o1XaN2x7K5aVz94erFUrPVVulVF+zLKj/4qnH5qfTuL0p5iIrqlJ+ay+thSDZD4ovPS36q3f87tk9e3Lnov53vn/L2+Thk6SrZie3vUZdKKhIkhUqFFKnQ/TFIrk3KdtN1eM1kNakpxSiTAUwLYGbxmYYATIAjA3BkAI4MwBEDHDHAEQMcMcARXztSZGQ6pQgzM0HxkTo+kuMjbXxk4AppRZspxageAjA1gMkApgUwAY4UwJECOFIAR+rakbY2U1OKUWZgzDFLM6UYnUkEYGoAkwFMC2BGXxey0Eo3+18KrHTzmQxgAu5RYKWbzWSAIwY4YoAjBjji6LOuexKAqQFMBjAtgAlxhJBECEuE0EQIT4HlTrJUZkoxCg1sdxGgGgFlBDT60OufiBs1a8Xb/QD3LEWt\n';
+  var deflated_data_base64_graph9 = 'eNq12NFKwzAUBuBXkV5tEEdykpxm3gnilW8wRum2TCudlbYKU3x361yv2mjR/FDo4Rz6tfBDErpavSft8dknV8kub31bHHwikjLf+LJr3fStD5HcFYei7WbXZVltL27zonypfdM1ar8rmsvG16++vpjpVLHU866/KapsW1aNz/ZF6b8nrPpJXu2zfXN82p4H1A/K/O2Y7WvfP3GyHv0h/3pvtrnP2ofdeWTmyVqsTl85I0lKqO5aCicUCcPdc0oujLMpCynswspl1//lHvZcXM/KyB4NPKVJ8ZQijBoEygjURUe1kACTAKYBmAwwERkpREhqkJJJiSxPKcLoICazZKdpShFGGYE6AEoSgRICRQRFiKAIEZQe2ZmsJDOlCKOEQEeColTzlCKMMgIdLn2kjHRTivCyLxEoIVCDQBmBIoKyiKAsIiiLCMoigrLxgzJCAkwCmMN1j93pXPPjPchxXM7F5YYnvH96FNkbScNINlOKMMoI1AHQkXNdBJQQ6DAoq9KUpxRhlBGoA6DDc10MlBAoIiiNCEojgjKIbchA9iHzt59Y60/IqUeC\n';
   var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
   var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
   var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
@@ -321,10 +321,10 @@ function show_config_window() {
       <table>\
 <tr><td colspan='2' id='sectioncol'>Server Identity</td></tr>\
     <tr>\
-    <td id='configkey'>Hostname</td><td id='configval'>MSP153</td>\
+    <td id='configkey'>Hostname</td><td id='configval'>MSP153MSP153</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Shorthostname</td><td id='configval'>MSP153</td>\
+    <td id='configkey'>Shorthostname</td><td id='configval'>MSP153MSP153</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Tailscale0 network ignored</td><td id='configval'>null_address</td>\
@@ -351,13 +351,19 @@ function show_config_window() {
     <td id='configkey'>Tailscale0 ip4</td><td id='configval'>100.66.40.29</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Br-de7e8f60e6bb ip4</td><td id='configval'>172.17.37.1</td>\
+    <td id='configkey'>Br-40ec4963d670 ip4</td><td id='configval'>172.17.75.1</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Br-aec056d44328 ip4</td><td id='configval'>172.17.3.1</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>All ip addresses</td><td id='configval'>127.0.0.1,172.20.52.153,192.168.122.1,172.17.12.1,172.17.77.1,172.17.0.1,100.66.40.29,172.17.37.1,172.17.3.1</td>\
+    <td id='configkey'>Br-102f7a869ccf ip4</td><td id='configval'>172.17.79.1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Br-2cf67eb26de7 ip4</td><td id='configval'>172.17.136.1</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>All ip addresses</td><td id='configval'>127.0.0.1,172.20.52.153,192.168.122.1,172.17.12.1,172.17.77.1,172.17.0.1,100.66.40.29,172.17.75.1,172.17.3.1,172.17.79.1,172.17.136.1</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Serial-number</td><td id='configval'>............</td>\
@@ -387,16 +393,19 @@ function show_config_window() {
     </tr>\
 <tr><td colspan='2' id='sectioncol'>Linux Control Group (CGroup) Configuration</td></tr>\
     <tr>\
-    <td id='configkey'>Name</td><td id='configval'>docker/3ac85de653237794bf6a79dda410bdf51bbb80c3fa3bf8d0e7d1a066c6410eed</td>\
+    <td id='configkey'>Name</td><td id='configval'>docker/c7276db22e82cf5ee3fe3bc7de2eb44fbd57d0bc7ba4df0dd39093a210fdc9cd</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Memory path</td><td id='configval'>/sys/fs/cgroup/memory/docker/3ac85de653237794bf6a79dda410bdf51bbb80c3fa3bf8d0e7d1a066c6410eed</td>\
+    <td id='configkey'>Version</td><td id='configval'>1</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Cpuacct path</td><td id='configval'>/sys/fs/cgroup/cpu,cpuacct/docker/3ac85de653237794bf6a79dda410bdf51bbb80c3fa3bf8d0e7d1a066c6410eed</td>\
+    <td id='configkey'>Memory path</td><td id='configval'>/sys/fs/cgroup/memory/docker/c7276db22e82cf5ee3fe3bc7de2eb44fbd57d0bc7ba4df0dd39093a210fdc9cd</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Cpuset path</td><td id='configval'>/sys/fs/cgroup/cpuset/docker/3ac85de653237794bf6a79dda410bdf51bbb80c3fa3bf8d0e7d1a066c6410eed</td>\
+    <td id='configkey'>Cpuacct path</td><td id='configval'>/sys/fs/cgroup/cpu,cpuacct/docker/c7276db22e82cf5ee3fe3bc7de2eb44fbd57d0bc7ba4df0dd39093a210fdc9cd</td>\
+    </tr>\
+    <tr>\
+    <td id='configkey'>Cpuset path</td><td id='configval'>/sys/fs/cgroup/cpuset/docker/c7276db22e82cf5ee3fe3bc7de2eb44fbd57d0bc7ba4df0dd39093a210fdc9cd</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Cpus</td><td id='configval'>0, 1</td>\
@@ -477,7 +486,7 @@ function show_config_window() {
       <table>\
 <tr><td colspan='2' id='sectioncol'>Performance Stats Collector Configuration</td></tr>\
     <tr>\
-    <td id='configkey'>Command</td><td id='configval'>../collector/bin/glibc/cmonitor_collector --sampling-interval=2 --num-samples=60 --collect=cgroup_cpu,cgroup_memory,cgroup_threads --foreground --output-filename=docker-userapp.json --cgroup-name=docker/3ac85de653237794bf6a79dda410bdf51bbb80c3fa3bf8d0e7d1</td>\
+    <td id='configkey'>Command</td><td id='configval'>../collector/bin/glibc/cmonitor_collector --sampling-interval=2 --num-samples=60 --collect=cgroup_cpu,cgroup_memory,cgroup_threads --foreground --output-filename=docker-userapp.json --cgroup-name=docker/c7276db22e82cf5ee3fe3bc7de2eb44fbd57d0bc7ba4df0dd390</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Sample interval seconds</td><td id='configval'>2</td>\
@@ -486,7 +495,7 @@ function show_config_window() {
     <td id='configkey'>Sample num</td><td id='configval'>60</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Version</td><td id='configval'>1.7-0</td>\
+    <td id='configkey'>Version</td><td id='configval'>2.0-0</td>\
     </tr>\
     <tr>\
     <td id='configkey'>Collecting</td><td id='configval'>cgroup_cpu,cgroup_memory,cgroup_threads</td>\
@@ -498,7 +507,7 @@ function show_config_window() {
     <td id='configkey'>Userid</td><td id='configval'>0</td>\
     </tr>\
     <tr>\
-    <td id='configkey'>Pid</td><td id='configval'>3573947</td>\
+    <td id='configkey'>Pid</td><td id='configval'>371912</td>\
     </tr>\
       </table>\
     </body></html>\
@@ -542,13 +551,13 @@ function show_config_window() {
     <table>
     <tr><td><ul>
       <li>Collected: <span id='bottom_table_val'>cgroup_cpu, cgroup_memory, cgroup_threads</span></li>
-      <li>Started sampling at: <span id='bottom_table_val'>2021-10-28T00:08:33 (UTC)</span></li>
+      <li>Started sampling at: <span id='bottom_table_val'>2021-11-19T08:12:46 (UTC)</span></li>
       <li>Samples: <span id='bottom_table_val'>60</span></li>
       <li>Sampling Interval (s): <span id='bottom_table_val'>2</span></li>
       </ul></td><td><ul>
       <li>Total time sampled (hh:mm:ss): <span id='bottom_table_val'>0:02:00</span></li>
-      <li>Version (cmonitor_collector): <span id='bottom_table_val'>1.7-0</span></li>
-      <li>Version (cmonitor_chart): <span id='bottom_table_val'>1.8-2</span></li>
+      <li>Version (cmonitor_collector): <span id='bottom_table_val'>2.0-0</span></li>
+      <li>Version (cmonitor_chart): <span id='bottom_table_val'>2.0-0</span></li>
     </ul></td></tr>
     </table>
   </div>
@@ -556,7 +565,7 @@ function show_config_window() {
     <h3>Monitored System Summary</h3>
     <table>
     <tr><td><ul>
-      <li>Hostname: <span id='bottom_table_val'>MSP153</span></li>
+      <li>Hostname: <span id='bottom_table_val'>MSP153MSP153</span></li>
       <li>OS: <span id='bottom_table_val'>CentOS Linux 7 (Core)</span></li>
       <li>CPU: <span id='bottom_table_val'>Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz</span></li>
       <li>BogoMIPS: <span id='bottom_table_val'>5586.32</span></li>

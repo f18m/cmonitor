@@ -12,8 +12,8 @@ RPM_TARBALL_DIR:=/tmp/cmonitor/tarball
 # IMPORTANT: other places where the version must be updated:
 #  - debian/changelog             -> to release a new Ubuntu package
 # See also https://github.com/f18m/cmonitor/wiki/new-release
-CMONITOR_VERSION:=1.8
-CMONITOR_RELEASE:=5
+CMONITOR_VERSION:=2.0
+CMONITOR_RELEASE:=0
 
 ifeq ($(DOCKER_LATEST),1)
 DOCKER_TAG=latest
