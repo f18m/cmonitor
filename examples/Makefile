@@ -2,6 +2,8 @@
 # Makefile to regenerate example data
 # 
 TOPDIR=..
+
+
 EXAMPLE_JSON_FILES=\
 	baremetal1.json.gz \
 	baremetal2.json.gz \
@@ -45,8 +47,8 @@ regen_baremetal1:
 		--output-filename baremetal1 \
 		--foreground \
 		--debug
-	@pkill example-load
-	@jq -e . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED !!!" ; exit 10 )
+	@pkill example-load || true
+	@jq -e . baremetal1.json >/dev/null && ( echo "Valid JSON produced" ) || ( echo "INVALID JSON WAS PRODUCED" ; exit 10 )
 	@gzip -f baremetal1.json
 
 #

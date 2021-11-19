@@ -169,17 +169,17 @@ class CmonitorStatistics:
             print("Error while opening input JSON file '%s': %s" % (infile, err))
             sys.exit(1)
 
-        # fix up the end of the file if it is not complete
-        ending = text[-3:-1]  # The last two character
-        if ending == "},":  # the data capture is still running or halted
-            text = text[:-2] + "\n ]\n}\n"
-        else:
-            ending = text[-5:]  # The last two character
-            if ending == "    }":
-                text += "\n  ]\n}\n"
-
         # Convert the text to json and extract the stats
-        entry = json.loads(text)  # convert text to JSON
+        try:
+            entry = json.loads(text)  # convert text to JSON
+        except json.decoder.JSONDecodeError as e:
+            # fix up the end of the file if it is not complete
+            if text[-1]==',':
+                # try removing last comma 
+                text[-1]=' '
+            # add the closure of the "samples" array and JSON end-of-object
+            entry = json.loads(text + "]}")
+
         try:
             jheader = entry["header"]
             jdata = entry[

@@ -1,8 +1,10 @@
 # as part of this example limit the CPUs where this docker can run to just 2 (the first 2 available)
+TOPDIR=../..
 DOCKER_EXAMPLE_CPUS:=0,1
 DOCKER_EXAMPLE_MEMORY_LIMIT:=100m
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f ..)
 HOSTNAME:=docker-userapp-with-embedded-collector
+CMONITOR_COLLECTOR=$(TOPDIR)/collector/bin/glibc/cmonitor_collector
 
 all: prepare_context
 	@docker stop cmonitor-example || true
@@ -25,8 +27,8 @@ all: prepare_context
 
 prepare_context:
 	@cp -fv ../example-load.sh .
-	@cp -fv ../../src/cmonitor_collector .
-	@if ldd ../../src/cmonitor_collector | grep libc.so.6 >/dev/null; then \
+	@cp -fv $(CMONITOR_COLLECTOR) .
+	@if ldd $(CMONITOR_COLLECTOR) | grep libc.so.6 >/dev/null; then \
 		echo "Found that cmonitor_collector is correctly compiled for Ubuntu apparently" ; \
 	else \
 		echo "cmonitor_collector needs to be built for x86_64 distro. Cannot proceed" ; \
