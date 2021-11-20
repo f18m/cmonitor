@@ -14,7 +14,7 @@ include $(ROOT_DIR)/Constants.mk
 #
 
 all:
-	$(MAKE) -C src RPM_VERSION=$(CMONITOR_VERSION) RPM_RELEASE=$(CMONITOR_RELEASE)
+	$(MAKE) -C src RPM_VERSION=$(CMONITOR_VERSION) RPM_RELEASE=$(CMONITOR_RELEASE) DISABLE_UNIT_TESTS_BUILD=$(DISABLE_UNIT_TESTS_BUILD)
 
 test: 
 	$(MAKE) -C src test
@@ -115,7 +115,7 @@ ifeq ($(shell whoami),root)
 	@exit 1
 endif
 	dpkg-buildpackage -tc -S --force-sign # build source only otherwise Ubuntu PPA rejects with "Source/binary (i.e. mixed) uploads are not allowed"
-	## PROBABLY NOT NECESSARY: debsign -S            # you must have the GPG key setup properly for this to work (see e.g. https://help.github.com/en/articles/generating-a-new-gpg-key)
+	debsign -S            # you must have the GPG key setup properly for this to work (see e.g. https://help.github.com/en/articles/generating-a-new-gpg-key)
 	@echo "When ready to upload to your PPA run dput as e.g.:"
 	@echo "    cd .. && dput ppa:francesco-montorsi/cmonitor cmonitor_$(CMONITOR_VERSION).$(CMONITOR_RELEASE)-1ubuntu1_source.changes"
 

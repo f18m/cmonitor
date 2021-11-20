@@ -12,6 +12,12 @@ export DH_VERBOSE=1
 %:
 	dh $@ 
 
+override_dh_auto_build:
+	$(MAKE) -C collector all DISABLE_UNIT_TESTS_BUILD=1
+
 # we just override the 'install' phase to provide not only the DESTDIR but also the BINDIR variable
 override_dh_auto_install: 
-	$(MAKE) install BINDIR=usr/bin DESTDIR=$(PWD)/debian/cmonitor
+	$(MAKE) -C collector install BINDIR=usr/bin DESTDIR=$(PWD)/debian/cmonitor
+
+override_dh_auto_test:
+	echo "unit tests disabled"

@@ -55,7 +55,9 @@ HEADERS = $(wildcard *.h)
 # Targets
 
 all: $(OUT)
+ifneq ($(DISABLE_UNIT_TESTS_BUILD),1)
 	$(MAKE) -C tests all
+endif
 
 test:
 	$(MAKE) -C tests test
