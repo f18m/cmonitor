@@ -1,3 +1,15 @@
+cmonitor (2.0.0-1ubuntu9) bionic; urgency=medium
+
+  * Fix release by removing i386 also from cmonitor-tools
+
+ -- Francesco Montorsi <francesco.montorsi@gmail.com>  Sat, 20 Nov 2021 14:35:27 +0000
+
+cmonitor (2.0.0-1ubuntu8) bionic; urgency=medium
+
+  * Split binary package in 2: cmonitor-collector and cmonitor-tools
+
+ -- Francesco Montorsi <francesco.montorsi@gmail.com>  Sat, 20 Nov 2021 14:24:47 +0000
+
 cmonitor (2.0.0-1ubuntu7) bionic; urgency=medium
 
   * Remove i386 arch

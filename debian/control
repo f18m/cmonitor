@@ -10,15 +10,11 @@ Package: cmonitor-collector
 Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: a container performance monitoring solution
- A Docker/LXC, database-free, lightweight container performance monitoring solution, perfect for ephemeral containers
- (e.g. containers used for DevOps automatic testing). Can also be used with InfluxDB and Grafana to monitor long-lived 
- containers in real-time.
-
+  Package containing the C++ lightweight agent to collect all metrics from monitored systems
 
 Package: cmonitor-tools
-Architecture: any
+Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}
 Description: a container performance monitoring solution
- A Docker/LXC, database-free, lightweight container performance monitoring solution, perfect for ephemeral containers
- (e.g. containers used for DevOps automatic testing). Can also be used with InfluxDB and Grafana to monitor long-lived
- containers in real-time.
+  Package containig the auxiliary Python3 scripts to post-process recorded metrics.
+  This package has arch amd64 just because on i386 the build fails as it will try to build the C++ part as well.
