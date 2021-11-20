@@ -1,3 +1,9 @@
+cmonitor (2.0.0-1ubuntu7) bionic; urgency=medium
+
+  * Remove i386 arch
+
+ -- Francesco Montorsi <francesco.montorsi@gmail.com>  Sat, 20 Nov 2021 00:45:10 +0000
+
 cmonitor (2.0.0-1ubuntu6) bionic; urgency=medium
 
   * Fix release

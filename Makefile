@@ -70,6 +70,11 @@ examples:
 #  - run dput to upload to your PPA
 #
 # Note: debian control files must live in the root folder of the project, not inside "collector" or "tools"
+deb_help:
+	@echo " make deb_new_changelog"
+	@echo " make deb_local_test"
+	@echo " make deb_source_pkg_for_upload"
+
 deb_new_changelog:
 	dch -i --distribution bionic --controlmaint
 
