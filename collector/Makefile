@@ -97,28 +97,6 @@ endif
 		cp -fv $(RPM_TMP_DIR)/x86_64/cmonitor-*.rpm $(outdir)/
 
 
-
-# DEBIAN PACKAGE
-#
-# Reference guide:
-#   https://www.debian.org/doc/manuals/maint-guide/dreq.en.html
-#
-# Quick summary:
-#  - update debian/changelog using interactive utility "dch -i"
-#    (you must have formatted the debian/changelog file according to Debian/Ubuntu strict rules!!)
-#  - make deb
-#  - run dput to upload to your PPA
-deb:
-ifeq ($(shell whoami),root)
-	@echo "*** ERROR: generating the Debian/Ubuntu package requires using a normal user, having a valid GPG secret key registered;"
-	@echo "           both 'gpg -k' and 'gpg -K' must show the same key."
-	@exit 1
-endif
-	dpkg-buildpackage -tc -S --force-sign # build source only otherwise Ubuntu PPA rejects with "Source/binary (i.e. mixed) uploads are not allowed"
-	debsign -S            # you must have the GPG key setup properly for this to work (see e.g. https://help.github.com/en/articles/generating-a-new-gpg-key)
-	@echo "When ready to upload to your PPA run dput as e.g.:"
-	@echo "    cd .. && dput ppa:francesco-montorsi/cmonitor cmonitor_$(CMONITOR_VERSION).$(CMONITOR_RELEASE)-1ubuntu1_source.changes"
-
 #
 # DOCKER IMAGE
 # 

@@ -26,8 +26,8 @@ Table of contents of this README:
   - [Yet-Another-Monitoring-Project?](#yet-another-monitoring-project)
   - [Supported Linux Kernels](#supported-linux-kernels)
   - [How to install](#how-to-install)
-    - [RPM](#rpm)
-    - [Ubuntu](#ubuntu)
+    - [RPM (for Fedora, Centos)](#rpm)
+    - [Debian package (for Debian, Ubuntu, etc)](#ubuntu)
     - [Docker](#docker)
   - [How to use](#how-to-use)
     - [Step 1: collect stats](#step-1-collect-stats)
@@ -42,8 +42,6 @@ Table of contents of this README:
     - [Reference Manual](#reference-manual)
   - [Project History](#project-history)
   - [License](#license)
-
-
 ## Features
 
 This project collects performance data about:
@@ -110,10 +108,11 @@ See [tests folder](collector/src/tests) for more details.
 ## How to install
 
 
-### RPM
+### RPM (for Fedora, Centos)
 
-If you use an LXC/Docker container based on a Centos/RHEL/Fedora distribution you can log into the container (or change its Dockerfile)
-and just install the RPM right away from the [COPR](https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/) repository:
+You can get started with cmonitor by installing a native RPM.
+This project uses [COPR](https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/) repository for maintaining
+always up-to-date RPMs for Fedora and Centos distributions. Just run:
 
 ```
 yum install -y yum-plugin-copr
@@ -121,18 +120,24 @@ yum copr enable -y f18m/cmonitor
 yum install -y cmonitor-collector cmonitor-tools
 ```
 
+(or use `dnf` if you prefer).
+
 Note that the RPM `cmonitor-collector` has no dependencies from Python and has very small set of dependencies (GNU libc and few others)
 so can be installed easily everywhere. The RPM `cmonitor-tools` instead requires Python3.
 
-### Ubuntu
+### Debian package (for Debian, Ubuntu, etc)
 
-If you use an LXC/Docker container based on a Ubuntu distribution you can similarly install from [my Ubuntu PPA](https://launchpad.net/~francesco-montorsi/+archive/ubuntu/cmonitor). 
-using the following commands:
+You can get started with cmonitor by installing it as a Debian package.
+The debian packages are built using [Ubuntu private PPA service](https://launchpad.net/~francesco-montorsi/+archive/ubuntu/cmonitor). 
+Just run:
 
 ```
 add-apt-repository ppa:francesco-montorsi/cmonitor
-apt-get install cmonitor
+apt-get install cmonitor-collector cmonitor-tools
 ```
+
+Note that the debian package `cmonitor-collector` has no dependencies from Python and has very small set of dependencies (GNU libc and few others)
+so can be installed easily everywhere. The debian package `cmonitor-tools` instead requires Python3.
 
 WARNING: I'm having troubles maintaining both the RPM, docker and Ubuntu packaging for this project, so typically the Ubuntu (.deb) package is
 updated only later, when I have time. If you want to test very latest cmonitor release as .deb please let me know, I might be able to push the latest
