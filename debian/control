@@ -6,10 +6,19 @@ Build-Depends: debhelper (>=10), libgtest-dev
 Standards-Version: 4.0.0
 Homepage: https://github.com/f18m/cmonitor
 
-Package: cmonitor
+Package: cmonitor-collector
 Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: a container performance monitoring solution
  A Docker/LXC, database-free, lightweight container performance monitoring solution, perfect for ephemeral containers
  (e.g. containers used for DevOps automatic testing). Can also be used with InfluxDB and Grafana to monitor long-lived 
+ containers in real-time.
+
+
+Package: cmonitor-tools
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}
+Description: a container performance monitoring solution
+ A Docker/LXC, database-free, lightweight container performance monitoring solution, perfect for ephemeral containers
+ (e.g. containers used for DevOps automatic testing). Can also be used with InfluxDB and Grafana to monitor long-lived
  containers in real-time.

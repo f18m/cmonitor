@@ -13,11 +13,16 @@ export DH_VERBOSE=1
 	dh $@ 
 
 override_dh_auto_build:
-	$(MAKE) -C collector all DISABLE_UNIT_TESTS_BUILD=1
+	$(MAKE) -C collector all DISABLE_UNIT_TESTS_BUILD=1 -j
+	$(MAKE) -C tools
+        # just to give the same user experience of RPMs, remove the .py extension here
+	mv ./tools/chart/cmonitor_chart.py ./tools/chart/cmonitor_chart
+	mv ./tools/statistics/cmonitor_statistics.py ./tools/statistics/cmonitor_statistics
 
-# we just override the 'install' phase to provide not only the DESTDIR but also the BINDIR variable
 override_dh_auto_install: 
-	$(MAKE) -C collector install BINDIR=usr/bin DESTDIR=$(PWD)/debian/cmonitor
+	# we just override the 'install' phase to provide not only the DESTDIR but also the BINDIR variable
+	#$(MAKE) -C collector install BINDIR=usr/bin DESTDIR=$(PWD)/debian/cmonitor
+	echo "skipping install because files will get installed by cmonitor-*.install files"
 
 override_dh_auto_test:
-	echo "unit tests disabled"
+	echo "unit tests disabled -- I didn't manage to get lgtest linking step to work"
