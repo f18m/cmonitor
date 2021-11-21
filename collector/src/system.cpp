@@ -18,9 +18,9 @@
  */
 
 #include "system.h"
+#include "logger.h"
 #include "output_frontend.h"
 #include "utils.h"
-#include "logger.h"
 #include <assert.h>
 #include <mntent.h>
 #include <sys/vfs.h>
@@ -28,7 +28,6 @@
 #define MAX_LOGICAL_CPU (256)
 #define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpu_count + 1.0)))
 #define DELTA_LOGICAL(stat) ((float)(stat - logical_cpu[cpuno].stat) / (float)elapsed_sec)
-
 
 void CMonitorSystem::proc_stat_cpu_total(
     const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu, int max_cpu_count)
@@ -89,8 +88,8 @@ void CMonitorSystem::proc_stat_cpu_total(
     total_cpu.guestnice = guestnice;
 }
 
-int CMonitorSystem::proc_stat_cpu_index(const char* cpu_data, double elapsed_sec, OutputFields output_opts,
-    cpu_specs_t* logical_cpu)
+int CMonitorSystem::proc_stat_cpu_index(
+    const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t* logical_cpu)
 {
     long long user;
     long long nice;
@@ -331,7 +330,8 @@ void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts
                             tmpstr[j] = 0;
 
                     if (strncmp(tmpstr, "loop", 4) != 0) {
-                        // CMonitorLogger::instance()->LogDebug("DEBUG saved %ld %s disk name\n", i, previous[i].dk_name);
+                        // CMonitorLogger::instance()->LogDebug("DEBUG saved %ld %s disk name\n", i,
+                        // previous[i].dk_name);
                         strcpy(previous[disks_sampled].dk_name, tmpstr);
                         disks_sampled++;
                     } else {
@@ -391,7 +391,8 @@ void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts
         current.dk_time /= 10.0; /* in milli-seconds to make it up to 100%, 1000/100 = 10 */
 
         for (i = 0; i < disks_found; i++) {
-            // CMonitorLogger::instance()->LogDebug("DEBUG disks new %s old %s\n", current.dk_name, previous[i].dk_name);
+            // CMonitorLogger::instance()->LogDebug("DEBUG disks new %s old %s\n", current.dk_name,
+            // previous[i].dk_name);
             if (!strcmp(current.dk_name, previous[i].dk_name)) {
 
                 if (!filtered_out && output_opts != PF_NONE) {
@@ -536,6 +537,19 @@ void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
     if (interfaces_found == 0 || interfaces_sampled == 0)
         return; // this happens in e.g. Docker containers having no network
 
+    // clang-format off
+    /*
+        the file has a format like (see https://man7.org/linux/man-pages/man5/proc.5.html)
+
+            Inter-|   Receive                                                |  Transmit
+             face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+                lo: 2776770   11307    0    0    0     0          0         0  2776770   11307    0    0    0     0       0          0
+              eth0: 1215645    2751    0    0    0     0          0         0  1782404    4324    0    0    0   427       0          0
+              ppp0: 1622270    5552    1    0    0     0          0         0   354130    5669    0    0    0     0       0          0
+              tap0:    7714      81    0    0    0     0          0         0     7714      81    0    0    0     0       0          0
+    */
+    // clang-format on
+
     if (fgets(buf, 1024, fp) == NULL)
         return; /* throw away the header line */
     if (fgets(buf, 1024, fp) == NULL)
@@ -548,16 +562,20 @@ void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
 
         bzero(&current, sizeof(struct netinfo));
         ret = sscanf(&buf[0], "%s %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
-            (char*)current.if_name, &current.if_ibytes, &current.if_ipackets, &current.if_ierrs, &current.if_idrop,
-            &current.if_ififo, &current.if_iframe, &junk, &junk, &current.if_obytes, &current.if_opackets,
-            &current.if_oerrs, &current.if_odrop, &current.if_ofifo, &current.if_ocolls, &current.if_ocarrier);
+            (char*)current.if_name, // force newline
+            // input
+            &current.if_ibytes, &current.if_ipackets, &current.if_ierrs, &current.if_idrop, &current.if_ififo,
+            &current.if_iframe, &junk, &junk, // force newline
+            // output
+            &current.if_obytes, &current.if_opackets, &current.if_oerrs, &current.if_odrop, &current.if_ofifo,
+            &current.if_ocolls, &current.if_ocarrier);
 
         if (ret != 16) {
             CMonitorLogger::instance()->LogError("net sscanf wanted 16 returned = %d line=%s\n", ret, (char*)buf);
         } else {
             for (i = 0; i < interfaces_found; i++) {
-                // CMonitorLogger::instance()->LogDebug("DEBUG: i=%ld current.if_name=%s, previous=%s interfaces=%ld\n", i,
-                // *current.if_name, previous[i].if_name, interfaces);
+                // CMonitorLogger::instance()->LogDebug("DEBUG: i=%ld current.if_name=%s, previous=%s interfaces=%ld\n",
+                // i, *current.if_name, previous[i].if_name, interfaces);
                 if (!strcmp(current.if_name, previous[i].if_name)) {
 
                     if (output_opts != PF_NONE) {
@@ -569,27 +587,32 @@ void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
 
                         case PF_ALL:
                             m_pOutput->pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed_sec);
-                            m_pOutput->pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
+                            m_pOutput->pdouble(
+                                "ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
                             m_pOutput->pdouble("ierrs", (current.if_ierrs - previous[i].if_ierrs) / elapsed_sec);
                             m_pOutput->pdouble("idrop", (current.if_idrop - previous[i].if_idrop) / elapsed_sec);
                             m_pOutput->pdouble("ififo", (current.if_ififo - previous[i].if_ififo) / elapsed_sec);
                             m_pOutput->pdouble("iframe", (current.if_iframe - previous[i].if_iframe) / elapsed_sec);
 
                             m_pOutput->pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed_sec);
-                            m_pOutput->pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
+                            m_pOutput->pdouble(
+                                "opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
                             m_pOutput->pdouble("oerrs", (current.if_oerrs - previous[i].if_oerrs) / elapsed_sec);
                             m_pOutput->pdouble("odrop", (current.if_odrop - previous[i].if_odrop) / elapsed_sec);
                             m_pOutput->pdouble("ofifo", (current.if_ofifo - previous[i].if_ofifo) / elapsed_sec);
 
                             m_pOutput->pdouble("ocolls", (current.if_ocolls - previous[i].if_ocolls) / elapsed_sec);
-                            m_pOutput->pdouble("ocarrier", (current.if_ocarrier - previous[i].if_ocarrier) / elapsed_sec);
+                            m_pOutput->pdouble(
+                                "ocarrier", (current.if_ocarrier - previous[i].if_ocarrier) / elapsed_sec);
                             break;
 
                         case PF_USED_BY_CHART_SCRIPT_ONLY:
                             m_pOutput->pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed_sec);
                             m_pOutput->pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed_sec);
-                            m_pOutput->pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
-                            m_pOutput->pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
+                            m_pOutput->pdouble(
+                                "ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
+                            m_pOutput->pdouble(
+                                "opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
                             break;
                         }
                         m_pOutput->psubsection_end();

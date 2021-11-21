@@ -35,8 +35,6 @@
 
 #define PAGESIZE_BYTES (1024 * 4)
 
-typedef std::map<std::string /* controller type */, std::string /* path */> cgroup_paths_map_t;
-
 // ----------------------------------------------------------------------------------
 // C++ Helper functions
 // ----------------------------------------------------------------------------------
@@ -96,7 +94,7 @@ const char* get_state(char n)
 }
 
 bool CMonitorCgroups::cgroup_proc_procsinfo(
-    pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts)
+    pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts, bool output_tgid)
 {
 #define MAX_STAT_FILE_PREFIX_LEN 1000
 #define MAX_PROC_FILENAME_LEN (MAX_STAT_FILE_PREFIX_LEN + 64)
@@ -293,6 +291,7 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(
         }
     }
 
+    if (output_tgid)
     { /* process the status file for the process/thread */
 
         snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/status", stat_file_prefix);
@@ -322,6 +321,19 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(
                 if (fgets(buf, 1024, fp) == NULL) {
                     break;
                 }
+                /*
+                    from https://man7.org/linux/man-pages/man5/proc.5.html
+                    
+                    rchar: characters read
+                            The number of bytes which this task has caused to
+                            be read from storage.  This is simply the sum of
+                            bytes which this process passed to read(2) and
+                            similar system calls.  It includes things such as
+                            terminal I/O and is unaffected by whether or not
+                            actual physical disk I/O was required (the read
+                            might have been satisfied from pagecache).
+
+                */
                 if (strncmp("rchar:", buf, 6) == 0)
                     sscanf(&buf[7], "%lld", &pout->io_rchar);
                 if (strncmp("wchar:", buf, 6) == 0)
@@ -421,20 +433,23 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
 
     // get new fresh processes data and update current database:
     currDB.clear();
+    bool needsToFilterOutThreads = (m_nCGroupsFound == CG_VERSION1) && !include_threads;
     for (size_t i = 0; i < all_pids.size(); i++) {
 
         // acquire all possible informations on this PID (or TID)
+        // NOTE: getting the Tgid is expensive (requires opening a dedicated file) so that's done only
+        //       if strictly needed, i.e. if needsToFilterOutThreads==true
         procsinfo_t procData;
-        cgroup_proc_procsinfo(all_pids[i], include_threads, &procData, output_opts);
+        cgroup_proc_procsinfo(all_pids[i], include_threads, &procData, output_opts, needsToFilterOutThreads);
 
-        if (include_threads) {
-            // CMonitorLogger::instance()->LogDebug("Found thread %d %d", procData.pi_pid, procData.pi_tgid);
-            currDB.insert(std::make_pair(all_pids[i], procData));
-        } else {
+        if (needsToFilterOutThreads) {
             // only the main thread has its PID == TGID...
             if (procData.pi_pid == procData.pi_tgid)
                 // this is the main thread of current PID... insert it into the database
                 currDB.insert(std::make_pair(all_pids[i], procData));
+        } else {
+            // we can simply take into account all PIDs/TIDs collected
+            currDB.insert(std::make_pair(all_pids[i], procData));
         }
     }
 

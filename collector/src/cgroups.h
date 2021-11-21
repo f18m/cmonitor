@@ -91,6 +91,7 @@ public:
         const std::set<std::string>& allowedStatsNames_v1, const std::set<std::string>& allowedStatsNames_v2);
     void cgroup_proc_cpuacct(double elapsed_sec);
     void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads);
+    void cgroup_proc_network_interfaces(double elapsed_sec, OutputFields output_opts);
 
     // misc helpers
     bool cgroup_still_exists();
@@ -103,7 +104,8 @@ private:
     void cgroup_v2_read_limits();
 
     // cgroup processes
-    bool cgroup_proc_procsinfo(pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts);
+    bool cgroup_proc_procsinfo(
+        pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts, bool output_tgid);
     bool cgroup_collect_pids(const std::string& file, std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
     // cpuacct and cpuset cgroups
@@ -143,6 +145,7 @@ private:
     unsigned int m_num_memory_samples_collected = 0;
     unsigned int m_num_cpuacct_samples_collected = 0;
     unsigned int m_num_tasks_samples_collected = 0;
+    unsigned int m_num_network_samples_collected = 0;
 
     // handles to stat files
     FILE* m_fp_cpuacct_stats = nullptr;
