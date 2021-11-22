@@ -58,9 +58,22 @@ all: $(OUT)
 ifneq ($(DISABLE_UNIT_TESTS_BUILD),1)
 	$(MAKE) -C tests all
 endif
+ifneq ($(DISABLE_BENCHMARKS_BUILD),1)
+	$(MAKE) -C benchmarks all
+endif
 
 test:
 	$(MAKE) -C tests test
+tests:
+	$(MAKE) -C tests test
+
+benchmark:
+	$(MAKE) -C benchmarks benchmarks
+benchmarks:
+	$(MAKE) -C benchmarks benchmarks
+
+.PHONY: tests benchmarks
+
 
 $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS)
@@ -68,6 +81,7 @@ $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 clean:
 	rm -f $(OUT) $(OBJS) *.err *.json *.log
 	$(MAKE) -C tests clean
+	$(MAKE) -C benchmarks clean
 
 strip:
 	strip $(OUT)
