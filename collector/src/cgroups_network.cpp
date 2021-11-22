@@ -43,8 +43,6 @@
 
 void CMonitorCgroups::cgroup_proc_network_interfaces(double elapsed_sec, OutputFields output_opts)
 {
-    char str[256];
-
     if (m_nCGroupsFound == CG_NONE)
         return;
 
@@ -88,7 +86,7 @@ void CMonitorCgroups::cgroup_proc_network_interfaces(double elapsed_sec, OutputF
         return;
     }
 
-    pid_t first = all_pids[0];
+    //pid_t first = all_pids[0];
 
     /*
         IMPORTANT: there are at least two methods to monitor network statistics of a particular network namespace:
@@ -124,7 +122,7 @@ void CMonitorCgroups::cgroup_proc_network_interfaces(double elapsed_sec, OutputF
     for (auto entry = m_topper_procs.lower_bound(m_pCfg->m_nProcessScoreThreshold); entry != m_topper_procs.end();
          entry++) {
 
-        m_pOutput->plong("cmon_score", score);
+        m_pOutput->plong("todo", 0);
     }
     m_pOutput->psection_end();
 

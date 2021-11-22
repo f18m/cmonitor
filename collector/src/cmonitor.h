@@ -53,16 +53,18 @@ enum PerformanceKpiFamily {
     PK_CGROUP_CPU_ACCT = 128, // collect CPU stats for the whole cgroup from controller "cpu accounting"
     PK_CGROUP_MEMORY = 256, // collect memory stats for the whole cgroup from controller "memory"
     PK_CGROUP_BLKIO = 512, // collect IO stats for the whole cgroup from controller "bulk IO"
-    PK_CGROUP_PROCESSES = 1024, // provide per-PID info about CPU,memory,disk // FIXME: make granularity configurable
-    PK_CGROUP_THREADS = 2048, // provide per-thread info about CPU,memory,disk // FIXME: make granularity configurable
+    PK_CGROUP_NETWORK_INTERFACES
+    = 1024, // collect network statistics by interface considering the network namespace of first proc in cgroup
+    PK_CGROUP_PROCESSES = 2048, // provide per-PID info about CPU,memory,disk // FIXME: make granularity configurable
+    PK_CGROUP_THREADS = 4096, // provide per-thread info about CPU,memory,disk // FIXME: make granularity configurable
 
     PK_MAX,
 
     PK_ALL_BAREMETAL = PK_BAREMETAL_CPU | PK_BAREMETAL_DISK | PK_BAREMETAL_MEMORY | PK_BAREMETAL_NETWORK,
-    PK_ALL_CGROUP = PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_PROCESSES,
+    PK_ALL_CGROUP = PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_NETWORK_INTERFACES | PK_CGROUP_PROCESSES,
 
     PK_ALL = PK_BAREMETAL_CPU | PK_BAREMETAL_DISK | PK_BAREMETAL_MEMORY | PK_BAREMETAL_NETWORK // force newline
-        | PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_PROCESSES
+        | PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_NETWORK_INTERFACES | PK_CGROUP_PROCESSES
 };
 
 PerformanceKpiFamily string2PerformanceKpiFamily(const std::string&);
@@ -208,14 +210,12 @@ public:
     std::map<std::string, std::string> m_mapCustomMetadata; // --custom-metadata
 };
 
-
 //------------------------------------------------------------------------------
 // CMonitorAppHelper
 //------------------------------------------------------------------------------
 
 class CMonitorOutputFrontend;
-class CMonitorAppHelper
-{
+class CMonitorAppHelper {
 public:
     CMonitorAppHelper(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
     {

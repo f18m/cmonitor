@@ -149,6 +149,7 @@ struct option_extended {
         "  'cgroup_cpu': collect CPU stats from the 'cpuacct' cgroup\n" // force newline
         "  'cgroup_memory': collect memory stats from 'memory' cgroup\n" // force newline
         /*"  'cgroup_blkio': collect IO stats from 'blkio' cgroup\n" NOT YET AVAILABLE */
+        "  'cgroup_network': collect network statistics by interface for the network namespace of the cgroup\n" // force newline
         "  'cgroup_processes': collect stats for each process inside the 'cpuacct' cgroup\n" // force newline
         "  'cgroup_threads': collect stats for each thread inside the 'cpuacct' cgroup\n" // force newline
         "  'all_baremetal': the combination of 'cpu', 'memory', 'disk', 'network'\n" // force newline
@@ -244,6 +245,8 @@ PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
         return PK_CGROUP_MEMORY;
     if (to_lower(str) == "cgroup_blkio")
         return PK_CGROUP_BLKIO;
+    if (to_lower(str) == "cgroup_network")
+        return PK_CGROUP_NETWORK_INTERFACES;
     if (to_lower(str) == "cgroup_processes")
         return PK_CGROUP_PROCESSES;
     if (to_lower(str) == "cgroup_threads")
@@ -277,6 +280,8 @@ std::string performanceKpiFamily2string(PerformanceKpiFamily k)
         return "cgroup_memory";
     case PK_CGROUP_BLKIO:
         return "cgroup_blkio";
+    case PK_CGROUP_NETWORK_INTERFACES:
+        return "cgroup_network";
     case PK_CGROUP_PROCESSES:
         return "cgroup_processes";
     case PK_CGROUP_THREADS:
@@ -813,6 +818,12 @@ int CMonitorCollectorApp::run(int argc, char** argv)
             m_cgroups_collector.cgroup_proc_memory(
                 charted_stats_from_cgroup_memory_v1, charted_stats_from_cgroup_memory_v2);
         }
+
+        if (m_cfg.m_nCollectFlags & PK_CGROUP_NETWORK_INTERFACES) {
+            m_cgroups_collector.cgroup_proc_network_interfaces(
+                elapsed, m_cfg.m_nOutputFields /* emit JSON */);
+        }
+
         if (m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) {
             m_cgroups_collector.cgroup_proc_tasks(
                 elapsed, m_cfg.m_nOutputFields /* emit JSON */, false /* do not include threads */);

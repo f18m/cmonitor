@@ -41,6 +41,7 @@ OBJS = \
     $(OUTDIR)/cgroups_config.o \
 	$(OUTDIR)/cgroups_cpuacct.o \
 	$(OUTDIR)/cgroups_memory.o \
+	$(OUTDIR)/cgroups_network.o \
 	$(OUTDIR)/cgroups_processes.o \
     $(OUTDIR)/header_info.o \
     $(OUTDIR)/logger.o \
