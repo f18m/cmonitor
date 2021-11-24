@@ -23,16 +23,38 @@
 // Includes
 //------------------------------------------------------------------------------
 
+#include "cmonitor.h"
 #include <map>
 #include <set>
 #include <string.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
-#include "cmonitor.h"
 
 //------------------------------------------------------------------------------
-// The App object
+// Types
+//------------------------------------------------------------------------------
+
+typedef struct {
+    long long if_ibytes;
+    long long if_ipackets;
+    long long if_ierrs;
+    long long if_idrop;
+    long long if_ififo;
+    long long if_iframe;
+    long long if_obytes;
+    long long if_opackets;
+    long long if_oerrs;
+    long long if_odrop;
+    long long if_ofifo;
+    long long if_ocolls;
+    long long if_ocarrier;
+} netinfo_t;
+
+typedef std::map<std::string /* interface name */, netinfo_t> netinfo_map_t;
+
+//------------------------------------------------------------------------------
+// CMonitorSystem
 //------------------------------------------------------------------------------
 
 class CMonitorSystem : public CMonitorAppHelper {
@@ -42,24 +64,25 @@ public:
     {
     }
 
+    void set_monitored_cpus(const std::set<uint64_t>& cpus) { m_monitored_cpus = cpus; }
+
     //------------------------------------------------------------------------------
-    // Functions to collect /proc stats (baremetal)
+    // Functions to collect /proc stats (baremetal), invoked by main app
     //------------------------------------------------------------------------------
 
     void proc_stat(double elapsed, OutputFields output_opts);
-    void proc_stat_cpu_total(const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu,
-        int max_cpu_count); // utility of proc_stat()
-
     void proc_diskstats(double elapsed, OutputFields output_opts);
     void proc_net_dev(double elapsed, OutputFields output_opts);
     void proc_loadavg();
     void proc_filesystems();
     void proc_uptime();
 
-    void set_monitored_cpus(const std::set<uint64_t>& cpus)
-    {
-        m_monitored_cpus = cpus;
-    }
+    //------------------------------------------------------------------------------
+    // Utility shared with CMonitorCgroups
+    //------------------------------------------------------------------------------
+
+    static bool read_net_dev(
+        const std::string& filename, const std::set<std::string>& net_iface_whitelist, netinfo_map_t& out_infos);
 
 private:
     bool is_monitored_cpu(int cpu)
@@ -69,10 +92,14 @@ private:
         return m_monitored_cpus.find(cpu) != m_monitored_cpus.end();
     }
 
-    int proc_stat_cpu_index(const char* cpu_data, double elapsed_sec, OutputFields output_opts,
-        cpu_specs_t* logical_cpu);
+    int proc_stat_cpu_index(
+        const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t* logical_cpu);
+    void proc_stat_cpu_total(const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu,
+        int max_cpu_count); // utility of proc_stat()
 
 private:
     std::set<uint64_t> m_monitored_cpus;
-};
 
+    std::set<std::string> m_network_interfaces_up;
+    netinfo_map_t m_previous_netinfo;
+};
