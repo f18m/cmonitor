@@ -36,21 +36,26 @@
 #define FAST_FILE_READER_MAX_FILE_SIZE 16384
 
 //------------------------------------------------------------------------------
-// The FastFileReader object
-// Use this like that:
+// The FastFileReader class
+// Usage example:
 /*
-    FastFileReader g_reader("/proc/stat");
+    class MyClass {
+        MyClass() : m_reader("/proc/stat") {}
+       ...
+    private:
+       FastFileReader m_reader;
+    }
 
-    void my_timer_func()
+    void MyClass::my_timer_func()
     {
-        g_reader.open_or_rewind();
+        m_reader.open_or_rewind();
 
-        const char*p = g_reader.get_next_line();
+        const char* p = m_reader.get_next_line();
         while (p)
         {
             // process line pointed at by "p"
 
-            p = g_reader.get_next_line();
+            p = m_reader.get_next_line();
         }
     }
 */

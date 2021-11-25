@@ -23,7 +23,6 @@
 #include <fcntl.h> // open()
 #include <unistd.h> // read()
 
-
 /* static */ char FastFileReader::m_buff[FAST_FILE_READER_MAX_FILE_SIZE];
 
 /*
@@ -37,12 +36,15 @@ bool FastFileReader::open_or_rewind()
     // On error, -1 is returned and errno is set to indicate the error.
     m_start_next_line_to_process = NULL;
     m_num_lines = 0;
-    if (m_fd != -1)
-        lseek(m_fd, 0, SEEK_SET);
-    else
+    if (m_fd != -1) {
+        off_t ret = lseek(m_fd, 0, SEEK_SET);
+        if (ret == -1)
+            return false;
+    } else {
         m_fd = open(m_filepath.c_str(), O_RDONLY);
-    if (m_fd == -1)
-        return false;
+        if (m_fd == -1)
+            return false;
+    }
     return read_whole_file();
 }
 
@@ -50,7 +52,7 @@ bool FastFileReader::read_whole_file()
 {
     ssize_t nread = read(m_fd, m_buff, FAST_FILE_READER_MAX_FILE_SIZE);
     if (nread <= 0 || nread >= (ssize_t)FAST_FILE_READER_MAX_FILE_SIZE)
-        return false; // we expect a non-zero value less than the "buf" size
+        return false; // we expect a non-zero value less than the "m_buff" size
 
     m_buff[nread] = '\0'; // add NUL termination
     m_start_next_line_to_process = m_buff;
