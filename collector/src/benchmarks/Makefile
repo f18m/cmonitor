@@ -1,5 +1,5 @@
 #
-# Main makefile to build cmonitor_collector unit tests
+# Main makefile to build cmonitor_collector benchmark tests
 #
 
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -15,44 +15,42 @@ CXXFLAGS+=-g -O2     # release mode; NOTE: without -g the creation of debuginfo 
 LDFLAGS+=-g -O2
 endif
 
-LIBRARIES+= -lgtest -lpthread
+LIBRARIES+= -lbenchmark -lpthread
 
 ifeq ($(MUSL_BUILD),1)
 OUTDIR=../../bin/musl
 else
 OUTDIR=../../bin/glibc
 endif
-OUT=$(OUTDIR)/unit_tests
+OUT=$(OUTDIR)/benchmark_tests
 
 OBJS = \
-    $(OUTDIR)/tests_main.o \
+    $(OUTDIR)/open_fopen_ifstream_benchmark.o \
     $(OUTDIR)/cgroups_config.o \
 	$(OUTDIR)/cgroups_cpuacct.o \
 	$(OUTDIR)/cgroups_memory.o \
-	$(OUTDIR)/cgroups_network.o \
 	$(OUTDIR)/cgroups_processes.o \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/output_frontend.o \
-    $(OUTDIR)/system.o \
     $(OUTDIR)/utils.o
 
 HEADERS = $(wildcard ../*.h)
 
-TEST_KERNELS = \
-	centos7-Linux-3.10.0-x86_64 \
-	fedora35-Linux-5.14.17-x86_64 \
-	ubuntu20.04-Linux-5.4.0-x86_64
 
 # Targets
 
 all: $(OUT)
 
-test: $(OUT)
-	@echo "Running unit test binary $(OUT)"
-	sudo $(OUT)
-tests: $(OUT)
-	@echo "Running unit test binary $(OUT)"
-	sudo $(OUT)
+benchmark: $(OUT)
+	@echo "Running benchmark binary $(OUT)"
+	cpupower frequency-set --governor performance
+	$(OUT)
+	cpupower frequency-set --governor powersave
+benchmarks: $(OUT)
+	@echo "Running benchmark binary $(OUT)"
+	cpupower frequency-set --governor performance
+	$(OUT)
+	cpupower frequency-set --governor powersave
 
 debug:
 	gdb $(OUT)
@@ -61,12 +59,7 @@ $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBRARIES)
 
 clean:
-	rm -f $(OUT) $(OBJS) *.err *.json *.log
-	for kk in $(TEST_KERNELS); do \
-		rm -rf $$kk/sample*/proc $$kk/sample*/sys $$kk/sample*/sample-timestamp ; \
-		rm -f $$kk/current-sample ; \
-		rm -f $$kk/result-*.json ; \
-	done
+	rm -f $(OUT) $(OBJS) 
 
 # Rules
 

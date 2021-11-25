@@ -11,6 +11,7 @@ addons:
     - valgrind
     - python3
     - libgtest-dev
+    - libbenchmark-dev
 
 install: pip install j2cli
 

@@ -35,8 +35,6 @@
 
 #define PAGESIZE_BYTES (1024 * 4)
 
-typedef std::map<std::string /* controller type */, std::string /* path */> cgroup_paths_map_t;
-
 // ----------------------------------------------------------------------------------
 // C++ Helper functions
 // ----------------------------------------------------------------------------------
@@ -96,7 +94,7 @@ const char* get_state(char n)
 }
 
 bool CMonitorCgroups::cgroup_proc_procsinfo(
-    pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts)
+    pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts, bool output_tgid)
 {
 #define MAX_STAT_FILE_PREFIX_LEN 1000
 #define MAX_PROC_FILENAME_LEN (MAX_STAT_FILE_PREFIX_LEN + 64)
@@ -293,6 +291,7 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(
         }
     }
 
+    if (output_tgid)
     { /* process the status file for the process/thread */
 
         snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/status", stat_file_prefix);
@@ -322,6 +321,19 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(
                 if (fgets(buf, 1024, fp) == NULL) {
                     break;
                 }
+                /*
+                    from https://man7.org/linux/man-pages/man5/proc.5.html
+                    
+                    rchar: characters read
+                            The number of bytes which this task has caused to
+                            be read from storage.  This is simply the sum of
+                            bytes which this process passed to read(2) and
+                            similar system calls.  It includes things such as
+                            terminal I/O and is unaffected by whether or not
+                            actual physical disk I/O was required (the read
+                            might have been satisfied from pagecache).
+
+                */
                 if (strncmp("rchar:", buf, 6) == 0)
                     sscanf(&buf[7], "%lld", &pout->io_rchar);
                 if (strncmp("wchar:", buf, 6) == 0)
@@ -421,20 +433,23 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
 
     // get new fresh processes data and update current database:
     currDB.clear();
+    bool needsToFilterOutThreads = (m_nCGroupsFound == CG_VERSION1) && !include_threads;
     for (size_t i = 0; i < all_pids.size(); i++) {
 
         // acquire all possible informations on this PID (or TID)
+        // NOTE: getting the Tgid is expensive (requires opening a dedicated file) so that's done only
+        //       if strictly needed, i.e. if needsToFilterOutThreads==true
         procsinfo_t procData;
-        cgroup_proc_procsinfo(all_pids[i], include_threads, &procData, output_opts);
+        cgroup_proc_procsinfo(all_pids[i], include_threads, &procData, output_opts, needsToFilterOutThreads);
 
-        if (include_threads) {
-            // CMonitorLogger::instance()->LogDebug("Found thread %d %d", procData.pi_pid, procData.pi_tgid);
-            currDB.insert(std::make_pair(all_pids[i], procData));
-        } else {
+        if (needsToFilterOutThreads) {
             // only the main thread has its PID == TGID...
             if (procData.pi_pid == procData.pi_tgid)
                 // this is the main thread of current PID... insert it into the database
                 currDB.insert(std::make_pair(all_pids[i], procData));
+        } else {
+            // we can simply take into account all PIDs/TIDs collected
+            currDB.insert(std::make_pair(all_pids[i], procData));
         }
     }
 
@@ -497,7 +512,7 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
 
 #define CURRENT(member) (p->member)
 #define PREVIOUS(member) (q->member)
-#define TIMEDELTA(member) (CURRENT(member) - PREVIOUS(member))
+#define DELTA(member) (CURRENT(member) - PREVIOUS(member))
 #define COUNTDELTA(member) ((PREVIOUS(member) > CURRENT(member)) ? 0 : (CURRENT(member) - PREVIOUS(member)))
 
         sprintf(str, "pid_%ld", (long)CURRENT(pi_pid));
@@ -532,9 +547,9 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
                  IOW there is no need to do any math to produce a percentage, just taking
                  the delta of the absolute, monotonic-increasing value and divide by the elapsed time
         */
-        m_pOutput->pdouble("cpu_tot", (double)(TIMEDELTA(pi_utime) + TIMEDELTA(pi_stime)) / elapsed_sec);
-        m_pOutput->pdouble("cpu_usr", (double)TIMEDELTA(pi_utime) / elapsed_sec);
-        m_pOutput->pdouble("cpu_sys", (double)TIMEDELTA(pi_stime) / elapsed_sec);
+        m_pOutput->pdouble("cpu_tot", (double)(DELTA(pi_utime) + DELTA(pi_stime)) / elapsed_sec);
+        m_pOutput->pdouble("cpu_usr", (double)DELTA(pi_utime) / elapsed_sec);
+        m_pOutput->pdouble("cpu_sys", (double)DELTA(pi_stime) / elapsed_sec);
 
         // provide also the total, monotonically-increasing CPU time:
         // this is used by chart script to produce the "top of the topper" chart
@@ -587,10 +602,10 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
          * I/O fields
          */
         m_pOutput->pdouble("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
-        m_pOutput->plong("io_rchar", TIMEDELTA(io_rchar) / elapsed_sec);
-        m_pOutput->plong("io_wchar", TIMEDELTA(io_wchar) / elapsed_sec);
-        m_pOutput->plong("io_read_bytes", TIMEDELTA(io_read_bytes) / elapsed_sec);
-        m_pOutput->plong("io_write_bytes", TIMEDELTA(io_write_bytes) / elapsed_sec);
+        m_pOutput->plong("io_rchar", DELTA(io_rchar) / elapsed_sec);
+        m_pOutput->plong("io_wchar", DELTA(io_wchar) / elapsed_sec);
+        m_pOutput->plong("io_read_bytes", DELTA(io_read_bytes) / elapsed_sec);
+        m_pOutput->plong("io_write_bytes", DELTA(io_write_bytes) / elapsed_sec);
 
         // provide also the total, monotonically-increasing I/O time:
         // this is used by chart script to produce the "top of the topper" chart

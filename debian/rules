@@ -13,7 +13,7 @@ export DH_VERBOSE=1
 	dh $@ 
 
 override_dh_auto_build:
-	$(MAKE) -C collector all DISABLE_UNIT_TESTS_BUILD=1 -j
+	$(MAKE) -C collector all DISABLE_UNIT_TESTS_BUILD=1 DISABLE_BENCHMARKS_BUILD=1 -j
 	$(MAKE) -C tools
         # just to give the same user experience of RPMs, remove the .py extension here
 	mv ./tools/chart/cmonitor_chart.py ./tools/chart/cmonitor_chart

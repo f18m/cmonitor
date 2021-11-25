@@ -18,9 +18,9 @@
  */
 
 #include "system.h"
+#include "logger.h"
 #include "output_frontend.h"
 #include "utils.h"
-#include "logger.h"
 #include <assert.h>
 #include <mntent.h>
 #include <sys/vfs.h>
@@ -28,7 +28,6 @@
 #define MAX_LOGICAL_CPU (256)
 #define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpu_count + 1.0)))
 #define DELTA_LOGICAL(stat) ((float)(stat - logical_cpu[cpuno].stat) / (float)elapsed_sec)
-
 
 void CMonitorSystem::proc_stat_cpu_total(
     const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu, int max_cpu_count)
@@ -89,8 +88,8 @@ void CMonitorSystem::proc_stat_cpu_total(
     total_cpu.guestnice = guestnice;
 }
 
-int CMonitorSystem::proc_stat_cpu_index(const char* cpu_data, double elapsed_sec, OutputFields output_opts,
-    cpu_specs_t* logical_cpu)
+int CMonitorSystem::proc_stat_cpu_index(
+    const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t* logical_cpu)
 {
     long long user;
     long long nice;
@@ -331,7 +330,8 @@ void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts
                             tmpstr[j] = 0;
 
                     if (strncmp(tmpstr, "loop", 4) != 0) {
-                        // CMonitorLogger::instance()->LogDebug("DEBUG saved %ld %s disk name\n", i, previous[i].dk_name);
+                        // CMonitorLogger::instance()->LogDebug("DEBUG saved %ld %s disk name\n", i,
+                        // previous[i].dk_name);
                         strcpy(previous[disks_sampled].dk_name, tmpstr);
                         disks_sampled++;
                     } else {
@@ -391,7 +391,8 @@ void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts
         current.dk_time /= 10.0; /* in milli-seconds to make it up to 100%, 1000/100 = 10 */
 
         for (i = 0; i < disks_found; i++) {
-            // CMonitorLogger::instance()->LogDebug("DEBUG disks new %s old %s\n", current.dk_name, previous[i].dk_name);
+            // CMonitorLogger::instance()->LogDebug("DEBUG disks new %s old %s\n", current.dk_name,
+            // previous[i].dk_name);
             if (!strcmp(current.dk_name, previous[i].dk_name)) {
 
                 if (!filtered_out && output_opts != PF_NONE) {
@@ -442,80 +443,32 @@ void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts
  */
 void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
 {
-    struct netinfo {
-        char if_name[128];
-        long long if_ibytes;
-        long long if_ipackets;
-        long long if_ierrs;
-        long long if_idrop;
-        long long if_ififo;
-        long long if_iframe;
-        long long if_obytes;
-        long long if_opackets;
-        long long if_oerrs;
-        long long if_odrop;
-        long long if_ofifo;
-        long long if_ocolls;
-        long long if_ocarrier;
-    };
-
-    static struct netinfo current;
-    static struct netinfo* previous;
-    static long interfaces_found = 0, interfaces_sampled = 0;
-    long long junk;
-
-    static FILE* fp = 0;
-    char buf[1024];
-    int ret;
-
-    /* popen variables */
-    FILE* pop;
-    char tmpstr[1024 + 1];
-    long i;
-    long j;
-    long len;
+    static bool first_time = true;
 
     DEBUGLOG_FUNCTION_START();
-    if (fp == (FILE*)0) {
-        /* Just count the number of UP network interfaces */
-        pop = popen("/sbin/ifconfig -s 2>/dev/null", "r");
-        if (pop != NULL) {
-            /* throw away the headerline */
-            tmpstr[0] = 0;
-            interfaces_found = 0;
-            if (fgets(tmpstr, 1024, pop)) {
-                for (;; interfaces_found++) {
-                    tmpstr[0] = 0;
-                    if (fgets(tmpstr, 1024, pop) == NULL)
-                        break;
-                    // CMonitorLogger::instance()->LogDebug("DEBUG %ld interfaces - %s\n", interfaces, tmpstr);
-                }
-            }
-            pclose(pop);
-        } else {
-            CMonitorLogger::instance()->LogErrorWithErrno("failed to list network devices using /sbin/ifconfig");
-            interfaces_found = 0;
-        }
-        // CMonitorLogger::instance()->LogDebug("DEBUG %ld intergaces\n", interfaces);
-        previous = (netinfo*)calloc(sizeof(struct netinfo), interfaces_found);
 
+    if (first_time) {
+        /* popen variables */
+        FILE* pop;
+        char tmpstr[1024 + 1];
+
+        // find only interfaces that are UP
         pop = popen("/sbin/ifconfig -s 2>/dev/null", "r");
         if (pop != NULL) {
             /* throw away the headerline */
             if (fgets(tmpstr, 1024, pop)) {
-                for (i = 0; i < interfaces_found; i++) {
+                for (int i = 0;; i++) {
                     tmpstr[0] = 0;
                     if (fgets(tmpstr, 1024, pop) == NULL)
                         break;
                     tmpstr[strlen(tmpstr)] = 0; /* remove NL char */
-                    len = strlen(tmpstr);
-                    for (j = 0; j < len; j++)
+                    int len = strlen(tmpstr);
+                    for (int j = 0; j < len; j++)
                         if (tmpstr[j] == ' ')
                             tmpstr[j] = 0;
 
                     if (strncmp(tmpstr, "veth", 4) != 0) {
-                        strcpy(previous[interfaces_sampled].if_name, tmpstr);
-                        interfaces_sampled++;
+                        m_network_interfaces_up.insert(tmpstr);
                     } else {
                         /* veth**** interfaces are not real */
                         CMonitorLogger::instance()->LogDebug("Discarding net interface %s\n", tmpstr);
@@ -523,85 +476,155 @@ void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
                 }
             }
             pclose(pop);
-        } else
-            interfaces_found = 0;
-
-        if ((fp = fopen("/proc/net/dev", "r")) == NULL) {
-            CMonitorLogger::instance()->LogErrorWithErrno("failed to open /proc/net/dev");
-            return;
         }
-    } else
-        rewind(fp);
+        first_time = false;
+    }
 
-    if (interfaces_found == 0 || interfaces_sampled == 0)
+    if (m_network_interfaces_up.empty())
         return; // this happens in e.g. Docker containers having no network
 
-    if (fgets(buf, 1024, fp) == NULL)
-        return; /* throw away the header line */
-    if (fgets(buf, 1024, fp) == NULL)
-        return; /* throw away the header line */
+    // clang-format off
+    /*
+        the file has a format like (see https://man7.org/linux/man-pages/man5/proc.5.html)
 
-    if (output_opts != PF_NONE)
+            Inter-|   Receive                                                |  Transmit
+             face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+                lo: 2776770   11307    0    0    0     0          0         0  2776770   11307    0    0    0     0       0          0
+              eth0: 1215645    2751    0    0    0     0          0         0  1782404    4324    0    0    0   427       0          0
+              ppp0: 1622270    5552    1    0    0     0          0         0   354130    5669    0    0    0     0       0          0
+              tap0:    7714      81    0    0    0     0          0         0     7714      81    0    0    0     0       0          0
+    */
+    // clang-format on
+
+    netinfo_map_t new_stats;
+    read_net_dev("/proc/net/dev", m_network_interfaces_up, new_stats);
+
+    if (output_opts != PF_NONE) {
         m_pOutput->psection_start("network_interfaces");
+        output_net_dev_stats(m_pOutput, elapsed_sec, new_stats, m_previous_netinfo, output_opts);
+        m_pOutput->psection_end();
+    }
+
+    // finally remember the last sampled stats:
+    m_previous_netinfo = new_stats;
+}
+
+/* static */
+bool CMonitorSystem::read_net_dev(
+    const std::string& filename, const std::set<std::string>& net_iface_whitelist, netinfo_map_t& out_stats)
+{
+    // clang-format off
+    /*
+        the file has a format like (see https://man7.org/linux/man-pages/man5/proc.5.html)
+
+            Inter-|   Receive                                                |  Transmit
+             face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+                lo: 2776770   11307    0    0    0     0          0         0  2776770   11307    0    0    0     0       0          0
+              eth0: 1215645    2751    0    0    0     0          0         0  1782404    4324    0    0    0   427       0          0
+              ppp0: 1622270    5552    1    0    0     0          0         0   354130    5669    0    0    0     0       0          0
+              tap0:    7714      81    0    0    0     0          0         0     7714      81    0    0    0     0       0          0
+    */
+    // clang-format on
+
+    FILE* fp = 0;
+    if ((fp = fopen(filename.c_str(), "r")) == NULL) {
+        CMonitorLogger::instance()->LogErrorWithErrno("failed to open %s", filename.c_str());
+        return false;
+    }
+
+    char buf[1024];
+    if (fgets(buf, 1024, fp) == NULL) /* throw away the header line */
+        return false;
+    if (fgets(buf, 1024, fp) == NULL) /* throw away the header line */
+        return false;
+
+    long long junk;
     while (fgets(buf, 1024, fp) != NULL) {
         strip_spaces(buf);
 
-        bzero(&current, sizeof(struct netinfo));
-        ret = sscanf(&buf[0], "%s %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
-            (char*)current.if_name, &current.if_ibytes, &current.if_ipackets, &current.if_ierrs, &current.if_idrop,
-            &current.if_ififo, &current.if_iframe, &junk, &junk, &current.if_obytes, &current.if_opackets,
-            &current.if_oerrs, &current.if_odrop, &current.if_ofifo, &current.if_ocolls, &current.if_ocarrier);
+        char name[128];
+        netinfo_t current;
+        bzero(&current, sizeof(netinfo_t));
+        int ret = sscanf(&buf[0], "%s %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
+            name, // force newline
+            // input
+            &current.if_ibytes, &current.if_ipackets, &current.if_ierrs, &current.if_idrop, &current.if_ififo,
+            &current.if_iframe, &junk, &junk, // force newline
+            // output
+            &current.if_obytes, &current.if_opackets, &current.if_oerrs, &current.if_odrop, &current.if_ofifo,
+            &current.if_ocolls, &current.if_ocarrier);
 
         if (ret != 16) {
             CMonitorLogger::instance()->LogError("net sscanf wanted 16 returned = %d line=%s\n", ret, (char*)buf);
-        } else {
-            for (i = 0; i < interfaces_found; i++) {
-                // CMonitorLogger::instance()->LogDebug("DEBUG: i=%ld current.if_name=%s, previous=%s interfaces=%ld\n", i,
-                // *current.if_name, previous[i].if_name, interfaces);
-                if (!strcmp(current.if_name, previous[i].if_name)) {
-
-                    if (output_opts != PF_NONE) {
-                        m_pOutput->psubsection_start(current.if_name);
-                        switch (output_opts) {
-                        case PF_NONE:
-                            assert(0);
-                            break;
-
-                        case PF_ALL:
-                            m_pOutput->pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed_sec);
-                            m_pOutput->pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
-                            m_pOutput->pdouble("ierrs", (current.if_ierrs - previous[i].if_ierrs) / elapsed_sec);
-                            m_pOutput->pdouble("idrop", (current.if_idrop - previous[i].if_idrop) / elapsed_sec);
-                            m_pOutput->pdouble("ififo", (current.if_ififo - previous[i].if_ififo) / elapsed_sec);
-                            m_pOutput->pdouble("iframe", (current.if_iframe - previous[i].if_iframe) / elapsed_sec);
-
-                            m_pOutput->pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed_sec);
-                            m_pOutput->pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
-                            m_pOutput->pdouble("oerrs", (current.if_oerrs - previous[i].if_oerrs) / elapsed_sec);
-                            m_pOutput->pdouble("odrop", (current.if_odrop - previous[i].if_odrop) / elapsed_sec);
-                            m_pOutput->pdouble("ofifo", (current.if_ofifo - previous[i].if_ofifo) / elapsed_sec);
-
-                            m_pOutput->pdouble("ocolls", (current.if_ocolls - previous[i].if_ocolls) / elapsed_sec);
-                            m_pOutput->pdouble("ocarrier", (current.if_ocarrier - previous[i].if_ocarrier) / elapsed_sec);
-                            break;
-
-                        case PF_USED_BY_CHART_SCRIPT_ONLY:
-                            m_pOutput->pdouble("ibytes", (current.if_ibytes - previous[i].if_ibytes) / elapsed_sec);
-                            m_pOutput->pdouble("obytes", (current.if_obytes - previous[i].if_obytes) / elapsed_sec);
-                            m_pOutput->pdouble("ipackets", (current.if_ipackets - previous[i].if_ipackets) / elapsed_sec);
-                            m_pOutput->pdouble("opackets", (current.if_opackets - previous[i].if_opackets) / elapsed_sec);
-                            break;
-                        }
-                        m_pOutput->psubsection_end();
-                    }
-                    memcpy(&previous[i], &current, sizeof(struct netinfo));
-                    break; /* once found stop searching */
-                }
-            }
+            continue;
         }
+
+        // as fixed rule always discard the loopback device:
+        if (strncmp(name, "lo", 2) == 0)
+            continue;
+
+        if (net_iface_whitelist.empty() || net_iface_whitelist.find(name) != net_iface_whitelist.end())
+            // this interface is in the whitelist, store it:
+            out_stats[name] = current;
     }
-    if (output_opts != PF_NONE)
-        m_pOutput->psection_end();
+
+    return !out_stats.empty();
+}
+
+/* static */
+bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, double elapsed_sec,
+    const netinfo_map_t& new_stats, const netinfo_map_t& prev_stats, OutputFields output_opts)
+{
+#define CURRENT(member) (current.member)
+#define PREVIOUS(member) (previous.member)
+#define DELTA(member) (CURRENT(member) - PREVIOUS(member))
+
+    for (auto it : new_stats) {
+        const std::string& name = it.first;
+        const netinfo_t& current = it.second;
+
+        const auto it_prev = prev_stats.find(name);
+        if (it_prev == prev_stats.end())
+            continue; // looks like a new interface, skip it in this sample if we cannot take any delta
+
+        // found previous values, statistics can now be generated:
+        const netinfo_t& previous = it_prev->second;
+        m_pOutput->psubsection_start(name.c_str());
+
+        switch (output_opts) {
+        case PF_NONE:
+            assert(0);
+            break;
+
+        case PF_ALL:
+            m_pOutput->plong("ibytes", DELTA(if_ibytes) / elapsed_sec);
+            m_pOutput->plong("ipackets", DELTA(if_ipackets) / elapsed_sec);
+            m_pOutput->plong("ierrs", DELTA(if_ierrs) / elapsed_sec);
+            m_pOutput->plong("idrop", DELTA(if_idrop) / elapsed_sec);
+            m_pOutput->plong("ififo", DELTA(if_ififo) / elapsed_sec);
+            m_pOutput->plong("iframe", DELTA(if_iframe) / elapsed_sec);
+
+            m_pOutput->plong("obytes", DELTA(if_obytes) / elapsed_sec);
+            m_pOutput->plong("opackets", DELTA(if_opackets) / elapsed_sec);
+            m_pOutput->plong("oerrs", DELTA(if_oerrs) / elapsed_sec);
+            m_pOutput->plong("odrop", DELTA(if_odrop) / elapsed_sec);
+            m_pOutput->plong("ofifo", DELTA(if_ofifo) / elapsed_sec);
+
+            m_pOutput->plong("ocolls", DELTA(if_ocolls) / elapsed_sec);
+            m_pOutput->plong("ocarrier", DELTA(if_ocarrier) / elapsed_sec);
+            break;
+
+        case PF_USED_BY_CHART_SCRIPT_ONLY:
+            m_pOutput->plong("ibytes", DELTA(if_ibytes) / elapsed_sec);
+            m_pOutput->plong("obytes", DELTA(if_obytes) / elapsed_sec);
+            m_pOutput->plong("ipackets", DELTA(if_ipackets) / elapsed_sec);
+            m_pOutput->plong("opackets", DELTA(if_opackets) / elapsed_sec);
+            break;
+        }
+        m_pOutput->psubsection_end();
+    }
+
+    return true;
 }
 
 /*
