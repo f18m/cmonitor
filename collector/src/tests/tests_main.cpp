@@ -170,13 +170,13 @@ TEST(CGroups, centos7_Linux_3_10_0_withthreads)
         "docker/27d5147ebb2620bfd9c20f728e0785f55e523efd0bb25a1a8e225c7fa9e0e335", true /* with threads */,
         4 /* nsamples */);
 }
-#if 0
+
 TEST(CGroups, ubuntu2004_Linux_5_4_0_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
         "nothreads", // force newline
         "ubuntu20.04-Linux-5.4.0-x86_64", // force newline
-        "docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a", false /* with threads */,
+        "docker//fffe499793dc451b96e4d8628adfcd762d1a8177d8627d8e879c56ca093bc7ef", false /* with threads */,
         4 /* nsamples */);
 }
 TEST(CGroups, ubuntu2004_Linux_5_4_0_withthreads)
@@ -184,10 +184,9 @@ TEST(CGroups, ubuntu2004_Linux_5_4_0_withthreads)
     run_cmonitor_on_tarball_samples( // force newline
         "withthreads", // force newline
         "ubuntu20.04-Linux-5.4.0-x86_64", // force newline
-        "docker//938cbdc624d3af04e6e75ed6ace47c5155276353cb36aa7ee9cc1e52cc10fa6a", true /* with threads */,
+        "docker//fffe499793dc451b96e4d8628adfcd762d1a8177d8627d8e879c56ca093bc7ef", true /* with threads */,
         4 /* nsamples */);
 }
-#endif
 
 //------------------------------------------------------------------------------
 // unit tests on cgroups v2
