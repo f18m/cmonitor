@@ -93,7 +93,7 @@ const char* get_state(char n)
     }
 }
 
-bool CMonitorCgroups::proc_procsinfo(
+bool CMonitorCgroups::get_process_infos(
     pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts, bool output_tgid)
 {
 #define MAX_STAT_FILE_PREFIX_LEN 1000
@@ -440,7 +440,7 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         // NOTE: getting the Tgid is expensive (requires opening a dedicated file) so that's done only
         //       if strictly needed, i.e. if needsToFilterOutThreads==true
         procsinfo_t procData;
-        proc_procsinfo(all_pids[i], include_threads, &procData, output_opts, needsToFilterOutThreads);
+        get_process_infos(all_pids[i], include_threads, &procData, output_opts, needsToFilterOutThreads);
 
         if (needsToFilterOutThreads) {
             // only the main thread has its PID == TGID...

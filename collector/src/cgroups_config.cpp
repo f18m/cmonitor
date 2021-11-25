@@ -397,7 +397,7 @@ void CMonitorCgroups::v1_read_limits()
         return;
     }
 
-    if (!read_from_system_cpu_for_current_cgroup(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
+    if (!read_cpuset_cpus(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
         CMonitorLogger::instance()->LogError("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
         m_nCGroupsFound = CG_NONE;
         return;
@@ -443,7 +443,7 @@ void CMonitorCgroups::v2_read_limits()
         return;
     }
 
-    if (!read_from_system_cpu_for_current_cgroup(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
+    if (!read_cpuset_cpus(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
         CMonitorLogger::instance()->LogError("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
         m_nCGroupsFound = CG_NONE;
         return;

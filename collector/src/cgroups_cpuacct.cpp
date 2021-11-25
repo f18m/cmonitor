@@ -32,7 +32,7 @@
 // CMonitorCgroups - private helpers
 // ----------------------------------------------------------------------------------
 
-bool CMonitorCgroups::read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<uint64_t>& cpus)
+bool CMonitorCgroups::read_cpuset_cpus(std::string kernelPath, std::set<uint64_t>& cpus)
 {
     std::set<uint64_t> empty_set;
     return read_integers_with_range_validation(kernelPath + "/cpuset.cpus", 0, INT32_MAX, cpus);
@@ -73,7 +73,7 @@ bool CMonitorCgroups::read_cpuacct_line(const std::string& path, std::vector<uin
     return true;
 }
 
-bool CMonitorCgroups::proc_cpuacct_v1_counters_by_cpu(
+bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
     bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage)
 {
     /* NOTE: newer distros have stats like
@@ -242,7 +242,7 @@ bool CMonitorCgroups::proc_cpuacct_v1_counters_by_cpu(
     return bValidData;
 }
 
-bool CMonitorCgroups::proc_cpuacct_v2_counters(
+bool CMonitorCgroups::sample_cpuacct_v2_counters(
     bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage)
 {
     // see https://www.kernel.org/doc/Documentation/cgroup-v2.txt
@@ -339,13 +339,13 @@ void CMonitorCgroups::sample_cpuacct(double elapsed_sec)
     case CG_VERSION1:
         // emit per-CPU information since cgroups v1 provide such granularity
         // from these, we also compute the TOTAL cpu usages
-        bValidData = proc_cpuacct_v1_counters_by_cpu(print, elapsed_sec, total_cpu_usage);
+        bValidData = sample_cpuacct_v1_counters_by_cpu(print, elapsed_sec, total_cpu_usage);
         break;
 
     case CG_VERSION2:
         // with cgroups v2, there is no more per-cpu usage reported, we just have
         // the total aggregated cpu usage break down in kernel/user space
-        bValidData = proc_cpuacct_v2_counters(print, elapsed_sec, total_cpu_usage);
+        bValidData = sample_cpuacct_v2_counters(print, elapsed_sec, total_cpu_usage);
         break;
 
     case CG_NONE:

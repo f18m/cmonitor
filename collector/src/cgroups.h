@@ -106,19 +106,21 @@ private:
     void init_cpuacct();
 
     // cgroup processes
-    bool proc_procsinfo(
+    bool get_process_infos(
         pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts, bool output_tgid);
     bool collect_pids(const std::string& file, std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
-    // cpuacct and cpuset cgroups
+    // cpuacct controller
     bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */);
-    bool proc_cpuacct_v1_counters_by_cpu(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
-    bool proc_cpuacct_v2_counters(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
-    bool is_allowed_cpu(int cpu);
-    bool read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<uint64_t>& cpus);
+    bool sample_cpuacct_v1_counters_by_cpu(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
+    bool sample_cpuacct_v2_counters(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
 
-    // memory cgroups
-    size_t proc_memory_dump_flat_keyed(
+    // cpuset controller
+    bool is_allowed_cpu(int cpu);
+    bool read_cpuset_cpus(std::string kernelPath, std::set<uint64_t>& cpus);
+
+    // memory controller
+    size_t sample_flat_keyed_file(
         const std::string& path, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix);
 
 private:

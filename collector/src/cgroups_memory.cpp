@@ -32,7 +32,7 @@
 // CMonitorCgroups - internal helpers
 // ----------------------------------------------------------------------------------
 
-size_t CMonitorCgroups::proc_memory_dump_flat_keyed(
+size_t CMonitorCgroups::sample_flat_keyed_file(
     const std::string& path, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix)
 {
     size_t nread = 0, ndiscarded = 0;
@@ -120,7 +120,7 @@ void CMonitorCgroups::sample_memory(
     // dump main memory statistics file
     const std::set<std::string>& allowedStatsNames
         = (m_nCGroupsFound == CG_VERSION1) ? allowedStatsNames_v1 : allowedStatsNames_v2;
-    proc_memory_dump_flat_keyed(m_cgroup_memory_kernel_path + "/memory.stat", allowedStatsNames, "stat.");
+    sample_flat_keyed_file(m_cgroup_memory_kernel_path + "/memory.stat", allowedStatsNames, "stat.");
 
     switch (m_nCGroupsFound) {
     case CG_VERSION1:
@@ -129,7 +129,7 @@ void CMonitorCgroups::sample_memory(
         break;
 
     case CG_VERSION2:
-        proc_memory_dump_flat_keyed(
+        sample_flat_keyed_file(
             m_cgroup_memory_kernel_path + "/memory.events", allowedStatsNames, "events.");
         break;
 
