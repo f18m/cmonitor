@@ -41,7 +41,7 @@
 // CMonitorCgroups - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
 
-void CMonitorCgroups::cgroup_proc_network_interfaces(double elapsed_sec, OutputFields output_opts)
+void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields output_opts)
 {
     if (m_nCGroupsFound == CG_NONE)
         return;
@@ -62,12 +62,12 @@ void CMonitorCgroups::cgroup_proc_network_interfaces(double elapsed_sec, OutputF
         // of course here we're assuming that the "tasks" under the cpuacct cgroup are the ones
         // the user is interested to monitor... in theory the "tasks" under other controllers like "memory"
         // might be different; in practice with Docker/LXC/Kube that does not happen
-        if (!cgroup_collect_pids(m_cgroup_cpuacct_kernel_path + "/tasks", all_pids))
+        if (!collect_pids(m_cgroup_cpuacct_kernel_path + "/tasks", all_pids))
             return;
         break;
 
     case CG_VERSION2:
-        if (!cgroup_collect_pids(m_cgroup_cpuacct_kernel_path + "/cgroup.procs", all_pids))
+        if (!collect_pids(m_cgroup_cpuacct_kernel_path + "/cgroup.procs", all_pids))
             return;
         break;
 

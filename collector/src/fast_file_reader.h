@@ -63,7 +63,7 @@
 
 class FastFileReader {
 public:
-    FastFileReader(const std::string& filepath)
+    FastFileReader(const std::string& filepath = "")
     {
         m_filepath = filepath;
         m_fd = -1;
@@ -72,11 +72,16 @@ public:
     }
     ~FastFileReader()
     {
-        if (m_fd != -1)
-            close(m_fd);
+        close();
     }
 
+    void set_file(const std::string& filepath = "")
+    {
+        close(); // in case a previous one had already been opened
+        m_filepath = filepath;
+    }
     bool open_or_rewind();
+    void close();
 
     // returns NULL if EOF is reached
     const char* get_next_line();

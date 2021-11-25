@@ -33,19 +33,32 @@
 
 bool FastFileReader::open_or_rewind()
 {
-    // On error, -1 is returned and errno is set to indicate the error.
     m_start_next_line_to_process = NULL;
     m_num_lines = 0;
     if (m_fd != -1) {
+        // file was already open, just seek again back to the beginning
         off_t ret = lseek(m_fd, 0, SEEK_SET);
         if (ret == -1)
             return false;
     } else {
+        // On error, -1 is returned and errno is set to indicate the error.
         m_fd = open(m_filepath.c_str(), O_RDONLY);
         if (m_fd == -1)
             return false;
     }
+
+    // cache the entire file contents in memory
     return read_whole_file();
+}
+
+void FastFileReader::close()
+{
+    if (m_fd != -1)
+    {
+        ::close(m_fd);
+        m_fd = -1;
+        // next call to open_or_rewind() will reopen it
+    }
 }
 
 bool FastFileReader::read_whole_file()

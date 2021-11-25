@@ -93,7 +93,7 @@ const char* get_state(char n)
     }
 }
 
-bool CMonitorCgroups::cgroup_proc_procsinfo(
+bool CMonitorCgroups::proc_procsinfo(
     pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts, bool output_tgid)
 {
 #define MAX_STAT_FILE_PREFIX_LEN 1000
@@ -351,7 +351,7 @@ bool CMonitorCgroups::cgroup_proc_procsinfo(
     return true;
 }
 
-bool CMonitorCgroups::cgroup_collect_pids(const std::string& path, std::vector<pid_t>& pids)
+bool CMonitorCgroups::collect_pids(const std::string& path, std::vector<pid_t>& pids)
 {
     CMonitorLogger::instance()->LogDebug("Trying to read tasks inside the monitored cgroup from %s.\n", path.c_str());
     if (!file_or_dir_exists(path.c_str()))
@@ -380,7 +380,7 @@ bool CMonitorCgroups::cgroup_collect_pids(const std::string& path, std::vector<p
 // CMonitorCgroups - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
 
-void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads)
+void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_opts, bool include_threads)
 {
     char str[256];
 
@@ -407,7 +407,7 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
         // of course here we're assuming that the "tasks" under the cpuacct cgroup are the ones
         // the user is interested to monitor... in theory the "tasks" under other controllers like "memory"
         // might be different; in practice with Docker/LXC/Kube that does not happen
-        if (!cgroup_collect_pids(m_cgroup_cpuacct_kernel_path + "/tasks", all_pids))
+        if (!collect_pids(m_cgroup_cpuacct_kernel_path + "/tasks", all_pids))
             return;
         break;
 
@@ -416,12 +416,12 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
         // read the right file up-front based on 'include_threads':
         if (include_threads)
         {
-            if (!cgroup_collect_pids(m_cgroup_cpuacct_kernel_path + "/cgroup.threads", all_pids))
+            if (!collect_pids(m_cgroup_cpuacct_kernel_path + "/cgroup.threads", all_pids))
                 return;
         }
         else
         {
-            if (!cgroup_collect_pids(m_cgroup_cpuacct_kernel_path + "/cgroup.procs", all_pids))
+            if (!collect_pids(m_cgroup_cpuacct_kernel_path + "/cgroup.procs", all_pids))
                 return;
         }
         break;
@@ -440,7 +440,7 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
         // NOTE: getting the Tgid is expensive (requires opening a dedicated file) so that's done only
         //       if strictly needed, i.e. if needsToFilterOutThreads==true
         procsinfo_t procData;
-        cgroup_proc_procsinfo(all_pids[i], include_threads, &procData, output_opts, needsToFilterOutThreads);
+        proc_procsinfo(all_pids[i], include_threads, &procData, output_opts, needsToFilterOutThreads);
 
         if (needsToFilterOutThreads) {
             // only the main thread has its PID == TGID...

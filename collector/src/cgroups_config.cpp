@@ -214,7 +214,7 @@ bool get_cgroup_v1_abs_path_prefix_for_this_pid(const std::string& cgroup_type, 
 // CMonitorCgroups - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
 
-void CMonitorCgroups::cgroup_init( // force newline
+void CMonitorCgroups::init( // force newline
     const std::string& cgroup_prefix_for_test, // force newline
     const std::string& proc_prefix_for_test)
 {
@@ -315,7 +315,7 @@ void CMonitorCgroups::cgroup_init( // force newline
 
         // NOTE: in case we're inside Docker or LXC we should be able to find ourselves inside the
         //       paths composed only by the ABS PREFIXES
-        if (cgroup_init_check_for_our_pid()) {
+        if (init_check_for_our_pid()) {
             m_cgroup_systemd_name = cgroup_paths["name=systemd"];
         } else {
             // try to adjust the full cgroup paths by adding the cgroup paths read from /proc/self/cgroup
@@ -330,7 +330,7 @@ void CMonitorCgroups::cgroup_init( // force newline
                 "Adjusting cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
             CMonitorLogger::instance()->LogDebug(
                 "Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
-            if (cgroup_init_check_for_our_pid())
+            if (init_check_for_our_pid())
                 m_cgroup_systemd_name = cgroup_paths["name=systemd"];
         }
     } else {
@@ -366,15 +366,17 @@ void CMonitorCgroups::cgroup_init( // force newline
     case CG_NONE:
         break;
     case CG_VERSION1:
-        cgroup_v1_read_limits();
+        v1_read_limits();
         break;
     case CG_VERSION2:
-        cgroup_v2_read_limits();
+        v2_read_limits();
         break;
     }
+
+    
 }
 
-void CMonitorCgroups::cgroup_v1_read_limits()
+void CMonitorCgroups::v1_read_limits()
 {
     // READ LIMITS IMPOSED BY CGROUPS
 
@@ -428,7 +430,7 @@ void CMonitorCgroups::cgroup_v1_read_limits()
         m_cgroup_memory_limit_bytes, m_cgroup_memory_kernel_path.c_str());
 }
 
-void CMonitorCgroups::cgroup_v2_read_limits()
+void CMonitorCgroups::v2_read_limits()
 {
     // READ LIMITS IMPOSED BY CGROUPS
 
@@ -468,7 +470,7 @@ void CMonitorCgroups::cgroup_v2_read_limits()
         m_cgroup_memory_limit_bytes, m_cgroup_memory_kernel_path.c_str());
 }
 
-bool CMonitorCgroups::cgroup_init_check_for_our_pid()
+bool CMonitorCgroups::init_check_for_our_pid()
 {
     // CGROUP CHECKS
     // now if we got the right paths, we should be able to find our pid in all these cgroups

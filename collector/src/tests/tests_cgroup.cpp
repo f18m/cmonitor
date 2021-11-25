@@ -104,8 +104,7 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
 
     // allocate the class under test:
     CMonitorCgroups t(&cfg, &actual_output);
-    t.cgroup_init( // force newline
-        current_sample_abs_dir, current_sample_abs_dir);
+    t.init(current_sample_abs_dir, current_sample_abs_dir);
 
     // start feeding fixed, test data
     actual_output.pheader_start();
@@ -122,10 +121,10 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
 
         // finally run the code to test
         actual_output.psample_start();
-        t.cgroup_proc_cpuacct(elapsed_sec);
-        t.cgroup_proc_memory(allowedStats, allowedStats);
-        t.cgroup_proc_tasks(elapsed_sec, cfg.m_nOutputFields, include_threads);
-        t.cgroup_proc_network_interfaces(elapsed_sec, cfg.m_nOutputFields);
+        t.sample_cpuacct(elapsed_sec);
+        t.sample_memory(allowedStats, allowedStats);
+        t.sample_processes(elapsed_sec, cfg.m_nOutputFields, include_threads);
+        t.sample_network_interfaces(elapsed_sec, cfg.m_nOutputFields);
 
         actual_output.push_current_sample();
         prev_ts = curr_ts;

@@ -21,7 +21,7 @@ TEST(FastFileReader, basic_read)
     }
 
     // proc/stat length depends on the number of CPUs available, so its number of lines varies
-    std::cout << "FastFileReader: read " << nlines << "lines" << std::endl;
+    std::cout << "FastFileReader: read " << nlines << "lines from /proc/stat" << std::endl;
     ASSERT_TRUE(nlines > 0 && nlines < 1024);
 }
 
@@ -44,7 +44,7 @@ TEST(FastFileReader, read_multiple_times)
         }
 
         // we expect that each time we read the file, it's different:
-        std::cout << "FastFileReader: current hash is " << curr_hash << std::endl;
+        std::cout << "FastFileReader: current hash for /proc/stat is " << curr_hash << std::endl;
         ASSERT_TRUE(curr_hash != prev_hash);
         prev_hash = curr_hash;
 

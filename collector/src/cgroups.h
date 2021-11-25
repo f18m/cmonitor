@@ -82,17 +82,17 @@ public:
 
     // main setup
     // NOTE: arguments are used only during unit testing
-    void cgroup_init(const std::string& cgroup_prefix_for_test = "", const std::string& proc_prefix_for_test = "");
+    void init(const std::string& cgroup_prefix_for_test = "", const std::string& proc_prefix_for_test = "");
 
     // one-shot configuration info
     void output_config();
 
     // collect & output cgroup stats
-    void cgroup_proc_memory(
+    void sample_cpuacct(double elapsed_sec);
+    void sample_memory(
         const std::set<std::string>& allowedStatsNames_v1, const std::set<std::string>& allowedStatsNames_v2);
-    void cgroup_proc_cpuacct(double elapsed_sec);
-    void cgroup_proc_tasks(double elapsed_sec, OutputFields output_opts, bool include_threads);
-    void cgroup_proc_network_interfaces(double elapsed_sec, OutputFields output_opts);
+    void sample_network_interfaces(double elapsed_sec, OutputFields output_opts);
+    void sample_processes(double elapsed_sec, OutputFields output_opts, bool include_threads);
 
     // misc helpers
     bool cgroup_still_exists();
@@ -100,28 +100,29 @@ public:
 
 private:
     // cgroups config
-    bool cgroup_init_check_for_our_pid();
-    void cgroup_v1_read_limits();
-    void cgroup_v2_read_limits();
+    bool init_check_for_our_pid();
+    void v1_read_limits();
+    void v2_read_limits();
+    void init_cpuacct();
 
     // cgroup processes
-    bool cgroup_proc_procsinfo(
+    bool proc_procsinfo(
         pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts, bool output_tgid);
-    bool cgroup_collect_pids(const std::string& file, std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
+    bool collect_pids(const std::string& file, std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
     // cpuacct and cpuset cgroups
     bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */);
-    bool cgroup_proc_cpuacct_v1_counters_by_cpu(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
-    bool cgroup_proc_cpuacct_v2_counters(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
-    bool cgroup_is_allowed_cpu(int cpu);
+    bool proc_cpuacct_v1_counters_by_cpu(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
+    bool proc_cpuacct_v2_counters(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
+    bool is_allowed_cpu(int cpu);
     bool read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<uint64_t>& cpus);
 
     // memory cgroups
-    size_t cgroup_proc_memory_dump_flat_keyed(
+    size_t proc_memory_dump_flat_keyed(
         const std::string& path, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix);
 
 private:
-    // main switch that indicates if cgroup_init() was successful or not
+    // main switch that indicates if init() was successful or not
     CGroupDetected m_nCGroupsFound = CG_NONE;
 
     // paths of cgroups for the cgroup to monitor (either our own cgroup or another one):
