@@ -369,6 +369,7 @@ Data sampling options
                                           'network': collect network stats from /proc/net/dev
                                           'cgroup_cpu': collect CPU stats from the 'cpuacct' cgroup
                                           'cgroup_memory': collect memory stats from 'memory' cgroup
+                                          'cgroup_network': collect network statistics by interface for the network namespace of the cgroup
                                           'cgroup_processes': collect stats for each process inside the 'cpuacct' cgroup
                                           'cgroup_threads': collect stats for each thread inside the 'cpuacct' cgroup
                                           'all_baremetal': the combination of 'cpu', 'memory', 'disk', 'network'
@@ -385,7 +386,8 @@ Data sampling options
                                         the performances of other containers.
   -t, --score-threshold=<REQ ARG>       If cgroup process/thread sampling is active (--collect=cgroup_processes/cgroup_threads) use the provided
                                         score threshold to filter out non-interesting processes/threads. The 'score' is a number that is linearly
-                                        increasing with the CPU usage. Defaults to value '1' to filter out all processes/threads having zero CPU usage.
+                                        increasing with the CPU usage. Defaults to value '1' to filter out all processes/threads having zero CPU
+                                        usage. Use '0' to turn off filtering by score.
   -M, --custom-metadata=<REQ ARG>       Allows to specify custom metadata key:value pairs that will be saved into the JSON output (if saving data
                                         locally) under the 'header.custom_metadata' path. See usage examples below.
                                         
