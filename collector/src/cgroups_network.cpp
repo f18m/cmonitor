@@ -86,7 +86,7 @@ void CMonitorCgroups::cgroup_proc_network_interfaces(double elapsed_sec, OutputF
         return;
     }
 
-    //pid_t first = all_pids[0];
+    pid_t first_pid = all_pids[0];
 
     /*
         IMPORTANT: there are at least two methods to monitor network statistics of a particular network namespace:
@@ -114,17 +114,23 @@ void CMonitorCgroups::cgroup_proc_network_interfaces(double elapsed_sec, OutputF
                 lo: 5402517   80034    0    0    0     0          0         0  5402517   80034    0    0    0     0       0          0
         the numbers are identical... so we go with SECOND METHOD which of course is way simpler
     */
-    // FIXME refactor code from
-    //    proc_net_dev();
-    // to take a FD and fill an output structure
 
-    m_pOutput->psection_start("cgroup_network");
-    for (auto entry = m_topper_procs.lower_bound(m_pCfg->m_nProcessScoreThreshold); entry != m_topper_procs.end();
-         entry++) {
+    char filename[1024];
+    snprintf(filename, sizeof(filename), "%s/proc/%d/net/dev", m_proc_prefix.c_str(), first_pid);
 
-        m_pOutput->plong("todo", 0);
+    std::set<std::string> empty_whitelist;
+
+    // read new stats
+    netinfo_map_t new_stats;
+    CMonitorSystem::read_net_dev(filename, empty_whitelist, new_stats);
+
+    // output delta stats
+    if (output_opts != PF_NONE) {
+        m_pOutput->psection_start("cgroup_network");
+        CMonitorSystem::output_net_dev_stats(m_pOutput, elapsed_sec, new_stats, m_previous_netinfo, output_opts);
+        m_pOutput->psection_end();
     }
-    m_pOutput->psection_end();
 
-    // CMonitorLogger::instance()->LogDebug("%zu processes found over score threshold", nProcsOverThreshold);
+    // finally remember the last sampled stats:
+    m_previous_netinfo = new_stats;
 }

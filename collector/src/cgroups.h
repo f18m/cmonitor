@@ -24,6 +24,7 @@
 //------------------------------------------------------------------------------
 
 #include "cmonitor.h"
+#include "system.h"
 #include <map>
 #include <set>
 #include <string.h>
@@ -138,8 +139,13 @@ private:
 
     // configuration/status read from "cpuacct" cgroup
     unsigned int m_num_cpus_cpuacct_cgroup = 0;
+
+    // previous values sampled from "cpuacct" cgroup
     cpuacct_utilisation_t m_cpuacct_prev_values[MAX_LOGICAL_CPU];
     cpuacct_utilisation_t m_cpuacct_prev_values_for_total_cpu;
+
+    // previous values for network interfaces inside cgroup
+    netinfo_map_t m_previous_netinfo;
 
     // counters of how many times each cgroup_proc_*() main API has been invoked
     unsigned int m_num_memory_samples_collected = 0;

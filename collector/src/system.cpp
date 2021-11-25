@@ -476,7 +476,7 @@ void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
                 }
             }
             pclose(pop);
-        } 
+        }
         first_time = false;
     }
 
@@ -501,53 +501,8 @@ void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
 
     if (output_opts != PF_NONE) {
         m_pOutput->psection_start("network_interfaces");
-
-        for (auto it : new_stats) {
-            const std::string& name = it.first;
-            const netinfo_t& current = it.second;
-
-            auto prev_stats = m_previous_netinfo.find(name);
-            if (prev_stats == m_previous_netinfo.end())
-                continue; // looks like a new interface, skip it in this sample if we cannot take any delta
-
-            // found previous values, statistics can now be generated:
-            netinfo_t& previous = prev_stats->second;
-            m_pOutput->psubsection_start(name.c_str());
-
-            switch (output_opts) {
-            case PF_NONE:
-                assert(0);
-                break;
-
-            case PF_ALL:
-                m_pOutput->pdouble("ibytes", (current.if_ibytes - previous.if_ibytes) / elapsed_sec);
-                m_pOutput->pdouble("ipackets", (current.if_ipackets - previous.if_ipackets) / elapsed_sec);
-                m_pOutput->pdouble("ierrs", (current.if_ierrs - previous.if_ierrs) / elapsed_sec);
-                m_pOutput->pdouble("idrop", (current.if_idrop - previous.if_idrop) / elapsed_sec);
-                m_pOutput->pdouble("ififo", (current.if_ififo - previous.if_ififo) / elapsed_sec);
-                m_pOutput->pdouble("iframe", (current.if_iframe - previous.if_iframe) / elapsed_sec);
-
-                m_pOutput->pdouble("obytes", (current.if_obytes - previous.if_obytes) / elapsed_sec);
-                m_pOutput->pdouble("opackets", (current.if_opackets - previous.if_opackets) / elapsed_sec);
-                m_pOutput->pdouble("oerrs", (current.if_oerrs - previous.if_oerrs) / elapsed_sec);
-                m_pOutput->pdouble("odrop", (current.if_odrop - previous.if_odrop) / elapsed_sec);
-                m_pOutput->pdouble("ofifo", (current.if_ofifo - previous.if_ofifo) / elapsed_sec);
-
-                m_pOutput->pdouble("ocolls", (current.if_ocolls - previous.if_ocolls) / elapsed_sec);
-                m_pOutput->pdouble("ocarrier", (current.if_ocarrier - previous.if_ocarrier) / elapsed_sec);
-                break;
-
-            case PF_USED_BY_CHART_SCRIPT_ONLY:
-                m_pOutput->pdouble("ibytes", (current.if_ibytes - previous.if_ibytes) / elapsed_sec);
-                m_pOutput->pdouble("obytes", (current.if_obytes - previous.if_obytes) / elapsed_sec);
-                m_pOutput->pdouble("ipackets", (current.if_ipackets - previous.if_ipackets) / elapsed_sec);
-                m_pOutput->pdouble("opackets", (current.if_opackets - previous.if_opackets) / elapsed_sec);
-                break;
-            }
-            m_pOutput->psubsection_end();
-        }
-
-        m_pOutput->psection_end(); // network_interfaces section
+        output_net_dev_stats(m_pOutput, elapsed_sec, new_stats, m_previous_netinfo, output_opts);
+        m_pOutput->psection_end();
     }
 
     // finally remember the last sampled stats:
@@ -578,9 +533,9 @@ bool CMonitorSystem::read_net_dev(
     }
 
     char buf[1024];
-    if (fgets(buf, 1024, fp) == NULL)  /* throw away the header line */
+    if (fgets(buf, 1024, fp) == NULL) /* throw away the header line */
         return false;
-    if (fgets(buf, 1024, fp) == NULL)  /* throw away the header line */
+    if (fgets(buf, 1024, fp) == NULL) /* throw away the header line */
         return false;
 
     long long junk;
@@ -604,12 +559,64 @@ bool CMonitorSystem::read_net_dev(
             continue;
         }
 
-        if (net_iface_whitelist.find(name) != net_iface_whitelist.end())
+        if (net_iface_whitelist.empty() || net_iface_whitelist.find(name) != net_iface_whitelist.end())
             // this interface is in the whitelist, store it:
             out_stats[name] = current;
     }
 
     return !out_stats.empty();
+}
+
+/* static */
+bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, double elapsed_sec,
+    const netinfo_map_t& new_stats, const netinfo_map_t& prev_stats, OutputFields output_opts)
+{
+    for (auto it : new_stats) {
+        const std::string& name = it.first;
+        const netinfo_t& current = it.second;
+
+        const auto it_prev = prev_stats.find(name);
+        if (it_prev == prev_stats.end())
+            continue; // looks like a new interface, skip it in this sample if we cannot take any delta
+
+        // found previous values, statistics can now be generated:
+        const netinfo_t& previous = it_prev->second;
+        m_pOutput->psubsection_start(name.c_str());
+
+        switch (output_opts) {
+        case PF_NONE:
+            assert(0);
+            break;
+
+        case PF_ALL:
+            m_pOutput->pdouble("ibytes", (current.if_ibytes - previous.if_ibytes) / elapsed_sec);
+            m_pOutput->pdouble("ipackets", (current.if_ipackets - previous.if_ipackets) / elapsed_sec);
+            m_pOutput->pdouble("ierrs", (current.if_ierrs - previous.if_ierrs) / elapsed_sec);
+            m_pOutput->pdouble("idrop", (current.if_idrop - previous.if_idrop) / elapsed_sec);
+            m_pOutput->pdouble("ififo", (current.if_ififo - previous.if_ififo) / elapsed_sec);
+            m_pOutput->pdouble("iframe", (current.if_iframe - previous.if_iframe) / elapsed_sec);
+
+            m_pOutput->pdouble("obytes", (current.if_obytes - previous.if_obytes) / elapsed_sec);
+            m_pOutput->pdouble("opackets", (current.if_opackets - previous.if_opackets) / elapsed_sec);
+            m_pOutput->pdouble("oerrs", (current.if_oerrs - previous.if_oerrs) / elapsed_sec);
+            m_pOutput->pdouble("odrop", (current.if_odrop - previous.if_odrop) / elapsed_sec);
+            m_pOutput->pdouble("ofifo", (current.if_ofifo - previous.if_ofifo) / elapsed_sec);
+
+            m_pOutput->pdouble("ocolls", (current.if_ocolls - previous.if_ocolls) / elapsed_sec);
+            m_pOutput->pdouble("ocarrier", (current.if_ocarrier - previous.if_ocarrier) / elapsed_sec);
+            break;
+
+        case PF_USED_BY_CHART_SCRIPT_ONLY:
+            m_pOutput->pdouble("ibytes", (current.if_ibytes - previous.if_ibytes) / elapsed_sec);
+            m_pOutput->pdouble("obytes", (current.if_obytes - previous.if_obytes) / elapsed_sec);
+            m_pOutput->pdouble("ipackets", (current.if_ipackets - previous.if_ipackets) / elapsed_sec);
+            m_pOutput->pdouble("opackets", (current.if_opackets - previous.if_opackets) / elapsed_sec);
+            break;
+        }
+        m_pOutput->psubsection_end();
+    }
+
+    return true;
 }
 
 /*

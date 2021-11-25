@@ -83,6 +83,8 @@ public:
 
     static bool read_net_dev(
         const std::string& filename, const std::set<std::string>& net_iface_whitelist, netinfo_map_t& out_infos);
+    static bool output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, double elapsed_sec,
+        const netinfo_map_t& new_stats, const netinfo_map_t& prev_stats, OutputFields output_opts);
 
 private:
     bool is_monitored_cpu(int cpu)
