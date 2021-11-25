@@ -512,7 +512,7 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
 
 #define CURRENT(member) (p->member)
 #define PREVIOUS(member) (q->member)
-#define TIMEDELTA(member) (CURRENT(member) - PREVIOUS(member))
+#define DELTA(member) (CURRENT(member) - PREVIOUS(member))
 #define COUNTDELTA(member) ((PREVIOUS(member) > CURRENT(member)) ? 0 : (CURRENT(member) - PREVIOUS(member)))
 
         sprintf(str, "pid_%ld", (long)CURRENT(pi_pid));
@@ -547,9 +547,9 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
                  IOW there is no need to do any math to produce a percentage, just taking
                  the delta of the absolute, monotonic-increasing value and divide by the elapsed time
         */
-        m_pOutput->pdouble("cpu_tot", (double)(TIMEDELTA(pi_utime) + TIMEDELTA(pi_stime)) / elapsed_sec);
-        m_pOutput->pdouble("cpu_usr", (double)TIMEDELTA(pi_utime) / elapsed_sec);
-        m_pOutput->pdouble("cpu_sys", (double)TIMEDELTA(pi_stime) / elapsed_sec);
+        m_pOutput->pdouble("cpu_tot", (double)(DELTA(pi_utime) + DELTA(pi_stime)) / elapsed_sec);
+        m_pOutput->pdouble("cpu_usr", (double)DELTA(pi_utime) / elapsed_sec);
+        m_pOutput->pdouble("cpu_sys", (double)DELTA(pi_stime) / elapsed_sec);
 
         // provide also the total, monotonically-increasing CPU time:
         // this is used by chart script to produce the "top of the topper" chart
@@ -602,10 +602,10 @@ void CMonitorCgroups::cgroup_proc_tasks(double elapsed_sec, OutputFields output_
          * I/O fields
          */
         m_pOutput->pdouble("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
-        m_pOutput->plong("io_rchar", TIMEDELTA(io_rchar) / elapsed_sec);
-        m_pOutput->plong("io_wchar", TIMEDELTA(io_wchar) / elapsed_sec);
-        m_pOutput->plong("io_read_bytes", TIMEDELTA(io_read_bytes) / elapsed_sec);
-        m_pOutput->plong("io_write_bytes", TIMEDELTA(io_write_bytes) / elapsed_sec);
+        m_pOutput->plong("io_rchar", DELTA(io_rchar) / elapsed_sec);
+        m_pOutput->plong("io_wchar", DELTA(io_wchar) / elapsed_sec);
+        m_pOutput->plong("io_read_bytes", DELTA(io_read_bytes) / elapsed_sec);
+        m_pOutput->plong("io_write_bytes", DELTA(io_write_bytes) / elapsed_sec);
 
         // provide also the total, monotonically-increasing I/O time:
         // this is used by chart script to produce the "top of the topper" chart

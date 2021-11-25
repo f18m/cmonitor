@@ -559,6 +559,10 @@ bool CMonitorSystem::read_net_dev(
             continue;
         }
 
+        // as fixed rule always discard the loopback device:
+        if (strncmp(name, "lo", 2) == 0)
+            continue;
+
         if (net_iface_whitelist.empty() || net_iface_whitelist.find(name) != net_iface_whitelist.end())
             // this interface is in the whitelist, store it:
             out_stats[name] = current;
@@ -571,6 +575,10 @@ bool CMonitorSystem::read_net_dev(
 bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, double elapsed_sec,
     const netinfo_map_t& new_stats, const netinfo_map_t& prev_stats, OutputFields output_opts)
 {
+#define CURRENT(member) (current.member)
+#define PREVIOUS(member) (previous.member)
+#define DELTA(member) (CURRENT(member) - PREVIOUS(member))
+
     for (auto it : new_stats) {
         const std::string& name = it.first;
         const netinfo_t& current = it.second;
@@ -589,28 +597,28 @@ bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, dou
             break;
 
         case PF_ALL:
-            m_pOutput->pdouble("ibytes", (current.if_ibytes - previous.if_ibytes) / elapsed_sec);
-            m_pOutput->pdouble("ipackets", (current.if_ipackets - previous.if_ipackets) / elapsed_sec);
-            m_pOutput->pdouble("ierrs", (current.if_ierrs - previous.if_ierrs) / elapsed_sec);
-            m_pOutput->pdouble("idrop", (current.if_idrop - previous.if_idrop) / elapsed_sec);
-            m_pOutput->pdouble("ififo", (current.if_ififo - previous.if_ififo) / elapsed_sec);
-            m_pOutput->pdouble("iframe", (current.if_iframe - previous.if_iframe) / elapsed_sec);
+            m_pOutput->plong("ibytes", DELTA(if_ibytes) / elapsed_sec);
+            m_pOutput->plong("ipackets", DELTA(if_ipackets) / elapsed_sec);
+            m_pOutput->plong("ierrs", DELTA(if_ierrs) / elapsed_sec);
+            m_pOutput->plong("idrop", DELTA(if_idrop) / elapsed_sec);
+            m_pOutput->plong("ififo", DELTA(if_ififo) / elapsed_sec);
+            m_pOutput->plong("iframe", DELTA(if_iframe) / elapsed_sec);
 
-            m_pOutput->pdouble("obytes", (current.if_obytes - previous.if_obytes) / elapsed_sec);
-            m_pOutput->pdouble("opackets", (current.if_opackets - previous.if_opackets) / elapsed_sec);
-            m_pOutput->pdouble("oerrs", (current.if_oerrs - previous.if_oerrs) / elapsed_sec);
-            m_pOutput->pdouble("odrop", (current.if_odrop - previous.if_odrop) / elapsed_sec);
-            m_pOutput->pdouble("ofifo", (current.if_ofifo - previous.if_ofifo) / elapsed_sec);
+            m_pOutput->plong("obytes", DELTA(if_obytes) / elapsed_sec);
+            m_pOutput->plong("opackets", DELTA(if_opackets) / elapsed_sec);
+            m_pOutput->plong("oerrs", DELTA(if_oerrs) / elapsed_sec);
+            m_pOutput->plong("odrop", DELTA(if_odrop) / elapsed_sec);
+            m_pOutput->plong("ofifo", DELTA(if_ofifo) / elapsed_sec);
 
-            m_pOutput->pdouble("ocolls", (current.if_ocolls - previous.if_ocolls) / elapsed_sec);
-            m_pOutput->pdouble("ocarrier", (current.if_ocarrier - previous.if_ocarrier) / elapsed_sec);
+            m_pOutput->plong("ocolls", DELTA(if_ocolls) / elapsed_sec);
+            m_pOutput->plong("ocarrier", DELTA(if_ocarrier) / elapsed_sec);
             break;
 
         case PF_USED_BY_CHART_SCRIPT_ONLY:
-            m_pOutput->pdouble("ibytes", (current.if_ibytes - previous.if_ibytes) / elapsed_sec);
-            m_pOutput->pdouble("obytes", (current.if_obytes - previous.if_obytes) / elapsed_sec);
-            m_pOutput->pdouble("ipackets", (current.if_ipackets - previous.if_ipackets) / elapsed_sec);
-            m_pOutput->pdouble("opackets", (current.if_opackets - previous.if_opackets) / elapsed_sec);
+            m_pOutput->plong("ibytes", DELTA(if_ibytes) / elapsed_sec);
+            m_pOutput->plong("obytes", DELTA(if_obytes) / elapsed_sec);
+            m_pOutput->plong("ipackets", DELTA(if_ipackets) / elapsed_sec);
+            m_pOutput->plong("opackets", DELTA(if_opackets) / elapsed_sec);
             break;
         }
         m_pOutput->psubsection_end();

@@ -2,19 +2,23 @@
 
 # main inputs of this script, can be provided by CLI
 # Usage:
-#  this_script.sh <output-folder> [docker-name] [name-main-process-inside-docker] [nsamples] [sampling_interval_sec]
+#  this_script.sh <output-folder> [name-of-docker-to-launch] [nsamples] [sampling_interval_sec]
 #
 
 # CLI option parsing
 output_folder=${1:-}
 docker_name=${2:-userapp}
-process_name=${3:-redis-server}
-nsamples=${4:-4}
-ninterval_sec=${5:-5}
+nsamples=${3:-4}
+ninterval_sec=${4:-5}
 
 # Globals
 redis_load_generator=../../../examples/example_load_redis.py
-cgroups_ver=1
+cgroups_ver=1 # can be changed later on to "2" depending on where we run
+process_name=redis-server
+redis_docker_cpus="0,1"
+redis_docker_cpu_quota="0.9"
+redis_docker_memory_limit="10m"
+
 
 function detect_cgroups_version()
 {
@@ -35,7 +39,9 @@ function copy_all_cgroup_folders_v1()
     for dir_to_copy in \
         /sys/fs/cgroup/memory/docker/${cgroup}/ \
         /sys/fs/cgroup/cpu,cpuacct/docker/${cgroup}/ \
-        /sys/fs/cgroup/cpuset/docker/${cgroup}/ ; do
+        /sys/fs/cgroup/cpuset/docker/${cgroup}/ \
+        /sys/fs/cgroup/blkio/docker/${cgroup}/ \
+        /sys/fs/cgroup/hugetlb/docker/${cgroup}/ ; do
 
         echo "Copying ${dir_to_copy}"
         mkdir -p /tmp/cmonitor-temp/${dir_to_copy}
@@ -89,8 +95,9 @@ function copy_selected_proc_files()
         echo "Processing PID/TID=${pid}"
 
         dst_dir="/tmp/cmonitor-temp/proc/${pid}"
-        mkdir -p $dst_dir
-        cp -a /proc/${pid}/stat /proc/${pid}/statm /proc/${pid}/status /proc/${pid}/io        $dst_dir
+        mkdir -p $dst_dir $dst_dir/net
+        cp -a /proc/${pid}/stat /proc/${pid}/statm /proc/${pid}/status /proc/${pid}/io         $dst_dir
+        cp -a /proc/${pid}/net/dev $dst_dir/net/
 
         # copy also all equivalent files from the "tasks" folder
         for task in /proc/${pid}/task/*; do
@@ -141,13 +148,31 @@ fi
 # we need abs path
 output_folder="$(readlink -f $output_folder)"
 
+# launch the docker from which we sample unit test data
+echo "Launching the docker ${docker_name} from which we will sample unit test data"
+docker run \
+        --detach \
+        --interactive \
+        --tty \
+        --rm \
+        --cpuset-cpus=${redis_docker_cpus} \
+        --cpus=${redis_docker_cpu_quota} \
+        --memory=${redis_docker_memory_limit} \
+        -P \
+        --name ${docker_name} \
+        redis:latest
+sleep 1
+
 # get some information that won't change across samples
 cgroup="$(docker ps -aq --no-trunc -f "name=$docker_name")"
 pids_to_save="$(ps -T -o tid --no-headers -C ${process_name})"
+if [ "$cgroup" = "" ]; then
+    echo "Failed to launch the docker or retrieve its full name"
+    exit 2
+fi
 
 # make sure load generator is stopped
 pkill example_load_re
-
 
 detect_cgroups_version
 

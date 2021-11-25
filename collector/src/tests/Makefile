@@ -29,9 +29,11 @@ OBJS = \
     $(OUTDIR)/cgroups_config.o \
 	$(OUTDIR)/cgroups_cpuacct.o \
 	$(OUTDIR)/cgroups_memory.o \
+	$(OUTDIR)/cgroups_network.o \
 	$(OUTDIR)/cgroups_processes.o \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/output_frontend.o \
+    $(OUTDIR)/system.o \
     $(OUTDIR)/utils.o
 
 HEADERS = $(wildcard ../*.h)
