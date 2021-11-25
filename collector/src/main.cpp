@@ -169,7 +169,7 @@ struct option_extended {
     { "Data sampling options", &g_long_opts[7],
         "If cgroup process/thread sampling is active (--collect=cgroup_processes/cgroup_threads) use the provided\n"
         "score threshold to filter out non-interesting processes/threads. The 'score' is a number that is linearly\n"
-        "increasing with the CPU usage. Defaults to value '1' to filter out all processes/threads having zero CPU "
+        "increasing with the CPU usage. Defaults to value '1' to filter out all processes/threads having zero CPU\n"
         "usage. Use '0' to turn off filtering by score." },
     { "Data sampling options", &g_long_opts[8],
         "Allows to specify custom metadata key:value pairs that will be saved into the JSON output (if saving data\n"
