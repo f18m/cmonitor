@@ -24,16 +24,22 @@ OUTDIR=../../bin/glibc
 endif
 OUT=$(OUTDIR)/benchmark_tests
 
-OBJS = \
-    $(OUTDIR)/open_fopen_ifstream_benchmark.o \
+OBJS_BENCHMARKS = \
+    $(OUTDIR)/open_fopen_ifstream_benchmark.o 
+
+OBJS_CMONITOR_COLLECTOR = \
     $(OUTDIR)/cgroups_config.o \
 	$(OUTDIR)/cgroups_cpuacct.o \
 	$(OUTDIR)/cgroups_memory.o \
+	$(OUTDIR)/cgroups_network.o \
 	$(OUTDIR)/cgroups_processes.o \
+	$(OUTDIR)/fast_file_reader.o \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/output_frontend.o \
-    $(OUTDIR)/fast_file_reader.o \
+    $(OUTDIR)/system.o \
     $(OUTDIR)/utils.o
+
+OBJS = $(OBJS_BENCHMARKS) $(OBJS_CMONITOR_COLLECTOR)
 
 HEADERS = $(wildcard ../*.h)
 

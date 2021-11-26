@@ -215,6 +215,7 @@ bool get_cgroup_v1_abs_path_prefix_for_this_pid(const std::string& cgroup_type, 
 // ----------------------------------------------------------------------------------
 
 void CMonitorCgroups::init( // force newline
+    bool include_threads, // force newline
     const std::string& cgroup_prefix_for_test, // force newline
     const std::string& proc_prefix_for_test)
 {
@@ -222,6 +223,7 @@ void CMonitorCgroups::init( // force newline
 
     m_nCGroupsFound = CG_NONE;
     m_cgroup_systemd_name = "N/A";
+    m_cgroup_processes_include_threads = include_threads;
     m_proc_prefix = proc_prefix_for_test;
 
     // ABSOLUTE PATH PREFIXES
@@ -375,6 +377,8 @@ void CMonitorCgroups::init( // force newline
 
     init_cpuacct(cgroup_prefix_for_test);
     init_memory(cgroup_prefix_for_test);
+    init_network(cgroup_prefix_for_test);
+    init_processes(cgroup_prefix_for_test);
 }
 
 void CMonitorCgroups::v1_read_limits()

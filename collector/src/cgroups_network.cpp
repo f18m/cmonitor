@@ -41,6 +41,32 @@
 // CMonitorCgroups - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
 
+void CMonitorCgroups::init_network(const std::string& cgroup_prefix_for_test)
+{
+    // when unit testing, we ask the FastFileReader to actually be not-so-fast and reopen each time the file;
+    // that's because during unit testing the actual inode of the statistic file changes on every sample.
+    // Of course this does not happen in normal mode
+    bool reopen_each_time = !cgroup_prefix_for_test.empty();
+
+    switch (m_nCGroupsFound) {
+    case CG_VERSION1:
+        // in cgroups v1 all TIDs are available in the cgroup file named "tasks"
+        // of course here we're assuming that the "tasks" under the cpuacct cgroup are the ones
+        // the user is interested to monitor... in theory the "tasks" under other controllers like "memory"
+        // might be different; in practice with Docker/LXC/Kube that does not happen
+        m_cgroup_network_reader_pids.set_file(m_cgroup_cpuacct_kernel_path + "/tasks", reopen_each_time);
+        break;
+
+    case CG_VERSION2:
+        m_cgroup_network_reader_pids.set_file(m_cgroup_cpuacct_kernel_path + "/cgroup.procs", reopen_each_time);
+        break;
+
+    case CG_NONE:
+        assert(0);
+        return;
+    }
+}
+
 void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields output_opts)
 {
     if (m_nCGroupsFound == CG_NONE)
@@ -56,25 +82,8 @@ void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields
 
     // collect all PIDs for current cgroup
     std::vector<pid_t> all_pids;
-    switch (m_nCGroupsFound) {
-    case CG_VERSION1:
-        // in cgroups v1 all TIDs are available in the cgroup file named "tasks"
-        // of course here we're assuming that the "tasks" under the cpuacct cgroup are the ones
-        // the user is interested to monitor... in theory the "tasks" under other controllers like "memory"
-        // might be different; in practice with Docker/LXC/Kube that does not happen
-        if (!collect_pids(m_cgroup_cpuacct_kernel_path + "/tasks", all_pids))
-            return;
-        break;
-
-    case CG_VERSION2:
-        if (!collect_pids(m_cgroup_cpuacct_kernel_path + "/cgroup.procs", all_pids))
-            return;
-        break;
-
-    case CG_NONE:
-        assert(0);
+    if (!collect_pids(m_cgroup_network_reader_pids, all_pids))
         return;
-    }
 
     // now take the first PID and assume its network namespace is the one the user is interested about;
     // we will monitor that network namespace (and only that) for the entire lifetime of its cgroup;
@@ -115,6 +124,7 @@ void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields
         the numbers are identical... so we go with SECOND METHOD which of course is way simpler
     */
 
+    // FIXME: use FastFileReader which optimizes the case where the PID chosen 1st time stays constant
     char filename[1024];
     snprintf(filename, sizeof(filename), "%s/proc/%d/net/dev", m_proc_prefix.c_str(), first_pid);
 

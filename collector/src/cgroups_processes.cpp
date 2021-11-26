@@ -291,8 +291,7 @@ bool CMonitorCgroups::get_process_infos(
         }
     }
 
-    if (output_tgid)
-    { /* process the status file for the process/thread */
+    if (output_tgid) { /* process the status file for the process/thread */
 
         snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/status", stat_file_prefix);
         if ((fp = fopen(filename, "r")) == NULL) {
@@ -323,7 +322,7 @@ bool CMonitorCgroups::get_process_infos(
                 }
                 /*
                     from https://man7.org/linux/man-pages/man5/proc.5.html
-                    
+
                     rchar: characters read
                             The number of bytes which this task has caused to
                             be read from storage.  This is simply the sum of
@@ -376,11 +375,66 @@ bool CMonitorCgroups::collect_pids(const std::string& path, std::vector<pid_t>& 
     return true;
 }
 
+bool CMonitorCgroups::collect_pids(FastFileReader& reader, std::vector<pid_t>& pids)
+{
+    if (!reader.open_or_rewind()) {
+        CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", reader.get_file().c_str());
+        return false;
+    }
+
+    const char* pline = reader.get_next_line();
+    while (pline) {
+        uint64_t pid;
+        // this PID is actually a TID (thread ID) most of the time... because in the kernel process/thread
+        // distinction is much less strong than userspace: they're all tasks
+        if (string2int(pline, pid))
+            pids.push_back((pid_t)pid);
+
+        pline = reader.get_next_line();
+    }
+
+    CMonitorLogger::instance()->LogDebug("Found %zu PIDs/TIDs to monitor [%s] inside %s.\n", pids.size(),
+        stl_container2string(pids, ",").c_str(), reader.get_file().c_str());
+
+    return true;
+}
+
 // ----------------------------------------------------------------------------------
 // CMonitorCgroups - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
 
-void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_opts, bool include_threads)
+void CMonitorCgroups::init_processes(const std::string& cgroup_prefix_for_test)
+{
+    // when unit testing, we ask the FastFileReader to actually be not-so-fast and reopen each time the file;
+    // that's because during unit testing the actual inode of the statistic file changes on every sample.
+    // Of course this does not happen in normal mode
+    bool reopen_each_time = !cgroup_prefix_for_test.empty();
+
+    switch (m_nCGroupsFound) {
+    case CG_VERSION1:
+        // in cgroups v1 all TIDs are available in the cgroup file named "tasks"
+        // of course here we're assuming that the "tasks" under the cpuacct cgroup are the ones
+        // the user is interested to monitor... in theory the "tasks" under other controllers like "memory"
+        // might be different; in practice with Docker/LXC/Kube that does not happen
+        m_cgroup_processes_reader_pids.set_file(m_cgroup_cpuacct_kernel_path + "/tasks", reopen_each_time);
+        break;
+
+    case CG_VERSION2:
+        // with cgroups v2, there are 2 different files that contain PIDs/TIDs so we can just
+        // read the right file up-front based on 'include_threads':
+        if (m_cgroup_processes_include_threads)
+            m_cgroup_processes_reader_pids.set_file(m_cgroup_cpuacct_kernel_path + "/cgroup.threads", reopen_each_time);
+        else
+            m_cgroup_processes_reader_pids.set_file(m_cgroup_cpuacct_kernel_path + "/cgroup.procs", reopen_each_time);
+        break;
+
+    case CG_NONE:
+        assert(0);
+        return;
+    }
+}
+
+void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_opts)
 {
     char str[256];
 
@@ -401,46 +455,19 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 
     // collect all PIDs for current cgroup
     std::vector<pid_t> all_pids;
-    switch (m_nCGroupsFound) {
-    case CG_VERSION1:
-        // in cgroups v1 all TIDs are available in the cgroup file named "tasks"
-        // of course here we're assuming that the "tasks" under the cpuacct cgroup are the ones
-        // the user is interested to monitor... in theory the "tasks" under other controllers like "memory"
-        // might be different; in practice with Docker/LXC/Kube that does not happen
-        if (!collect_pids(m_cgroup_cpuacct_kernel_path + "/tasks", all_pids))
-            return;
-        break;
-
-    case CG_VERSION2:
-        // with cgroups v2, there are 2 different files that contain PIDs/TIDs so we can just
-        // read the right file up-front based on 'include_threads':
-        if (include_threads)
-        {
-            if (!collect_pids(m_cgroup_cpuacct_kernel_path + "/cgroup.threads", all_pids))
-                return;
-        }
-        else
-        {
-            if (!collect_pids(m_cgroup_cpuacct_kernel_path + "/cgroup.procs", all_pids))
-                return;
-        }
-        break;
-
-    case CG_NONE:
-        assert(0);
+    if (!collect_pids(m_cgroup_processes_reader_pids, all_pids))
         return;
-    }
 
     // get new fresh processes data and update current database:
     currDB.clear();
-    bool needsToFilterOutThreads = (m_nCGroupsFound == CG_VERSION1) && !include_threads;
+    bool needsToFilterOutThreads = (m_nCGroupsFound == CG_VERSION1) && !m_cgroup_processes_include_threads;
     for (size_t i = 0; i < all_pids.size(); i++) {
 
         // acquire all possible informations on this PID (or TID)
         // NOTE: getting the Tgid is expensive (requires opening a dedicated file) so that's done only
         //       if strictly needed, i.e. if needsToFilterOutThreads==true
         procsinfo_t procData;
-        get_process_infos(all_pids[i], include_threads, &procData, output_opts, needsToFilterOutThreads);
+        get_process_infos(all_pids[i], m_cgroup_processes_include_threads, &procData, output_opts, needsToFilterOutThreads);
 
         if (needsToFilterOutThreads) {
             // only the main thread has its PID == TGID...
@@ -496,7 +523,7 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
     CMonitorLogger::instance()->LogDebug(
         "Tracking %zu/%zu processes/threads (include_threads=%d); min/max score found: %lu/%lu", // force
                                                                                                  // newline
-        currDB.size(), all_pids.size(), include_threads, m_topper_procs.begin()->first, m_topper_procs.rbegin()->first);
+        currDB.size(), all_pids.size(), m_cgroup_processes_include_threads, m_topper_procs.begin()->first, m_topper_procs.rbegin()->first);
 
     // Now output all data for each process, starting from the minimal score PROCESS_SCORE_IGNORE_THRESHOLD
     static double ticks = (double)sysconf(_SC_CLK_TCK); // clock ticks per second

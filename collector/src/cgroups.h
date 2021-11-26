@@ -88,7 +88,7 @@ public:
 
     // main setup
     // NOTE: arguments are used only during unit testing
-    void init(const std::string& cgroup_prefix_for_test = "", const std::string& proc_prefix_for_test = "");
+    void init(bool include_threads, const std::string& cgroup_prefix_for_test = "", const std::string& proc_prefix_for_test = "");
 
     // one-shot configuration info
     void output_config();
@@ -98,7 +98,7 @@ public:
     void sample_memory(
         const std::set<std::string>& allowedStatsNames_v1, const std::set<std::string>& allowedStatsNames_v2);
     void sample_network_interfaces(double elapsed_sec, OutputFields output_opts);
-    void sample_processes(double elapsed_sec, OutputFields output_opts, bool include_threads);
+    void sample_processes(double elapsed_sec, OutputFields output_opts);
 
     // misc helpers
     bool cgroup_still_exists();
@@ -111,11 +111,14 @@ private:
     void v2_read_limits();
     void init_cpuacct(const std::string& cgroup_prefix_for_test);
     void init_memory(const std::string& cgroup_prefix_for_test);
+    void init_network(const std::string& cgroup_prefix_for_test);
+    void init_processes(const std::string& cgroup_prefix_for_test);
 
     // cgroup processes
     bool get_process_infos(
         pid_t pid, bool include_threads, procsinfo_t* pout, OutputFields output_opts, bool output_tgid);
     bool collect_pids(const std::string& file, std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
+    bool collect_pids(FastFileReader& reader, std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
     // cpuacct controller
     bool read_cpuacct_line(FastFileReader& reader, std::vector<uint64_t>& valuesINT /* OUT */);
@@ -186,13 +189,15 @@ private:
     //------------------------------------------------------------------------------
     // cgroup network
     //------------------------------------------------------------------------------
+    FastFileReader m_cgroup_network_reader_pids;
     // previous values for network interfaces inside cgroup
     netinfo_map_t m_previous_netinfo;
-
 
     //------------------------------------------------------------------------------
     // cgroup processes tracking
     //------------------------------------------------------------------------------
+    FastFileReader m_cgroup_processes_reader_pids;
+    bool m_cgroup_processes_include_threads = false;
     std::map<pid_t, procsinfo_t> m_pid_databases[2];
     unsigned int m_pid_database_current_index = 0; // will be alternatively 0 and 1
 
