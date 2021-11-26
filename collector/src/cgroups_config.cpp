@@ -373,7 +373,7 @@ void CMonitorCgroups::init( // force newline
         break;
     }
 
-    
+    init_cpuacct(cgroup_prefix_for_test);
 }
 
 void CMonitorCgroups::v1_read_limits()

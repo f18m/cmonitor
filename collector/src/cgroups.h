@@ -24,6 +24,7 @@
 //------------------------------------------------------------------------------
 
 #include "cmonitor.h"
+#include "fast_file_reader.h"
 #include "system.h"
 #include <map>
 #include <set>
@@ -58,6 +59,12 @@ typedef struct {
     uint64_t counter_nsec_sys_mode;
 } cpuacct_utilisation_t;
 
+typedef struct {
+    uint64_t nr_periods;
+    uint64_t nr_throttled;
+    uint64_t throttled_time_nsec;
+} cpuacct_throttling_t;
+
 //------------------------------------------------------------------------------
 // The CMonitorCgroups object
 //------------------------------------------------------------------------------
@@ -72,12 +79,11 @@ public:
     {
         memset(&m_cpuacct_prev_values[0], 0, MAX_LOGICAL_CPU * sizeof(cpuacct_utilisation_t));
         memset(&m_cpuacct_prev_values_for_total_cpu, 0, sizeof(cpuacct_utilisation_t));
+        memset(&m_cpuacct_prev_values_for_throttling, 0, sizeof(cpuacct_throttling_t));
     }
 
     ~CMonitorCgroups()
     {
-        if (m_fp_cpuacct_stats)
-            fclose(m_fp_cpuacct_stats);
     }
 
     // main setup
@@ -103,7 +109,7 @@ private:
     bool init_check_for_our_pid();
     void v1_read_limits();
     void v2_read_limits();
-    void init_cpuacct();
+    void init_cpuacct(const std::string& cgroup_prefix_for_test);
 
     // cgroup processes
     bool get_process_infos(
@@ -111,7 +117,7 @@ private:
     bool collect_pids(const std::string& file, std::vector<pid_t>& pids); // utility of cgroup_proc_tasks()
 
     // cpuacct controller
-    bool read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */);
+    bool read_cpuacct_line(FastFileReader& reader, std::vector<uint64_t>& valuesINT /* OUT */);
     bool sample_cpuacct_v1_counters_by_cpu(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
     bool sample_cpuacct_v2_counters(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage);
 
@@ -127,39 +133,57 @@ private:
     // main switch that indicates if init() was successful or not
     CGroupDetected m_nCGroupsFound = CG_NONE;
 
-    // paths of cgroups for the cgroup to monitor (either our own cgroup or another one):
+    //------------------------------------------------------------------------------
+    // paths of cgroups controllers to monitor (either our own cgroup or another one):
+    //------------------------------------------------------------------------------
     std::string m_cgroup_systemd_name;
     std::string m_cgroup_memory_kernel_path;
     std::string m_cgroup_cpuacct_kernel_path;
     std::string m_cgroup_cpuset_kernel_path;
     std::string m_proc_prefix; // used only during unit testing to insert an arbitrary prefix in front of "/proc"
 
-    // limits read from the cgroups that apply to this process:
-    uint64_t m_cgroup_memory_limit_bytes = 0;
-    std::set<uint64_t> m_cgroup_cpus;
-    uint64_t m_cgroup_cpuacct_period_us = 0;
-    uint64_t m_cgroup_cpuacct_quota_us = 0;
-
-    // configuration/status read from "cpuacct" cgroup
-    unsigned int m_num_cpus_cpuacct_cgroup = 0;
-
-    // previous values sampled from "cpuacct" cgroup
-    cpuacct_utilisation_t m_cpuacct_prev_values[MAX_LOGICAL_CPU];
-    cpuacct_utilisation_t m_cpuacct_prev_values_for_total_cpu;
-
-    // previous values for network interfaces inside cgroup
-    netinfo_map_t m_previous_netinfo;
-
+    //------------------------------------------------------------------------------
     // counters of how many times each cgroup_proc_*() main API has been invoked
+    //------------------------------------------------------------------------------
     unsigned int m_num_memory_samples_collected = 0;
     unsigned int m_num_cpuacct_samples_collected = 0;
     unsigned int m_num_tasks_samples_collected = 0;
     unsigned int m_num_network_samples_collected = 0;
 
-    // handles to stat files
-    FILE* m_fp_cpuacct_stats = nullptr;
+    //------------------------------------------------------------------------------
+    // limits read from the cgroups controllers:
+    //------------------------------------------------------------------------------
+    uint64_t m_cgroup_memory_limit_bytes = 0;
+    std::set<uint64_t> m_cgroup_cpus;
+    uint64_t m_cgroup_cpuacct_period_us = 0;
+    uint64_t m_cgroup_cpuacct_quota_us = 0;
 
-    // Process tracking
+    //------------------------------------------------------------------------------
+    // cpuacct controller
+    //------------------------------------------------------------------------------
+    FastFileReader m_cgroup_cpuacct_v1_reader_sys_stat; // if has split user/system time
+    FastFileReader m_cgroup_cpuacct_v1_reader_user_stat; // if has split user/system time
+    FastFileReader m_cgroup_cpuacct_v1_reader_combined_stat; // if has COMBINED user/system time
+    FastFileReader m_cgroup_cpuacct_v1_reader_total_cpu_stat;
+    FastFileReader m_cgroup_cpuacct_v2_reader_total_cpu_stat;
+    bool m_cgroup_cpuacct_v1_supports_split_user_and_system_time = false;
+    unsigned int m_num_cpus_cpuacct_cgroup = 0;
+
+    // previous values sampled from "cpuacct" cgroup
+    cpuacct_utilisation_t m_cpuacct_prev_values[MAX_LOGICAL_CPU];
+    cpuacct_utilisation_t m_cpuacct_prev_values_for_total_cpu;
+    cpuacct_throttling_t m_cpuacct_prev_values_for_throttling;
+
+    //------------------------------------------------------------------------------
+    // cgroup network
+    //------------------------------------------------------------------------------
+    // previous values for network interfaces inside cgroup
+    netinfo_map_t m_previous_netinfo;
+
+
+    //------------------------------------------------------------------------------
+    // cgroup processes tracking
+    //------------------------------------------------------------------------------
     std::map<pid_t, procsinfo_t> m_pid_databases[2];
     unsigned int m_pid_database_current_index = 0; // will be alternatively 0 and 1
 
@@ -167,6 +191,9 @@ private:
     // that's why we use std::multimap instead of a std::map
     std::multimap<uint64_t /* process score */, proc_topper_t> m_topper_procs;
 
+
+    //------------------------------------------------------------------------------
     // buffer used for reading stats files or for other processing
+    //------------------------------------------------------------------------------
     char m_buff[8192];
 };

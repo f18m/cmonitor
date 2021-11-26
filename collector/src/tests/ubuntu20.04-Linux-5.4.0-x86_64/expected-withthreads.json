@@ -44,7 +44,7 @@
                 "sys": 0.000
             },
             "throttling": {
-                "nr_periods": 10,
+                "nr_periods": 24,
                 "nr_throttled": 0,
                 "throttled_time": 0
             },
@@ -264,7 +264,7 @@
                 "sys": 0.000
             },
             "throttling": {
-                "nr_periods": 10,
+                "nr_periods": 43,
                 "nr_throttled": 0,
                 "throttled_time": 0
             },
@@ -484,7 +484,7 @@
                 "sys": 0.000
             },
             "throttling": {
-                "nr_periods": 10,
+                "nr_periods": 52,
                 "nr_throttled": 0,
                 "throttled_time": 0
             },

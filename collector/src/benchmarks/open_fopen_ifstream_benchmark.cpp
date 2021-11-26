@@ -23,13 +23,13 @@
 	BM_open_syscall/4                  26348 ns        26272 ns        26630
 	BM_open_syscall/5                  55929 ns        55557 ns        12530
 	BM_open_syscall/6                 387032 ns       385802 ns         1795
-	BM_open_syscall_with_rewind/0       3325 ns         3325 ns       210355
-	BM_open_syscall_with_rewind/1       1485 ns         1485 ns       470774
-	BM_open_syscall_with_rewind/2       1289 ns         1289 ns       543043
-	BM_open_syscall_with_rewind/3       1306 ns         1306 ns       535131
-	BM_open_syscall_with_rewind/4      23146 ns        23146 ns        30199
-	BM_open_syscall_with_rewind/5      50405 ns        50405 ns        13859
-	BM_open_syscall_with_rewind/6     379598 ns       379597 ns         1859
+	BM_open_syscall_with_rewind/0       3325 ns         3325 ns       210355 <-- winner
+	BM_open_syscall_with_rewind/1       1485 ns         1485 ns       470774 <-- winner
+	BM_open_syscall_with_rewind/2       1289 ns         1289 ns       543043 <-- winner
+	BM_open_syscall_with_rewind/3       1306 ns         1306 ns       535131 <-- winner
+	BM_open_syscall_with_rewind/4      23146 ns        23146 ns        30199 <-- winner
+	BM_open_syscall_with_rewind/5      50405 ns        50405 ns        13859 <-- winner
+	BM_open_syscall_with_rewind/6     379598 ns       379597 ns         1859 <-- winner
 	BM_fopen/0                         15618 ns        15559 ns        44681
 	BM_fopen/1                         12553 ns        12491 ns        55987
 	BM_fopen/2                         11862 ns        11804 ns        57951
@@ -155,6 +155,7 @@ BENCHMARK(BM_open_syscall)->DenseRange(0, NUM_FILES, 1);
 
 //------------------------------------------------------------------------------
 // BM_open_syscall_with_rewind
+// Out of this benchmark test FastFileReader class has been written
 //------------------------------------------------------------------------------
 
 static void BM_open_syscall_with_rewind(benchmark::State& state)

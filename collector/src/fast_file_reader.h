@@ -69,16 +69,20 @@ public:
         m_fd = -1;
         m_start_next_line_to_process = NULL;
         m_num_lines = 0;
+        m_reopen_each_time = false;
     }
     ~FastFileReader()
     {
         close();
     }
 
-    void set_file(const std::string& filepath = "")
+    void set_file(const std::string& filepath = "", bool reopen_each_time = false)
     {
         close(); // in case a previous one had already been opened
         m_filepath = filepath;
+
+        // reopen each time is used during unit testing:
+        m_reopen_each_time = reopen_each_time;
     }
     bool open_or_rewind();
     void close();
@@ -86,11 +90,17 @@ public:
     // returns NULL if EOF is reached
     const char* get_next_line();
 
+    std::string get_file() const
+    {
+        return m_filepath;
+    }
+
 private:
     bool read_whole_file();
 
 private:
     std::string m_filepath;
+    bool m_reopen_each_time;
     int m_fd;
 
     // the cache buffer is static because cmonitor_collector is mono-thread so we don't

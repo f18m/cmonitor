@@ -35,12 +35,15 @@ bool FastFileReader::open_or_rewind()
 {
     m_start_next_line_to_process = NULL;
     m_num_lines = 0;
-    if (m_fd != -1) {
+    if (m_fd != -1 && !m_reopen_each_time) {
         // file was already open, just seek again back to the beginning
         off_t ret = lseek(m_fd, 0, SEEK_SET);
         if (ret == -1)
             return false;
     } else {
+        if (m_fd != -1 && m_reopen_each_time)
+            ::close(m_fd);
+
         // On error, -1 is returned and errno is set to indicate the error.
         m_fd = open(m_filepath.c_str(), O_RDONLY);
         if (m_fd == -1)
