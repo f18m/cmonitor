@@ -65,9 +65,9 @@
     {
         "cgroup_cpuacct_stats": {
             "throttling": {
-                "nr_periods": 370,
+                "nr_periods": 17,
                 "nr_throttled": 0,
-                "throttled_usec": 0
+                "throttled_time": 0
             },
             "cpu_tot": {
                 "user": 0.023,
@@ -170,9 +170,9 @@
     {
         "cgroup_cpuacct_stats": {
             "throttling": {
-                "nr_periods": 419,
+                "nr_periods": 49,
                 "nr_throttled": 0,
-                "throttled_usec": 0
+                "throttled_time": 0
             },
             "cpu_tot": {
                 "user": 1.776,
@@ -275,9 +275,9 @@
     {
         "cgroup_cpuacct_stats": {
             "throttling": {
-                "nr_periods": 450,
+                "nr_periods": 31,
                 "nr_throttled": 0,
-                "throttled_usec": 0
+                "throttled_time": 0
             },
             "cpu_tot": {
                 "user": 0.889,

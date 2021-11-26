@@ -243,11 +243,9 @@ bool CMonitorCgroups::sample_cpuacct_v2_counters(bool print, double elapsed_sec,
     }
 
     unsigned int nFoundCpuUsageValues = 0;
-    if (print)
-        m_pOutput->psubsection_start("throttling");
-
     std::string label;
     uint64_t value;
+    cpuacct_throttling_t counter_throttling;
     const char* pline = m_cgroup_cpuacct_v2_reader_total_cpu_stat.get_next_line();
     while (pline) {
 
@@ -265,18 +263,31 @@ bool CMonitorCgroups::sample_cpuacct_v2_counters(bool print, double elapsed_sec,
             } else if (label == "system_usec") {
                 total_cpu_usage.counter_nsec_sys_mode = value * 1000;
                 nFoundCpuUsageValues++;
-            } else if (print) {
-                // if we get here, it means this counter is related to throttling:
-                // emit immediately all informations about throttling...
-                m_pOutput->plong(label.c_str(), value);
+            } else if (label == "nr_periods") {
+                counter_throttling.nr_periods = value;
+            } else if (label == "nr_throttled") {
+                counter_throttling.nr_throttled = value;
+            } else if (label == "throttled_usec") {
+                counter_throttling.throttled_time_nsec = value * 1000;
             }
         }
 
         pline = m_cgroup_cpuacct_v2_reader_total_cpu_stat.get_next_line();
     }
 
-    if (print)
+    if (print) {
+        m_pOutput->psubsection_start("throttling");
+        m_pOutput->plong(
+            "nr_periods", counter_throttling.nr_periods - m_cpuacct_prev_values_for_throttling.nr_periods);
+        m_pOutput->plong("nr_throttled",
+            counter_throttling.nr_throttled - m_cpuacct_prev_values_for_throttling.nr_throttled);
+        m_pOutput->plong("throttled_time",
+            counter_throttling.throttled_time_nsec - m_cpuacct_prev_values_for_throttling.throttled_time_nsec);
         m_pOutput->psubsection_end();
+    }
+    
+    // save for next cycle
+    m_cpuacct_prev_values_for_throttling = counter_throttling;
 
     return nFoundCpuUsageValues == 2;
 }
