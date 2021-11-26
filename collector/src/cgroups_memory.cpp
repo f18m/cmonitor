@@ -32,44 +32,50 @@
 // CMonitorCgroups - internal helpers
 // ----------------------------------------------------------------------------------
 
+bool read_integer(FastFileReader& reader, uint64_t& value)
+{
+    if (!reader.open_or_rewind()) {
+        CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", reader.get_file().c_str());
+        return false; // file does not exist or not readable
+    }
+
+    // read a single integer from the file
+    value = 0;
+    return (sscanf(reader.get_next_line(), "%lu", &value) == 1);
+}
+
 size_t CMonitorCgroups::sample_flat_keyed_file(
-    const std::string& path, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix)
+    FastFileReader& reader, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix)
 {
     size_t nread = 0, ndiscarded = 0;
-    FILE* fp_memory_stats;
-    if ((fp_memory_stats = fopen(path.c_str(), "r")) == NULL) {
-        CMonitorLogger::instance()->LogError("Cannot open file [%s]", path.c_str());
+    if (!reader.open_or_rewind()) {
+        CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", reader.get_file().c_str());
         return nread;
     }
 
     std::string label;
     uint64_t value = 0;
-    while (fgets(m_buff, 1000, fp_memory_stats) != NULL) {
+    const char* pline = reader.get_next_line();
+    while (pline) {
 
-        char* pstart = m_buff;
+        std::string line;
         if (m_nCGroupsFound == CG_VERSION1) {
-            if (strncmp(m_buff, "total_", 6) != 0)
+            if (strncmp(pline, "total_", 6) != 0)
+            {
+                pline = reader.get_next_line();
                 continue; // skip NON-totals: collect only cgroup-total values
+            }
 
             // forget about the total_ prefix to make cgroups v1 stat names more similar to those of cgroups v2
-            pstart = &m_buff[6];
+            line = std::string(&pline[6]);
         }
+        else
+            line = std::string(pline);
 
-        size_t len = strlen(pstart);
-        if (pstart[len - 1] == '\n')
-            pstart[len - 1] = 0;
-#if 0 // in both cgroups v1 and cgroups v2 the "memory" controller will never generate 'special' characters
-        for (size_t i = 0; i < len; i++) {
-            if (m_buff[i] == '(')
-                m_buff[i] = '_';
-            if (m_buff[i] == ')')
-                m_buff[i] = ' ';
-            if (m_buff[i] == ':')
-                m_buff[i] = ' ';
-        }
-#endif
+        if (line.back() == '\n')
+            line.pop_back();
 
-        if (split_label_value(pstart, ' ', label, value)) {
+        if (split_label_value(line, ' ', label, value)) {
             // add label prefix before filtering
             label = label_prefix + label;
 
@@ -81,12 +87,12 @@ size_t CMonitorCgroups::sample_flat_keyed_file(
             } else
                 ndiscarded++;
         }
+
+        pline = reader.get_next_line();
     }
 
     CMonitorLogger::instance()->LogDebug(
-        "For memory controller %s read=%zu discarded=%zu kpis", path.c_str(), nread, ndiscarded);
-
-    fclose(fp_memory_stats);
+        "For memory controller %s read=%zu discarded=%zu kpis", reader.get_file().c_str(), nread, ndiscarded);
 
     return nread;
 }
@@ -94,6 +100,31 @@ size_t CMonitorCgroups::sample_flat_keyed_file(
 // ----------------------------------------------------------------------------------
 // CMonitorCgroups - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
+
+void CMonitorCgroups::init_memory(const std::string& cgroup_prefix_for_test)
+{
+    // when unit testing, we ask the FastFileReader to actually be not-so-fast and reopen each time the file;
+    // that's because during unit testing the actual inode of the statistic file changes on every sample.
+    // Of course this does not happen in normal mode
+    bool reopen_each_time = !cgroup_prefix_for_test.empty();
+
+    m_cgroup_memory_v1v2_stat.set_file(m_cgroup_memory_kernel_path + "/memory.stat", reopen_each_time);
+
+    switch (m_nCGroupsFound) {
+    case CG_VERSION1:
+        m_cgroup_memory_v1_failcnt.set_file(m_cgroup_memory_kernel_path + "/memory.failcnt", reopen_each_time);
+        break;
+
+    case CG_VERSION2:
+        m_cgroup_memory_v2_current.set_file(m_cgroup_memory_kernel_path + "/memory.current", reopen_each_time);
+        m_cgroup_memory_v2_events.set_file(m_cgroup_memory_kernel_path + "/memory.events", reopen_each_time);
+        break;
+
+    case CG_NONE:
+        assert(0);
+        return;
+    }
+}
 
 void CMonitorCgroups::sample_memory(
     const std::set<std::string>& allowedStatsNames_v1, const std::set<std::string>& allowedStatsNames_v2)
@@ -114,23 +145,22 @@ void CMonitorCgroups::sample_memory(
 
     if (m_nCGroupsFound == CG_VERSION2)
         // list as first value the main "current" KPI
-        if (read_integer(m_cgroup_memory_kernel_path + "/memory.current", value))
+        if (read_integer(m_cgroup_memory_v2_current, value))
             m_pOutput->plong("stat.current", value);
 
     // dump main memory statistics file
     const std::set<std::string>& allowedStatsNames
         = (m_nCGroupsFound == CG_VERSION1) ? allowedStatsNames_v1 : allowedStatsNames_v2;
-    sample_flat_keyed_file(m_cgroup_memory_kernel_path + "/memory.stat", allowedStatsNames, "stat.");
+    sample_flat_keyed_file(m_cgroup_memory_v1v2_stat, allowedStatsNames, "stat.");
 
     switch (m_nCGroupsFound) {
     case CG_VERSION1:
-        if (read_integer(m_cgroup_memory_kernel_path + "/memory.failcnt", value))
+        if (read_integer(m_cgroup_memory_v1_failcnt, value))
             m_pOutput->plong("failcnt", value);
         break;
 
     case CG_VERSION2:
-        sample_flat_keyed_file(
-            m_cgroup_memory_kernel_path + "/memory.events", allowedStatsNames, "events.");
+        sample_flat_keyed_file(m_cgroup_memory_v2_events, allowedStatsNames, "events.");
         break;
 
     case CG_NONE:

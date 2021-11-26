@@ -110,6 +110,7 @@ private:
     void v1_read_limits();
     void v2_read_limits();
     void init_cpuacct(const std::string& cgroup_prefix_for_test);
+    void init_memory(const std::string& cgroup_prefix_for_test);
 
     // cgroup processes
     bool get_process_infos(
@@ -127,7 +128,7 @@ private:
 
     // memory controller
     size_t sample_flat_keyed_file(
-        const std::string& path, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix);
+        FastFileReader& reader, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix);
 
 private:
     // main switch that indicates if init() was successful or not
@@ -175,6 +176,14 @@ private:
     cpuacct_throttling_t m_cpuacct_prev_values_for_throttling;
 
     //------------------------------------------------------------------------------
+    // memory controller
+    //------------------------------------------------------------------------------
+    FastFileReader m_cgroup_memory_v2_current;
+    FastFileReader m_cgroup_memory_v1v2_stat;
+    FastFileReader m_cgroup_memory_v1_failcnt;
+    FastFileReader m_cgroup_memory_v2_events;    
+
+    //------------------------------------------------------------------------------
     // cgroup network
     //------------------------------------------------------------------------------
     // previous values for network interfaces inside cgroup
@@ -190,10 +199,4 @@ private:
     // it's possible, even if unlikely, for 2 PIDs to have identical process score...
     // that's why we use std::multimap instead of a std::map
     std::multimap<uint64_t /* process score */, proc_topper_t> m_topper_procs;
-
-
-    //------------------------------------------------------------------------------
-    // buffer used for reading stats files or for other processing
-    //------------------------------------------------------------------------------
-    char m_buff[8192];
 };
