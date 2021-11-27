@@ -24,18 +24,24 @@ OUTDIR=../../bin/glibc
 endif
 OUT=$(OUTDIR)/unit_tests
 
-OBJS = \
-    $(OUTDIR)/tests_main.o \
+OBJS_UNIT_TESTS = \
+    $(OUTDIR)/tests_cgroup.o \
+    $(OUTDIR)/tests_fast_file_reader.o \
+    $(OUTDIR)/tests_main.o
+
+OBJS_CMONITOR_COLLECTOR = \
     $(OUTDIR)/cgroups_config.o \
 	$(OUTDIR)/cgroups_cpuacct.o \
 	$(OUTDIR)/cgroups_memory.o \
 	$(OUTDIR)/cgroups_network.o \
 	$(OUTDIR)/cgroups_processes.o \
+	$(OUTDIR)/fast_file_reader.o \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/output_frontend.o \
     $(OUTDIR)/system.o \
     $(OUTDIR)/utils.o
 
+OBJS = $(OBJS_UNIT_TESTS) $(OBJS_CMONITOR_COLLECTOR)
 HEADERS = $(wildcard ../*.h)
 
 TEST_KERNELS = \

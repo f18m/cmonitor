@@ -43,6 +43,7 @@ OBJS = \
 	$(OUTDIR)/cgroups_memory.o \
 	$(OUTDIR)/cgroups_network.o \
 	$(OUTDIR)/cgroups_processes.o \
+	$(OUTDIR)/fast_file_reader.o \
     $(OUTDIR)/header_info.o \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/main.o \

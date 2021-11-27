@@ -32,28 +32,21 @@
 // CMonitorCgroups - private helpers
 // ----------------------------------------------------------------------------------
 
-bool CMonitorCgroups::read_from_system_cpu_for_current_cgroup(std::string kernelPath, std::set<uint64_t>& cpus)
+bool CMonitorCgroups::read_cpuset_cpus(std::string kernelPath, std::set<uint64_t>& cpus)
 {
     std::set<uint64_t> empty_set;
     return read_integers_with_range_validation(kernelPath + "/cpuset.cpus", 0, INT32_MAX, cpus);
 }
 
-bool CMonitorCgroups::read_cpuacct_line(const std::string& path, std::vector<uint64_t>& valuesINT /* OUT */)
+bool CMonitorCgroups::read_cpuacct_line(FastFileReader& reader, std::vector<uint64_t>& valuesINT /* OUT */)
 {
-    FILE* fp1 = 0;
-    if ((fp1 = fopen(path.c_str(), "r")) == NULL) {
-        CMonitorLogger::instance()->LogError("failed to open %s", path.c_str());
+    if (!reader.open_or_rewind()) {
+        CMonitorLogger::instance()->LogError("failed to re-open %s", reader.get_file().c_str());
         return false;
     }
 
-    if (fgets(m_buff, CGROUP_COLLECTOR_BUFF_SIZE, fp1) == NULL) {
-        fclose(fp1);
-        return false;
-    }
-
-    fclose(fp1);
-
-    std::vector<std::string> values = split_string_in_array(m_buff, ' ');
+    std::string line = reader.get_next_line();
+    std::vector<std::string> values = split_string_in_array(line, ' ');
     if (m_num_cpus_cpuacct_cgroup == 0) {
         // first time we read the CPU stats
         m_num_cpus_cpuacct_cgroup = values.size();
@@ -73,7 +66,7 @@ bool CMonitorCgroups::read_cpuacct_line(const std::string& path, std::vector<uin
     return true;
 }
 
-bool CMonitorCgroups::cgroup_proc_cpuacct_v1_counters_by_cpu(
+bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
     bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage)
 {
     /* NOTE: newer distros have stats like
@@ -91,29 +84,23 @@ bool CMonitorCgroups::cgroup_proc_cpuacct_v1_counters_by_cpu(
 
     char label[512];
 
-    std::string cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
     bool bValidData = true;
-    if (file_or_dir_exists(cgroup_stat_file.c_str())) {
+    if (m_cgroup_cpuacct_v1_supports_split_user_and_system_time) {
 
         // this system supports per-cpu system/user stats:
 
-        std::vector<uint64_t> counter_nsec_sys_mode;
-        if (!read_cpuacct_line(cgroup_stat_file, counter_nsec_sys_mode))
+        std::vector<uint64_t> counter_nsec_sys_mode, counter_nsec_user_mode;
+        if (!read_cpuacct_line(m_cgroup_cpuacct_v1_reader_sys_stat, counter_nsec_sys_mode))
+            bValidData = false;
+        if (!read_cpuacct_line(m_cgroup_cpuacct_v1_reader_user_stat, counter_nsec_user_mode))
             bValidData = false;
 
-        std::vector<uint64_t> counter_nsec_user_mode;
-        if (!read_cpuacct_line(m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_user", counter_nsec_user_mode))
-            bValidData = false;
-
-        if (counter_nsec_sys_mode.size() != counter_nsec_user_mode.size())
-            bValidData = false;
-        if (counter_nsec_sys_mode.empty())
+        if (counter_nsec_sys_mode.size() != counter_nsec_user_mode.size() || counter_nsec_sys_mode.empty())
             bValidData = false;
 
         if (bValidData) {
             CMonitorLogger::instance()->LogDebug("Found cpuacct.usage_percpu_sys/user cgroups; computing CPU usage "
-                                                 "for %.2fsec delta time and %zu CPUs "
-                                                 "(print=%d)\n",
+                                                 "for %.2fsec delta time and %zu CPUs (print=%d)\n",
                 elapsed_sec, counter_nsec_user_mode.size(), print);
 
             for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
@@ -135,7 +122,7 @@ bool CMonitorCgroups::cgroup_proc_cpuacct_v1_counters_by_cpu(
                     "CPU %zu, current user=%lu, current sys=%lu, prev user=%lu, prev sys=%lu", // force newline
                     i, counter_nsec_user_mode[i], counter_nsec_sys_mode[i],
                     m_cpuacct_prev_values[i].counter_nsec_user_mode, m_cpuacct_prev_values[i].counter_nsec_sys_mode);
-                if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
+                if (is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
                     double cpuUserPercent = // force newline
                         100 * ((double)(counter_nsec_user_mode[i] - m_cpuacct_prev_values[i].counter_nsec_user_mode))
                         / (elapsed_sec * 1E9);
@@ -162,13 +149,10 @@ bool CMonitorCgroups::cgroup_proc_cpuacct_v1_counters_by_cpu(
         }
 
     } else {
-        // just get the per-cpu total:
-
-        // update "cgroup_stat_file" which might be used later for error logging
-        cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu";
+        // just get the per-cpu total (system+user space):
 
         std::vector<uint64_t> counter_nsec_user_mode;
-        if (!read_cpuacct_line(cgroup_stat_file, counter_nsec_user_mode))
+        if (!read_cpuacct_line(m_cgroup_cpuacct_v1_reader_combined_stat, counter_nsec_user_mode))
             bValidData = false;
         if (counter_nsec_user_mode.empty())
             bValidData = false;
@@ -181,7 +165,7 @@ bool CMonitorCgroups::cgroup_proc_cpuacct_v1_counters_by_cpu(
                 /*
                  * Same comments for USER/SYS computations done above apply here!
                  */
-                if (cgroup_is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
+                if (is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
                     double cpuUserPercent = // force newline
                         100 * ((double)(counter_nsec_user_mode[i] - m_cpuacct_prev_values[i].counter_nsec_user_mode))
                         / (elapsed_sec * 1E9);
@@ -202,109 +186,108 @@ bool CMonitorCgroups::cgroup_proc_cpuacct_v1_counters_by_cpu(
         }
     }
 
-    // Provide throttling statistics; in cgroups v1 these are:
+    // Provide (DELTA OF) throttling statistics; in cgroups v1 these are:
     //   nr_periods <num>
     //   nr_throttled <num>
     //   throttled_time <num_in_nanosecs>
     // Interesting reads:
     //   https://medium.com/indeed-engineering/unthrottled-fixing-cpu-limits-in-the-cloud-a0995ede8e89
 
-    cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpu.stat";
-    if (file_or_dir_exists(cgroup_stat_file.c_str())) {
-        if (m_fp_cpuacct_stats == 0) {
-            if ((m_fp_cpuacct_stats = fopen(cgroup_stat_file.c_str(), "r")) == NULL) {
-                CMonitorLogger::instance()->LogError("failed to open %s", cgroup_stat_file.c_str());
-                m_fp_cpuacct_stats = 0;
+    if (m_cgroup_cpuacct_v1_reader_total_cpu_stat.open_or_rewind()) {
+        if (bValidData) {
+            const char* pline = m_cgroup_cpuacct_v1_reader_total_cpu_stat.get_next_line();
+            char label[512];
+            uint64_t value;
+            cpuacct_throttling_t counter_throttling;
+            while (pline) {
+                sscanf(pline, "%s %lu", label, &value);
+                if (strcmp(label, "nr_periods") == 0)
+                    counter_throttling.nr_periods = value;
+                else if (strcmp(label, "nr_throttled") == 0)
+                    counter_throttling.nr_throttled = value;
+                else if (strcmp(label, "throttled_time") == 0)
+                    counter_throttling.throttled_time_nsec = value;
+                pline = m_cgroup_cpuacct_v1_reader_total_cpu_stat.get_next_line();
             }
-        } else {
-            rewind(m_fp_cpuacct_stats);
-        }
 
-        if (m_fp_cpuacct_stats) {
-            if (print)
+            if (print) {
                 m_pOutput->psubsection_start("throttling");
-
-            while (fgets(m_buff, 1000, m_fp_cpuacct_stats) != NULL) {
-                uint64_t value;
-                char label[512];
-                sscanf(m_buff, "%s %lu", label, &value);
-                if (print)
-                    m_pOutput->plong(label, value);
+                m_pOutput->plong(
+                    "nr_periods", counter_throttling.nr_periods - m_cpuacct_prev_values_for_throttling.nr_periods);
+                m_pOutput->plong("nr_throttled",
+                    counter_throttling.nr_throttled - m_cpuacct_prev_values_for_throttling.nr_throttled);
+                m_pOutput->plong("throttled_time",
+                    counter_throttling.throttled_time_nsec - m_cpuacct_prev_values_for_throttling.throttled_time_nsec);
+                m_pOutput->psubsection_end();
             }
 
-            if (print)
-                m_pOutput->psubsection_end();
+            // save for next cycle
+            m_cpuacct_prev_values_for_throttling = counter_throttling;
         }
     } else {
-        CMonitorLogger::instance()->LogError("failed to open %s", cgroup_stat_file.c_str());
+        CMonitorLogger::instance()->LogError(
+            "failed to open %s", m_cgroup_cpuacct_v1_reader_total_cpu_stat.get_file().c_str());
     }
 
     return bValidData;
 }
 
-bool CMonitorCgroups::cgroup_proc_cpuacct_v2_counters(
-    bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage)
+bool CMonitorCgroups::sample_cpuacct_v2_counters(bool print, double elapsed_sec, cpuacct_utilisation_t& total_cpu_usage)
 {
     // see https://www.kernel.org/doc/Documentation/cgroup-v2.txt
 
-    std::string cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpu.stat";
-    if (!file_or_dir_exists(cgroup_stat_file.c_str())) {
-        total_cpu_usage.counter_nsec_sys_mode = 0;
-        total_cpu_usage.counter_nsec_user_mode = 0;
+    if (!m_cgroup_cpuacct_v2_reader_total_cpu_stat.open_or_rewind()) {
+        CMonitorLogger::instance()->LogError(
+            "failed to open %s", m_cgroup_cpuacct_v2_reader_total_cpu_stat.get_file().c_str());
         return false;
     }
 
-    if (m_fp_cpuacct_stats == 0) {
-        if ((m_fp_cpuacct_stats = fopen(cgroup_stat_file.c_str(), "r")) == NULL) {
-            CMonitorLogger::instance()->LogError("failed to open %s", cgroup_stat_file.c_str());
-            m_fp_cpuacct_stats = 0;
-        }
-    } else {
-        rewind(m_fp_cpuacct_stats);
-    }
-
     unsigned int nFoundCpuUsageValues = 0;
-    if (m_fp_cpuacct_stats) {
+    std::string label;
+    uint64_t value;
+    cpuacct_throttling_t counter_throttling;
+    const char* pline = m_cgroup_cpuacct_v2_reader_total_cpu_stat.get_next_line();
+    while (pline) {
 
-        if (print)
-            m_pOutput->psubsection_start("throttling");
+        std::string line(pline);
+        if (line.back() == '\n')
+            line.pop_back();
 
-        std::string label;
-        uint64_t value;
-        while (fgets(m_buff, 1000, m_fp_cpuacct_stats) != NULL) {
-
-            size_t len = strlen(m_buff);
-            if (m_buff[len - 1] == '\n')
-                m_buff[len - 1] = 0;
-
-            if (split_label_value(m_buff, ' ', label, value)) {
-                // save for later any info about CPU usage...
-                if (label == "usage_usec")
-                    continue; // skip this, it's obtained as user_usec+system_usec
-                if (label == "user_usec") {
-                    total_cpu_usage.counter_nsec_user_mode = value * 1000;
-                    nFoundCpuUsageValues++;
-                    continue;
-                }
-                if (label == "system_usec") {
-                    total_cpu_usage.counter_nsec_sys_mode = value * 1000;
-                    nFoundCpuUsageValues++;
-                    continue;
-                }
-
-                // emit immediately all informations about throttling...
-                if (print)
-                    m_pOutput->plong(label.c_str(), value);
+        if (split_label_value(line, ' ', label, value)) {
+            // save for later any info about CPU usage...
+            if (label == "usage_usec") {
+                // skip this, it's obtained as user_usec+system_usec
+            } else if (label == "user_usec") {
+                total_cpu_usage.counter_nsec_user_mode = value * 1000;
+                nFoundCpuUsageValues++;
+            } else if (label == "system_usec") {
+                total_cpu_usage.counter_nsec_sys_mode = value * 1000;
+                nFoundCpuUsageValues++;
+            } else if (label == "nr_periods") {
+                counter_throttling.nr_periods = value;
+            } else if (label == "nr_throttled") {
+                counter_throttling.nr_throttled = value;
+            } else if (label == "throttled_usec") {
+                counter_throttling.throttled_time_nsec = value * 1000;
             }
         }
 
-        if (print)
-            m_pOutput->psubsection_end();
+        pline = m_cgroup_cpuacct_v2_reader_total_cpu_stat.get_next_line();
     }
 
-    // FIXME: just to get unit tests successful
-    fclose(m_fp_cpuacct_stats);
-    m_fp_cpuacct_stats = 0;
+    if (print) {
+        m_pOutput->psubsection_start("throttling");
+        m_pOutput->plong(
+            "nr_periods", counter_throttling.nr_periods - m_cpuacct_prev_values_for_throttling.nr_periods);
+        m_pOutput->plong("nr_throttled",
+            counter_throttling.nr_throttled - m_cpuacct_prev_values_for_throttling.nr_throttled);
+        m_pOutput->plong("throttled_time",
+            counter_throttling.throttled_time_nsec - m_cpuacct_prev_values_for_throttling.throttled_time_nsec);
+        m_pOutput->psubsection_end();
+    }
+    
+    // save for next cycle
+    m_cpuacct_prev_values_for_throttling = counter_throttling;
 
     return nFoundCpuUsageValues == 2;
 }
@@ -313,14 +296,52 @@ bool CMonitorCgroups::cgroup_proc_cpuacct_v2_counters(
 // CMonitorCgroups - Functions used by the cmonitor_collector engine
 // ----------------------------------------------------------------------------------
 
-bool CMonitorCgroups::cgroup_is_allowed_cpu(int cpu)
+bool CMonitorCgroups::is_allowed_cpu(int cpu)
 {
     if (m_nCGroupsFound == CG_NONE)
         return true; // allowed
     return m_cgroup_cpus.find(cpu) != m_cgroup_cpus.end();
 }
 
-void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec)
+void CMonitorCgroups::init_cpuacct(const std::string& cgroup_prefix_for_test)
+{
+    // when unit testing, we ask the FastFileReader to actually be not-so-fast and reopen each time the file;
+    // that's because during unit testing the actual inode of the statistic file changes on every sample.
+    // Of course this does not happen in normal mode
+    bool reopen_each_time = !cgroup_prefix_for_test.empty();
+
+    switch (m_nCGroupsFound) {
+    case CG_VERSION1: {
+        std::string cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
+        if (file_or_dir_exists(cgroup_stat_file.c_str())) {
+            // current kernel supports reporting in 2 different counters system and user CPU usage
+            m_cgroup_cpuacct_v1_supports_split_user_and_system_time = true;
+            m_cgroup_cpuacct_v1_reader_sys_stat.set_file(
+                m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys", reopen_each_time);
+            m_cgroup_cpuacct_v1_reader_user_stat.set_file(
+                m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_user", reopen_each_time);
+        } else {
+            // current kernel reports combined (user+system) per-CPU usage
+            m_cgroup_cpuacct_v1_reader_combined_stat.set_file(
+                m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu", reopen_each_time);
+        }
+
+        m_cgroup_cpuacct_v1_reader_total_cpu_stat.set_file(
+            m_cgroup_cpuacct_kernel_path + "/cpu.stat", reopen_each_time);
+    } break;
+
+    case CG_VERSION2:
+        m_cgroup_cpuacct_v2_reader_total_cpu_stat.set_file(
+            m_cgroup_cpuacct_kernel_path + "/cpu.stat", reopen_each_time);
+        break;
+
+    case CG_NONE:
+        assert(0);
+        return;
+    }
+}
+
+void CMonitorCgroups::sample_cpuacct(double elapsed_sec)
 {
     if (m_nCGroupsFound == CG_NONE)
         return;
@@ -339,13 +360,13 @@ void CMonitorCgroups::cgroup_proc_cpuacct(double elapsed_sec)
     case CG_VERSION1:
         // emit per-CPU information since cgroups v1 provide such granularity
         // from these, we also compute the TOTAL cpu usages
-        bValidData = cgroup_proc_cpuacct_v1_counters_by_cpu(print, elapsed_sec, total_cpu_usage);
+        bValidData = sample_cpuacct_v1_counters_by_cpu(print, elapsed_sec, total_cpu_usage);
         break;
 
     case CG_VERSION2:
         // with cgroups v2, there is no more per-cpu usage reported, we just have
         // the total aggregated cpu usage break down in kernel/user space
-        bValidData = cgroup_proc_cpuacct_v2_counters(print, elapsed_sec, total_cpu_usage);
+        bValidData = sample_cpuacct_v2_counters(print, elapsed_sec, total_cpu_usage);
         break;
 
     case CG_NONE:

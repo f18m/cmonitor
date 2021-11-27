@@ -40,9 +40,9 @@
                 "user": 0.109
             },
             "throttling": {
-                "nr_periods": 4588,
-                "nr_throttled": 98,
-                "throttled_time": 409729382
+                "nr_periods": 15,
+                "nr_throttled": 0,
+                "throttled_time": 0
             },
             "cpu_tot": {
                 "user": 0.148,
@@ -256,9 +256,9 @@
                 "user": 35.396
             },
             "throttling": {
-                "nr_periods": 4588,
-                "nr_throttled": 98,
-                "throttled_time": 409729382
+                "nr_periods": 49,
+                "nr_throttled": 48,
+                "throttled_time": 91294862
             },
             "cpu_tot": {
                 "user": 84.974,
@@ -472,9 +472,9 @@
                 "user": 2.648
             },
             "throttling": {
-                "nr_periods": 4588,
-                "nr_throttled": 98,
-                "throttled_time": 409729382
+                "nr_periods": 17,
+                "nr_throttled": 1,
+                "throttled_time": 3998863
             },
             "cpu_tot": {
                 "user": 2.816,

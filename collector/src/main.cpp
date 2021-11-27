@@ -707,16 +707,15 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     m_system_collector.proc_diskstats(0, PF_NONE /* do not emit JSON data */);
     m_system_collector.proc_net_dev(0, PF_NONE /* do not emit JSON data */);
     if (bCollectCGroupInfo) {
-        m_cgroups_collector.cgroup_init();
+        m_cgroups_collector.init(m_cfg.m_nCollectFlags & PK_CGROUP_THREADS);
 
         if (m_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT)
-            m_cgroups_collector.cgroup_proc_cpuacct(0);
+            m_cgroups_collector.sample_cpuacct(0);
 
         if (m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES)
-            m_cgroups_collector.cgroup_proc_tasks(
-                0, PF_NONE /* do not emit JSON */, false /* do not include threads */);
+            m_cgroups_collector.sample_processes(0, PF_NONE /* do not emit JSON */);
         if (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)
-            m_cgroups_collector.cgroup_proc_tasks(0, PF_NONE /* do not emit JSON */, true /* do include threads */);
+            m_cgroups_collector.sample_processes(0, PF_NONE /* do not emit JSON */);
     }
 
     double current_time = get_timestamp_sec();
@@ -813,25 +812,19 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         if (m_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) {
             // do not list all CPU informations when cgroup mode is ON: don't put information
             // for CPUs outside current cgroup!
-            m_cgroups_collector.cgroup_proc_cpuacct(elapsed);
+            m_cgroups_collector.sample_cpuacct(elapsed);
         }
 
         if (m_cfg.m_nCollectFlags & PK_CGROUP_MEMORY) {
-            m_cgroups_collector.cgroup_proc_memory(
-                charted_stats_from_cgroup_memory_v1, charted_stats_from_cgroup_memory_v2);
+            m_cgroups_collector.sample_memory(charted_stats_from_cgroup_memory_v1, charted_stats_from_cgroup_memory_v2);
         }
 
         if (m_cfg.m_nCollectFlags & PK_CGROUP_NETWORK_INTERFACES) {
-            m_cgroups_collector.cgroup_proc_network_interfaces(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
+            m_cgroups_collector.sample_network_interfaces(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
         }
 
-        if (m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) {
-            m_cgroups_collector.cgroup_proc_tasks(
-                elapsed, m_cfg.m_nOutputFields /* emit JSON */, false /* do not include threads */);
-        }
-        if (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS) {
-            m_cgroups_collector.cgroup_proc_tasks(
-                elapsed, m_cfg.m_nOutputFields /* emit JSON */, true /* do include threads */);
+        if ((m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) || (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {
+            m_cgroups_collector.sample_processes(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
         }
 
         m_output.push_current_sample();
