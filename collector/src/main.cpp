@@ -42,6 +42,7 @@
 #define PID_FILE "/var/run/cmonitor.pid"
 
 #define ADDITIONAL_HELP_COLUMN_START (40)
+#define TEST_COLLECTOR_PERFORMANCES
 
 //------------------------------------------------------------------------------
 // Globals
@@ -660,8 +661,10 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 
     // init debug/error channels:
     CMonitorLogger::instance()->init_error_output_file(m_cfg.m_strOutputFilenamePrefix);
+#ifndef TEST_COLLECTOR_PERFORMANCES // when testing performances we don't want logging that would fake results
     if (m_cfg.m_bDebug)
         CMonitorLogger::instance()->enable_debug();
+#endif
 
     // init the output channels:
     m_output.init_json_output_file(m_cfg.m_strOutputFilenamePrefix);
@@ -768,8 +771,11 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     m_output.psample_array_start();
     double previous_time = current_time;
     for (unsigned int loop = 0; m_cfg.m_nSamples == 0 || loop < m_cfg.m_nSamples; loop++) {
+#ifndef TEST_COLLECTOR_PERFORMANCES // when testing performances we want to push cmonitor_collector at 100% CPU usage
+                                    // and then look at hotspots
         if (loop != 0)
             sleep(m_cfg.m_nSamplingInterval);
+#endif
         CMonitorLogger::instance()->LogDebug("Starting sample %u/%lu", loop, m_cfg.m_nSamples);
 
         // get timestamp for the new sample

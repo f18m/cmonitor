@@ -21,6 +21,7 @@
 #include "utils.h"
 #include "logger.h"
 #include "output_frontend.h"
+#include <fmt/format.h>
 #include <limits.h>
 #include <sstream>
 #include <sys/stat.h>
@@ -360,20 +361,19 @@ void proc_read_numeric_stats_from(
 {
     FILE* fp = 0;
     char line[1024];
-    char filename[1024];
     char label[512];
     char number[512];
     int i;
     int len;
 
     DEBUGLOG_FUNCTION_START();
-    sprintf(filename, "/proc/%s", statname);
-    if ((fp = fopen(filename, "r")) == NULL) {
-        CMonitorLogger::instance()->LogErrorWithErrno("Failed to open performance file %s", filename);
+    std::string filename = fmt::format("/proc/{}", statname);
+    if ((fp = fopen(filename.c_str(), "r")) == NULL) {
+        CMonitorLogger::instance()->LogErrorWithErrno("Failed to open performance file %s", filename.c_str());
         return;
     }
-    sprintf(label, "proc_%s", statname);
-    pOutput->psection_start(label);
+
+    pOutput->psection_start(fmt::format("proc_{}", statname).c_str());
     while (fgets(line, 1000, fp) != NULL) {
         len = strlen(line);
         bool is_kb = false;

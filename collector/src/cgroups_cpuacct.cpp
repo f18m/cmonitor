@@ -82,8 +82,6 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
      *  https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/resource_management_guide/sec-cpuacct
      */
 
-    char label[512];
-
     bool bValidData = true;
     if (m_cgroup_cpuacct_v1_supports_split_user_and_system_time) {
 
@@ -131,8 +129,7 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
                         / (elapsed_sec * 1E9);
 
                     // output JSON counter
-                    sprintf(label, "cpu%zu", i);
-                    m_pOutput->psubsection_start(label);
+                    m_pOutput->psubsection_start(fmt::format("cpu{}", i).c_str());
                     m_pOutput->pdouble("user", cpuUserPercent);
                     m_pOutput->pdouble("sys", cpuSysPercent);
                     m_pOutput->psubsection_end();
@@ -171,8 +168,7 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
                         / (elapsed_sec * 1E9);
 
                     // output JSON counter
-                    sprintf(label, "cpu%zu", i);
-                    m_pOutput->psubsection_start(label);
+                    m_pOutput->psubsection_start(fmt::format("cpu{}", i).c_str());
                     m_pOutput->pdouble("user", cpuUserPercent);
                     m_pOutput->psubsection_end();
                 }
@@ -277,15 +273,14 @@ bool CMonitorCgroups::sample_cpuacct_v2_counters(bool print, double elapsed_sec,
 
     if (print) {
         m_pOutput->psubsection_start("throttling");
+        m_pOutput->plong("nr_periods", counter_throttling.nr_periods - m_cpuacct_prev_values_for_throttling.nr_periods);
         m_pOutput->plong(
-            "nr_periods", counter_throttling.nr_periods - m_cpuacct_prev_values_for_throttling.nr_periods);
-        m_pOutput->plong("nr_throttled",
-            counter_throttling.nr_throttled - m_cpuacct_prev_values_for_throttling.nr_throttled);
+            "nr_throttled", counter_throttling.nr_throttled - m_cpuacct_prev_values_for_throttling.nr_throttled);
         m_pOutput->plong("throttled_time",
             counter_throttling.throttled_time_nsec - m_cpuacct_prev_values_for_throttling.throttled_time_nsec);
         m_pOutput->psubsection_end();
     }
-    
+
     // save for next cycle
     m_cpuacct_prev_values_for_throttling = counter_throttling;
 

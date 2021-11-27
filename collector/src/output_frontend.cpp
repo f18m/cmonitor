@@ -26,6 +26,7 @@
 #include "utils.h"
 #include <algorithm>
 #include <assert.h>
+#include <fmt/format.h>
 #include <netdb.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -283,8 +284,7 @@ void CMonitorOutputFrontend::push_current_sections_to_influxdb(bool is_header)
         gettimeofday(&tv, 0);
         uint64_t ts_nsec = ((uint64_t)tv.tv_sec * 1E9) + ((uint64_t)tv.tv_usec * 1E3);
 
-        char ts_nsec_str[64];
-        snprintf(ts_nsec_str, sizeof(ts_nsec_str), "%lu", ts_nsec);
+        std::string ts_nsec_str = fmt::format_int(ts_nsec).str();
 
         std::string all_measurements;
         all_measurements.reserve(4096);
@@ -312,7 +312,7 @@ void CMonitorOutputFrontend::push_current_sections_to_influxdb(bool is_header)
         size_t num_measurements = get_current_sample_measurements();
         CMonitorLogger::instance()->LogDebug(
             "push_current_sections_to_influxdb() pushing to InfluxDB %zu measurements for timestamp: %s\n",
-            num_measurements, ts_nsec_str);
+            num_measurements, ts_nsec_str.c_str());
 
         post_http_send_line(m_influxdb_client_conn, all_measurements.data(), all_measurements.size());
     }
@@ -569,9 +569,8 @@ void CMonitorOutputFrontend::phex(const char* name, long long value)
     m_hex++;
     assert(m_current_meas_list);
 
-    char buff[128];
-    snprintf(buff, sizeof(buff), "0x%08llx", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, buff, true));
+    auto fmt_string = fmt::format("hex:{:#08x}", value);
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
 }
 
 void CMonitorOutputFrontend::plong(const char* name, long long value)
@@ -581,9 +580,9 @@ void CMonitorOutputFrontend::plong(const char* name, long long value)
 
     // according to
     //   https://www.zverovich.net/2020/06/13/fast-int-to-string-revisited.html
-    // fmt::format_int	would be the fastest way to convert integers but it's not in C++20 gcc STL yet
-    // so we use std::to_string which is slower but it's c++11 standard
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, std::to_string(value).c_str(), true));
+    // fmt::format_int is be the fastest way to convert integers
+    auto fmt_string = fmt::format_int(value);
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
 }
 
 void CMonitorOutputFrontend::pdouble(const char* name, double value)
@@ -592,9 +591,8 @@ void CMonitorOutputFrontend::pdouble(const char* name, double value)
     assert(m_current_meas_list);
 
     // with std::to_string() you cannot specify the accuracy (how many decimal digits)
-    char buff[128];
-    snprintf(buff, sizeof(buff), "%.3f", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, buff, true));
+    auto fmt_string = fmt::format("{:.3f}", value);
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
 }
 
 void CMonitorOutputFrontend::pstring(const char* name, const char* value)

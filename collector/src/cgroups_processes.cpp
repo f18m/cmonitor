@@ -101,17 +101,15 @@ bool CMonitorCgroups::get_process_infos(
 #define MAX_PROC_CONTENT_LEN 4096
 
     FILE* fp = NULL;
-    char stat_file_prefix[MAX_STAT_FILE_PREFIX_LEN] = { '\0' };
-    char filename[MAX_PROC_FILENAME_LEN] = { '\0' };
     char buf[MAX_PROC_CONTENT_LEN] = { '\0' };
 
     memset(pout, 0, sizeof(procsinfo_t));
 
     /* the statistic directory for the process */
-    snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/proc/%d", m_proc_prefix.c_str(), pid);
+    auto filename = fmt::format("{}/proc/{}", m_proc_prefix, pid);
     struct stat statbuf;
-    if (stat(filename, &statbuf) != 0) {
-        CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to stat file %s", filename);
+    if (stat(filename.c_str(), &statbuf) != 0) {
+        CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to stat file %s", filename.c_str());
         return false;
     }
 
@@ -152,15 +150,16 @@ bool CMonitorCgroups::get_process_infos(
          To make sure we collect the stats for the whole process identified by PID=pid (and not just its main thread),
          we look at /proc/<pid>/<statistics-file>
     */
+    std::string stat_file_prefix;
     if (include_threads)
-        snprintf(stat_file_prefix, MAX_STAT_FILE_PREFIX_LEN, "%s/proc/%d/task/%d/", m_proc_prefix.c_str(), pid, pid);
+        stat_file_prefix = fmt::format("{}/proc/{}/task/{}", m_proc_prefix, pid, pid);
     else
-        snprintf(stat_file_prefix, MAX_STAT_FILE_PREFIX_LEN, "%s/proc/%d/", m_proc_prefix.c_str(), pid);
+        stat_file_prefix = fmt::format("{}/proc/{}", m_proc_prefix, pid);
 
     { /* process the statistic file for the process/thread */
-        snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/stat", stat_file_prefix);
-        if ((fp = fopen(filename, "r")) == NULL) {
-            CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to open file %s", filename);
+        filename = stat_file_prefix + "/stat";
+        if ((fp = fopen(filename.c_str(), "r")) == NULL) {
+            CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to open file %s", filename.c_str());
             return false;
         }
 
@@ -194,7 +193,7 @@ bool CMonitorCgroups::get_process_infos(
         // never seen a case where inside /proc/<pid>/task/<pid>/stat you find mention of a pid != <pid>
         if (pout->pi_pid != pid) {
             CMonitorLogger::instance()->LogError(
-                "ERROR: found pid=%d inside the filename=%s... unexpected mismatch\n", pout->pi_pid, filename);
+                "ERROR: found pid=%d inside the filename=%s... unexpected mismatch\n", pout->pi_pid, filename.c_str());
             return false;
         }
 
@@ -269,16 +268,16 @@ bool CMonitorCgroups::get_process_infos(
 
     if (output_opts == PF_ALL) { /* process the statm file for the process/thread */
 
-        snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/statm", stat_file_prefix);
-        if ((fp = fopen(filename, "r")) == NULL) {
-            CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename);
+        filename = stat_file_prefix + "/statm";
+        if ((fp = fopen(filename.c_str(), "r")) == NULL) {
+            CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename.c_str());
             return false;
         }
         size_t size = fread(buf, 1, MAX_PROC_CONTENT_LEN - 1, fp);
         fclose(fp); /* close it even if the read failed, the file could have been removed
                     between open & read i.e. the device driver does not behave like a file */
         if (size == 0) {
-            CMonitorLogger::instance()->LogError("failed to read file %s", filename);
+            CMonitorLogger::instance()->LogError("failed to read file %s", filename.c_str());
             return false;
         }
 
@@ -293,9 +292,9 @@ bool CMonitorCgroups::get_process_infos(
 
     if (output_tgid) { /* process the status file for the process/thread */
 
-        snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/status", stat_file_prefix);
-        if ((fp = fopen(filename, "r")) == NULL) {
-            CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename);
+        filename = stat_file_prefix + "/status";
+        if ((fp = fopen(filename.c_str(), "r")) == NULL) {
+            CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename.c_str());
             return false;
         }
         for (int i = 0;; i++) {
@@ -314,38 +313,39 @@ bool CMonitorCgroups::get_process_infos(
     { /* process the I/O file for the process/thread */
         pout->io_read_bytes = 0;
         pout->io_write_bytes = 0;
-        snprintf(filename, MAX_PROC_FILENAME_LEN, "%s/io", stat_file_prefix);
-        if ((fp = fopen(filename, "r")) != NULL) {
-            for (int i = 0; i < 6; i++) {
-                if (fgets(buf, 1024, fp) == NULL) {
-                    break;
-                }
-                /*
-                    from https://man7.org/linux/man-pages/man5/proc.5.html
 
-                    rchar: characters read
-                            The number of bytes which this task has caused to
-                            be read from storage.  This is simply the sum of
-                            bytes which this process passed to read(2) and
-                            similar system calls.  It includes things such as
-                            terminal I/O and is unaffected by whether or not
-                            actual physical disk I/O was required (the read
-                            might have been satisfied from pagecache).
-
-                */
-                if (strncmp("rchar:", buf, 6) == 0)
-                    sscanf(&buf[7], "%lld", &pout->io_rchar);
-                if (strncmp("wchar:", buf, 6) == 0)
-                    sscanf(&buf[7], "%lld", &pout->io_wchar);
-                if (strncmp("read_bytes:", buf, 11) == 0)
-                    sscanf(&buf[12], "%lld", &pout->io_read_bytes);
-                if (strncmp("write_bytes:", buf, 12) == 0)
-                    sscanf(&buf[13], "%lld", &pout->io_write_bytes);
-            }
+        filename = stat_file_prefix + "/io";
+        if ((fp = fopen(filename.c_str(), "r")) == NULL) {
+            CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename.c_str());
+            return false;
         }
+        for (int i = 0; i < 6; i++) {
+            if (fgets(buf, 1024, fp) == NULL) {
+                break;
+            }
+            /*
+                from https://man7.org/linux/man-pages/man5/proc.5.html
 
-        if (fp != NULL)
-            fclose(fp);
+                rchar: characters read
+                        The number of bytes which this task has caused to
+                        be read from storage.  This is simply the sum of
+                        bytes which this process passed to read(2) and
+                        similar system calls.  It includes things such as
+                        terminal I/O and is unaffected by whether or not
+                        actual physical disk I/O was required (the read
+                        might have been satisfied from pagecache).
+
+            */
+            if (strncmp("rchar:", buf, 6) == 0)
+                sscanf(&buf[7], "%lld", &pout->io_rchar);
+            if (strncmp("wchar:", buf, 6) == 0)
+                sscanf(&buf[7], "%lld", &pout->io_wchar);
+            if (strncmp("read_bytes:", buf, 11) == 0)
+                sscanf(&buf[12], "%lld", &pout->io_read_bytes);
+            if (strncmp("write_bytes:", buf, 12) == 0)
+                sscanf(&buf[13], "%lld", &pout->io_write_bytes);
+        }
+        fclose(fp);
     }
     return true;
 }
@@ -436,8 +436,6 @@ void CMonitorCgroups::init_processes(const std::string& cgroup_prefix_for_test)
 
 void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_opts)
 {
-    char str[256];
-
     if (m_nCGroupsFound == CG_NONE)
         return;
 
@@ -467,7 +465,8 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         // NOTE: getting the Tgid is expensive (requires opening a dedicated file) so that's done only
         //       if strictly needed, i.e. if needsToFilterOutThreads==true
         procsinfo_t procData;
-        get_process_infos(all_pids[i], m_cgroup_processes_include_threads, &procData, output_opts, needsToFilterOutThreads);
+        get_process_infos(
+            all_pids[i], m_cgroup_processes_include_threads, &procData, output_opts, needsToFilterOutThreads);
 
         if (needsToFilterOutThreads) {
             // only the main thread has its PID == TGID...
@@ -523,7 +522,8 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
     CMonitorLogger::instance()->LogDebug(
         "Tracking %zu/%zu processes/threads (include_threads=%d); min/max score found: %lu/%lu", // force
                                                                                                  // newline
-        currDB.size(), all_pids.size(), m_cgroup_processes_include_threads, m_topper_procs.begin()->first, m_topper_procs.rbegin()->first);
+        currDB.size(), all_pids.size(), m_cgroup_processes_include_threads, m_topper_procs.begin()->first,
+        m_topper_procs.rbegin()->first);
 
     // Now output all data for each process, starting from the minimal score PROCESS_SCORE_IGNORE_THRESHOLD
     static double ticks = (double)sysconf(_SC_CLK_TCK); // clock ticks per second
@@ -542,8 +542,7 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 #define DELTA(member) (CURRENT(member) - PREVIOUS(member))
 #define COUNTDELTA(member) ((PREVIOUS(member) > CURRENT(member)) ? 0 : (CURRENT(member) - PREVIOUS(member)))
 
-        sprintf(str, "pid_%ld", (long)CURRENT(pi_pid));
-        m_pOutput->psubsection_start(str);
+        m_pOutput->psubsection_start(fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid)).c_str());
         m_pOutput->plong("cmon_score", score);
 
         /*
