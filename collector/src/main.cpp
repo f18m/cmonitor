@@ -766,18 +766,19 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     CMonitorLogger::instance()->LogDebug(
         "Starting sampling of performance data; collect flags=%u", m_cfg.m_nCollectFlags);
     m_output.psample_array_start();
+    double previous_time = current_time;
     for (unsigned int loop = 0; m_cfg.m_nSamples == 0 || loop < m_cfg.m_nSamples; loop++) {
         if (loop != 0)
             sleep(m_cfg.m_nSamplingInterval);
         CMonitorLogger::instance()->LogDebug("Starting sample %u/%lu", loop, m_cfg.m_nSamples);
 
-        /* calculate elapsed time to include sleep and data collection time */
-        double previous_time = current_time;
+        // get timestamp for the new sample
+        previous_time = current_time;
         current_time = get_timestamp_sec();
         if (current_time == 0)
             continue; // failed in getting current time...
-        double elapsed = current_time - previous_time;
 
+        double elapsed = current_time - previous_time;
         m_output.psample_start();
 
         // some stats are always collected, regardless of m_cfg.m_nCollectFlags
@@ -827,6 +828,12 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         }
 
         m_output.push_current_sample();
+
+        // in debug mode provide an indication of how much optimized is cmonitor_collector:
+        if (m_cfg.m_bDebug) {
+            double sampling_time = get_timestamp_sec() - current_time;
+            CMonitorLogger::instance()->LogDebug("Sampling time was %.3fmsec", sampling_time * 1000);
+        }
 
         if (g_bExiting)
             break; // graceful exit allows to produce a valid JSON on SIGTERM signals!
