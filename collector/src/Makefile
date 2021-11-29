@@ -17,7 +17,7 @@ else
 CXXFLAGS += -g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
 LDFLAGS += -g -O2
 endif
-LDFLAGS += -lfmt
+LIBS += -lfmt
 
 ifeq ($(MUSL_BUILD),1)
 OUTDIR=../bin/musl
@@ -79,7 +79,7 @@ benchmarks:
 
 
 $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
-	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS)
+	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBS)
 
 clean:
 	rm -f $(OUT) $(OBJS) *.err *.json *.log
