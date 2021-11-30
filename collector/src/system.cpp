@@ -538,14 +538,14 @@ bool CMonitorSystem::read_net_dev(
     if (fgets(buf, 1024, fp) == NULL) /* throw away the header line */
         return false;
 
-    long long junk;
+    uint64_t junk;
     while (fgets(buf, 1024, fp) != NULL) {
         strip_spaces(buf);
 
         char name[128];
         netinfo_t current;
         bzero(&current, sizeof(netinfo_t));
-        int ret = sscanf(&buf[0], "%s %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
+        int ret = sscanf(&buf[0], "%s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
             name, // force newline
             // input
             &current.if_ibytes, &current.if_ipackets, &current.if_ierrs, &current.if_idrop, &current.if_ififo,

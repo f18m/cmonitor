@@ -109,7 +109,10 @@ bool CMonitorCgroups::get_process_infos(
     auto filename = fmt::format("{}/proc/{}", m_proc_prefix, pid);
     struct stat statbuf;
     if (stat(filename.c_str(), &statbuf) != 0) {
-        CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to stat file %s", filename.c_str());
+        // IMPORTANT: cmonitor_collector first reads all PIDs and then invokes, sequentially, this function;
+        //            this means that by the time we get here, a PID may has ceased to exist. So do not generate
+        //            any error line for this condition and consider it to be just something that can happen.
+        // CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to stat file %s", filename.c_str());
         return false;
     }
 
@@ -465,17 +468,18 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         // NOTE: getting the Tgid is expensive (requires opening a dedicated file) so that's done only
         //       if strictly needed, i.e. if needsToFilterOutThreads==true
         procsinfo_t procData;
-        get_process_infos(
-            all_pids[i], m_cgroup_processes_include_threads, &procData, output_opts, needsToFilterOutThreads);
+        if (get_process_infos(
+                all_pids[i], m_cgroup_processes_include_threads, &procData, output_opts, needsToFilterOutThreads)) {
 
-        if (needsToFilterOutThreads) {
-            // only the main thread has its PID == TGID...
-            if (procData.pi_pid == procData.pi_tgid)
-                // this is the main thread of current PID... insert it into the database
+            if (needsToFilterOutThreads) {
+                // only the main thread has its PID == TGID...
+                if (procData.pi_pid == procData.pi_tgid)
+                    // this is the main thread of current PID... insert it into the database
+                    currDB.insert(std::make_pair(all_pids[i], procData));
+            } else {
+                // we can simply take into account all PIDs/TIDs collected
                 currDB.insert(std::make_pair(all_pids[i], procData));
-        } else {
-            // we can simply take into account all PIDs/TIDs collected
-            currDB.insert(std::make_pair(all_pids[i], procData));
+            }
         }
     }
 

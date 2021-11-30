@@ -42,7 +42,30 @@
 #define PID_FILE "/var/run/cmonitor.pid"
 
 #define ADDITIONAL_HELP_COLUMN_START (40)
-#define TEST_COLLECTOR_PERFORMANCES
+
+/*
+  To look for bottlenecks and improvements of this utility, just uncomment
+  TEST_COLLECTOR_PERFORMANCES and then start this app with
+  --num-samples=0.
+  This makes it possible to use "perf top" or other utilities to investigate
+  bottlenecks
+*/
+//#define TEST_COLLECTOR_PERFORMANCES
+
+/*
+  Some measurements in Nov2021 reveal that when running:
+
+    make -C examples regen_baremetal1           sampling time was about 33msec
+    make -C examples regen_docker_userapp       sampling time was about 0.7msec
+
+  The duration of sampling is linearly proportional with the number of PIDs to be monitored
+  by CMonitorCgroups::sample_processes() and that explains the difference between the 2 numbers
+  above (during baremetal1 example the collector tracked around 500 PIDs/TIDs in my test).
+  Anyhow a reasonable min value for sampling time is currently set to 10msecs.
+  Below such threshold the time for sampling all stats (even when there's a single PID like for a Docker)
+  becomes too large compared to the sleeping time and the CPU usage of cmonitor_collector might be too high.
+*/
+#define MIN_SAMPLING_TIME_SEC (0.01)
 
 //------------------------------------------------------------------------------
 // Globals
@@ -73,6 +96,7 @@ private:
     void get_timestamps(std::string& localTime, std::string& utcTime);
     void psample_date_time(long loop);
     double get_timestamp_sec();
+    void do_sampling_sleep();
 
 private:
     //------------------------------------------------------------------------------
@@ -421,14 +445,30 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
         else {
             switch (c) {
             // Data sampling options
-            case 's':
-                if (!string2int(optarg, m_cfg.m_nSamplingInterval)) {
+            case 's': {
+                double interval_sec;
+                if (!string2double(optarg, interval_sec)) {
                     printf("Unrecognized sampling interval: %s\n", optarg);
                     exit(51);
                 }
-                if (m_cfg.m_nSamplingInterval == 0) // safety check
-                    m_cfg.m_nSamplingInterval = 1;
-                break;
+                if (interval_sec <= 0) // safety check
+                {
+                    printf("Invalid negative or zero sampling time: %s. Minimum value is %fsec\n", optarg,
+                        MIN_SAMPLING_TIME_SEC);
+                    exit(51);
+                }
+                if (interval_sec <= MIN_SAMPLING_TIME_SEC) // safety check
+                {
+                    printf("A sampling time smaller than %fsec will very likely produce very approximated results "
+                           "since the time\n"
+                           "it takes to sample all statistics varies between 1-100msecs. Please adjust sampling time "
+                           "to be above %fsec.\n",
+                        MIN_SAMPLING_TIME_SEC, MIN_SAMPLING_TIME_SEC);
+                    exit(52);
+                }
+
+                m_cfg.m_nSamplingIntervalMsec = interval_sec * 1000;
+            } break;
             case 'c':
                 if (strcmp(optarg, "until-cgroup-alive") == 0)
                     m_cfg.m_nSamples = SPECIAL_NUMSAMPLES_UNTIL_CGROUP_ALIVE;
@@ -643,6 +683,18 @@ void CMonitorCollectorApp::check_pid_file()
     // else: this is the first instance of this software... continue
 }
 
+void CMonitorCollectorApp::do_sampling_sleep()
+{
+    if (m_cfg.m_nSamplingIntervalMsec > 1000) {
+        // usleep() cannot sleep more than 1sec, so actually do 2 sleeps:
+        unsigned int num_secs = m_cfg.m_nSamplingIntervalMsec / 1000;
+        unsigned int num_msecs_left = (m_cfg.m_nSamplingIntervalMsec - num_secs * 1000);
+        if (sleep(num_secs) == 0)
+            usleep(num_msecs_left * 1000);
+    } else
+        usleep(m_cfg.m_nSamplingIntervalMsec * 1000);
+}
+
 int CMonitorCollectorApp::run(int argc, char** argv)
 {
     // if only one instance allowed, do the check:
@@ -727,7 +779,7 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     m_output.pheader_start();
     m_header_info_generator.header_identity();
     m_header_info_generator.header_cmonitor_info(
-        argc, argv, m_cfg.m_nSamplingInterval, m_cfg.m_nSamples, m_cfg.m_nCollectFlags);
+        argc, argv, m_cfg.m_nSamplingIntervalMsec, m_cfg.m_nSamples, m_cfg.m_nCollectFlags);
     m_header_info_generator.header_etc_os_release();
     m_header_info_generator.header_version();
     if (bCollectCGroupInfo)
@@ -740,10 +792,10 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     m_header_info_generator.header_custom_metadata();
     m_output.push_header();
 
-    /* first time just sleep(1) so the first snapshot has some real-ish data */
-    if (m_cfg.m_nSamplingInterval <= 60)
-        sleep(m_cfg.m_nSamplingInterval);
-    else
+    /* first time just sleep() a bit so the first snapshot has some real-ish data */
+    if (m_cfg.m_nSamplingIntervalMsec <= 60000) {
+        do_sampling_sleep();
+    } else
         sleep(60); /* if a long time between snapshot do a quick one now so we have one in the bank */
 
     std::set<std::string> charted_stats_from_meminfo;
@@ -766,15 +818,16 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     // else: leave empty
 
     // start actual data samples:
-    CMonitorLogger::instance()->LogDebug(
-        "Starting sampling of performance data; collect flags=%u", m_cfg.m_nCollectFlags);
+    CMonitorLogger::instance()->LogDebug("Starting sampling of performance data; collect flags=%u, interval=%lumsecs",
+        m_cfg.m_nCollectFlags, m_cfg.m_nSamplingIntervalMsec);
     m_output.psample_array_start();
     double previous_time = current_time;
     for (unsigned int loop = 0; m_cfg.m_nSamples == 0 || loop < m_cfg.m_nSamples; loop++) {
 #ifndef TEST_COLLECTOR_PERFORMANCES // when testing performances we want to push cmonitor_collector at 100% CPU usage
                                     // and then look at hotspots
-        if (loop != 0)
-            sleep(m_cfg.m_nSamplingInterval);
+        if (loop != 0) {
+            do_sampling_sleep();
+        }
 #endif
         CMonitorLogger::instance()->LogDebug("Starting sample %u/%lu", loop, m_cfg.m_nSamples);
 

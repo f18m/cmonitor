@@ -1,5 +1,5 @@
 /*
- * header_info.h -- code generating information sampled only at the start, one-shot 
+ * header_info.h -- code generating information sampled only at the start, one-shot
  * Developer: Francesco Montorsi.
  * (C) Copyright 2018 Francesco Montorsi
 
@@ -23,13 +23,13 @@
 // Includes
 //------------------------------------------------------------------------------
 
+#include "cmonitor.h"
 #include <map>
 #include <set>
 #include <string.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
-#include "cmonitor.h"
 
 //------------------------------------------------------------------------------
 // The CMonitorHeaderInfo object
@@ -41,14 +41,14 @@ public:
         : CMonitorAppHelper(pCfg, pOutput)
     {
     }
-    
+
     //------------------------------------------------------------------------------
     // JSON header functions
     //------------------------------------------------------------------------------
 
     void header_identity();
     void header_cmonitor_info(
-        int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags);
+        int argc, char** argv, double sampling_interval_sec, long num_samples, unsigned int collect_flags);
     void header_etc_os_release();
     void header_cpuinfo();
     void header_version();

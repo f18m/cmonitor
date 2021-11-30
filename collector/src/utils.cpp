@@ -106,8 +106,35 @@ bool string2int(const char* s, uint64_t& result)
     if (s[0] == '\0' || isspace(s[0]))
         return false;
 
+    /*
+    from the manpage:
+    Since 0 can legitimately be returned on both success and failure, the calling program should set errno to 0 before
+    the call, and then determine if an error occurred by checking whether errno has a nonzero value after the call.
+    */
     errno = 0;
     unsigned long l = strtoul(s, &end, 10);
+    if (errno != 0)
+        return false;
+
+    if (*end != '\0')
+        return false;
+    result = l;
+    return true;
+}
+
+bool string2double(const char* s, double& result)
+{
+    char* end;
+    if (s[0] == '\0' || isspace(s[0]))
+        return false;
+
+    /*
+    from the manpage:
+    Since 0 can legitimately be returned on both success and failure, the calling program should set errno to 0 before
+    the call, and then determine if an error occurred by checking whether errno has a nonzero value after the call.
+    */
+    errno = 0;
+    double l = strtod(s, &end);
     if (errno != 0)
         return false;
 

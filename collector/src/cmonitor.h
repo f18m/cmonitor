@@ -204,7 +204,7 @@ public:
 
     // data collecting options
     uint64_t m_nSamples = 0; // --num-samples
-    uint64_t m_nSamplingInterval = 60; // --sampling-interval
+    uint64_t m_nSamplingIntervalMsec = 60000; // --sampling-interval
     unsigned int m_nCollectFlags = PK_ALL; // --collect; this is a bitmask of PerformanceKpiFamily values
     OutputFields m_nOutputFields = PF_USED_BY_CHART_SCRIPT_ONLY; // --deep-collect
     std::string m_strCGroupName; // --cgroup-name

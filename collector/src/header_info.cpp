@@ -19,9 +19,9 @@
  */
 
 #include "header_info.h"
+#include "logger.h"
 #include "output_frontend.h"
 #include "utils.h"
-#include "logger.h"
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <netdb.h>
@@ -143,7 +143,7 @@ void CMonitorHeaderInfo::header_identity()
 }
 
 void CMonitorHeaderInfo::header_cmonitor_info(
-    int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags)
+    int argc, char** argv, double sampling_interval_sec, long num_samples, unsigned int collect_flags)
 {
     /* user name and id */
     struct passwd* pw;
@@ -159,7 +159,7 @@ void CMonitorHeaderInfo::header_cmonitor_info(
     }
 
     m_pOutput->pstring("command", command);
-    m_pOutput->plong("sample_interval_seconds", sampling_interval_sec);
+    m_pOutput->pdouble("sample_interval_seconds", sampling_interval_sec);
     m_pOutput->plong("sample_num", num_samples);
     m_pOutput->pstring("version", VERSION_STRING);
 

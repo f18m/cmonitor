@@ -36,19 +36,19 @@
 //------------------------------------------------------------------------------
 
 typedef struct {
-    long long if_ibytes;
-    long long if_ipackets;
-    long long if_ierrs;
-    long long if_idrop;
-    long long if_ififo;
-    long long if_iframe;
-    long long if_obytes;
-    long long if_opackets;
-    long long if_oerrs;
-    long long if_odrop;
-    long long if_ofifo;
-    long long if_ocolls;
-    long long if_ocarrier;
+    uint64_t if_ibytes;
+    uint64_t if_ipackets;
+    uint64_t if_ierrs;
+    uint64_t if_idrop;
+    uint64_t if_ififo;
+    uint64_t if_iframe;
+    uint64_t if_obytes;
+    uint64_t if_opackets;
+    uint64_t if_oerrs;
+    uint64_t if_odrop;
+    uint64_t if_ofifo;
+    uint64_t if_ocolls;
+    uint64_t if_ocarrier;
 } netinfo_t;
 
 typedef std::map<std::string /* interface name */, netinfo_t> netinfo_map_t;
