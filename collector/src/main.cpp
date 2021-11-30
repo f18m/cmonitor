@@ -26,6 +26,7 @@
 #include "utils.h"
 #include <assert.h>
 #include <fcntl.h>
+#include <fmt/chrono.h>
 #include <getopt.h>
 #include <iostream>
 #include <signal.h>
@@ -93,7 +94,7 @@ public:
 private:
     void print_help();
     void check_pid_file();
-    void get_timestamps(std::string& localTime, std::string& utcTime);
+    void get_timestamps(std::string& utcTime);
     void psample_date_time(long loop);
     double get_timestamp_sec();
     void do_sampling_sleep();
@@ -612,30 +613,31 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
 // Application core functions
 //------------------------------------------------------------------------------
 
-void CMonitorCollectorApp::get_timestamps(std::string& localTime, std::string& utcTime)
+void CMonitorCollectorApp::get_timestamps(std::string& utcTime)
 {
-    time_t timer; /* used to work out the time details*/
-    struct tm* tim = nullptr; /* used to work out the local hour/min/second */
+    // std::time_t sampled_time; /* used to work out the time details*/
+    // struct tm tim = nullptr; /* used to work out the local hour/min/second */
 
-    timer = time(0);
-    tim = localtime(&timer);
-    tim->tm_year += 1900; /* read localtime() manual page!! */
-    tim->tm_mon += 1; /* because it is 0 to 11 */
-
-    /* This is ISO 8601 datatime string format - ugly but get over it! :-) */
-
-    char buffer[256];
-    sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
-        tim->tm_sec);
-    localTime = buffer;
-
-    tim = gmtime(&timer);
+    // sampled_time = std::time(0);
+#if 0
+    tim = gmtime(&sampled_time);
     tim->tm_year += 1900; /* read gmtime() manual page!! */
     tim->tm_mon += 1; /* because it is 0 to 11 */
 
-    sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
+    sprintf(buffer, "%04d-%02d-%02dT%H:%M:%S", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
         tim->tm_sec);
     utcTime = buffer;
+#endif
+
+    auto now_ts = std::chrono::system_clock::now();
+    // utcTime = fmt::format("{:%04Y-%02m-%02dT%H:%M:%S}", now_ts);
+    std::time_t sampled_time = std::chrono::system_clock::to_time_t(now_ts);
+
+    // unsigned int sampled_time_msec = std::chrono::duration_cast<std::chrono::milliseconds>(now_ts).count();
+    auto millisec_since_epoch
+        = std::chrono::duration_cast<std::chrono::milliseconds>(now_ts.time_since_epoch()).count() % 1000;
+
+    utcTime = fmt::format("{:%04Y-%02m-%02dT%H:%M:%S}.{:03d}", fmt::gmtime(sampled_time), millisec_since_epoch);
 }
 
 double CMonitorCollectorApp::get_timestamp_sec()
@@ -656,11 +658,10 @@ void CMonitorCollectorApp::psample_date_time(long loop)
 {
     DEBUGLOG_FUNCTION_START();
 
-    std::string localTime, utcTime;
-    get_timestamps(localTime, utcTime);
+    std::string utcTime;
+    get_timestamps(utcTime);
 
     m_output.psection_start("timestamp");
-    m_output.pstring("datetime", localTime.c_str());
     m_output.pstring("UTC", utcTime.c_str());
     m_output.plong("sample_index", loop);
     m_output.psection_end();

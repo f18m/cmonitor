@@ -1,10 +1,10 @@
 ## TODO collector-side
 
 - Add memory.pressure and cpu.pressure collection for cgroups v2
-- Start using "fmt-devel" to get very fast formatting support, see https://github.com/fmtlib/fmt
-  since the collector is mostly dealing with string/integer operations
 - Add 'io' cgroup v2 data collection
 - Add support for UDP data tx to InfluxDB
+- Remove sscanf() calls in favour of a more optimized logic; from some simple
+  benchmark test, sscanf() dominates the sampling time
 
 ## TODO chart-side
 

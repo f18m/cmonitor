@@ -17,7 +17,7 @@ else
 CXXFLAGS += -g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
 LDFLAGS += -g -O2
 endif
-LIBS += -lfmt -ltcmalloc
+LIBS += -lfmt
 
 ifeq ($(MUSL_BUILD),1)
 OUTDIR=../bin/musl

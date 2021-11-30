@@ -48,7 +48,7 @@ public:
 
     void header_identity();
     void header_cmonitor_info(
-        int argc, char** argv, double sampling_interval_sec, long num_samples, unsigned int collect_flags);
+        int argc, char** argv, long sampling_interval_msec, long num_samples, unsigned int collect_flags);
     void header_etc_os_release();
     void header_cpuinfo();
     void header_version();

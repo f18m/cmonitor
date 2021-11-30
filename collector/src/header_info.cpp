@@ -143,12 +143,8 @@ void CMonitorHeaderInfo::header_identity()
 }
 
 void CMonitorHeaderInfo::header_cmonitor_info(
-    int argc, char** argv, double sampling_interval_sec, long num_samples, unsigned int collect_flags)
+    int argc, char** argv, long sampling_interval_msec, long num_samples, unsigned int collect_flags)
 {
-    /* user name and id */
-    struct passwd* pw;
-    uid_t uid;
-
     m_pOutput->psection_start("cmonitor");
 
     char command[1024] = { 0 };
@@ -158,10 +154,24 @@ void CMonitorHeaderInfo::header_cmonitor_info(
             strcat(command, " ");
     }
 
+    // -------------------------------------------------
+    // the full set of arguments provided by commandline & version
     m_pOutput->pstring("command", command);
-    m_pOutput->pdouble("sample_interval_seconds", sampling_interval_sec);
-    m_pOutput->plong("sample_num", num_samples);
     m_pOutput->pstring("version", VERSION_STRING);
+
+    // -------------------------------------------------
+    // time information
+    time_t t = time(NULL);
+    struct tm lt = { 0 };
+    localtime_r(&t, &lt);
+    m_pOutput->plong("gmt_offset_seconds", lt.tm_gmtoff);
+    m_pOutput->pstring("timezone_name", lt.tm_zone);
+    m_pOutput->pdouble("sample_interval_seconds", (double)sampling_interval_msec / 1000.0f);
+
+    // -------------------------------------------------
+    // num and contents of each sample
+
+    m_pOutput->plong("sample_num", num_samples);
 
     std::string str;
     for (size_t j = 1; j < PK_MAX; j *= 2) {
@@ -176,6 +186,11 @@ void CMonitorHeaderInfo::header_cmonitor_info(
         str.pop_back();
     m_pOutput->pstring("collecting", str.c_str());
 
+    // -------------------------------------------------
+    // users/permissions info
+
+    struct passwd* pw;
+    uid_t uid;
     uid = geteuid();
     if ((pw = getpwuid(uid)) != NULL) {
         m_pOutput->pstring("username", pw->pw_name);
