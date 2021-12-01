@@ -94,10 +94,9 @@ public:
 private:
     void print_help();
     void check_pid_file();
-    void get_timestamps(std::string& utcTime);
-    void psample_date_time(long loop);
-    double get_timestamp_sec();
+    void output_sample_date_time(long loop, const std::string& utcTime);
     void do_sampling_sleep();
+    bool get_timestamp(double* ts_for_delta_computation, std::string& utcTime);
 
 private:
     //------------------------------------------------------------------------------
@@ -613,54 +612,31 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
 // Application core functions
 //------------------------------------------------------------------------------
 
-void CMonitorCollectorApp::get_timestamps(std::string& utcTime)
+bool CMonitorCollectorApp::get_timestamp(double* ts_for_delta_computation, std::string& utcTime)
 {
-    // std::time_t sampled_time; /* used to work out the time details*/
-    // struct tm tim = nullptr; /* used to work out the local hour/min/second */
+    struct timespec tv;
+    if (clock_gettime(CLOCK_MONOTONIC, &tv) != 0) {
+        *ts_for_delta_computation = 0;
+        return false;
+    }
 
-    // sampled_time = std::time(0);
-#if 0
-    tim = gmtime(&sampled_time);
-    tim->tm_year += 1900; /* read gmtime() manual page!! */
-    tim->tm_mon += 1; /* because it is 0 to 11 */
+    // produce at the same time the timestamp which will be used for DELTA computations...
+    *ts_for_delta_computation = (double)tv.tv_sec + (double)tv.tv_nsec * 1.0e-9;
 
-    sprintf(buffer, "%04d-%02d-%02dT%H:%M:%S", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
-        tim->tm_sec);
-    utcTime = buffer;
-#endif
-
+    // ...and the wall-clock timestamp to associate to the new sample of statistics:
     auto now_ts = std::chrono::system_clock::now();
-    // utcTime = fmt::format("{:%04Y-%02m-%02dT%H:%M:%S}", now_ts);
-    std::time_t sampled_time = std::chrono::system_clock::to_time_t(now_ts);
 
-    // unsigned int sampled_time_msec = std::chrono::duration_cast<std::chrono::milliseconds>(now_ts).count();
+    // and of course the string representation of the wall-clock sample, with millisec accuracy:
+    std::time_t sampling_time_in_secs = std::chrono::system_clock::to_time_t(now_ts);
     auto millisec_since_epoch
         = std::chrono::duration_cast<std::chrono::milliseconds>(now_ts.time_since_epoch()).count() % 1000;
-
-    utcTime = fmt::format("{:%04Y-%02m-%02dT%H:%M:%S}.{:03d}", fmt::gmtime(sampled_time), millisec_since_epoch);
+    utcTime
+        = fmt::format("{:%04Y-%02m-%02dT%H:%M:%S}.{:03d}", fmt::gmtime(sampling_time_in_secs), millisec_since_epoch);
+    return true;
 }
 
-double CMonitorCollectorApp::get_timestamp_sec()
+void CMonitorCollectorApp::output_sample_date_time(long loop, const std::string& utcTime)
 {
-#if 0
-    struct timeval tv;
-    gettimeofday(&tv, 0);
-    return (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
-#else
-    struct timespec tv;
-    if (clock_gettime(CLOCK_MONOTONIC, &tv) == 0)
-        return (double)tv.tv_sec + (double)tv.tv_nsec * 1.0e-9;
-    return 0;
-#endif
-}
-
-void CMonitorCollectorApp::psample_date_time(long loop)
-{
-    DEBUGLOG_FUNCTION_START();
-
-    std::string utcTime;
-    get_timestamps(utcTime);
-
     m_output.psection_start("timestamp");
     m_output.pstring("UTC", utcTime.c_str());
     m_output.plong("sample_index", loop);
@@ -774,7 +750,9 @@ int CMonitorCollectorApp::run(int argc, char** argv)
             m_cgroups_collector.sample_processes(0, PF_NONE /* do not emit JSON */);
     }
 
-    double current_time = get_timestamp_sec();
+    double current_time;
+    std::string current_time_str;
+    get_timestamp(&current_time, current_time_str);
 
     // write stuff that is present only in the very first sample (never changes):
     m_output.pheader_start();
@@ -834,15 +812,14 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 
         // get timestamp for the new sample
         previous_time = current_time;
-        current_time = get_timestamp_sec();
-        if (current_time == 0)
+        if (!get_timestamp(&current_time, current_time_str))
             continue; // failed in getting current time...
 
         double elapsed = current_time - previous_time;
         m_output.psample_start();
 
         // some stats are always collected, regardless of m_cfg.m_nCollectFlags
-        psample_date_time(loop);
+        output_sample_date_time(loop, current_time_str);
         // proc_uptime(); // not really useful!!
         m_system_collector.proc_loadavg();
 
@@ -891,8 +868,10 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 
         // in debug mode provide an indication of how much optimized is cmonitor_collector:
         if (m_cfg.m_bDebug) {
-            double sampling_time = get_timestamp_sec() - current_time;
-            CMonitorLogger::instance()->LogDebug("Sampling time was %.3fmsec", sampling_time * 1000);
+            std::string tmp;
+            double sampling_time;
+            if (get_timestamp(&sampling_time, tmp))
+                CMonitorLogger::instance()->LogDebug("Sampling time was %.3fmsec", sampling_time * 1000);
         }
 
         if (g_bExiting)
