@@ -206,16 +206,14 @@ void CMonitorHeaderInfo::header_cmonitor_info(
 
 void CMonitorHeaderInfo::header_etc_os_release()
 {
-    static FILE* fp = 0;
+    FILE* fp = 0;
     char buf[1024 + 1];
 
     DEBUGLOG_FUNCTION_START();
-    if (fp == 0) {
-        if ((fp = fopen("/etc/os-release", "r")) == NULL) {
-            return;
-        }
-    } else
-        rewind(fp);
+
+    if ((fp = fopen("/etc/os-release", "r")) == NULL) {
+        return;
+    }
 
     m_pOutput->psection_start("os_release");
     while (fgets(buf, 1024, fp) != NULL) {
@@ -237,11 +235,13 @@ void CMonitorHeaderInfo::header_etc_os_release()
         }
     }
     m_pOutput->psection_end();
+
+    fclose(fp);
 }
 
 void CMonitorHeaderInfo::header_cpuinfo()
 {
-    static FILE* fp = 0;
+    FILE* fp = 0;
     char buf[1024 + 1];
     char string[1024 + 1];
     double value;
@@ -252,12 +252,9 @@ void CMonitorHeaderInfo::header_cpuinfo()
     int ispower = 0;
 
     DEBUGLOG_FUNCTION_START();
-    if (fp == 0) {
-        if ((fp = fopen("/proc/cpuinfo", "r")) == NULL) {
-            return;
-        }
-    } else
-        rewind(fp);
+    if ((fp = fopen("/proc/cpuinfo", "r")) == NULL) {
+        return;
+    }
 
     m_pOutput->psection_start("cpuinfo");
     processor = -1;
@@ -346,6 +343,8 @@ void CMonitorHeaderInfo::header_cpuinfo()
         }
         m_pOutput->psection_end();
     }
+
+    fclose(fp);
 }
 
 void CMonitorHeaderInfo::header_meminfo()
@@ -359,16 +358,15 @@ void CMonitorHeaderInfo::header_meminfo()
 
 void CMonitorHeaderInfo::header_version()
 {
-    static FILE* fp = 0;
+    FILE* fp = 0;
     char buf[1024 + 1];
 
     DEBUGLOG_FUNCTION_START();
-    if (fp == 0) {
-        if ((fp = fopen("/proc/version", "r")) == NULL) {
-            return;
-        }
-    } else
-        rewind(fp);
+
+    if ((fp = fopen("/proc/version", "r")) == NULL) {
+        return;
+    }
+
     if (fgets(buf, 1024, fp) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
         for (size_t i = 0; i < strlen(buf); i++) {
@@ -379,6 +377,8 @@ void CMonitorHeaderInfo::header_version()
         m_pOutput->pstring("version", buf);
         m_pOutput->psection_end();
     }
+
+    fclose(fp);
 }
 
 void CMonitorHeaderInfo::header_lscpu()

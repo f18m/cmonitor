@@ -39,6 +39,8 @@ void CMonitorSystem::init()
 {
     m_cpu_stat.set_file("/proc/stat");
     m_disk_stat.set_file("/proc/diskstats");
+    m_uptime.set_file("/proc/uptime");
+    m_loadavg.set_file("/proc/loadavg");
 }
 
 #if 0 // currently unused
@@ -570,77 +572,70 @@ bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, dou
 */
 void CMonitorSystem::sample_uptime()
 {
-    static FILE* fp = 0;
-    char buf[1024 + 1];
-    int count;
+    DEBUGLOG_FUNCTION_START();
+
+    if (!m_uptime.open_or_rewind()) {
+        CMonitorLogger::instance()->LogError("failed to re-open %s", m_uptime.get_file().c_str());
+        return;
+    }
+
+    const char* pline = m_uptime.get_next_line();
+    if (!pline)
+        return;
+
     long long value;
     long long days;
     long long hours;
+    if (sscanf(pline, "%lld", &value) == 1) {
+        days = value / 60 / 60 / 24;
+        hours = (value - (days * 60 * 60 * 24)) / 60 / 60;
 
-    DEBUGLOG_FUNCTION_START();
-    if (fp == 0) {
-        if ((fp = fopen("/proc/uptime", "r")) == NULL) {
-            return;
-        }
-    } else
-        rewind(fp);
-
-    if (fgets(buf, 1024, fp) != NULL) {
-        count = sscanf(buf, "%lld", &value);
-        if (count == 1) {
-            m_pOutput->psection_start("proc_uptime");
-            m_pOutput->plong("total_seconds", value);
-            days = value / 60 / 60 / 24;
-            hours = (value - (days * 60 * 60 * 24)) / 60 / 60;
-            m_pOutput->plong("days", days);
-            m_pOutput->plong("hours", hours);
-            m_pOutput->psection_end();
-        }
+        m_pOutput->psection_start("proc_uptime");
+        m_pOutput->plong("total_seconds", value);
+        m_pOutput->plong("days", days);
+        m_pOutput->plong("hours", hours);
+        m_pOutput->psection_end();
     }
 }
 
 void CMonitorSystem::sample_loadavg()
 {
-    char buf[1024 + 1];
-    int count;
-    float load_avg_1min;
-    float load_avg_5min;
-    float load_avg_15min;
-    FILE* fp;
-
     DEBUGLOG_FUNCTION_START();
 
-    if ((fp = fopen("/proc/loadavg", "r")) == NULL) {
+    if (!m_loadavg.open_or_rewind()) {
+        CMonitorLogger::instance()->LogError("failed to re-open %s", m_loadavg.get_file().c_str());
         return;
     }
 
-    if (fgets(buf, 1024, fp) != NULL) {
-        /*
-                /proc/loadavg
-                The first three fields in this file are load average figures giving
-                the  number  of jobs in the run queue (state R) or waiting for disk
-                I/O (state D) averaged over 1, 5, and 15  minutes.
-                They are the same as the load average numbers given by
-                uptime(1) and other programs.  The fourth field consists of
-                two numbers separated by a slash (/).  The first of these is
-                the number of currently runnable kernel scheduling entities
-                (processes, threads).  The value after the slash is the number
-                of kernel scheduling entities that currently exist on the sys‐
-                tem.  The fifth field is the PID of the process that was most
-                recently created on the system.
-         */
+    const char* pline = m_loadavg.get_next_line();
+    if (!pline)
+        return;
 
-        count = sscanf(buf, "%f %f %f", &load_avg_1min, &load_avg_5min, &load_avg_15min);
-        if (count == 3) {
-            m_pOutput->psection_start("proc_loadavg");
-            m_pOutput->pdouble("load_avg_1min", load_avg_1min);
-            m_pOutput->pdouble("load_avg_5min", load_avg_5min);
-            m_pOutput->pdouble("load_avg_15min", load_avg_15min);
-            m_pOutput->psection_end();
-        }
+    /*
+            /proc/loadavg
+            The first three fields in this file are load average figures giving
+            the  number  of jobs in the run queue (state R) or waiting for disk
+            I/O (state D) averaged over 1, 5, and 15  minutes.
+            They are the same as the load average numbers given by
+            uptime(1) and other programs.  The fourth field consists of
+            two numbers separated by a slash (/).  The first of these is
+            the number of currently runnable kernel scheduling entities
+            (processes, threads).  The value after the slash is the number
+            of kernel scheduling entities that currently exist on the sys‐
+            tem.  The fifth field is the PID of the process that was most
+            recently created on the system.
+     */
+
+    float load_avg_1min;
+    float load_avg_5min;
+    float load_avg_15min;
+    if (sscanf(pline, "%f %f %f", &load_avg_1min, &load_avg_5min, &load_avg_15min) == 3) {
+        m_pOutput->psection_start("proc_loadavg");
+        m_pOutput->pdouble("load_avg_1min", load_avg_1min);
+        m_pOutput->pdouble("load_avg_5min", load_avg_5min);
+        m_pOutput->pdouble("load_avg_15min", load_avg_15min);
+        m_pOutput->psection_end();
     }
-
-    fclose(fp);
 }
 
 void CMonitorSystem::sample_filesystems()

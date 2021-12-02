@@ -175,4 +175,10 @@ private:
     // network stats
     std::set<std::string> m_network_interfaces_up;
     netinfo_map_t m_previous_netinfo;
+
+    // uptime
+    FastFileReader m_uptime;
+
+    // loadavg
+    FastFileReader m_loadavg;
 };
