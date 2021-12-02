@@ -285,6 +285,10 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
         CMonitorLogger::instance()->LogError("failed to re-open %s", m_disk_stat.get_file().c_str());
         return;
     }
+
+    // FIXME: break in 2 parts the parsing of the stat file and the output of measurements just like done for CPU and
+    // net stats
+
     if (output_opts != PF_NONE)
         m_pOutput->psection_start("disks");
 
@@ -468,6 +472,9 @@ bool CMonitorSystem::read_net_dev(
     */
     // clang-format on
 
+    // FIXME: instead of doing a fopen() here we could take as arg both a FastFileReader and the filename ;
+    //        then we invoke the given FastFileReader set_file() and read from it: in best case if filename didn't change
+    //        we will save the operation of opening a new FD!
     FILE* fp = 0;
     if ((fp = fopen(filename.c_str(), "r")) == NULL) {
         CMonitorLogger::instance()->LogErrorWithErrno("failed to open %s", filename.c_str());
