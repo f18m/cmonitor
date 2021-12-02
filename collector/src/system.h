@@ -77,6 +77,38 @@ typedef struct cpu_specs_s {
 
 #define MAX_LOGICAL_CPU (256)
 
+// please refer https://www.kernel.org/doc/Documentation/iostats.txt
+
+typedef struct {
+    long dk_major;
+    long dk_minor;
+    char dk_name[128];
+
+    // reads
+    long long dk_reads; // Field 1: This is the total number of reads completed successfully.
+    long long dk_rmerge; // Field 2: Reads and writes which are adjacent to each other may be merged for efficiency.
+    long long dk_rkb; // Field 3: This is the total number of Kbytes read successfully. [converted by us from sectors]
+    long long dk_rmsec; // Field 4: This is the total number of milliseconds spent by all reads
+
+    // writes
+    long long dk_writes; // Same as Field 1 but for writes
+    long long dk_wmerge; // Same as Field 2 but for writes
+    long long dk_wkb; // Same as Field 3 but for writes
+    long long dk_wmsec; // Same as Field 4 but for writes
+
+    // others
+    long long dk_inflight; // Field 9: number of I/Os currently in progress
+    long long dk_time; // Field 10: This field increases so long as field 9 is nonzero. (milliseconds) [converted in
+                       // percentage]
+    long long dk_backlog; // Field 11: weighted # of milliseconds spent doing I/Os
+
+    // computed by ourselves:
+    long long dk_xfers; // sum of number of read/write operations
+    long long dk_bsize;
+} diskinfo_t;
+
+typedef std::map<std::string /* disk name */, diskinfo_t> diskinfo_map_t;
+
 //------------------------------------------------------------------------------
 // CMonitorSystem
 //------------------------------------------------------------------------------
@@ -135,6 +167,12 @@ private:
     cpu_specs_t m_cpu_stat_prev_values[MAX_LOGICAL_CPU] = {};
     int m_cpu_count = 0;
 
+    // disk stats
+    FastFileReader m_disk_stat;
+    std::set<std::string> m_disks;
+    diskinfo_map_t m_previous_diskinfo;
+
+    // network stats
     std::set<std::string> m_network_interfaces_up;
     netinfo_map_t m_previous_netinfo;
 };

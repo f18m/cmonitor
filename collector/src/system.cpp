@@ -35,7 +35,11 @@
 // CMonitorSystem
 // ----------------------------------------------------------------------------------
 
-void CMonitorSystem::init() { m_cpu_stat.set_file("/proc/stat"); }
+void CMonitorSystem::init()
+{
+    m_cpu_stat.set_file("/proc/stat");
+    m_disk_stat.set_file("/proc/diskstats");
+}
 
 #if 0 // currently unused
 void CMonitorSystem::proc_stat_cpu_total(
@@ -185,7 +189,7 @@ void CMonitorSystem::sample_cpu_stat(double elapsed_sec, OutputFields output_opt
             if (!is_monitored_cpu(i))
                 continue;
 
-#define DELTA_LOGICAL(stat) ((double)(new_values[i].stat - m_cpu_stat_prev_values[i].stat) / elapsed_sec)
+#define DELTA_CPU_STAT(stat) ((double)(new_values[i].stat - m_cpu_stat_prev_values[i].stat) / elapsed_sec)
 
             m_pOutput->psubsection_start(fmt::format("cpu{:d}", i).c_str());
             switch (output_opts) {
@@ -194,21 +198,19 @@ void CMonitorSystem::sample_cpu_stat(double elapsed_sec, OutputFields output_opt
                 break;
             case PF_ALL:
             case PF_USED_BY_CHART_SCRIPT_ONLY:
-                m_pOutput->pdouble("user", DELTA_LOGICAL(user)); /* counter */
-                m_pOutput->pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
-                m_pOutput->pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
-                m_pOutput->pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
-                m_pOutput->pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
-                m_pOutput->pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
-                m_pOutput->pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
-                m_pOutput->pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
-                m_pOutput->pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
-                m_pOutput->pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
+                m_pOutput->pdouble("user", DELTA_CPU_STAT(user)); /* counter */
+                m_pOutput->pdouble("nice", DELTA_CPU_STAT(nice)); /* counter */
+                m_pOutput->pdouble("sys", DELTA_CPU_STAT(sys)); /* counter */
+                m_pOutput->pdouble("idle", DELTA_CPU_STAT(idle)); /* counter */
+                m_pOutput->pdouble("iowait", DELTA_CPU_STAT(iowait)); /* counter */
+                m_pOutput->pdouble("hardirq", DELTA_CPU_STAT(hardirq)); /* counter */
+                m_pOutput->pdouble("softirq", DELTA_CPU_STAT(softirq)); /* counter */
+                m_pOutput->pdouble("steal", DELTA_CPU_STAT(steal)); /* counter */
+                m_pOutput->pdouble("guest", DELTA_CPU_STAT(guest)); /* counter */
+                m_pOutput->pdouble("guestnice", DELTA_CPU_STAT(guestnice)); /* counter */
                 break;
             }
             m_pOutput->psubsection_end();
-
-#undef DELTA_LOGICAL
         }
 
         m_pOutput->psubsection_start("counters");
@@ -233,81 +235,24 @@ read /proc/diskstats
 */
 void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_opts)
 {
-    // please refer https://www.kernel.org/doc/Documentation/iostats.txt
-
-    struct diskinfo {
-        long dk_major;
-        long dk_minor;
-        char dk_name[128];
-
-        // reads
-        long long dk_reads; // Field 1: This is the total number of reads completed successfully.
-        long long dk_rmerge; // Field 2: Reads and writes which are adjacent to each other may be merged for efficiency.
-        long long
-            dk_rkb; // Field 3: This is the total number of Kbytes read successfully. [converted by us from sectors]
-        long long dk_rmsec; // Field 4: This is the total number of milliseconds spent by all reads
-
-        // writes
-        long long dk_writes; // Same as Field 1 but for writes
-        long long dk_wmerge; // Same as Field 2 but for writes
-        long long dk_wkb; // Same as Field 3 but for writes
-        long long dk_wmsec; // Same as Field 4 but for writes
-
-        // others
-        long long dk_inflight; // Field 9: number of I/Os currently in progress
-        long long dk_time; // Field 10: This field increases so long as field 9 is nonzero. (milliseconds) [converted in
-                           // percentage]
-        long long dk_backlog; // Field 11: weighted # of milliseconds spent doing I/Os
-
-        // computed by ourselves:
-        long long dk_xfers; // sum of number of read/write operations
-        long long dk_bsize;
-    };
-
-    static struct diskinfo current;
-    static struct diskinfo* previous;
-    static long disks_found = 0, disks_sampled = 0;
-    static FILE* fp = 0;
-    char buf[1024];
+    static bool first_time = true;
     int dk_stats;
 
-    /* popen variables */
-    FILE* pop;
-    char tmpstr[1024 + 1];
-    long i;
-    long j;
-    long len;
-    int filtered_out = 0;
-
     DEBUGLOG_FUNCTION_START();
-    if (fp == (FILE*)0) {
-        /* Just count the number of disks */
-        pop = popen("lsblk --nodeps --output NAME,TYPE --raw 2>/dev/null", "r");
-        if (pop != NULL) {
-            /* throw away the headerline */
-            tmpstr[0] = 0;
-            disks_found = 0;
-            if (fgets(tmpstr, 127, pop)) {
-                for (;; disks_found++) {
-                    tmpstr[0] = 0;
-                    if (fgets(tmpstr, 127, pop) == NULL)
-                        break;
-                    // CMonitorLogger::instance()->LogDebug("DEBUG %ld disks - %s\n", disks, tmpstr);
-                }
-            }
-            pclose(pop);
-        } else {
-            CMonitorLogger::instance()->LogErrorWithErrno("failed to list number of disks using 'lsblk'");
-            disks_found = 0;
-        }
-        // CMonitorLogger::instance()->LogDebug("DEBUG %ld disks\n", disks);
-        previous = (diskinfo*)calloc(sizeof(struct diskinfo), disks_found);
+
+    if (first_time) {
+        /* popen variables */
+        FILE* pop;
+        char tmpstr[1024 + 1];
+        long i;
+        long j;
+        long len;
 
         pop = popen("lsblk --nodeps --output NAME,TYPE --raw 2>/dev/null", "r");
         if (pop != NULL) {
             /* throw away the headerline */
             if (fgets(tmpstr, 70, pop)) {
-                for (i = 0; i < disks_found; i++) {
+                for (i = 0;; i++) {
                     tmpstr[0] = 0;
                     if (fgets(tmpstr, 70, pop) == NULL)
                         break;
@@ -320,8 +265,7 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
                     if (strncmp(tmpstr, "loop", 4) != 0) {
                         // CMonitorLogger::instance()->LogDebug("DEBUG saved %ld %s disk name\n", i,
                         // previous[i].dk_name);
-                        strcpy(previous[disks_sampled].dk_name, tmpstr);
-                        disks_sampled++;
+                        m_disks.insert(tmpstr);
                     } else {
                         CMonitorLogger::instance()->LogDebug("Discarding disk %s\n", tmpstr);
                         /* loop**** disks are not real */
@@ -329,29 +273,33 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
                 }
             }
             pclose(pop);
-        } else
-            disks_sampled = 0;
-
-        if ((fp = fopen("/proc/diskstats", "r")) == NULL) {
-            CMonitorLogger::instance()->LogErrorWithErrno("failed to open - /proc/diskstats");
-            return;
         }
-    } else
-        rewind(fp);
 
+        CMonitorLogger::instance()->LogDebug("Found %zu disks to monitor\n", m_disks.size());
+        first_time = false;
+    }
+
+    if (!m_disk_stat.open_or_rewind()) {
+        CMonitorLogger::instance()->LogError("failed to re-open %s", m_disk_stat.get_file().c_str());
+        return;
+    }
     if (output_opts != PF_NONE)
         m_pOutput->psection_start("disks");
-    while (fgets(buf, 1024, fp) != NULL) {
-        buf[strlen(buf) - 1] = 0; /* remove newline */
+
+    diskinfo_t current;
+    const char* buf = m_disk_stat.get_next_line();
+    while (buf) {
+        // char* pbuf = const_cast<char*>(buf);
+        // pbuf[strlen(buf) - 1] = 0; /* remove newline */ // unnecessary???
 
         // CMonitorLogger::instance()->LogDebug("DISKSTATS: \"%s\"", buf);
 
         /* zero the data ready for reading */
-        bzero(&current, sizeof(struct diskinfo));
+        bzero(&current, sizeof(diskinfo_t));
 
         // try to read all the 14 fields
-        dk_stats = sscanf(&buf[0], "%ld %ld %s %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld",
-            &current.dk_major, &current.dk_minor, // force newline
+        dk_stats = sscanf(buf, "%ld %ld %s %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", &current.dk_major,
+            &current.dk_minor, // force newline
             &current.dk_name[0], // force newline
             &current.dk_reads, &current.dk_rmerge, &current.dk_rkb, &current.dk_rmsec, // force newline
             &current.dk_writes, &current.dk_wmerge, &current.dk_wkb, &current.dk_wmsec, // force newline
@@ -378,49 +326,50 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
         // f18m: not really sure this is correct... assumes that this field is updated 10 times per second
         current.dk_time /= 10.0; /* in milli-seconds to make it up to 100%, 1000/100 = 10 */
 
-        for (i = 0; i < disks_found; i++) {
-            // CMonitorLogger::instance()->LogDebug("DEBUG disks new %s old %s\n", current.dk_name,
-            // previous[i].dk_name);
-            if (!strcmp(current.dk_name, previous[i].dk_name)) {
+        const auto it_prev = m_previous_diskinfo.find(current.dk_name);
+        if (it_prev != m_previous_diskinfo.end()) {
+            const diskinfo_t& previous = it_prev->second;
 
-                if (!filtered_out && output_opts != PF_NONE) {
-                    m_pOutput->psubsection_start(current.dk_name);
+            if (output_opts != PF_NONE) {
+                m_pOutput->psubsection_start(current.dk_name);
 
-                    switch (output_opts) {
-                    case PF_NONE:
-                        assert(0);
-                        break;
+#define DELTA_DISK_STAT(member) ((double)(current.member - previous.member) / elapsed_sec)
 
-                    case PF_ALL:
-                        m_pOutput->pdouble("reads", (current.dk_reads - previous[i].dk_reads) / elapsed_sec);
-                        m_pOutput->pdouble("rmerge", (current.dk_rmerge - previous[i].dk_rmerge) / elapsed_sec);
-                        m_pOutput->pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed_sec);
-                        m_pOutput->pdouble("rmsec", (current.dk_rmsec - previous[i].dk_rmsec) / elapsed_sec);
+                switch (output_opts) {
+                case PF_NONE:
+                    assert(0);
+                    break;
 
-                        m_pOutput->pdouble("writes", (current.dk_writes - previous[i].dk_writes) / elapsed_sec);
-                        m_pOutput->pdouble("wmerge", (current.dk_wmerge - previous[i].dk_wmerge) / elapsed_sec);
-                        m_pOutput->pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed_sec);
-                        m_pOutput->pdouble("wmsec", (current.dk_wmsec - previous[i].dk_wmsec) / elapsed_sec);
+                case PF_ALL:
+                    m_pOutput->pdouble("reads", DELTA_DISK_STAT(dk_reads));
+                    m_pOutput->pdouble("rmerge", DELTA_DISK_STAT(dk_rmerge));
+                    m_pOutput->pdouble("rkb", DELTA_DISK_STAT(dk_rkb));
+                    m_pOutput->pdouble("rmsec", DELTA_DISK_STAT(dk_rmsec));
 
-                        m_pOutput->plong("inflight", current.dk_inflight);
-                        m_pOutput->pdouble("time", (current.dk_time - previous[i].dk_time) / elapsed_sec);
-                        m_pOutput->pdouble("backlog", (current.dk_backlog - previous[i].dk_backlog) / elapsed_sec);
-                        m_pOutput->pdouble("xfers", (current.dk_xfers - previous[i].dk_xfers) / elapsed_sec);
-                        m_pOutput->plong("bsize", current.dk_bsize);
-                        break;
+                    m_pOutput->pdouble("writes", DELTA_DISK_STAT(dk_writes));
+                    m_pOutput->pdouble("wmerge", DELTA_DISK_STAT(dk_wmerge));
+                    m_pOutput->pdouble("wkb", DELTA_DISK_STAT(dk_wkb));
+                    m_pOutput->pdouble("wmsec", DELTA_DISK_STAT(dk_wmsec));
 
-                    case PF_USED_BY_CHART_SCRIPT_ONLY:
-                        m_pOutput->pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed_sec);
-                        m_pOutput->pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed_sec);
-                        break;
-                    }
+                    m_pOutput->plong("inflight", current.dk_inflight);
+                    m_pOutput->pdouble("time", DELTA_DISK_STAT(dk_time));
+                    m_pOutput->pdouble("backlog", DELTA_DISK_STAT(dk_backlog));
+                    m_pOutput->pdouble("xfers", DELTA_DISK_STAT(dk_xfers));
+                    m_pOutput->plong("bsize", current.dk_bsize);
+                    break;
 
-                    m_pOutput->psubsection_end();
+                case PF_USED_BY_CHART_SCRIPT_ONLY:
+                    m_pOutput->pdouble("rkb", DELTA_DISK_STAT(dk_rkb));
+                    m_pOutput->pdouble("wkb", DELTA_DISK_STAT(dk_wkb));
+                    break;
                 }
-                memcpy(&previous[i], &current, sizeof(struct diskinfo));
-                break; /* once found stop searching */
+
+                m_pOutput->psubsection_end();
             }
         }
+
+        m_previous_diskinfo[current.dk_name] = current;
+        buf = m_disk_stat.get_next_line();
     }
     if (output_opts != PF_NONE)
         m_pOutput->psection_end();
@@ -465,6 +414,9 @@ void CMonitorSystem::sample_net_dev(double elapsed_sec, OutputFields output_opts
             }
             pclose(pop);
         }
+
+        CMonitorLogger::instance()->LogDebug(
+            "Found %zu network interfaces to monitor\n", m_network_interfaces_up.size());
         first_time = false;
     }
 
@@ -563,9 +515,7 @@ bool CMonitorSystem::read_net_dev(
 bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, double elapsed_sec,
     const netinfo_map_t& new_stats, const netinfo_map_t& prev_stats, OutputFields output_opts)
 {
-#define CURRENT(member) (current.member)
-#define PREVIOUS(member) (previous.member)
-#define DELTA(member) (CURRENT(member) - PREVIOUS(member))
+#define DELTA_NET_STAT(member) ((double)(current.member - previous.member) / elapsed_sec)
 
     for (auto it : new_stats) {
         const std::string& name = it.first;
@@ -585,28 +535,28 @@ bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, dou
             break;
 
         case PF_ALL:
-            m_pOutput->plong("ibytes", DELTA(if_ibytes) / elapsed_sec);
-            m_pOutput->plong("ipackets", DELTA(if_ipackets) / elapsed_sec);
-            m_pOutput->plong("ierrs", DELTA(if_ierrs) / elapsed_sec);
-            m_pOutput->plong("idrop", DELTA(if_idrop) / elapsed_sec);
-            m_pOutput->plong("ififo", DELTA(if_ififo) / elapsed_sec);
-            m_pOutput->plong("iframe", DELTA(if_iframe) / elapsed_sec);
+            m_pOutput->plong("ibytes", DELTA_NET_STAT(if_ibytes));
+            m_pOutput->plong("ipackets", DELTA_NET_STAT(if_ipackets));
+            m_pOutput->plong("ierrs", DELTA_NET_STAT(if_ierrs));
+            m_pOutput->plong("idrop", DELTA_NET_STAT(if_idrop));
+            m_pOutput->plong("ififo", DELTA_NET_STAT(if_ififo));
+            m_pOutput->plong("iframe", DELTA_NET_STAT(if_iframe));
 
-            m_pOutput->plong("obytes", DELTA(if_obytes) / elapsed_sec);
-            m_pOutput->plong("opackets", DELTA(if_opackets) / elapsed_sec);
-            m_pOutput->plong("oerrs", DELTA(if_oerrs) / elapsed_sec);
-            m_pOutput->plong("odrop", DELTA(if_odrop) / elapsed_sec);
-            m_pOutput->plong("ofifo", DELTA(if_ofifo) / elapsed_sec);
+            m_pOutput->plong("obytes", DELTA_NET_STAT(if_obytes));
+            m_pOutput->plong("opackets", DELTA_NET_STAT(if_opackets));
+            m_pOutput->plong("oerrs", DELTA_NET_STAT(if_oerrs));
+            m_pOutput->plong("odrop", DELTA_NET_STAT(if_odrop));
+            m_pOutput->plong("ofifo", DELTA_NET_STAT(if_ofifo));
 
-            m_pOutput->plong("ocolls", DELTA(if_ocolls) / elapsed_sec);
-            m_pOutput->plong("ocarrier", DELTA(if_ocarrier) / elapsed_sec);
+            m_pOutput->plong("ocolls", DELTA_NET_STAT(if_ocolls));
+            m_pOutput->plong("ocarrier", DELTA_NET_STAT(if_ocarrier));
             break;
 
         case PF_USED_BY_CHART_SCRIPT_ONLY:
-            m_pOutput->plong("ibytes", DELTA(if_ibytes) / elapsed_sec);
-            m_pOutput->plong("obytes", DELTA(if_obytes) / elapsed_sec);
-            m_pOutput->plong("ipackets", DELTA(if_ipackets) / elapsed_sec);
-            m_pOutput->plong("opackets", DELTA(if_opackets) / elapsed_sec);
+            m_pOutput->plong("ibytes", DELTA_NET_STAT(if_ibytes));
+            m_pOutput->plong("obytes", DELTA_NET_STAT(if_obytes));
+            m_pOutput->plong("ipackets", DELTA_NET_STAT(if_ipackets));
+            m_pOutput->plong("opackets", DELTA_NET_STAT(if_opackets));
             break;
         }
         m_pOutput->psubsection_end();
