@@ -1,7 +1,9 @@
-FROM alpine:3.7
+# for this example we use the same base image used by our musl-builder image:
+#   https://github.com/radupopescu/musl-builder/blob/master/Dockerfile
+FROM alpine:3.14  
 
 # make sure you did run the "cmonitor_musl" target before building this image:
-RUN apk add libstdc++ libc6-compat
+RUN apk add libstdc++ libc6-compat fmt-dev 
 COPY cmonitor_collector /usr/bin/
 
 # finally run the cmonitor collector 
