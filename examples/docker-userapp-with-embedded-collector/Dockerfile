@@ -1,10 +1,12 @@
-# NOTE: for this example we build our Docker on Ubuntu which provides a few utils like
+# NOTE: for this example we build our Docker on Fedora which provides a few utils like
 # - lshw
 # - stress
 # out of the box!
-FROM ubuntu:bionic
+# NOTE: fedora:32 ships /lib64/libfmt.so.6 which is the shared object with MAJOR version required
+#       by the GLIBC cmonitor_collector that gets built on Centos7... that's why we stick with 32
+FROM fedora:32
 
-RUN apt-get update &&  apt-get -y install gnupg2 stress lshw
+RUN dnf install -y gnupg2 stress lshw fmt
 
 # for now simply install from the local build (assuming that you built the binary on Ubuntu!)
 COPY cmonitor_collector /usr/bin/
@@ -17,7 +19,7 @@ COPY example-load.sh .
 #  - for this example collect 3minutes of data (60 samples) and then stop
 #  - put resulting files in /perf folder which is actually a volume shared with the host (see docker run command)
 CMD /usr/bin/cmonitor_collector \
-      --sampling-interval=3 \
-      --output-filename=docker-userapp-with-embedded-collector \
-      --output-directory /perf ; \
-    bash example-load.sh
+  --sampling-interval=3 \
+  --output-filename=docker-userapp-with-embedded-collector \
+  --output-directory=/perf ; \
+  bash example-load.sh

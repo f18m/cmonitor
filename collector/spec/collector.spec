@@ -5,6 +5,7 @@ Summary:        A Docker/LXC, database-free, lightweight container performance m
 License:        GPL
 URL:            https://github.com/f18m/cmonitor
 Source0:        cmonitor-collector-__RPM_VERSION__.tar.gz
+Requires:       fmt
 
 # these are the requirements that we need on COPR builds:
 BuildRequires:  gcc-c++, make, gtest-devel
