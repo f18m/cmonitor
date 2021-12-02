@@ -82,27 +82,6 @@ enum OutputFields {
 // Types
 //------------------------------------------------------------------------------
 
-/*
- * Structure to store CPU usage specs as reported by Linux kernel
- * NOTE: all fields specify amount of time, measured in units of USER_HZ
-         (1/100ths of a second on most architectures); this means that if the
-         _delta_ CPU value reported is 60 in mode X, then that mode took 60% of the CPU!
-         IOW there is no need to do any math to produce a percentage, just taking
-         the delta of the absolute, monotonic-increasing value and divide by the time
-*/
-typedef struct cpu_specs_s {
-    long long user;
-    long long nice;
-    long long sys;
-    long long idle;
-    long long iowait;
-    long long hardirq;
-    long long softirq;
-    long long steal;
-    long long guest;
-    long long guestnice;
-} cpu_specs_t;
-
 typedef struct procsinfo_s {
     /* Process owner */
     uid_t uid;

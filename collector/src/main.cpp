@@ -735,9 +735,10 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     // statistic files, only of the CPUs that can be used by the cgroup-under-monitor:
     // m_system_collector.set_monitored_cpus(m_cgroups_collector.get_cgroup_cpus());
 
-    m_system_collector.proc_stat(0, PF_NONE /* do not emit JSON data */);
-    m_system_collector.proc_diskstats(0, PF_NONE /* do not emit JSON data */);
-    m_system_collector.proc_net_dev(0, PF_NONE /* do not emit JSON data */);
+    m_system_collector.init();
+    m_system_collector.sample_cpu_stat(0, PF_NONE /* do not emit JSON data */);
+    m_system_collector.sample_diskstats(0, PF_NONE /* do not emit JSON data */);
+    m_system_collector.sample_net_dev(0, PF_NONE /* do not emit JSON data */);
     if (bCollectCGroupInfo) {
         m_cgroups_collector.init(m_cfg.m_nCollectFlags & PK_CGROUP_THREADS);
 
@@ -818,15 +819,16 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         double elapsed = current_time - previous_time;
         m_output.psample_start();
 
-        // some stats are always collected, regardless of m_cfg.m_nCollectFlags
+        // always provide basic sample information like timestamp
         output_sample_date_time(loop, current_time_str);
-        // proc_uptime(); // not really useful!!
-        m_system_collector.proc_loadavg();
+
+        // loadavg stats are always collected, regardless of m_cfg.m_nCollectFlags
+        m_system_collector.sample_loadavg();
 
         // baremetal stats:
 
         if (m_cfg.m_nCollectFlags & PK_BAREMETAL_CPU) {
-            m_system_collector.proc_stat(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
+            m_system_collector.sample_cpu_stat(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
         }
 
         if (m_cfg.m_nCollectFlags & PK_BAREMETAL_MEMORY) {
@@ -836,11 +838,11 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         }
 
         if (m_cfg.m_nCollectFlags & PK_BAREMETAL_NETWORK) {
-            m_system_collector.proc_net_dev(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
+            m_system_collector.sample_net_dev(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
         }
 
         if (m_cfg.m_nCollectFlags & PK_BAREMETAL_DISK) {
-            m_system_collector.proc_diskstats(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
+            m_system_collector.sample_diskstats(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
             // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
 
@@ -869,9 +871,10 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         // in debug mode provide an indication of how much optimized is cmonitor_collector:
         if (m_cfg.m_bDebug) {
             std::string tmp;
-            double sampling_time;
-            if (get_timestamp(&sampling_time, tmp))
-                CMonitorLogger::instance()->LogDebug("Sampling time was %.3fmsec", sampling_time * 1000);
+            double time_after_sampling;
+            if (get_timestamp(&time_after_sampling, tmp))
+                CMonitorLogger::instance()->LogDebug(
+                    "Sampling time was %.3fmsec", (time_after_sampling - current_time) * 1000);
         }
 
         if (g_bExiting)

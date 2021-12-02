@@ -24,6 +24,7 @@
 //------------------------------------------------------------------------------
 
 #include "cmonitor.h"
+#include "fast_file_reader.h"
 #include <map>
 #include <set>
 #include <string.h>
@@ -53,6 +54,29 @@ typedef struct {
 
 typedef std::map<std::string /* interface name */, netinfo_t> netinfo_map_t;
 
+/*
+ * Structure to store CPU usage specs as reported by Linux kernel
+ * NOTE: all fields specify amount of time, measured in units of USER_HZ
+         (1/100ths of a second on most architectures); this means that if the
+         _delta_ CPU value reported is 60 in mode X, then that mode took 60% of the CPU!
+         IOW there is no need to do any math to produce a percentage, just taking
+         the delta of the absolute, monotonic-increasing value and divide by the time
+*/
+typedef struct cpu_specs_s {
+    long long user;
+    long long nice;
+    long long sys;
+    long long idle;
+    long long iowait;
+    long long hardirq;
+    long long softirq;
+    long long steal;
+    long long guest;
+    long long guestnice;
+} cpu_specs_t;
+
+#define MAX_LOGICAL_CPU (256)
+
 //------------------------------------------------------------------------------
 // CMonitorSystem
 //------------------------------------------------------------------------------
@@ -62,20 +86,22 @@ public:
     CMonitorSystem(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
         : CMonitorAppHelper(pCfg, pOutput)
     {
+        memset(&m_cpu_stat_prev_values[0], 0, MAX_LOGICAL_CPU * sizeof(cpu_specs_t));
     }
 
+    void init();
     void set_monitored_cpus(const std::set<uint64_t>& cpus) { m_monitored_cpus = cpus; }
 
     //------------------------------------------------------------------------------
     // Functions to collect /proc stats (baremetal), invoked by main app
     //------------------------------------------------------------------------------
 
-    void proc_stat(double elapsed, OutputFields output_opts);
-    void proc_diskstats(double elapsed, OutputFields output_opts);
-    void proc_net_dev(double elapsed, OutputFields output_opts);
-    void proc_loadavg();
-    void proc_filesystems();
-    void proc_uptime();
+    void sample_cpu_stat(double elapsed, OutputFields output_opts);
+    void sample_diskstats(double elapsed, OutputFields output_opts);
+    void sample_net_dev(double elapsed, OutputFields output_opts);
+    void sample_loadavg();
+    void sample_filesystems();
+    void sample_uptime();
 
     //------------------------------------------------------------------------------
     // Utility shared with CMonitorCgroups
@@ -94,13 +120,20 @@ private:
         return m_monitored_cpus.find(cpu) != m_monitored_cpus.end();
     }
 
-    int proc_stat_cpu_index(
-        const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t* logical_cpu);
-    void proc_stat_cpu_total(const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu,
-        int max_cpu_count); // utility of proc_stat()
+    int proc_stat_cpu_index(const char* cpu_data, cpu_specs_t* cpu_values_out);
+    // void proc_stat_cpu_total(const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t&
+    // total_cpu,
+    //    int max_cpu_count); // utility of proc_stat()
 
 private:
     std::set<uint64_t> m_monitored_cpus;
+
+    // last-sampled CPU stats:
+    FastFileReader m_cpu_stat;
+    long long m_cpu_stat_old_ctxt = 0;
+    long long m_cpu_stat_old_processes = 0;
+    cpu_specs_t m_cpu_stat_prev_values[MAX_LOGICAL_CPU] = {};
+    int m_cpu_count = 0;
 
     std::set<std::string> m_network_interfaces_up;
     netinfo_map_t m_previous_netinfo;

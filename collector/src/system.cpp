@@ -25,10 +25,19 @@
 #include <mntent.h>
 #include <sys/vfs.h>
 
-#define MAX_LOGICAL_CPU (256)
-#define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpu_count + 1.0)))
-#define DELTA_LOGICAL(stat) ((float)(stat - logical_cpu[cpuno].stat) / (float)elapsed_sec)
+// ----------------------------------------------------------------------------------
+// Macros
+// ----------------------------------------------------------------------------------
 
+#define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpu_count + 1.0)))
+
+// ----------------------------------------------------------------------------------
+// CMonitorSystem
+// ----------------------------------------------------------------------------------
+
+void CMonitorSystem::init() { m_cpu_stat.set_file("/proc/stat"); }
+
+#if 0 // currently unused
 void CMonitorSystem::proc_stat_cpu_total(
     const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu, int max_cpu_count)
 {
@@ -87,28 +96,23 @@ void CMonitorSystem::proc_stat_cpu_total(
     total_cpu.guest = guest;
     total_cpu.guestnice = guestnice;
 }
+#endif
 
-int CMonitorSystem::proc_stat_cpu_index(
-    const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t* logical_cpu)
+int CMonitorSystem::proc_stat_cpu_index(const char* cpu_data, cpu_specs_t* cpu_values_out)
 {
-    long long user;
-    long long nice;
-    long long sys;
-    long long idle;
-    long long iowait;
-    long long hardirq;
-    long long softirq;
-    long long steal;
-    long long guest;
-    long long guestnice;
     int cpuno;
 
     // see http://man7.org/linux/man-pages/man5/proc.5.html
     // Look for "/proc/stat"
 
-    int count = sscanf(cpu_data, /* cpuNNN USER*/
+    /* cpu_data must be a pointer immediately after the 'cpu' chars of:
+         cpuNNN ...lots of counters
+    */
+    int count = sscanf(cpu_data, // force newline
         "%d %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", // force newline
-        &cpuno, &user, &nice, &sys, &idle, &iowait, &hardirq, &softirq, &steal, &guest, &guestnice);
+        &cpuno, &cpu_values_out->user, &cpu_values_out->nice, &cpu_values_out->sys, &cpu_values_out->idle,
+        &cpu_values_out->iowait, &cpu_values_out->hardirq, &cpu_values_out->softirq, &cpu_values_out->steal,
+        &cpu_values_out->guest, &cpu_values_out->guestnice);
     if (count != 11)
         return -1;
 
@@ -116,134 +120,118 @@ int CMonitorSystem::proc_stat_cpu_index(
         return -1;
     if (!is_monitored_cpu(cpuno))
         return -1;
-
-    if (output_opts != PF_NONE) {
-        char label[512];
-        sprintf(label, "cpu%d", cpuno);
-        m_pOutput->psubsection_start(label);
-
-        switch (output_opts) {
-        case PF_NONE:
-            assert(0);
-            break;
-        case PF_ALL:
-        case PF_USED_BY_CHART_SCRIPT_ONLY:
-            m_pOutput->pdouble("user", DELTA_LOGICAL(user)); /* counter */
-            m_pOutput->pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
-            m_pOutput->pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
-            m_pOutput->pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
-            m_pOutput->pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
-            m_pOutput->pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
-            m_pOutput->pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
-            m_pOutput->pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
-            m_pOutput->pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
-            m_pOutput->pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
-            break;
-        }
-        m_pOutput->psubsection_end();
-    }
-    logical_cpu[cpuno].user = user;
-    logical_cpu[cpuno].nice = nice;
-    logical_cpu[cpuno].sys = sys;
-    logical_cpu[cpuno].idle = idle;
-    logical_cpu[cpuno].iowait = iowait;
-    logical_cpu[cpuno].hardirq = hardirq;
-    logical_cpu[cpuno].softirq = softirq;
-    logical_cpu[cpuno].steal = steal;
-    logical_cpu[cpuno].guest = guest;
-    logical_cpu[cpuno].guestnice = guestnice;
-
     return cpuno;
 }
 
 /*
 read /proc/stat
 */
-void CMonitorSystem::proc_stat(double elapsed_sec, OutputFields output_opts)
+void CMonitorSystem::sample_cpu_stat(double elapsed_sec, OutputFields output_opts)
 {
-    int count;
-    long long value;
-
-    /* Static data */
-    static FILE* fp = 0;
-    static char line[8192];
-    static int max_cpu_count;
-
-    static long long old_ctxt;
-    static long long old_processes;
-    // static cpu_specs_t total_cpu;
-    static cpu_specs_t logical_cpu[MAX_LOGICAL_CPU];
+    long long new_ctx, btime, new_processes, procs_running, procs_blocked;
 
     DEBUGLOG_FUNCTION_START();
-    CMonitorLogger::instance()->LogDebug("proc_stat(%.4f) max_cpu_count=%d\n", elapsed_sec, max_cpu_count);
-    if (fp == 0) {
-        if ((fp = fopen("/proc/stat", "r")) == NULL) {
-            CMonitorLogger::instance()->LogErrorWithErrno("failed to open file /proc/stat");
-            fp = 0;
-            return;
-        }
-    } else
-        rewind(fp);
 
-    if (output_opts != PF_NONE)
-        m_pOutput->psection_start("stat");
+    CMonitorLogger::instance()->LogDebug("proc_stat(%.4f) max_cpu_count=%d\n", elapsed_sec, m_cpu_count);
+    if (!m_cpu_stat.open_or_rewind()) {
+        CMonitorLogger::instance()->LogError("failed to re-open %s", m_cpu_stat.get_file().c_str());
+        return;
+    }
 
-    while (fgets(line, 1000, fp) != NULL) {
-        if (!strncmp(line, "cpu", 3)) {
+    cpu_specs_t new_values[MAX_LOGICAL_CPU];
+    cpu_specs_t tmp_values;
+    const char* line = m_cpu_stat.get_next_line();
+    while (line) {
+        if (strncmp(line, "cpu", 3) == 0) {
             if (line[3] == ' ') {
-                // found the summary line for ALL cpus together... skip it
+                // found the summary line for ALL cpus together, e.g.:
+                //     cpu  265510448 66285 143983783 14772309342 4657946 0 16861124 0 0 0
+                // skip it
+                line = m_cpu_stat.get_next_line();
                 continue;
             } else {
-                // found a line like:
+                // found a line for a specific CPU like:
                 //    cpu1 90470 3217 30294 291392 17250 0 3242 0 0 0
-
-                int cpuno = proc_stat_cpu_index(&line[3], elapsed_sec, output_opts, logical_cpu);
-                if (cpuno > max_cpu_count)
-                    max_cpu_count = cpuno;
+                // process it
+                int cpuno = proc_stat_cpu_index(&line[3], &tmp_values);
+                if (cpuno > m_cpu_count)
+                    m_cpu_count = cpuno;
+                if (cpuno >= 0)
+                    new_values[cpuno] = tmp_values;
             }
         } else if (!strncmp(line, "ctxt", 4)) {
-            value = 0;
-            count = sscanf(&line[5], "%lld", &value); /* counter */
-            if (count == 1) {
-                if (output_opts != PF_NONE) {
-                    m_pOutput->psubsection_start("counters");
-                    m_pOutput->pdouble("ctxt", ((double)(value - old_ctxt) / elapsed_sec));
-                }
-                old_ctxt = value;
-            }
+            new_ctx = 0;
+            sscanf(&line[5], "%lld", &new_ctx); /* counter */
         } else if (!strncmp(line, "btime", 5)) {
-            value = 0;
-            count = sscanf(&line[6], "%lld", &value); /* seconds since boot */
-            if (output_opts != PF_NONE)
-                m_pOutput->plong("btime", value);
+            btime = 0;
+            sscanf(&line[6], "%lld", &btime); /* seconds since boot */
         } else if (!strncmp(line, "processes", 9)) {
-            value = 0;
-            count = sscanf(&line[10], "%lld", &value); /* counter  actually forks */
-            if (output_opts != PF_NONE)
-                m_pOutput->pdouble("processes_forks", ((double)(value - old_processes) / elapsed_sec));
-            old_processes = value;
+            new_processes = 0;
+            sscanf(&line[10], "%lld", &new_processes); /* counter  actually forks */
         } else if (!strncmp(line, "procs_running", 13)) {
-            value = 0;
-            count = sscanf(&line[14], "%lld", &value);
-            if (output_opts != PF_NONE)
-                m_pOutput->plong("procs_running", value);
+            procs_running = 0;
+            sscanf(&line[14], "%lld", &procs_running);
         } else if (!strncmp(line, "procs_blocked", 13)) {
-            value = 0;
-            count = sscanf(&line[14], "%lld", &value);
-            if (output_opts != PF_NONE) {
-                m_pOutput->plong("procs_blocked", value);
-                m_pOutput->psubsection_end();
-            }
+            procs_blocked = 0;
+            sscanf(&line[14], "%lld", &procs_blocked);
         }
+
+        line = m_cpu_stat.get_next_line();
     }
-    if (output_opts != PF_NONE)
+
+    if (output_opts != PF_NONE) {
+        m_pOutput->psection_start("stat");
+        for (int i = 0; i < m_cpu_count; i++) {
+            if (!is_monitored_cpu(i))
+                continue;
+
+#define DELTA_LOGICAL(stat) ((double)(new_values[i].stat - m_cpu_stat_prev_values[i].stat) / elapsed_sec)
+
+            m_pOutput->psubsection_start(fmt::format("cpu{:d}", i).c_str());
+            switch (output_opts) {
+            case PF_NONE:
+                assert(0);
+                break;
+            case PF_ALL:
+            case PF_USED_BY_CHART_SCRIPT_ONLY:
+                m_pOutput->pdouble("user", DELTA_LOGICAL(user)); /* counter */
+                m_pOutput->pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
+                m_pOutput->pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
+                m_pOutput->pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
+                m_pOutput->pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
+                m_pOutput->pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
+                m_pOutput->pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
+                m_pOutput->pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
+                m_pOutput->pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
+                m_pOutput->pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
+                break;
+            }
+            m_pOutput->psubsection_end();
+
+#undef DELTA_LOGICAL
+        }
+
+        m_pOutput->psubsection_start("counters");
+        m_pOutput->pdouble("ctxt", ((double)(new_ctx - m_cpu_stat_old_ctxt) / elapsed_sec));
+        m_pOutput->plong("btime", btime);
+        m_pOutput->pdouble("processes_forks", ((double)(new_processes - m_cpu_stat_old_processes) / elapsed_sec));
+        m_pOutput->plong("procs_running", procs_running);
+        m_pOutput->plong("procs_blocked", procs_blocked);
+        m_pOutput->psubsection_end();
+
         m_pOutput->psection_end();
+    }
+
+    m_cpu_stat_old_ctxt = new_ctx;
+    m_cpu_stat_old_processes = new_processes;
+    for (int i = 0; i < m_cpu_count; i++)
+        m_cpu_stat_prev_values[i] = new_values[i];
 }
 
 /*
 read /proc/diskstats
 */
-void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts)
+void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_opts)
 {
     // please refer https://www.kernel.org/doc/Documentation/iostats.txt
 
@@ -441,7 +429,7 @@ void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts
 /*
  read /proc/net/dev
  */
-void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
+void CMonitorSystem::sample_net_dev(double elapsed_sec, OutputFields output_opts)
 {
     static bool first_time = true;
 
@@ -630,7 +618,7 @@ bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, dou
 /*
  read /proc/uptime
 */
-void CMonitorSystem::proc_uptime()
+void CMonitorSystem::sample_uptime()
 {
     static FILE* fp = 0;
     char buf[1024 + 1];
@@ -661,7 +649,7 @@ void CMonitorSystem::proc_uptime()
     }
 }
 
-void CMonitorSystem::proc_loadavg()
+void CMonitorSystem::sample_loadavg()
 {
     char buf[1024 + 1];
     int count;
@@ -705,7 +693,7 @@ void CMonitorSystem::proc_loadavg()
     fclose(fp);
 }
 
-void CMonitorSystem::proc_filesystems()
+void CMonitorSystem::sample_filesystems()
 {
     FILE* fp;
     struct mntent* fs;
