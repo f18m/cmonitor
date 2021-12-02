@@ -105,9 +105,9 @@ cmonitor_musl: # build cmonitor inside a Docker from Alpine distro, to build a c
 	@# use a Docker to compile inside an Alpine environment:
 	@# NOTE: by default debug symbols are embededed in the binary (to support COPR builds) but
 	#        for docker builds, we strip them away to reduce docker size:
-	docker run --rm -it -v "${ROOT_DIR}":"/opt/src" -e "MUSL_BUILD=1" \
+	docker run --rm -it -v "${ROOT_DIR}":"/opt/src" -e "MUSL_BUILD=1" -e "DISABLE_BENCHMARKS_BUILD=1" \
 		radupopescu/musl-builder \
-		sh -c "cd /opt/src/collector && apk add gtest-dev && gcc --version && make clean && make -j && make strip"
+		sh -c "cd /opt/src/collector && apk add gtest-dev fmt-dev  && gcc --version && make clean && make -j && make strip"
 
 docker_image: cmonitor_musl
 	@cp -fv bin/musl/cmonitor_collector docker
