@@ -23,10 +23,10 @@
      #bottom_table_val { font-family: monospace; }
   </style>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
-  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript">
-/* Load GoogleCharts: */
-google.load("visualization", "1.1", {packages:["corechart"]});
+// Load the Visualization API and the corechart package; version 51 is June 2021 version
+google.charts.load('51', {'packages':['corechart']});
 google.setOnLoadCallback(setup_button_click_handlers);
 
 /* The global chart object: */
@@ -63,15 +63,17 @@ function clear_chart() {
 }
 
 function draw_graph1() {
-  var deflated_data_base64_graph1 = 'eNp1zkELwiAUB/CvEp4KHubTzc3OHdqlqOg0drBmMHAUmxAj+u7p2qCggQ/+Pv/8MM+fxHV3Q1ak1M64qjYEiNVnY/1qPa5eQE6tafzTtrqExrFrnal9yEob7tlyN3voyvm40U05yw770Lpd3Rid0ZYUkPfonDOOgBw4YBJOAjFfEFCKphECo8yPEGJIPzNpIIM48YiMaCxVX+ceAcGpxPSLGOBpSIDEAEmq8PMbpEolIBiVXP6RijeRBk4V\n';
-  var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
-  var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
+  var inflated_data_graph1 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",99.841,0.0,0.333,0.0,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",64.569,0.0,2.33,32.618,0.0,0.0,0.333,0.0],["Date(2021,12,2,17,17,13,61)",66.911,0.0,1.997,30.626,0.0,0.0,0.333,0.0]];
   var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph1, 0);
+
   var options_graph1 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 0 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -87,15 +89,17 @@ function draw_graph1() {
 }
 
 function draw_graph2() {
-  var deflated_data_base64_graph2 = 'eNp9jsEKwjAMhl9FelIItU3XdvXswV0UFU9jh+oqDDaUrSBDfHfbscEuCgn5k/z5SJ6/ie+fjmxIab3zVeMIkNpeXR1G22n0AXLpXBtW++oWHee+864JIivr2Gfrw+JlKx/kzrblIjsdo+tx95P0ztakgHyALpEhB46AwHUMDRJXBARSTBEYZYCKKkxiQROsgqpEDosxf6I4A6kjS1LFxWgXQoASVGo+YxiT/ieFGx5IKqFmJPFwpOObRqr5NwOn+AJwoU9g\n';
-  var deflated_data_binary_graph2 = window.atob(deflated_data_base64_graph2);
-  var inflated_data_graph2 = JSON.parse(pako.inflate(deflated_data_binary_graph2, { to: 'string' }));
+  var inflated_data_graph2 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",32.282,0.0,26.624,26.291,13.645,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",35.613,0.0,0.333,63.571,0.0,0.0,0.998,0.0],["Date(2021,12,2,17,17,13,61)",64.913,0.0,1.997,32.956,0.0,0.0,0.0,0.0]];
   var data_graph2 = google.visualization.arrayToDataTable(inflated_data_graph2);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph2, 0);
+
   var options_graph2 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 1 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -111,15 +115,17 @@ function draw_graph2() {
 }
 
 function draw_graph3() {
-  var deflated_data_base64_graph3 = 'eNp1js0KwjAQhF9FclJYYn6apPHswV4UFU+lh2gjFFKUNiBFfHeTYIuXwg7Mzg4fW5Zv5IenRRtUG29901oEyJmrdSHajtEH0KW3XTjtm1tsnIfe2zaYonZxL9aHxcs0Ptid6epFcTrG1uPuR+utcaiCMkGXjDAKlAEDquIoEGyFgGCSxDFnOSiNRQaUY5mJvzi4WQ4lIFQATc0grXPQAudCTvyf5jEcJE3/aK1Tm2IpM9ASMyImBMWcswSqvvCZTnE=\n';
-  var deflated_data_binary_graph3 = window.atob(deflated_data_base64_graph3);
-  var inflated_data_graph3 = JSON.parse(pako.inflate(deflated_data_binary_graph3, { to: 'string' }));
+  var inflated_data_graph3 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,3.328,79.54,13.645,0.0,3.328,0.0],["Date(2021,12,2,17,17,10,57)",3.328,0.0,0.998,95.856,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.999,0.0,1.664,96.205,0.0,0.0,1.332,0.0]];
   var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph3, 0);
+
   var options_graph3 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 2 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -135,15 +141,17 @@ function draw_graph3() {
 }
 
 function draw_graph4() {
-  var deflated_data_base64_graph4 = 'eNp1js0KwjAQhF+l7ElhqfkhiXr2YC+KiqfSQ7QRCilKG5AivrtJTfWghWyYnZ392Dx/gOtuBpZQamdcVRtAsPpkrLdWg/VEOLam8aNNdQ6JQ9c6U3uRlTb02Wyb3HXlvFzrpkyy/S6krhc3SGe0hQLzHjphhFGkDBlSFZ5CwaaAJOWc+5/4klLiYp5SpWLztmNglEQJCtWjvjsRJeg8Gp8ax3CU9P9FgosfTPEC7oZOYQ==\n';
-  var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
-  var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
+  var inflated_data_graph4 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,0.666,98.177,0.666,0.0,0.333,0.0],["Date(2021,12,2,17,17,10,57)",0.666,0.0,0.666,98.518,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,0.666,98.535,0.0,0.0,0.0,0.0]];
   var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph4, 0);
+
   var options_graph4 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 3 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -159,15 +167,17 @@ function draw_graph4() {
 }
 
 function draw_graph5() {
-  var deflated_data_base64_graph5 = 'eNqNjkELwjAMhf/KyEkhzLSlbvPswV0UFU/DQ3UVBh3KFpAh/nfb4cAJgpAHLy/hS4riAdzdLCygNGy5qi0gOHOyzkfLIXoiHFrb+NG6OoeNfdeyrb3JSxf6fLaJ7qZib1emKaN8tw1b1wsPlq1xcMSih04kSYFCokSRhEpQyykgxfSWUgqzLNaUfoS9fjIEoU5GEAqIVP9PUDgXPSGcHz0iSXx9F0DHFxwdTFY=\n';
-  var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
-  var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
+  var inflated_data_graph5 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.333,99.508,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,99.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,0.333,99.201,0.0,0.0,0.333,0.0]];
   var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph5, 0);
+
   var options_graph5 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 4 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -183,15 +193,17 @@ function draw_graph5() {
 }
 
 function draw_graph6() {
-  var deflated_data_base64_graph6 = 'eNqNjs0KwjAQhF+l7ElhqfkhSePZg70oKp5KD9FGKKQobUCK+O6mwUpBBGEHZmeHjy2KB/j+ZmEJlfHW140FBGdO1oVoNUZPhGNn23Da1Oehceg7b5tg8soNe77YJndT+2DXpq2SfL8bWteLH623xkGJRYTOGGEUKUOGVA2jULA5IEnJW1pnqLNU0EkW9RNBCQoVGVLKKUWlgv1P4ShppHDOPxQdf+HiC1O+AH1HTMU=\n';
-  var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
-  var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
+  var inflated_data_graph6 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.998,98.51,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.666,0.0,0.998,97.52,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,0.999,98.535,0.0,0.0,0.0,0.0]];
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph6, 0);
+
   var options_graph6 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 5 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -207,15 +219,17 @@ function draw_graph6() {
 }
 
 function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNqNjk8LwjAMxb/K6Ekh1P5Z18WzB3dRVDyNHaqrMNhQtoIM8bvbjs2DIghJeHl5/EieP4jrb5YsSWmcdVVjCZDanGztrdVkPYEcO9v606Y6h8Sh75xtvMjKOuzZYhvdTeW8XJu2jLL9LqSuFzdJZ01NCsgH6EwwwYELEMB1KA1KzAkwKqX0k40KkSqWjsa7f1I4A6U9hlNEPaQFTRKPiakS8f8YCQn/+AYRATVNE/zCFC+q5k2O\n';
-  var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
-  var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
+  var inflated_data_graph7 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,0.333,99.508,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",1.997,0.0,2.663,94.524,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,0.999,97.869,0.0,0.0,0.0,0.0]];
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph7, 0);
+
   var options_graph7 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 6 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -231,15 +245,17 @@ function draw_graph7() {
 }
 
 function draw_graph8() {
-  var deflated_data_base64_graph8 = 'eNqNjk0LgkAQhv+KzKlgsP3QVTt3yEtR0Uk8bLqBsFLoQkj035uN7NAHBDPDO++8PExRXMENZwNzqLUzrmkNIFh9MJasxWjdEPa96ei0aiqf2A29My2JvLZ+z2fr4KIbR3KpuzrItxufOh3dKJ3RFkosHtCJYIIjFyiQJ74SjMUUkIVSSpqMWimFWRqmkXgar/5J4Qzj5A3jVZaFPI3+x0hU/Ps3FP3AlHemxE1q\n';
-  var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
-  var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
+  var inflated_data_graph8 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,0.666,98.842,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.333,0.0,0.333,99.184,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,0.666,98.202,0.0,0.0,0.0,0.0]];
   var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph8, 0);
+
   var options_graph8 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 7 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -255,15 +271,17 @@ function draw_graph8() {
 }
 
 function draw_graph9() {
-  var deflated_data_base64_graph9 = 'eNqNjk8LwjAMxb/KyEkhzP5Zu9WzB3dRVDyNHaqrMOhQtoIM8bvbTgeiCEICLy8vP1IUN3D9xcAcKu2MqxsDCFYfjPXWYrTuCPvOtH61qo8hses7Zxov8sqGOZ+to6uunZdL3VZRvt2E1PnkRumMtlBiMUAnjDCKlCFDmoZKUbApIInJqznnqLI4S9ibOfRPBiUo0gESjp9pKSUqFdMs+R/DUdIPjFIqfCO4+MKUDwmnTRM=\n';
-  var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
-  var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
+  var inflated_data_graph9 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.333,98.842,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.333,0.0,0.666,99.184,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,0.999,98.535,0.0,0.0,0.0,0.0]];
   var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph9, 0);
+
   var options_graph9 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 8 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -279,15 +297,17 @@ function draw_graph9() {
 }
 
 function draw_graph10() {
-  var deflated_data_base64_graph10 = 'eNp9jkELwjAMhf/KyEkhzKZllnr24C6KiqexQ3UVCh3KVpAh/nfbwmAoCkl4eXl8pKqe4Ie7gRU02htvWwMITp+NC9Z6tF4Ip9504bS1l5g4Dr03bRBl4+JeLnbZQ1sf5EZ3TVYe9jF1u/pReqMd1Fgl6IwzTkgcOZKMJbHgc0CWCyHCZKmVzAsi5PnEC/0TQgwLmShjNtKUChQ5BfyHCFzSxytKqfSM+MbUb7YdTNI=\n';
-  var deflated_data_binary_graph10 = window.atob(deflated_data_base64_graph10);
-  var inflated_data_graph10 = JSON.parse(pako.inflate(deflated_data_binary_graph10, { to: 'string' }));
+  var inflated_data_graph10 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,0.0,97.511,2.33,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.333,99.517,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,0.999,97.537,0.0,0.0,0.0,0.0]];
   var data_graph10 = google.visualization.arrayToDataTable(inflated_data_graph10);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph10, 0);
+
   var options_graph10 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 9 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -303,15 +323,17 @@ function draw_graph10() {
 }
 
 function draw_graph11() {
-  var deflated_data_base64_graph11 = 'eNqVjk8LwjAMxb+K5KQQav+4dvXswV0UFU9jh+oqDDqUrSBD/O62hYEiHoQkvLw8fqQsH+CHm4Ul1MZb37QWEJw5WRes1Wg9EY697cJp05xj4jD03rZBFLWLezHfTu6m8UGuTVdPiv0upq4XP0pvjYMKywSdcsoZMo4cmYqlMOMzQEqEEGFS5EGhzgjLedrf+ieEUcxUokgpU1oQwXPUC8L0HxiBkn08w4jWKmJyJb4w1QtXKk1G\n';
-  var deflated_data_binary_graph11 = window.atob(deflated_data_base64_graph11);
-  var inflated_data_graph11 = JSON.parse(pako.inflate(deflated_data_binary_graph11, { to: 'string' }));
+  var inflated_data_graph11 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,2.33,95.182,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.666,0.0,3.328,94.192,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,1.997,94.873,0.0,0.0,0.0,0.0]];
   var data_graph11 = google.visualization.arrayToDataTable(inflated_data_graph11);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph11, 0);
+
   var options_graph11 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 10 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -327,15 +349,17 @@ function draw_graph11() {
 }
 
 function draw_graph12() {
-  var deflated_data_base64_graph12 = 'eNqNjkELwjAMhf+K9KQQatPS1nr24C6KiqexQ3UVBh3KVpAh/nfbwkAUQUjCy8vjI2X5IGG4ObIktQ0uNK0jQLw9OR+t1Wg9gRx718XTpjmnxGHog2ujKGqf9mK+ndxtE6Jc266eFPtdSl0vYZTBWU8qKDN0yhlHQA4cUKfSIPmMAKNCiDgZcGqMBINUxmAy3vonBRlInTFKqZwWUSEYQdGI/zECFH5g8jecLrT6wlQvqm9Nig==\n';
-  var deflated_data_binary_graph12 = window.atob(deflated_data_base64_graph12);
-  var inflated_data_graph12 = JSON.parse(pako.inflate(deflated_data_binary_graph12, { to: 'string' }));
+  var inflated_data_graph12 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,2.995,91.521,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.666,0.0,3.661,93.193,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.666,0.0,3.995,92.876,0.0,0.0,0.0,0.0]];
   var data_graph12 = google.visualization.arrayToDataTable(inflated_data_graph12);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph12, 0);
+
   var options_graph12 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 11 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -351,15 +375,17 @@ function draw_graph12() {
 }
 
 function draw_graph13() {
-  var deflated_data_base64_graph13 = 'eNqNjMEKwjAQRH9FclJYYrJpk8azB3tRVDyVHqKNUEhR2oAU8d9NigVRBGF3mZkdXlHcie+vlixIZbz1dWMJEGeO1oVoOUYPIIfOtuG1rk+xse87b5sg8spFn883k5upfZAr01aTfLeNrcvZj9Jb40gJxQCdIkMOHAGBqzgKUpwRYFQIES4DDAp0QrNED/5tf0I4g1QNFCnliyJlwAiaovwfI0DyD4zWEjTSTH1jyidemU1a\n';
-  var deflated_data_binary_graph13 = window.atob(deflated_data_base64_graph13);
-  var inflated_data_graph13 = JSON.parse(pako.inflate(deflated_data_binary_graph13, { to: 'string' }));
+  var inflated_data_graph13 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,2.33,94.849,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.666,0.0,2.663,93.526,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.666,0.0,2.996,92.876,0.0,0.0,0.0,0.0]];
   var data_graph13 = google.visualization.arrayToDataTable(inflated_data_graph13);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph13, 0);
+
   var options_graph13 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 12 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -375,15 +401,17 @@ function draw_graph13() {
 }
 
 function draw_graph14() {
-  var deflated_data_base64_graph14 = 'eNqNjkELwjAMhf+K9KQQatvYrfXswV0UFU9jh+oqDDqUrSBD/O+2hYEigpCEl5fHR8ryQfxws2RJauOtb1pLgDhzsi5Yq9F6Ajn2tgunTXOOicPQe9sGUdQu7sV8O7mbxge5Nl09Kfa7mLpe/Ci9NY5UUCboVDDBgQsQwPNYOUgxI8AoIobJgFOtc9BIuZLJeOufFM5A5gmjtUpppChUxCip/8cgZPzjG0GzDEEvqGDqC1O9ALOyTYk=\n';
-  var deflated_data_binary_graph14 = window.atob(deflated_data_base64_graph14);
-  var inflated_data_graph14 = JSON.parse(pako.inflate(deflated_data_binary_graph14, { to: 'string' }));
+  var inflated_data_graph14 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,1.997,93.185,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.998,0.0,3.328,93.859,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,2.663,94.208,0.0,0.0,0.0,0.0]];
   var data_graph14 = google.visualization.arrayToDataTable(inflated_data_graph14);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph14, 0);
+
   var options_graph14 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 13 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -399,15 +427,17 @@ function draw_graph14() {
 }
 
 function draw_graph15() {
-  var deflated_data_base64_graph15 = 'eNqNjE0LwjAMhv+K5KQQZj9su3r24C6KiqexQ3UVBh3KVpAh/nfbwkAUQUjCk+TlKcsH+OFmYQm18dY3rQUEZ07WhdNqPD0Rjr3twmvTnGPiMPTetgGK2sW9mG8nd9P4gGvT1ZNiv4up68WP6K1xUGGZpFNGGEXKkCFVsRQKNgMkGec8TIIsEGqe5SKtb/3TQQkKlSRSypSmgRaoRUb1/xaOkn5YtFbRkiv2palewbFM7w==\n';
-  var deflated_data_binary_graph15 = window.atob(deflated_data_base64_graph15);
-  var inflated_data_graph15 = JSON.parse(pako.inflate(deflated_data_binary_graph15, { to: 'string' }));
+  var inflated_data_graph15 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,2.33,93.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.666,0.0,1.664,95.19,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.666,0.0,1.997,95.872,0.0,0.0,0.0,0.0]];
   var data_graph15 = google.visualization.arrayToDataTable(inflated_data_graph15);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph15, 0);
+
   var options_graph15 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 14 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -423,15 +453,17 @@ function draw_graph15() {
 }
 
 function draw_graph16() {
-  var deflated_data_base64_graph16 = 'eNqNjMsKwjAQRX+lzEphiHmY1Lh2YTeKiqvSRbQRCilKG5Ai/rtJoCCKIGTCmTuXU5YP8MPNwhJq461vWgsIzpysC9FqjJ4Ix9524bRpzrFxGHpv2wBF7eJezLbZ3TQ+4Np0dVbsd7F1vfgRvTUOKiyTdMIpZ8g4cmR5fDlKPgWkRCkVfoqcaC1RM7KQ8xS8zU8LoyjzD41SArUkTP9vEahYsgghUpsF4qgV4VR+aaoXZktNSA==\n';
-  var deflated_data_binary_graph16 = window.atob(deflated_data_base64_graph16);
-  var inflated_data_graph16 = JSON.parse(pako.inflate(deflated_data_binary_graph16, { to: 'string' }));
+  var inflated_data_graph16 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.666,0.0,2.995,91.854,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.666,0.0,2.663,95.19,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,1.332,96.205,0.0,0.0,0.0,0.0]];
   var data_graph16 = google.visualization.arrayToDataTable(inflated_data_graph16);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph16, 0);
+
   var options_graph16 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 15 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -447,15 +479,17 @@ function draw_graph16() {
 }
 
 function draw_graph17() {
-  var deflated_data_base64_graph17 = 'eNqNjkELwjAMhf/KyEkh1Laz7erZg7soKp7GDtVVGHQoW0GG+N9tBwOHCEISXl4eHymKJ/j+bmEFlfHW140FBGfO1gVrPVovhFNn23Da1peYOPadt00QeeXini92ycPUPsiNaaskP+xj6nb1o/TWOCixGKAzTjlDxpEjU7EUCj4HpERKGSZFTrQWqFPCMjEYH/2TwigKNcGkQTHUjGSS/49JUbIJhoZvNGpFOF1+Yco3tXZNkw==\n';
-  var deflated_data_binary_graph17 = window.atob(deflated_data_base64_graph17);
-  var inflated_data_graph17 = JSON.parse(pako.inflate(deflated_data_binary_graph17, { to: 'string' }));
+  var inflated_data_graph17 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.666,0.0,2.995,93.185,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.666,0.0,3.661,91.862,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.666,0.0,0.999,97.204,0.0,0.0,0.0,0.0]];
   var data_graph17 = google.visualization.arrayToDataTable(inflated_data_graph17);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph17, 0);
+
   var options_graph17 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 16 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -471,15 +505,17 @@ function draw_graph17() {
 }
 
 function draw_graph18() {
-  var deflated_data_base64_graph18 = 'eNqNjs0KwjAQhF+l5KSwxPyYpPHswV4UFU+lh2gjFFKUNiBFfHeTYEEUQdhdZmeHjy3LO/LD1aIFqo23vmktAuTM0bpgLUfrAejQ2y6c1s0pJvZD720bRFG7uBezTXYzjQ9yZbo6K3bbmLqc/Si9NQ5VUCbohBFGgTJgQFUsBYJNERAspQyTAMVaK9AcC5on461/UigBoRKGc/7CcE5Bz3Eu1P8YDpJ+YNI3AaP4F6Z6ArEGTYk=\n';
-  var deflated_data_binary_graph18 = window.atob(deflated_data_base64_graph18);
-  var inflated_data_graph18 = JSON.parse(pako.inflate(deflated_data_binary_graph18, { to: 'string' }));
+  var inflated_data_graph18 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.666,0.0,1.997,93.518,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.333,0.0,1.331,94.857,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,1.997,94.873,0.0,0.0,0.0,0.0]];
   var data_graph18 = google.visualization.arrayToDataTable(inflated_data_graph18);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph18, 0);
+
   var options_graph18 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 17 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -495,15 +531,17 @@ function draw_graph18() {
 }
 
 function draw_graph19() {
-  var deflated_data_base64_graph19 = 'eNqNjssKwjAQRX9FZqUwxDya1Lh2YTeKiqvSRbQRCilKG5Ai/rtJtaCIIEzCyc3lMHl+A99dLMyhNN76qraA4MzBuhAthuiOsG9tE75W1TE2dl3rbR0gK118Z9P16GoqH3BpmnKUbTexdT75Ab01DgrMe+mYU86QceTI0jgpSj4BpEQpFW6KnGgtUXPCZs/g7fy0MIoy/dCIQKzXBNvfGoGK9RohxGubADohMmFfluIBZRJNSA==\n';
-  var deflated_data_binary_graph19 = window.atob(deflated_data_base64_graph19);
-  var inflated_data_graph19 = JSON.parse(pako.inflate(deflated_data_binary_graph19, { to: 'string' }));
+  var inflated_data_graph19 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.666,0.0,2.995,92.186,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.666,0.0,3.661,92.195,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,2.33,94.541,0.0,0.0,0.0,0.0]];
   var data_graph19 = google.visualization.arrayToDataTable(inflated_data_graph19);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph19, 0);
+
   var options_graph19 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 18 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -519,15 +557,17 @@ function draw_graph19() {
 }
 
 function draw_graph20() {
-  var deflated_data_base64_graph20 = 'eNqVjE8LwjAMxb/KyEkh1P5ZN+vZg7soKp7GDtVVGHQoW0GG+N1ti0NBPAhJeHl5+ZXlHdxwNbCAWjvjmtYAgtVHY721HK0HwqE3nT+tm1NI7IfemdaLorZhL2ab5KYb5+VKd3VS7LYhdTm7UTqjLVRYRuiEU86QceTI8lA5Sj4FpCTLMj8pcqKURMXIXKbR+OifFEZR5hFDXxAhUKVE8j8YAjMWGcI/vymSSKG+KNUTd8pMpQ==\n';
-  var deflated_data_binary_graph20 = window.atob(deflated_data_base64_graph20);
-  var inflated_data_graph20 = JSON.parse(pako.inflate(deflated_data_binary_graph20, { to: 'string' }));
+  var inflated_data_graph20 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.666,0.0,2.995,91.854,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,2.33,94.524,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,2.33,95.539,0.0,0.0,0.0,0.0]];
   var data_graph20 = google.visualization.arrayToDataTable(inflated_data_graph20);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph20, 0);
+
   var options_graph20 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 19 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -543,15 +583,17 @@ function draw_graph20() {
 }
 
 function draw_graph21() {
-  var deflated_data_base64_graph21 = 'eNqNjs0KwkAMhF9FclIIdbNa13r2YC+KiqfSw2ojFLYobUCK+O7uChX8AyEDk8nwkSy7grRnhhkUVljKigHB2T07H8276Iawa7j2p2V5CI1t2whX3qSFC3s6XPUuthRvF7YueulmHVqno3RW2DrIMXtA+1ppQtKokUwYg7EeAKpIPUVKRWTGL5nXTwQpjM0bI0miafw/YYQT+vKF/iDkd67PSo4=\n';
-  var deflated_data_binary_graph21 = window.atob(deflated_data_base64_graph21);
-  var inflated_data_graph21 = JSON.parse(pako.inflate(deflated_data_binary_graph21, { to: 'string' }));
+  var inflated_data_graph21 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,100.174,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,99.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,100.2,0.0,0.0,0.0,0.0]];
   var data_graph21 = google.visualization.arrayToDataTable(inflated_data_graph21);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph21, 0);
+
   var options_graph21 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 20 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -567,15 +609,17 @@ function draw_graph21() {
 }
 
 function draw_graph22() {
-  var deflated_data_base64_graph22 = 'eNqNjM0KwjAQhF+l7ElhqfmxjfXswV4UFU+lh2hWKKQobUCK+O4mxYKigrADM7PDVxQ3cN2FYA5GO3JVTYBg9YGsrxZDdUfYt9T416o6hsWuax3V3uTGhpxP1tFVV87bpW5MlG83YXU+ucE60hZKLHroSDDBkQsUyFU4hYkYA7KYPSWlxCyLZ1P+Uvb6yeAME/UGYT0i+Z8gMeVfCKn6QJQPVgdLLQ==\n';
-  var deflated_data_binary_graph22 = window.atob(deflated_data_base64_graph22);
-  var inflated_data_graph22 = JSON.parse(pako.inflate(deflated_data_binary_graph22, { to: 'string' }));
+  var inflated_data_graph22 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.333,99.841,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,99.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,99.867,0.0,0.0,0.0,0.0]];
   var data_graph22 = google.visualization.arrayToDataTable(inflated_data_graph22);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph22, 0);
+
   var options_graph22 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 21 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -591,15 +635,17 @@ function draw_graph22() {
 }
 
 function draw_graph23() {
-  var deflated_data_base64_graph23 = 'eNqNjsEKwjAQRH+l5KSwxGxik8azB3tRVDyVHqKNUGhR2oAU8d9NghVEBGEHZmeHxxbFnbjhasmCVMZZV7eWAGnM0TY+Wo7RA8iht50/retTaOyH3tnWm7xqwp7PNsnN1M7blemqJN9tQ+tydqN11jSkhCJCJ5xxBOTAAVUYBSmfEmCUvaU1zeb4EXn9JCCDVEWE1llsIxUCQSua8v8pAiRGihDi1ZZShmc4+36mfAIiDUxn\n';
-  var deflated_data_binary_graph23 = window.atob(deflated_data_base64_graph23);
-  var inflated_data_graph23 = JSON.parse(pako.inflate(deflated_data_binary_graph23, { to: 'string' }));
+  var inflated_data_graph23 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,99.841,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.998,0.0,1.331,97.52,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,0.666,99.201,0.0,0.0,0.0,0.0]];
   var data_graph23 = google.visualization.arrayToDataTable(inflated_data_graph23);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph23, 0);
+
   var options_graph23 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 22 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -615,15 +661,17 @@ function draw_graph23() {
 }
 
 function draw_graph24() {
-  var deflated_data_base64_graph24 = 'eNqVjLEKwjAQhl+l3KRw1FxCm9bZwS6KilPpEE2EQorSBqSI725SKSriIOTCd//9fGV5A9dfDMxBK2dc3RhAsOpgrI8WY3RH2Hem9adVfQyNXd8503gotA17MVtHV1U7j0vV6qjYbkLrfHIjOqMsVFgO0glnnJA4ciQZnsSETwFZLITwP0PyRJhnMUk5BG/z00IME/mheVKexwn9oRGY0qB59b0iS78V1QNsJEyY\n';
-  var deflated_data_binary_graph24 = window.atob(deflated_data_base64_graph24);
-  var inflated_data_graph24 = JSON.parse(pako.inflate(deflated_data_binary_graph24, { to: 'string' }));
+  var inflated_data_graph24 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,1.331,98.177,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.333,0.0,0.333,99.517,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,99.867,0.0,0.0,0.0,0.0]];
   var data_graph24 = google.visualization.arrayToDataTable(inflated_data_graph24);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph24, 0);
+
   var options_graph24 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 23 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -639,15 +687,17 @@ function draw_graph24() {
 }
 
 function draw_graph25() {
-  var deflated_data_base64_graph25 = 'eNqNjkELgkAQhf+KzKlgsJ1dTe3cIS9FRSfxsOUEwkqhCyHRf29XEgIJghl482bexxTFE2x/Z1hBpS3bumFAMPrMxlnr0XohnDpu3WpbX/zFse8sN07klfFzvtgFD11bJze6rYL8sPdXt6sdpWVtoMRigM6kkIQkUSIlvhKM5RxQhOLTSinMsjCN6Msc+ieDBMbJAPHhMeEglEb/QxQuafIJCRHKCaN8A4IdS9s=\n';
-  var deflated_data_binary_graph25 = window.atob(deflated_data_base64_graph25);
-  var inflated_data_graph25 = JSON.parse(pako.inflate(deflated_data_binary_graph25, { to: 'string' }));
+  var inflated_data_graph25 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.333,99.841,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.333,0.0,0.0,99.184,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.333,100.2,0.0,0.0,0.0,0.0]];
   var data_graph25 = google.visualization.arrayToDataTable(inflated_data_graph25);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph25, 0);
+
   var options_graph25 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 24 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -663,15 +713,17 @@ function draw_graph25() {
 }
 
 function draw_graph26() {
-  var deflated_data_base64_graph26 = 'eNqNjk8LwjAMxb/KyEkhzP5xq/PswV0UFU9jh2ojDDqUrSBD/O62gw1UBCEPXl6SHymKB7juRrAEox25qiZAsPpE1kerIXoiHFtq/GhTncPGoWsd1d7kxoY+n22ju66ct2vdmCjf78LW9eIG60hbKLHooRPBBEcuUCBXoRQmYgrIYjaKMxZzNX/LvH4iOMNE9Qwp5XiRZfEi+Z8hMeUffwRCqr4Q5QuT0UtL\n';
-  var deflated_data_binary_graph26 = window.atob(deflated_data_base64_graph26);
-  var inflated_data_graph26 = JSON.parse(pako.inflate(deflated_data_binary_graph26, { to: 'string' }));
+  var inflated_data_graph26 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,100.174,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.333,0.0,0.0,99.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,99.867,0.0,0.0,0.0,0.0]];
   var data_graph26 = google.visualization.arrayToDataTable(inflated_data_graph26);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph26, 0);
+
   var options_graph26 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 25 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -687,15 +739,17 @@ function draw_graph26() {
 }
 
 function draw_graph27() {
-  var deflated_data_base64_graph27 = 'eNqNjs0KwkAMhF9FclIIdbNa13r2YC+KiqfSw2ojFLYobUCK+O7uChX8AyEDk8nwkSy7grRnhhkUVljKigHB2T07H8276Iawa7j2p2V5CI1t2whX3qSFC3s6XPUuthRvF7YueulmHVqno3RW2DrIMXtA+1ppQtKokUwYg7EeAKpIPUVKRWTGL5nXTwQpjM0bI0miafw/YYQT+vKF/iDkd67PSo4=\n';
-  var deflated_data_binary_graph27 = window.atob(deflated_data_base64_graph27);
-  var inflated_data_graph27 = JSON.parse(pako.inflate(deflated_data_binary_graph27, { to: 'string' }));
+  var inflated_data_graph27 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,100.174,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,99.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,100.2,0.0,0.0,0.0,0.0]];
   var data_graph27 = google.visualization.arrayToDataTable(inflated_data_graph27);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph27, 0);
+
   var options_graph27 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 26 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -711,15 +765,17 @@ function draw_graph27() {
 }
 
 function draw_graph28() {
-  var deflated_data_base64_graph28 = 'eNqNjM0KwjAQhF+l7ElhqUm0jfXswV4UFU+lh2hWKKQo7YIU8d1NhAr+gbADM7PDVxRX4O5MMANrmLiqCRCc2ZPz1byvbgi7lhr/WlaHsNh2LVPtTW5dyPloFV1Mxd4uTGOjfLMOq9ORe8tkHJRYPKADJZREqVCh1OE0JmoIKGLxlBQilnry0nn9REiBiX5jZFk8Tf4njDGVXwip/kCUd/xVSuI=\n';
-  var deflated_data_binary_graph28 = window.atob(deflated_data_base64_graph28);
-  var inflated_data_graph28 = JSON.parse(pako.inflate(deflated_data_binary_graph28, { to: 'string' }));
+  var inflated_data_graph28 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,100.174,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,99.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,99.867,0.0,0.0,0.0,0.0]];
   var data_graph28 = google.visualization.arrayToDataTable(inflated_data_graph28);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph28, 0);
+
   var options_graph28 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 27 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -735,15 +791,17 @@ function draw_graph28() {
 }
 
 function draw_graph29() {
-  var deflated_data_base64_graph29 = 'eNqNjk8LgkAQxb+KzKlgsJ01Xe3cIS9FRSfxsOUEwkqhCyHRd283MOgfBPPgzZvHjymKK9j+zDCDSlu2dcOAYPSejYvmQ3RD2HXcutOyPvjGtu8sN87klfF7PlkFF11bZxe6rYJ8s/at09EO1rI2UGLxgI6kkIQkUSIpPwpjOQYUoXgqy8J0Si+R008CCYzVG4KECCmN/mdEmNCXNxL1gSjvS+RLEg==\n';
-  var deflated_data_binary_graph29 = window.atob(deflated_data_base64_graph29);
-  var inflated_data_graph29 = JSON.parse(pako.inflate(deflated_data_binary_graph29, { to: 'string' }));
+  var inflated_data_graph29 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,99.841,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,100.183,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,99.867,0.0,0.0,0.0,0.0]];
   var data_graph29 = google.visualization.arrayToDataTable(inflated_data_graph29);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph29, 0);
+
   var options_graph29 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 28 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -759,15 +817,17 @@ function draw_graph29() {
 }
 
 function draw_graph30() {
-  var deflated_data_base64_graph30 = 'eNqNjEELwjAMhf+K5KQQZtO61Xn24C6KiqexQ3URBh3KVpAh/nfbwYQhgpDAy3svX54/wXV3hhWUxrGragYEa85svbUerBfCqeXGR9vqEhrHrnVce5GVNtzZfDd5mMp5uTFNOckO+9C6Xd0gHRsLBeY9dCqFJCSJEkmH0RjLGaCIxGdJiIj0YuT5/YkggbEeMZRSmKZR7MO/IQoT6iHhefjwkGXyDSnedddL5A==\n';
-  var deflated_data_binary_graph30 = window.atob(deflated_data_base64_graph30);
-  var inflated_data_graph30 = JSON.parse(pako.inflate(deflated_data_binary_graph30, { to: 'string' }));
+  var inflated_data_graph30 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,100.174,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.333,99.517,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,0.0,99.867,0.0,0.0,0.0,0.0]];
   var data_graph30 = google.visualization.arrayToDataTable(inflated_data_graph30);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph30, 0);
+
   var options_graph30 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 29 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -783,15 +843,17 @@ function draw_graph30() {
 }
 
 function draw_graph31() {
-  var deflated_data_base64_graph31 = 'eNqNjs0KwjAQhF+l7ElhiflpTePZg70oKp5KD7GNUEhR2oAU8d1NKhVUBGEHZmeHj83zG7j+YmABlXbG1Y0BBKuPxvpoOUZ3hENnWn9a12Vo7PvOmcabrLJhz2ab6Kpr5+1Kt1WU7bahdT650TqjLRSYD9AJp5wh48iRyTASEz4FpIS+xCglTMZvmddPBKOYyA+GUiRN/icInLOBIIR4/kCUkqhikkrxhSkeK8xLvQ==\n';
-  var deflated_data_binary_graph31 = window.atob(deflated_data_base64_graph31);
-  var inflated_data_graph31 = JSON.parse(pako.inflate(deflated_data_binary_graph31, { to: 'string' }));
+  var inflated_data_graph31 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,100.174,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,99.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,1.997,94.873,0.0,0.0,0.0,0.0]];
   var data_graph31 = google.visualization.arrayToDataTable(inflated_data_graph31);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph31, 0);
+
   var options_graph31 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 30 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -807,15 +869,17 @@ function draw_graph31() {
 }
 
 function draw_graph32() {
-  var deflated_data_base64_graph32 = 'eNqNjs0KwjAQhF+l7ElhifmhSePZg70oKp5KD9FGKKQobUCK+O4mpQVFBGEHZmeHjy2KB/j+ZmEJlfHW140FBGdO1oVoNUVPhGNn23Da1OfYOPSdt00weeXini+2yd3UPti1aask3+9i63rxk/XWOCixGKAzTjlDxpEjU3EUpnwOSAkdJaVErQlT6Vs46CeDUUxVgDAiBBvbWmeoFclS8T9GoGQfv9D4SSbVF6J8Ad18TEk=\n';
-  var deflated_data_binary_graph32 = window.atob(deflated_data_base64_graph32);
-  var inflated_data_graph32 = JSON.parse(pako.inflate(deflated_data_binary_graph32, { to: 'string' }));
+  var inflated_data_graph32 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.666,99.175,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",1.331,0.0,0.998,97.853,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,99.867,0.0,0.0,0.0,0.0]];
   var data_graph32 = google.visualization.arrayToDataTable(inflated_data_graph32);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph32, 0);
+
   var options_graph32 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 31 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -831,15 +895,17 @@ function draw_graph32() {
 }
 
 function draw_graph33() {
-  var deflated_data_base64_graph33 = 'eNqNjsEKwjAQRH9F9qSwxGxC28SzB3tRVDyVHqKNUEhR2oAU8d9NChWKCMIOzM4Ojy2KJ/j+bmEFlfHW140FBGfO1oVoPUYvhFNn23Da1pfYOPadt00weeXini93s4epfbAb01az/LCPrdvVj9Zb46DEYoDOBReEJFAgZXEyTMQCkDP+kdYs4WoSBf0kEMckGxBSyqFNwRFqxUil/2MkpjTBcKa1jhiVfn9TvgFrukyq\n';
-  var deflated_data_binary_graph33 = window.atob(deflated_data_base64_graph33);
-  var inflated_data_graph33 = JSON.parse(pako.inflate(deflated_data_binary_graph33, { to: 'string' }));
+  var inflated_data_graph33 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,99.508,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.333,0.0,1.331,98.186,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.333,0.0,0.999,98.868,0.0,0.0,0.0,0.0]];
   var data_graph33 = google.visualization.arrayToDataTable(inflated_data_graph33);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph33, 0);
+
   var options_graph33 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 32 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -855,15 +921,17 @@ function draw_graph33() {
 }
 
 function draw_graph34() {
-  var deflated_data_base64_graph34 = 'eNqNjM0KwjAQhF+l7ElhqfmxjfXswV4UFU+lh2hWKKQobUCK+O4mhQpVBGEHZmaHryge4LobwRKMduSqmgDB6hNZX62G6olwbKnxr011DotD1zqqvcmNDTmfbaO7rpy3a92YKN/vwup6cYN1pC2UWPTQiWCCIxcokKtwChMxBWQxe4szFnM1H3VePxGcYaI+GFkWL5L/CRJTPiJIKXtGqr4g5QuS5UtL\n';
-  var deflated_data_binary_graph34 = window.atob(deflated_data_base64_graph34);
-  var inflated_data_graph34 = JSON.parse(pako.inflate(deflated_data_binary_graph34, { to: 'string' }));
+  var inflated_data_graph34 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,100.174,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,99.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.333,99.867,0.0,0.0,0.0,0.0]];
   var data_graph34 = google.visualization.arrayToDataTable(inflated_data_graph34);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph34, 0);
+
   var options_graph34 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 33 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -879,15 +947,17 @@ function draw_graph34() {
 }
 
 function draw_graph35() {
-  var deflated_data_base64_graph35 = 'eNqNjs0KwjAQhF+l7ElhqZuENq1nD/aiqHgqPUQToZCitAEp4rubFAv+IAg7MDs7fGxZ3sD1FwNz0MoZVzcGEKw6GOujxRjdEfadaf1pVR9DY9d3zjTeFNqGvZito6uqnbdL1eqo2G5C63xyo3VGWaiwHKATTpwh48iRyTASEz4FpJieEkJgnscJZS/hoJ8MRpjINwj5jGKWif8ZAlP2wfBvZKn8QlQP5A5Lew==\n';
-  var deflated_data_binary_graph35 = window.atob(deflated_data_base64_graph35);
-  var inflated_data_graph35 = JSON.parse(pako.inflate(deflated_data_binary_graph35, { to: 'string' }));
+  var inflated_data_graph35 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.333,99.508,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,100.183,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,99.867,0.0,0.0,0.0,0.0]];
   var data_graph35 = google.visualization.arrayToDataTable(inflated_data_graph35);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph35, 0);
+
   var options_graph35 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 34 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -903,15 +973,17 @@ function draw_graph35() {
 }
 
 function draw_graph36() {
-  var deflated_data_base64_graph36 = 'eNqNjE8LgkAQxb+KzKlgsP2TmZ075KWo6CQeNp1AWCl0ICT67u1KBhVBMG94b+bxy7IbcHchWEBpmLiqCRCsOZJ1p+VwuiMcWmrca10VvrHvWqbambS0PqeTTXA1FTu7Mk0ZpLutb51PPFgmYyHHrIeOlFASpUKFMvYTY6TGgCLUWrsteiVJOJ/KV3zqJ0MKjOIeIt4Q0f8EjTP5QZBChOqLkD8ACJZK2Q==\n';
-  var deflated_data_binary_graph36 = window.atob(deflated_data_base64_graph36);
-  var inflated_data_graph36 = JSON.parse(pako.inflate(deflated_data_binary_graph36, { to: 'string' }));
+  var inflated_data_graph36 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,0.0,99.841,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,99.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,100.2,0.0,0.0,0.0,0.0]];
   var data_graph36 = google.visualization.arrayToDataTable(inflated_data_graph36);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph36, 0);
+
   var options_graph36 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 35 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -927,15 +999,17 @@ function draw_graph36() {
 }
 
 function draw_graph37() {
-  var deflated_data_base64_graph37 = 'eNqNjM0KwjAQhF+l7ElhqUm0jfXswV4UFU+lh2hWKKQo7YIU8d1NhAr+gbADM7PDVxRX4O5MMANrmLiqCRCc2ZPz1byvbgi7lhr/WlaHsNh2LVPtTW5dyPloFV1Mxd4uTGOjfLMOq9ORe8tkHJRYPKADJZREqVCh1OE0JmoIKGLxlBQilnry0nn9REiBiX5jZFk8Tf4njDGVXwip/kCUd/xVSuI=\n';
-  var deflated_data_binary_graph37 = window.atob(deflated_data_base64_graph37);
-  var inflated_data_graph37 = JSON.parse(pako.inflate(deflated_data_binary_graph37, { to: 'string' }));
+  var inflated_data_graph37 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,100.174,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,99.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,99.867,0.0,0.0,0.0,0.0]];
   var data_graph37 = google.visualization.arrayToDataTable(inflated_data_graph37);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph37, 0);
+
   var options_graph37 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 36 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -951,15 +1025,17 @@ function draw_graph37() {
 }
 
 function draw_graph38() {
-  var deflated_data_base64_graph38 = 'eNqNjk8LgkAQxb+KzKlgsJ01Xe3cIS9FRSfxsOUEwkqhCyHRd283MOgfBPPgzZvHjymKK9j+zDCDSlu2dcOAYPSejYvmQ3RD2HXcutOyPvjGtu8sN87klfF7PlkFF11bZxe6rYJ8s/at09EO1rI2UGLxgI6kkIQkUSIpPwpjOQYUoXgqy8J0Si+R008CCYzVG4KECCmN/mdEmNCXNxL1gSjvS+RLEg==\n';
-  var deflated_data_binary_graph38 = window.atob(deflated_data_base64_graph38);
-  var inflated_data_graph38 = JSON.parse(pako.inflate(deflated_data_binary_graph38, { to: 'string' }));
+  var inflated_data_graph38 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.0,0.0,0.0,99.841,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,100.183,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,99.867,0.0,0.0,0.0,0.0]];
   var data_graph38 = google.visualization.arrayToDataTable(inflated_data_graph38);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph38, 0);
+
   var options_graph38 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 37 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -975,15 +1051,17 @@ function draw_graph38() {
 }
 
 function draw_graph39() {
-  var deflated_data_base64_graph39 = 'eNqNjM0KwjAQhF+l7ElhqfmxjfXswV4UFU+lh2hWKKQobUCK+O4mxepBBWFnmdkdvqK4gesuBHMw2pGragIEqw9k/WkxnO4I+5Ya/1pVx9DYda2j2pvc2JDzyTq66sp5u9SNifLtJrTOJzdYR9pCiUUPHQkmOHKBArkKozARY0AWSyn9Zr04YzFX01d+6ieEM0xUT3n3syyeJf8TJKb8CyFVH4jyAZSPS0s=\n';
-  var deflated_data_binary_graph39 = window.atob(deflated_data_base64_graph39);
-  var inflated_data_graph39 = JSON.parse(pako.inflate(deflated_data_binary_graph39, { to: 'string' }));
+  var inflated_data_graph39 = [[{"type":"datetime","label":"Datetime"},"User","Nice","System","Idle","I/O wait","Hard IRQ","Soft IRQ","Steal"],["Date(2021,12,2,17,17,7,52)",0.333,0.0,0.0,100.174,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,10,57)",0.0,0.0,0.0,99.85,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",0.0,0.0,0.0,99.867,0.0,0.0,0.0,0.0]];
   var data_graph39 = google.visualization.arrayToDataTable(inflated_data_graph39);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph39, 0);
+
   var options_graph39 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 38 (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -999,15 +1077,17 @@ function draw_graph39() {
 }
 
 function draw_graph40() {
-  var deflated_data_base64_graph40 = 'eNqFk8FOwzAMht8lJ5CiKLabpOUKD8CF07TDED0gDYnDLgjx7qTxny3V0q3a4tSOv9l/vN3u15x+vmfzZD4Op/n0+TUba46H9/mYXS/V9WfN8+ubN8WQGlYjagY1QU1Uk9SMaiakVww4BBCBREARWAQYgUbAEXgMHte6wGPwGDwGj8Fj8Bg8Bk/AE/CkNgqegCfgCXgCnoxmb3dFuwf2TJbYsqW0fJIN/Ggsee8oyXR5bGIXgm897J34nO2mabR5L5JX3ccYy37yzUM4xDksbaDrEic83j3FTjayYySsd8Le+XP1PncT49C897/an1/lrjPy26bI5G1IWeWYHAtbiW4aWq2jHXLzMdciOXyuaq3l4EoNN5WWHGjB+W4WclJx20DCTxY9N6IJ4ui+nKz98nVGLa0nTit4J7XeQVf9bVXFRlpUnRwPZGNWlYoCoS/QlUvlrqLfDJfmlxug9kwoE7VElzvsjN3SWMC6Nbkd16X7Tht+c1j1v3aea21rY673+3+uNRwk\n';
-  var deflated_data_binary_graph40 = window.atob(deflated_data_base64_graph40);
-  var inflated_data_graph40 = JSON.parse(pako.inflate(deflated_data_binary_graph40, { to: 'string' }));
+  var inflated_data_graph40 = [[{"type":"datetime","label":"Datetime"},"CPU0","CPU1","CPU2","CPU3","CPU4","CPU5","CPU6","CPU7","CPU8","CPU9","CPU10","CPU11","CPU12","CPU13","CPU14","CPU15","CPU16","CPU17","CPU18","CPU19","CPU20","CPU21","CPU22","CPU23","CPU24","CPU25","CPU26","CPU27","CPU28","CPU29","CPU30","CPU31","CPU32","CPU33","CPU34","CPU35","CPU36","CPU37","CPU38"],["Date(2021,12,2,17,17,7,52)",100.17399999999999,72.55099999999999,20.301,1.998,0.333,0.998,0.666,0.9990000000000001,0.333,2.6630000000000003,2.6630000000000003,3.3280000000000003,2.6630000000000003,2.33,2.6630000000000003,3.661,3.661,2.6630000000000003,3.661,3.661,0.0,0.333,0.0,1.664,0.333,0.0,0.0,0.0,0.0,0.0,0.0,0.666,0.0,0.0,0.333,0.333,0.0,0.0,0.333],["Date(2021,12,2,17,17,10,57)",67.232,36.943999999999996,4.326,1.332,0.0,1.6640000000000001,4.66,0.666,0.9990000000000001,0.333,3.9939999999999998,4.327,3.3289999999999997,4.326,2.33,3.3289999999999997,4.327,1.664,4.327,2.33,0.0,0.0,2.3289999999999997,0.666,0.333,0.333,0.0,0.0,0.0,0.333,0.0,2.3289999999999997,1.664,0.0,0.0,0.0,0.0,0.0,0.0],["Date(2021,12,2,17,17,13,61)",69.241,66.91,3.995,0.9990000000000001,0.9990000000000001,1.332,1.332,0.9990000000000001,1.332,1.332,2.33,4.6610000000000005,3.662,2.996,2.6630000000000003,1.665,1.665,2.33,2.6630000000000003,2.6630000000000003,0.0,0.0,0.9990000000000001,0.0,0.333,0.0,0.0,0.0,0.0,0.333,2.33,0.0,1.332,0.333,0.0,0.0,0.0,0.0,0.0]];
   var data_graph40 = google.visualization.arrayToDataTable(inflated_data_graph40);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph40, 0);
+
   var options_graph40 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "All logical CPUs (from baremetal stats)",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
@@ -1023,15 +1103,17 @@ function draw_graph40() {
 }
 
 function draw_graph41() {
-  var deflated_data_base64_graph41 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lEKLU1OAUs6JyRmpKQoaLpnF2UGpiSmaQDG3otRUpVidaLB6DSMDI0MdQyMdIx1DcxAy1zE1AqoyNNUxNQGKm+NUaGigY2pOnEpjHTNDFJWxAD6VMuA=\n';
-  var deflated_data_binary_graph41 = window.atob(deflated_data_base64_graph41);
-  var inflated_data_graph41 = JSON.parse(pako.inflate(deflated_data_binary_graph41, { to: 'string' }));
+  var inflated_data_graph41 = [[{"type":"datetime","label":"Datetime"},"Used","Cached (DiskRead)","Free"],["Date(2021,12,2,17,17,7,52)",15,54,127],["Date(2021,12,2,17,17,10,57)",15,54,127],["Date(2021,12,2,17,17,13,61)",15,54,127]];
   var data_graph41 = google.visualization.arrayToDataTable(inflated_data_graph41);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph41, 0);
+
   var options_graph41 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Memory usage in GB (from baremetal stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "GB", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -1047,15 +1129,17 @@ function draw_graph41() {
 }
 
 function draw_graph42() {
-  var deflated_data_base64_graph42 = 'eNp1jztrwzAUhf9K0JTAtbkPXT06lqxZunQwHhysIZBASL2U0v+e2Gldy1RCCN3zHXSOmubLDJ/XZF5M3w1pOF2SAXPujun8kPa/0jeYj77bvKWu3xxezXN6v52GNI+UU1phzjGvsORYlri/VLjA05hjyjGtMOd4kd1CM31yy8gExMBAftwelHcGsEb0MXioOEhNatHKKEI1HstL2SYUbSx6WSxrsQYhqP/pQSI0PeE1BFdoUTCxRGcLTtVIGv+WlNsIOHq2gYq4ZheiKzSZDKKWgs664iPnHxfaSH7Ob9s7mZeadQ==\n';
-  var deflated_data_binary_graph42 = window.atob(deflated_data_base64_graph42);
-  var inflated_data_graph42 = JSON.parse(pako.inflate(deflated_data_binary_graph42, { to: 'string' }));
+  var inflated_data_graph42 = [[{"type":"datetime","label":"Datetime"},"sda Read MB","sda Write MB","sda1 Read MB","sda1 Write MB","sda2 Read MB","sda2 Write MB","sda3 Read MB","sda3 Write MB","dm-0 Read MB","dm-0 Write MB","dm-1 Read MB","dm-1 Write MB","dm-2 Read MB","dm-2 Write MB"],["Date(2021,12,2,17,17,7,52)",0.007987,-283.154043,0.0,-0.0,0.0,-0.0,0.007987,-283.154043,0.0,-0.031949,0.0,-0.0,0.007987,-283.123425],["Date(2021,12,2,17,17,10,57)",0.001331,-0.075886,0.0,-0.0,0.0,-0.0,0.001331,-0.075886,0.0,-0.023964,0.0,-0.0,0.001331,-0.055915999999999993],["Date(2021,12,2,17,17,13,61)",0.0,-12.268966,0.0,-0.0,0.0,-0.0,0.0,-12.354185,0.0,-0.050599,0.0,-0.0,0.0,-12.304917999999999]];
   var data_graph42 = google.visualization.arrayToDataTable(inflated_data_graph42);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph42, 0);
+
   var options_graph42 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Disk I/O (from baremetal stats)",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "MB", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
@@ -1071,15 +1155,17 @@ function draw_graph42() {
 }
 
 function draw_graph43() {
-  var deflated_data_base64_graph43 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lHzyE1Mcy9IVNAxzM/M0lZAETNEFDCEisTrRYBM0jAyMDHUMjXSMdAzNQchcx9QIqMFQz8jIFEgamoNIYyNTnBoMDXRMzUnTYaxjZgjWYQrWAdEH0hELAOoYPG0=\n';
-  var deflated_data_binary_graph43 = window.atob(deflated_data_base64_graph43);
-  var inflated_data_graph43 = JSON.parse(pako.inflate(deflated_data_binary_graph43, { to: 'string' }));
+  var inflated_data_graph43 = [[{"type":"datetime","label":"Datetime"},"LoadAvg (1min)","LoadAvg (5min)","LoadAvg (15min)"],["Date(2021,12,2,17,17,7,52)",1.225,1.175,1.325],["Date(2021,12,2,17,17,10,57)",1.225,1.175,1.325],["Date(2021,12,2,17,17,13,61)",1.525,1.225,1.325]];
   var data_graph43 = google.visualization.arrayToDataTable(inflated_data_graph43);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph43, 0);
+
   var options_graph43 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Average Load  (from baremetal stats)",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Load (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
@@ -1095,15 +1181,17 @@ function draw_graph43() {
 }
 
 function draw_graph44() {
-  var deflated_data_base64_graph44 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lEKLU4uAUsGVxSWpuUqxOtFgWQ0jAyNDHUMjHSMdQ3MQMtcxNdJU0rG01LO0NNExwKnO0EDH1Byo0Mxcz8ACnzpjHTNDkDoLPTMLkIGxAJXzLSk=\n';
-  var deflated_data_binary_graph44 = window.atob(deflated_data_base64_graph44);
-  var inflated_data_graph44 = JSON.parse(pako.inflate(deflated_data_binary_graph44, { to: 'string' }));
+  var inflated_data_graph44 = [[{"type":"datetime","label":"Datetime"},"User","System"],["Date(2021,12,2,17,17,7,52)",99.994,0],["Date(2021,12,2,17,17,10,57)",67.08,0],["Date(2021,12,2,17,17,13,61)",68.684,0]];
   var data_graph44 = google.visualization.arrayToDataTable(inflated_data_graph44);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph44, 0);
+
   var options_graph44 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 0 (from CGroup stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -1119,15 +1207,17 @@ function draw_graph44() {
 }
 
 function draw_graph45() {
-  var deflated_data_base64_graph45 = 'eNp9yrEKAkEMhOF3SaUwLJss2aC1byBWyxUnphDuQLxtDvHdjYKlwlT/fK09qK83pz1dxu79OjuBpvHsU6TDNz1Bp8XvcR3XpftMA9rn3UgWBgsEbO8ZVLYE3SUuFfmn4wy1gEWT5b+woHLAWpMaBxxevBMtQg==\n';
-  var deflated_data_binary_graph45 = window.atob(deflated_data_base64_graph45);
-  var inflated_data_graph45 = JSON.parse(pako.inflate(deflated_data_binary_graph45, { to: 'string' }));
+  var inflated_data_graph45 = [[{"type":"datetime","label":"Datetime"},"User","System"],["Date(2021,12,2,17,17,7,52)",59.136,0],["Date(2021,12,2,17,17,10,57)",35.706,0],["Date(2021,12,2,17,17,13,61)",66.571,0]];
   var data_graph45 = google.visualization.arrayToDataTable(inflated_data_graph45);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph45, 0);
+
   var options_graph45 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 1 (from CGroup stats), STACKED graph",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  1
@@ -1143,15 +1233,17 @@ function draw_graph45() {
 }
 
 function draw_graph46() {
-  var deflated_data_base64_graph46 = 'eNp9yzELwjAQBeD/cpPCM+bSJmlcdXRQ0Kl0qBg00FqRcxDxv1uVuikcPO7xvrK8k9zOkWa0ryVKaiOBmnoXm75aDNUDtExtkun62kndLzbHSyfSpNOhf+arrf4EU4XyzUZGGwYbGLB/nYc1Y8KEoRGCCiGHDYoz91OwhvUDcV7pAplVXv8RGRx/RaFckcM5ZT1X1RO2Qzo/\n';
-  var deflated_data_binary_graph46 = window.atob(deflated_data_base64_graph46);
-  var inflated_data_graph46 = JSON.parse(pako.inflate(deflated_data_binary_graph46, { to: 'string' }));
+  var inflated_data_graph46 = [[{"type":"datetime","label":"Datetime"},"Limit/Quota","Throttling","CPU0","CPU1"],["Date(2021,12,2,17,17,7,52)",-1,0,99.994,59.136],["Date(2021,12,2,17,17,10,57)",-1,0,67.08,35.706],["Date(2021,12,2,17,17,13,61)",-1,0,68.684,66.571]];
   var data_graph46 = google.visualization.arrayToDataTable(inflated_data_graph46);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph46, 0);
+
   var options_graph46 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "All logical CPUs available in the cgroup",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
@@ -1167,15 +1259,17 @@ function draw_graph46() {
 }
 
 function draw_graph47() {
-  var deflated_data_base64_graph47 = 'eNqLjq5WKqksSFWyUkpJLEktycxNVdJRyklMSs0BCrnAhGp1lEKLU1OAUs6JyRmpKQoaLpnF2UGpiSmaQDHHnJz8ZAW3xMyc0qLUYqCAT2ZuZolSrE4sANgbHsc=\n';
-  var deflated_data_binary_graph47 = window.atob(deflated_data_base64_graph47);
-  var inflated_data_graph47 = JSON.parse(pako.inflate(deflated_data_binary_graph47, { to: 'string' }));
+  var inflated_data_graph47 = [[{"type":"datetime","label":"Datetime"},"Used","Cached (DiskRead)","Alloc Failures","Limit"],["Date(2021,12,2,17,17,7,52)",1.908736,0.004096,42231,104.8576],["Date(2021,12,2,17,17,10,57)",2.035712,0.012288,42245,104.8576],["Date(2021,12,2,17,17,13,61)",3.497984,101.285888,43095,104.8576]];
   var data_graph47 = google.visualization.arrayToDataTable(inflated_data_graph47);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph47, 0);
+
   var options_graph47 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Used memory in MB (from memory cgroup)",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     series: {
      0: {targetAxisIndex:0},
      1: {targetAxisIndex:0},
@@ -1200,9 +1294,7 @@ function draw_graph47() {
 }
 
 function draw_graph48() {
-  var deflated_data_base64_graph48 = 'eNqLjlZyzs/NTcxLUdJRcg4IVSjJzE0FMj31/RWcKktSi0HCcAW+qbn5RZVQiVidaKXikqLUYqAaMz0DIx0DPQMdqIiChqGFppKOpYmRgYWeAUhlcm5+XmZJflF8cn5OTmqyEki1oY6xpYmphSFIH5q8goYlUL+RsampkQFQZWwsANphMYc=\n';
-  var deflated_data_binary_graph48 = window.atob(deflated_data_base64_graph48);
-  var inflated_data_graph48 = JSON.parse(pako.inflate(deflated_data_binary_graph48, { to: 'string' }));
+  var inflated_data_graph48 = [["Command","CPU time","I/O Bytes","Command","Memory Bytes"],["stress",6.02,0.0,"stress (18)",94208.0],["cmonitor_collec",0.01,394581.0,"cmonitor_collec (9)",2355200.0]];
   var data_graph48 = google.visualization.arrayToDataTable(inflated_data_graph48);
   var options_graph48 = {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
@@ -1224,15 +1316,17 @@ function draw_graph48() {
 }
 
 function draw_graph49() {
-  var deflated_data_base64_graph49 = 'eNp9jMEKgkAURX9F3krhZfNmtNHWLdsE7UTCbKiB0Ql9LSL696YgaWNwN/dy7qmqB/D9amANp4YN284AgmuOxoVp852eCFvbWV7ubp6bQOwvg2d2tj+HMvJgxjGKqUhCazvfW/bDofXOmTaKywRqrD6yWApJSBIlkn4nw0yH04JQYFmmWucoZmGNuZzgIi0yiSJVSs0eSGA+6cUfMylc0S9YvwAd3ke4\n';
-  var deflated_data_binary_graph49 = window.atob(deflated_data_base64_graph49);
-  var inflated_data_graph49 = JSON.parse(pako.inflate(deflated_data_binary_graph49, { to: 'string' }));
+  var inflated_data_graph49 = [[{"type":"datetime","label":"Datetime"},"Limit/Quota","Throttling","stress (18)","cmonitor_collec (9)"],["Date(2021,12,2,17,17,4,47)",-1,0,99.775,0],["Date(2021,12,2,17,17,7,52)",-1,0,98.842,0.333],["Date(2021,12,2,17,17,10,57)",-1,0,0,0],["Date(2021,12,2,17,17,13,61)",-1,0,0,0]];
   var data_graph49 = google.visualization.arrayToDataTable(inflated_data_graph49);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph49, 0);
+
   var options_graph49 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Top 20 processes for CPU usage (from cgroup stats)",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "CPU (%)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
@@ -1248,15 +1342,17 @@ function draw_graph49() {
 }
 
 function draw_graph50() {
-  var deflated_data_base64_graph50 = 'eNqFzMEKgzAQBNBfkT1F2EN2o0313L8IUmy6ByE2xeRSxH9vKu1RCnMa3oxzK+TXU6CH+5glT7MAQhhvEkp1+VUbQsqLpFQpOtdF+Dk+phyXq48hiK9UV8OAbl8o1kxIjIxkP2mwsWWkUR8Siy3vhAyb7pCRxvbfFRk80dcMb6GgOMQ=\n';
-  var deflated_data_binary_graph50 = window.atob(deflated_data_base64_graph50);
-  var inflated_data_graph50 = JSON.parse(pako.inflate(deflated_data_binary_graph50, { to: 'string' }));
+  var inflated_data_graph50 = [[{"type":"datetime","label":"Datetime"},"stress (18)","cmonitor_collec (9)"],["Date(2021,12,2,17,17,4,47)",0,0],["Date(2021,12,2,17,17,7,52)",0,13239],["Date(2021,12,2,17,17,10,57)",0,0],["Date(2021,12,2,17,17,13,61)",0,0]];
   var data_graph50 = google.visualization.arrayToDataTable(inflated_data_graph50);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph50, 0);
+
   var options_graph50 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Top 20 processes for I/O usage (from cgroup stats)",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "IO Read+Write (Bytes Per Sec)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
@@ -1272,15 +1368,17 @@ function draw_graph50() {
 }
 
 function draw_graph51() {
-  var deflated_data_base64_graph51 = 'eNp9zcEKwjAMBuBXGT1tEEaStevmTRBPvsEYMmcPhc7KVg8ivrtVEZkwIRDyhy9pmpsI17MRK3Hsggl2MAKE6w7GxWjzie4gdnawIe7Wzvk+2XbWXUYzxWAKsU9JSlUWp37wJxv8uO+9c6ZP0joTLTSvUykjExADA+lnSZA6IkKZV0qXIBEwx1oyVoCLSoPimWIu6As5L5TiRU0ISv9wqQD/PKQCSpqRAus3aR8fyU8a\n';
-  var deflated_data_binary_graph51 = window.atob(deflated_data_base64_graph51);
-  var inflated_data_graph51 = JSON.parse(pako.inflate(deflated_data_binary_graph51, { to: 'string' }));
+  var inflated_data_graph51 = [[{"type":"datetime","label":"Datetime"},"Limit","Alloc Failures","stress (18)","cmonitor_collec (9)"],["Date(2021,12,2,17,17,4,47)",104.8576,40,0.094208,0],["Date(2021,12,2,17,17,7,52)",104.8576,42231,0.094208,2.3552],["Date(2021,12,2,17,17,10,57)",104.8576,42245,0,0],["Date(2021,12,2,17,17,13,61)",104.8576,43095,0,0]];
   var data_graph51 = google.visualization.arrayToDataTable(inflated_data_graph51);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph51, 0);
+
   var options_graph51 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Top 20 processes for memory usage (from cgroup stats)",
     focusTarget: "category",
-    hAxis: { gridlines: { color: "lightgrey", count: 30 } },
+    tooltip: { textStyle: { fontSize: 12 } },
+    hAxis: { format: "HH:mm:ss.SSS z", gridlines: { color: "lightgrey", count: 30 } },
     vAxis: { title: "RSS Memory (MB)", gridlines: { color: "lightgrey", count: 11 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     isStacked:  0
