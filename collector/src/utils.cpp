@@ -23,6 +23,7 @@
 #include "output_frontend.h"
 #include <fmt/format.h>
 #include <limits.h>
+#include <netdb.h>
 #include <sstream>
 #include <sys/stat.h>
 
@@ -358,21 +359,18 @@ bool read_integers_with_range_validation(
 std::string get_hostname()
 {
     DEBUGLOG_FUNCTION_START();
-    std::string ret;
 
     char hostname[1024];
-    if (gethostname(hostname, sizeof(hostname)) != 0)
-        ret = "unknown-hostname";
-    else
-        ret = hostname;
+    hostname[1023] = '\0';
+    if (gethostname(hostname, sizeof(hostname) - 1) != 0)
+        return "unknown-hostname";
 
-    for (size_t i = 0; i < strlen(hostname); i++)
-        if (hostname[i] == '.')
-            break;
-        else
-            ret.push_back(hostname[i]);
+    struct hostent* h;
+    h = gethostbyname(hostname);
+    if (!h)
+        return std::string(hostname);
 
-    return ret;
+    return std::string(h->h_name);
 }
 
 /*

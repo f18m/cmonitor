@@ -37,8 +37,10 @@ JS_INDENT_SIZE = 2
 
 # see https://developers.google.com/chart/interactive/docs/reference#dateformat
 # the idea is that cmonitor_chart will most likely be used to explore short time intervals
-# so that day/month/year part is not useful, just the millisec-accurate time is useful:
-X_AXIS_DATEFORMAT = "HH:mm:ss.SSS z"
+# so that day/month/year part is not useful, just the time is useful; in tooltip we also
+# reach millisec accuracy:
+X_AXIS_DATEFORMAT = "HH:mm:ss"
+TOOLTIP_DATEFORMAT = "HH:mm:ss.SSS z"
 
 
 # =======================================================================================================
@@ -172,7 +174,7 @@ class GoogleChartsTimeSeries(object):
         )
 
         # add DateFormatter to use custom formatting of the 1st column (like everywhere else we assume first column is the timestamp)
-        ret_string += "var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});\n"
+        ret_string += "var date_formatter = new google.visualization.DateFormat({pattern: '%s'});\n" % (TOOLTIP_DATEFORMAT)
         ret_string += "date_formatter.format(data_%s, 0);\n\n" % (graphName)
 
         return ret_string
@@ -335,8 +337,20 @@ class GoogleChartsGraph:
         )
         ret_string += '  title: "%s",\n' % (self.graph_title)
         ret_string += '  focusTarget: "category",\n'
+
+        # by default this tool plots the top 20 processes; in these cases both tooltips and legend will have up to 21 rows (including time)
+        # so we make the font a bit smaller to make it more likely to view all the lines
         ret_string += "  tooltip: { textStyle: { fontSize: 12 } },\n"
-        ret_string += '  hAxis: { format: "%s", gridlines: { color: "lightgrey", count: 30 } },\n' % X_AXIS_DATEFORMAT
+        ret_string += "  legend: { textStyle: { fontSize: 12 } },\n"
+        ret_string += '  explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },\n'
+
+        # HORIZONTAL AXIS
+        ret_string += (
+            '  hAxis: { format: "%s", gridlines: { color: "lightgrey", count: 30 } },\n'
+            % X_AXIS_DATEFORMAT
+        )
+
+        # VERTICAL AXIS (OR AXES)
         if len(self.series_for_2nd_yaxis) > 0:
             # compute series that use 1st Y axis:
             num_series = self.data_table.getNumDataSeries()
@@ -366,7 +380,6 @@ class GoogleChartsGraph:
                 '  vAxis: { title: "%s", gridlines: { color: "lightgrey", count: 11 } },\n'
                 % str(self.y_axis_title)
             )
-        ret_string += '  explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },\n'
 
         # graph stacking
         g_next_graph_need_stacking = self.stack_state

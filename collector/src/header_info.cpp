@@ -63,9 +63,15 @@ void CMonitorHeaderInfo::header_identity()
     DEBUGLOG_FUNCTION_START();
 
     m_pOutput->psection_start("identity");
-    std::string strHostname = get_hostname();
-    m_pOutput->pstring("hostname", strHostname.c_str());
-    m_pOutput->pstring("shorthostname", strHostname.c_str());
+    std::string strFullHostname = get_hostname();
+    m_pOutput->pstring("hostname", strFullHostname.c_str());
+
+    // remove everything aftr first dot:
+    std::string shortHostname(strFullHostname);
+    size_t dot_pos = shortHostname.find('.');
+    if (dot_pos != std::string::npos)
+        shortHostname.resize(dot_pos);
+    m_pOutput->pstring("shorthostname", shortHostname.c_str());
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
