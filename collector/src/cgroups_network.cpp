@@ -111,22 +111,21 @@ void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields
 
         The two methods look identical in my tests, with Linux 3.10.0-1160.36.2.el7.x86_64 and Docker version 19.03.15:
              PID_OF_A_PROCESS_INSIDE_DOCKER=3468718
-             nsenter --target $PID_OF_A_PROCESS_INSIDE_DOCKER -n cat /proc/net/dev ; cat /proc/$PID_OF_A_PROCESS_INSIDE_DOCKER/net/dev
-        yields:
+             nsenter --target $PID_OF_A_PROCESS_INSIDE_DOCKER -n cat /proc/net/dev ; cat
+       /proc/$PID_OF_A_PROCESS_INSIDE_DOCKER/net/dev yields: Inter-|   Receive |  Transmit face |bytes    packets errs
+       drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed eth0: 1180404195
+       21807303    0    0    0     0          0         0 1624659358 21969100    0    0    0     0       0          0
+                lo: 5402517   80034    0    0    0     0          0         0  5402517   80034    0    0    0     0 0 0
             Inter-|   Receive                                                |  Transmit
-            face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
-            eth0: 1180404195 21807303    0    0    0     0          0         0 1624659358 21969100    0    0    0     0       0          0
-                lo: 5402517   80034    0    0    0     0          0         0  5402517   80034    0    0    0     0       0          0
-            Inter-|   Receive                                                |  Transmit
-            face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
-            eth0: 1180404195 21807303    0    0    0     0          0         0 1624659358 21969100    0    0    0     0       0          0
-                lo: 5402517   80034    0    0    0     0          0         0  5402517   80034    0    0    0     0       0          0
-        the numbers are identical... so we go with SECOND METHOD which of course is way simpler
+            face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls
+       carrier compressed eth0: 1180404195 21807303    0    0    0     0          0         0 1624659358 21969100    0
+       0    0     0       0          0 lo: 5402517   80034    0    0    0     0          0         0  5402517   80034 0
+       0    0     0       0          0 the numbers are identical... so we go with SECOND METHOD which of course is way
+       simpler
     */
 
     // FIXME: use FastFileReader which optimizes the case where the PID chosen 1st time stays constant
-    char filename[1024];
-    snprintf(filename, sizeof(filename), "%s/proc/%d/net/dev", m_proc_prefix.c_str(), first_pid);
+    std::string filename = fmt::format("{}/proc/{}/net/dev", m_proc_prefix, first_pid);
 
     std::set<std::string> empty_whitelist;
 

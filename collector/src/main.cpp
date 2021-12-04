@@ -26,6 +26,7 @@
 #include "utils.h"
 #include <assert.h>
 #include <fcntl.h>
+#include <fmt/chrono.h>
 #include <getopt.h>
 #include <iostream>
 #include <signal.h>
@@ -42,6 +43,30 @@
 #define PID_FILE "/var/run/cmonitor.pid"
 
 #define ADDITIONAL_HELP_COLUMN_START (40)
+
+/*
+  To look for bottlenecks and improvements of this utility, just uncomment
+  TEST_COLLECTOR_PERFORMANCES and then start this app with
+  --num-samples=0.
+  This makes it possible to use "perf top" or other utilities to investigate
+  bottlenecks
+*/
+//#define TEST_COLLECTOR_PERFORMANCES
+
+/*
+  Some measurements in Nov2021 reveal that when running:
+
+    make -C examples regen_baremetal1           sampling time was about 33msec
+    make -C examples regen_docker_userapp       sampling time was about 0.7msec
+
+  The duration of sampling is linearly proportional with the number of PIDs to be monitored
+  by CMonitorCgroups::sample_processes() and that explains the difference between the 2 numbers
+  above (during baremetal1 example the collector tracked around 500 PIDs/TIDs in my test).
+  Anyhow a reasonable min value for sampling time is currently set to 10msecs.
+  Below such threshold the time for sampling all stats (even when there's a single PID like for a Docker)
+  becomes too large compared to the sleeping time and the CPU usage of cmonitor_collector might be too high.
+*/
+#define MIN_SAMPLING_TIME_SEC (0.01)
 
 //------------------------------------------------------------------------------
 // Globals
@@ -69,9 +94,9 @@ public:
 private:
     void print_help();
     void check_pid_file();
-    void get_timestamps(std::string& localTime, std::string& utcTime);
-    void psample_date_time(long loop);
-    double get_timestamp_sec();
+    void output_sample_date_time(long loop, const std::string& utcTime);
+    void do_sampling_sleep();
+    bool get_timestamp(double* ts_for_delta_computation, std::string& utcTime);
 
 private:
     //------------------------------------------------------------------------------
@@ -420,14 +445,30 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
         else {
             switch (c) {
             // Data sampling options
-            case 's':
-                if (!string2int(optarg, m_cfg.m_nSamplingInterval)) {
+            case 's': {
+                double interval_sec;
+                if (!string2double(optarg, interval_sec)) {
                     printf("Unrecognized sampling interval: %s\n", optarg);
                     exit(51);
                 }
-                if (m_cfg.m_nSamplingInterval == 0) // safety check
-                    m_cfg.m_nSamplingInterval = 1;
-                break;
+                if (interval_sec <= 0) // safety check
+                {
+                    printf("Invalid negative or zero sampling time: %s. Minimum value is %fsec\n", optarg,
+                        MIN_SAMPLING_TIME_SEC);
+                    exit(51);
+                }
+                if (interval_sec <= MIN_SAMPLING_TIME_SEC) // safety check
+                {
+                    printf("A sampling time smaller than %fsec will very likely produce very approximated results "
+                           "since the time\n"
+                           "it takes to sample all statistics varies between 1-100msecs. Please adjust sampling time "
+                           "to be above %fsec.\n",
+                        MIN_SAMPLING_TIME_SEC, MIN_SAMPLING_TIME_SEC);
+                    exit(52);
+                }
+
+                m_cfg.m_nSamplingIntervalMsec = interval_sec * 1000;
+            } break;
             case 'c':
                 if (strcmp(optarg, "until-cgroup-alive") == 0)
                     m_cfg.m_nSamples = SPECIAL_NUMSAMPLES_UNTIL_CGROUP_ALIVE;
@@ -571,55 +612,32 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
 // Application core functions
 //------------------------------------------------------------------------------
 
-void CMonitorCollectorApp::get_timestamps(std::string& localTime, std::string& utcTime)
+bool CMonitorCollectorApp::get_timestamp(double* ts_for_delta_computation, std::string& utcTime)
 {
-    time_t timer; /* used to work out the time details*/
-    struct tm* tim = nullptr; /* used to work out the local hour/min/second */
-
-    timer = time(0);
-    tim = localtime(&timer);
-    tim->tm_year += 1900; /* read localtime() manual page!! */
-    tim->tm_mon += 1; /* because it is 0 to 11 */
-
-    /* This is ISO 8601 datatime string format - ugly but get over it! :-) */
-
-    char buffer[256];
-    sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
-        tim->tm_sec);
-    localTime = buffer;
-
-    tim = gmtime(&timer);
-    tim->tm_year += 1900; /* read gmtime() manual page!! */
-    tim->tm_mon += 1; /* because it is 0 to 11 */
-
-    sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d", tim->tm_year, tim->tm_mon, tim->tm_mday, tim->tm_hour, tim->tm_min,
-        tim->tm_sec);
-    utcTime = buffer;
-}
-
-double CMonitorCollectorApp::get_timestamp_sec()
-{
-#if 0
-    struct timeval tv;
-    gettimeofday(&tv, 0);
-    return (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
-#else
     struct timespec tv;
-    if (clock_gettime(CLOCK_MONOTONIC, &tv) == 0)
-        return (double)tv.tv_sec + (double)tv.tv_nsec * 1.0e-9;
-    return 0;
-#endif
+    if (clock_gettime(CLOCK_MONOTONIC, &tv) != 0) {
+        *ts_for_delta_computation = 0;
+        return false;
+    }
+
+    // produce at the same time the timestamp which will be used for DELTA computations...
+    *ts_for_delta_computation = (double)tv.tv_sec + (double)tv.tv_nsec * 1.0e-9;
+
+    // ...and the wall-clock timestamp to associate to the new sample of statistics:
+    auto now_ts = std::chrono::system_clock::now();
+
+    // and of course the string representation of the wall-clock sample, with millisec accuracy:
+    std::time_t sampling_time_in_secs = std::chrono::system_clock::to_time_t(now_ts);
+    auto millisec_since_epoch
+        = std::chrono::duration_cast<std::chrono::milliseconds>(now_ts.time_since_epoch()).count() % 1000;
+    utcTime
+        = fmt::format("{:%04Y-%02m-%02dT%H:%M:%S}.{:03d}", fmt::gmtime(sampling_time_in_secs), millisec_since_epoch);
+    return true;
 }
 
-void CMonitorCollectorApp::psample_date_time(long loop)
+void CMonitorCollectorApp::output_sample_date_time(long loop, const std::string& utcTime)
 {
-    DEBUGLOG_FUNCTION_START();
-
-    std::string localTime, utcTime;
-    get_timestamps(localTime, utcTime);
-
     m_output.psection_start("timestamp");
-    m_output.pstring("datetime", localTime.c_str());
     m_output.pstring("UTC", utcTime.c_str());
     m_output.plong("sample_index", loop);
     m_output.psection_end();
@@ -642,6 +660,18 @@ void CMonitorCollectorApp::check_pid_file()
     // else: this is the first instance of this software... continue
 }
 
+void CMonitorCollectorApp::do_sampling_sleep()
+{
+    if (m_cfg.m_nSamplingIntervalMsec > 1000) {
+        // usleep() cannot sleep more than 1sec, so actually do 2 sleeps:
+        unsigned int num_secs = m_cfg.m_nSamplingIntervalMsec / 1000;
+        unsigned int num_msecs_left = (m_cfg.m_nSamplingIntervalMsec - num_secs * 1000);
+        if (sleep(num_secs) == 0)
+            usleep(num_msecs_left * 1000);
+    } else
+        usleep(m_cfg.m_nSamplingIntervalMsec * 1000);
+}
+
 int CMonitorCollectorApp::run(int argc, char** argv)
 {
     // if only one instance allowed, do the check:
@@ -660,8 +690,10 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 
     // init debug/error channels:
     CMonitorLogger::instance()->init_error_output_file(m_cfg.m_strOutputFilenamePrefix);
+#ifndef TEST_COLLECTOR_PERFORMANCES // when testing performances we don't want logging that would fake results
     if (m_cfg.m_bDebug)
         CMonitorLogger::instance()->enable_debug();
+#endif
 
     // init the output channels:
     m_output.init_json_output_file(m_cfg.m_strOutputFilenamePrefix);
@@ -703,9 +735,10 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     // statistic files, only of the CPUs that can be used by the cgroup-under-monitor:
     // m_system_collector.set_monitored_cpus(m_cgroups_collector.get_cgroup_cpus());
 
-    m_system_collector.proc_stat(0, PF_NONE /* do not emit JSON data */);
-    m_system_collector.proc_diskstats(0, PF_NONE /* do not emit JSON data */);
-    m_system_collector.proc_net_dev(0, PF_NONE /* do not emit JSON data */);
+    m_system_collector.init();
+    m_system_collector.sample_cpu_stat(0, PF_NONE /* do not emit JSON data */);
+    m_system_collector.sample_diskstats(0, PF_NONE /* do not emit JSON data */);
+    m_system_collector.sample_net_dev(0, PF_NONE /* do not emit JSON data */);
     if (bCollectCGroupInfo) {
         m_cgroups_collector.init(m_cfg.m_nCollectFlags & PK_CGROUP_THREADS);
 
@@ -718,13 +751,15 @@ int CMonitorCollectorApp::run(int argc, char** argv)
             m_cgroups_collector.sample_processes(0, PF_NONE /* do not emit JSON */);
     }
 
-    double current_time = get_timestamp_sec();
+    double current_time;
+    std::string current_time_str;
+    get_timestamp(&current_time, current_time_str);
 
     // write stuff that is present only in the very first sample (never changes):
     m_output.pheader_start();
     m_header_info_generator.header_identity();
     m_header_info_generator.header_cmonitor_info(
-        argc, argv, m_cfg.m_nSamplingInterval, m_cfg.m_nSamples, m_cfg.m_nCollectFlags);
+        argc, argv, m_cfg.m_nSamplingIntervalMsec, m_cfg.m_nSamples, m_cfg.m_nCollectFlags);
     m_header_info_generator.header_etc_os_release();
     m_header_info_generator.header_version();
     if (bCollectCGroupInfo)
@@ -737,10 +772,10 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     m_header_info_generator.header_custom_metadata();
     m_output.push_header();
 
-    /* first time just sleep(1) so the first snapshot has some real-ish data */
-    if (m_cfg.m_nSamplingInterval <= 60)
-        sleep(m_cfg.m_nSamplingInterval);
-    else
+    /* first time just sleep() a bit so the first snapshot has some real-ish data */
+    if (m_cfg.m_nSamplingIntervalMsec <= 60000) {
+        do_sampling_sleep();
+    } else
         sleep(60); /* if a long time between snapshot do a quick one now so we have one in the bank */
 
     std::set<std::string> charted_stats_from_meminfo;
@@ -763,33 +798,37 @@ int CMonitorCollectorApp::run(int argc, char** argv)
     // else: leave empty
 
     // start actual data samples:
-    CMonitorLogger::instance()->LogDebug(
-        "Starting sampling of performance data; collect flags=%u", m_cfg.m_nCollectFlags);
+    CMonitorLogger::instance()->LogDebug("Starting sampling of performance data; collect flags=%u, interval=%lumsecs",
+        m_cfg.m_nCollectFlags, m_cfg.m_nSamplingIntervalMsec);
     m_output.psample_array_start();
     double previous_time = current_time;
     for (unsigned int loop = 0; m_cfg.m_nSamples == 0 || loop < m_cfg.m_nSamples; loop++) {
-        if (loop != 0)
-            sleep(m_cfg.m_nSamplingInterval);
+#ifndef TEST_COLLECTOR_PERFORMANCES // when testing performances we want to push cmonitor_collector at 100% CPU usage
+                                    // and then look at hotspots
+        if (loop != 0) {
+            do_sampling_sleep();
+        }
+#endif
         CMonitorLogger::instance()->LogDebug("Starting sample %u/%lu", loop, m_cfg.m_nSamples);
 
         // get timestamp for the new sample
         previous_time = current_time;
-        current_time = get_timestamp_sec();
-        if (current_time == 0)
+        if (!get_timestamp(&current_time, current_time_str))
             continue; // failed in getting current time...
 
         double elapsed = current_time - previous_time;
         m_output.psample_start();
 
-        // some stats are always collected, regardless of m_cfg.m_nCollectFlags
-        psample_date_time(loop);
-        // proc_uptime(); // not really useful!!
-        m_system_collector.proc_loadavg();
+        // always provide basic sample information like timestamp
+        output_sample_date_time(loop, current_time_str);
+
+        // loadavg stats are always collected, regardless of m_cfg.m_nCollectFlags
+        m_system_collector.sample_loadavg();
 
         // baremetal stats:
 
         if (m_cfg.m_nCollectFlags & PK_BAREMETAL_CPU) {
-            m_system_collector.proc_stat(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
+            m_system_collector.sample_cpu_stat(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
         }
 
         if (m_cfg.m_nCollectFlags & PK_BAREMETAL_MEMORY) {
@@ -799,11 +838,11 @@ int CMonitorCollectorApp::run(int argc, char** argv)
         }
 
         if (m_cfg.m_nCollectFlags & PK_BAREMETAL_NETWORK) {
-            m_system_collector.proc_net_dev(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
+            m_system_collector.sample_net_dev(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
         }
 
         if (m_cfg.m_nCollectFlags & PK_BAREMETAL_DISK) {
-            m_system_collector.proc_diskstats(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
+            m_system_collector.sample_diskstats(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
             // proc_filesystems(); // I don't find this really useful...specially for ephemeral containers!
         }
 
@@ -831,8 +870,11 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 
         // in debug mode provide an indication of how much optimized is cmonitor_collector:
         if (m_cfg.m_bDebug) {
-            double sampling_time = get_timestamp_sec() - current_time;
-            CMonitorLogger::instance()->LogDebug("Sampling time was %.3fmsec", sampling_time * 1000);
+            std::string tmp;
+            double time_after_sampling;
+            if (get_timestamp(&time_after_sampling, tmp))
+                CMonitorLogger::instance()->LogDebug(
+                    "Sampling time was %.3fmsec", (time_after_sampling - current_time) * 1000);
         }
 
         if (g_bExiting)

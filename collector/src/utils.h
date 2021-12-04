@@ -42,6 +42,7 @@ std::string to_lower(const std::string& orig_str);
 std::string trim_string(const std::string& s);
 void strip_spaces(char* s);
 bool string2int(const char* s, uint64_t& result);
+bool string2double(const char* s, double& result);
 bool file_or_dir_exists(const char* filename);
 template <typename T> std::string stl_container2string(const T& par, const std::string& delim);
 std::vector<std::string> split_string_in_array(const std::string& str, char splitter);

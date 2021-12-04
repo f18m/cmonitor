@@ -23,6 +23,7 @@
 // Includes
 //------------------------------------------------------------------------------
 
+#include <fmt/core.h>
 #include <map>
 #include <set>
 #include <string.h>
@@ -61,7 +62,8 @@ enum PerformanceKpiFamily {
     PK_MAX,
 
     PK_ALL_BAREMETAL = PK_BAREMETAL_CPU | PK_BAREMETAL_DISK | PK_BAREMETAL_MEMORY | PK_BAREMETAL_NETWORK,
-    PK_ALL_CGROUP = PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_NETWORK_INTERFACES | PK_CGROUP_PROCESSES,
+    PK_ALL_CGROUP
+    = PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_NETWORK_INTERFACES | PK_CGROUP_PROCESSES,
 
     PK_ALL = PK_BAREMETAL_CPU | PK_BAREMETAL_DISK | PK_BAREMETAL_MEMORY | PK_BAREMETAL_NETWORK // force newline
         | PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_NETWORK_INTERFACES | PK_CGROUP_PROCESSES
@@ -79,27 +81,6 @@ enum OutputFields {
 //------------------------------------------------------------------------------
 // Types
 //------------------------------------------------------------------------------
-
-/*
- * Structure to store CPU usage specs as reported by Linux kernel
- * NOTE: all fields specify amount of time, measured in units of USER_HZ
-         (1/100ths of a second on most architectures); this means that if the
-         _delta_ CPU value reported is 60 in mode X, then that mode took 60% of the CPU!
-         IOW there is no need to do any math to produce a percentage, just taking
-         the delta of the absolute, monotonic-increasing value and divide by the time
-*/
-typedef struct cpu_specs_s {
-    long long user;
-    long long nice;
-    long long sys;
-    long long idle;
-    long long iowait;
-    long long hardirq;
-    long long softirq;
-    long long steal;
-    long long guest;
-    long long guestnice;
-} cpu_specs_t;
 
 typedef struct procsinfo_s {
     /* Process owner */
@@ -202,7 +183,7 @@ public:
 
     // data collecting options
     uint64_t m_nSamples = 0; // --num-samples
-    uint64_t m_nSamplingInterval = 60; // --sampling-interval
+    uint64_t m_nSamplingIntervalMsec = 60000; // --sampling-interval
     unsigned int m_nCollectFlags = PK_ALL; // --collect; this is a bitmask of PerformanceKpiFamily values
     OutputFields m_nOutputFields = PF_USED_BY_CHART_SCRIPT_ONLY; // --deep-collect
     std::string m_strCGroupName; // --cgroup-name

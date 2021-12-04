@@ -19,9 +19,9 @@
  */
 
 #include "header_info.h"
+#include "logger.h"
 #include "output_frontend.h"
 #include "utils.h"
-#include "logger.h"
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <netdb.h>
@@ -63,9 +63,15 @@ void CMonitorHeaderInfo::header_identity()
     DEBUGLOG_FUNCTION_START();
 
     m_pOutput->psection_start("identity");
-    std::string strHostname = get_hostname();
-    m_pOutput->pstring("hostname", strHostname.c_str());
-    m_pOutput->pstring("shorthostname", strHostname.c_str());
+    std::string strFullHostname = get_hostname();
+    m_pOutput->pstring("hostname", strFullHostname.c_str());
+
+    // remove everything aftr first dot:
+    std::string shortHostname(strFullHostname);
+    size_t dot_pos = shortHostname.find('.');
+    if (dot_pos != std::string::npos)
+        shortHostname.resize(dot_pos);
+    m_pOutput->pstring("shorthostname", shortHostname.c_str());
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
@@ -143,12 +149,8 @@ void CMonitorHeaderInfo::header_identity()
 }
 
 void CMonitorHeaderInfo::header_cmonitor_info(
-    int argc, char** argv, long sampling_interval_sec, long num_samples, unsigned int collect_flags)
+    int argc, char** argv, long sampling_interval_msec, long num_samples, unsigned int collect_flags)
 {
-    /* user name and id */
-    struct passwd* pw;
-    uid_t uid;
-
     m_pOutput->psection_start("cmonitor");
 
     char command[1024] = { 0 };
@@ -158,10 +160,24 @@ void CMonitorHeaderInfo::header_cmonitor_info(
             strcat(command, " ");
     }
 
+    // -------------------------------------------------
+    // the full set of arguments provided by commandline & version
     m_pOutput->pstring("command", command);
-    m_pOutput->plong("sample_interval_seconds", sampling_interval_sec);
-    m_pOutput->plong("sample_num", num_samples);
     m_pOutput->pstring("version", VERSION_STRING);
+
+    // -------------------------------------------------
+    // time information
+    time_t t = time(NULL);
+    struct tm lt = { 0 };
+    localtime_r(&t, &lt);
+    m_pOutput->plong("gmt_offset_seconds", lt.tm_gmtoff);
+    m_pOutput->pstring("timezone_name", lt.tm_zone);
+    m_pOutput->pdouble("sample_interval_seconds", (double)sampling_interval_msec / 1000.0f);
+
+    // -------------------------------------------------
+    // num and contents of each sample
+
+    m_pOutput->plong("sample_num", num_samples);
 
     std::string str;
     for (size_t j = 1; j < PK_MAX; j *= 2) {
@@ -176,6 +192,11 @@ void CMonitorHeaderInfo::header_cmonitor_info(
         str.pop_back();
     m_pOutput->pstring("collecting", str.c_str());
 
+    // -------------------------------------------------
+    // users/permissions info
+
+    struct passwd* pw;
+    uid_t uid;
     uid = geteuid();
     if ((pw = getpwuid(uid)) != NULL) {
         m_pOutput->pstring("username", pw->pw_name);
@@ -191,16 +212,14 @@ void CMonitorHeaderInfo::header_cmonitor_info(
 
 void CMonitorHeaderInfo::header_etc_os_release()
 {
-    static FILE* fp = 0;
+    FILE* fp = 0;
     char buf[1024 + 1];
 
     DEBUGLOG_FUNCTION_START();
-    if (fp == 0) {
-        if ((fp = fopen("/etc/os-release", "r")) == NULL) {
-            return;
-        }
-    } else
-        rewind(fp);
+
+    if ((fp = fopen("/etc/os-release", "r")) == NULL) {
+        return;
+    }
 
     m_pOutput->psection_start("os_release");
     while (fgets(buf, 1024, fp) != NULL) {
@@ -222,11 +241,13 @@ void CMonitorHeaderInfo::header_etc_os_release()
         }
     }
     m_pOutput->psection_end();
+
+    fclose(fp);
 }
 
 void CMonitorHeaderInfo::header_cpuinfo()
 {
-    static FILE* fp = 0;
+    FILE* fp = 0;
     char buf[1024 + 1];
     char string[1024 + 1];
     double value;
@@ -237,12 +258,9 @@ void CMonitorHeaderInfo::header_cpuinfo()
     int ispower = 0;
 
     DEBUGLOG_FUNCTION_START();
-    if (fp == 0) {
-        if ((fp = fopen("/proc/cpuinfo", "r")) == NULL) {
-            return;
-        }
-    } else
-        rewind(fp);
+    if ((fp = fopen("/proc/cpuinfo", "r")) == NULL) {
+        return;
+    }
 
     m_pOutput->psection_start("cpuinfo");
     processor = -1;
@@ -331,6 +349,8 @@ void CMonitorHeaderInfo::header_cpuinfo()
         }
         m_pOutput->psection_end();
     }
+
+    fclose(fp);
 }
 
 void CMonitorHeaderInfo::header_meminfo()
@@ -344,16 +364,15 @@ void CMonitorHeaderInfo::header_meminfo()
 
 void CMonitorHeaderInfo::header_version()
 {
-    static FILE* fp = 0;
+    FILE* fp = 0;
     char buf[1024 + 1];
 
     DEBUGLOG_FUNCTION_START();
-    if (fp == 0) {
-        if ((fp = fopen("/proc/version", "r")) == NULL) {
-            return;
-        }
-    } else
-        rewind(fp);
+
+    if ((fp = fopen("/proc/version", "r")) == NULL) {
+        return;
+    }
+
     if (fgets(buf, 1024, fp) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
         for (size_t i = 0; i < strlen(buf); i++) {
@@ -364,6 +383,8 @@ void CMonitorHeaderInfo::header_version()
         m_pOutput->pstring("version", buf);
         m_pOutput->psection_end();
     }
+
+    fclose(fp);
 }
 
 void CMonitorHeaderInfo::header_lscpu()

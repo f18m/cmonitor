@@ -32,8 +32,15 @@ GRAPH_SOURCE_DATA_CGROUP = 2
 GRAPH_TYPE_AREA_CHART = 1
 GRAPH_TYPE_BUBBLE_CHART = 2
 
-SAVE_DEFLATED_JS_DATATABLES = True
+SAVE_DEFLATED_JS_DATATABLES = False
 JS_INDENT_SIZE = 2
+
+# see https://developers.google.com/chart/interactive/docs/reference#dateformat
+# the idea is that cmonitor_chart will most likely be used to explore short time intervals
+# so that day/month/year part is not useful, just the time is useful; in tooltip we also
+# reach millisec accuracy:
+X_AXIS_DATEFORMAT = "HH:mm:ss"
+TOOLTIP_DATEFORMAT = "HH:mm:ss.SSS z"
 
 
 # =======================================================================================================
@@ -60,19 +67,23 @@ class GoogleChartsTimeSeries(object):
 
     def ISOdatetimeToJSDate(self, date):
         """convert ISO datetime strings like
-          "2017-08-21T20:12:30"
+          "2017-08-21T20:12:30.123"
         to strings like:
-          "Date(2019,4,04,01,16,25)"
-        which are the datetime representation suitable for JS GoogleCharts
+          "Date(2017,8,21,20,12,30,123000)"
+        which are the datetime representation suitable for JS GoogleCharts, see
+        https://developers.google.com/chart/interactive/docs/datesandtimes
         """
-        dateAsPythonObj = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
-        return "Date(%d,%d,%d,%d,%d,%d)" % (
+        dateAsPythonObj = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f")
+
+        return "Date(%d,%d,%d,%d,%d,%d,%d)" % (
             dateAsPythonObj.year,
             dateAsPythonObj.month,
             dateAsPythonObj.day,
             dateAsPythonObj.hour,
             dateAsPythonObj.minute,
             dateAsPythonObj.second,
+            dateAsPythonObj.microsecond
+            / 1000,  # NOTE: the JavaScript Date() object wants milliseconds
         )
 
     def addRow(self, row_data_list):
@@ -161,6 +172,11 @@ class GoogleChartsTimeSeries(object):
             "var data_%s = google.visualization.arrayToDataTable(inflated_data_%s);\n"
             % (graphName, graphName)
         )
+
+        # add DateFormatter to use custom formatting of the 1st column (like everywhere else we assume first column is the timestamp)
+        ret_string += "var date_formatter = new google.visualization.DateFormat({pattern: '%s'});\n" % (TOOLTIP_DATEFORMAT)
+        ret_string += "date_formatter.format(data_%s, 0);\n\n" % (graphName)
+
         return ret_string
 
 
@@ -321,7 +337,20 @@ class GoogleChartsGraph:
         )
         ret_string += '  title: "%s",\n' % (self.graph_title)
         ret_string += '  focusTarget: "category",\n'
-        ret_string += '  hAxis: { gridlines: { color: "lightgrey", count: 30 } },\n'
+
+        # by default this tool plots the top 20 processes; in these cases both tooltips and legend will have up to 21 rows (including time)
+        # so we make the font a bit smaller to make it more likely to view all the lines
+        ret_string += "  tooltip: { textStyle: { fontSize: 12 } },\n"
+        ret_string += "  legend: { textStyle: { fontSize: 12 } },\n"
+        ret_string += '  explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },\n'
+
+        # HORIZONTAL AXIS
+        ret_string += (
+            '  hAxis: { format: "%s", gridlines: { color: "lightgrey", count: 30 } },\n'
+            % X_AXIS_DATEFORMAT
+        )
+
+        # VERTICAL AXIS (OR AXES)
         if len(self.series_for_2nd_yaxis) > 0:
             # compute series that use 1st Y axis:
             num_series = self.data_table.getNumDataSeries()
@@ -351,7 +380,6 @@ class GoogleChartsGraph:
                 '  vAxis: { title: "%s", gridlines: { color: "lightgrey", count: 11 } },\n'
                 % str(self.y_axis_title)
             )
-        ret_string += '  explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },\n'
 
         # graph stacking
         g_next_graph_need_stacking = self.stack_state
@@ -476,10 +504,10 @@ class HtmlOutputPage:
      #bottom_table_val { font-family: monospace; }
   </style>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
-  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript">
-/* Load GoogleCharts: */
-google.load("visualization", "1.1", {packages:["corechart"]});
+// Load the Visualization API and the corechart package; version 51 is June 2021 version
+google.charts.load('51', {'packages':['corechart']});
 google.setOnLoadCallback(setup_button_click_handlers);
 
 /* The global chart object: */
@@ -719,7 +747,7 @@ def choose_byte_divider(mem_total_bytes):
 def print_data_loading_stats(desc, jdata, n_invalid_samples):
     if n_invalid_samples > 0:
         print(
-            "While parsing %s statistics found %d/%d (%.1f%%) samples that did not contain the JSON section."
+            "While parsing %s statistics found %d/%d (%.1f%%) samples that did not contain some required JSON section."
             % (
                 desc,
                 n_invalid_samples,
@@ -727,6 +755,8 @@ def print_data_loading_stats(desc, jdata, n_invalid_samples):
                 100 * n_invalid_samples / len(jdata),
             )
         )
+    else:
+        print("Parsed correctly %d samples for [%s] category" % (len(jdata), desc))
 
 
 def cgroup_get_cpu_quota_percentage(jheader):
@@ -918,8 +948,8 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20, thread_fil
                             }
                         }
                     )
-        except KeyError:  # avoid crashing if a key is not present in the dictionary...
-            # print("Missing cgroup data while parsing sample %d" % i)
+        except KeyError as e:  # avoid crashing if a key is not present in the dictionary...
+            print(f"Missing cgroup data while parsing {i}-th sample: {e}")
             n_invalid_samples += 1
             pass
 
@@ -1493,7 +1523,7 @@ def generate_cgroup_memory(web, jheader, jdata):
         ["Timestamp", "Used", "Cached (DiskRead)", "Alloc Failures", "Limit"]
     )
 
-    ver = jheader["cgroup_config"]["version"]
+    ver = int(jheader["cgroup_config"]["version"])
 
     mem_limit_bytes, divider, unit = cgroup_get_memory_limit(jheader, jdata)
 
@@ -1521,8 +1551,8 @@ def generate_cgroup_memory(web, jheader, jdata):
                     mem_limit_bytes / divider,  # imposed limit of memory in this cgroup
                 ]
             )
-        except KeyError:  # avoid crashing if a key is not present in the dictionary...
-            # print("Missing cgroup data while parsing sample %d" % i)
+        except KeyError as e:  # avoid crashing if a key is not present in the dictionary...
+            print(f"Missing cgroup data while parsing {i}-th sample: {e}")
             n_invalid_samples += 1
             pass
 
@@ -1724,9 +1754,9 @@ def load_json_data(infile):
         entry = json.loads(text)  # convert text to JSON
     except json.decoder.JSONDecodeError as e:
         # fix up the end of the file if it is not complete
-        if text[-1]==',':
-            # try removing last comma 
-            text[-1]=' '
+        if text[-1] == ",":
+            # try removing last comma
+            text[-1] = " "
         # add the closure of the "samples" array and JSON end-of-object
         entry = json.loads(text + "]}")
 
@@ -1742,8 +1772,8 @@ def load_json_data(infile):
     # Check if cmonitor_collector version used differs or not:
     try:
         cmonitor_collector_version = jheader["cmonitor"]["version"]
-        my_major = VERSION_STRING.split('.')[0]
-        cmonitor_collector_major = cmonitor_collector_version.split('.')[0]
+        my_major = VERSION_STRING.split(".")[0]
+        cmonitor_collector_major = cmonitor_collector_version.split(".")[0]
         if cmonitor_collector_major != my_major:
             print(
                 f"ERROR: the input JSON file has been generated by cmonitor_collector v{cmonitor_collector_version}, which has a different MAJOR version compared to this tool which is v{VERSION_STRING}."

@@ -3,10 +3,11 @@
 # 
 TOPDIR=..
 
+#	baremetal2.json.gz \
+
 
 EXAMPLE_JSON_FILES=\
 	baremetal1.json.gz \
-	baremetal2.json.gz \
 	docker-collecting-baremetal-stats.json.gz \
 	docker-userapp-with-embedded-collector.json.gz \
 	docker-userapp-with-embedded-collector.json.gz \
@@ -121,11 +122,11 @@ regen_docker_userapp:
 		./example_load_redis.py userapp & \
 		sleep 1 ; \
 	done
-	@echo "Now running cmonitor_collector on the baremetal to monitor the 'userapp' container:"
+	@echo "Now running cmonitor_collector on the baremetal to monitor for 2 minutes the 'userapp' container:"
 	# NOTE: we know that docker creates a cgroup always named docker/container-ID
 	$(CMONITOR_COLLECTOR) \
-		--sampling-interval=2 \
-		--num-samples=60 \
+		--sampling-interval=0.5 \
+		--num-samples=240 \
 		--collect=cgroup_cpu,cgroup_memory,cgroup_threads \
 		--foreground \
 		--output-filename=docker-userapp.json \

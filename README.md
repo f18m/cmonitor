@@ -42,24 +42,33 @@ Table of contents of this README:
     - [Reference Manual](#reference-manual)
   - [Project History](#project-history)
   - [License](#license)
+
 ## Features
 
-This project collects performance data about:
+This project collects performance data sampling system-wide Linux statistic files (i.e. sampling `/proc`):
 
 - per-CPU-core usage;
-- memory usage;
+- memory usage (and memory pressure information);
 - network traffic (PPS and MB/s or Mbps);
 - disk load;
 - average Linux load;
-- CPU usage as reported by the `cpuacct` (CPU accounting) cgroup;
+
+and can sample cgroup-specific (read: container-specific) statistics from `/sys/fs/cgroup` like:
+
+- CPU usage as reported by the `cpuacct` (CPU accounting) cgroupv1 or by the  `cpu` cgroupv2;
 - CPU throttling reported under `cpuacct` cgroup;
 - CPU usage per-process and per-thread (useful for multithreaded application monitoring);
-- memory usage as reported by the `memory` cgroup;
+- memory usage and memory pressure information as reported by the `memory` cgroup;
+- network usage measured by sampling the network interfaces associated to a cgroup network namespace;
 - disk usage as reported by the `blkio` cgroup;
 
-Moreover the project allows you to easily post-process collected data and produce a **self-contained** HTML page which allows
-to visualize all the performance data easily using [Google Charts](https://developers.google.com/chart/).
+The collector of statistics can be configured to collect all or a subset of above statistics.
+Moreover sub-second sampling is possible and up to 100 samples/sec can be collected in some cases (sampling all stats for a docker container
+typically takes around 1msec). This allow to explore fast transients in CPU/memory/network usage.
 
+Finally the project allows you to easily post-process collected data to:
+* produce a **self-contained** HTML page which allows to visualize all the performance data easily using [Google Charts](https://developers.google.com/chart/);
+* extract statistics information e.g. average/median/peak CPU usage and CPU throttling, average/median/peak memory usage etc.
 
 
 ## Yet-Another-Monitoring-Project?

@@ -25,10 +25,25 @@
 #include <mntent.h>
 #include <sys/vfs.h>
 
-#define MAX_LOGICAL_CPU (256)
-#define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpu_count + 1.0)))
-#define DELTA_LOGICAL(stat) ((float)(stat - logical_cpu[cpuno].stat) / (float)elapsed_sec)
+// ----------------------------------------------------------------------------------
+// Macros
+// ----------------------------------------------------------------------------------
 
+#define DELTA_TOTAL(stat) ((float)(stat - total_cpu.stat) / (float)elapsed_sec / ((float)(max_cpu_count + 1.0)))
+
+// ----------------------------------------------------------------------------------
+// CMonitorSystem
+// ----------------------------------------------------------------------------------
+
+void CMonitorSystem::init()
+{
+    m_cpu_stat.set_file("/proc/stat");
+    m_disk_stat.set_file("/proc/diskstats");
+    m_uptime.set_file("/proc/uptime");
+    m_loadavg.set_file("/proc/loadavg");
+}
+
+#if 0 // currently unused
 void CMonitorSystem::proc_stat_cpu_total(
     const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t& total_cpu, int max_cpu_count)
 {
@@ -87,28 +102,23 @@ void CMonitorSystem::proc_stat_cpu_total(
     total_cpu.guest = guest;
     total_cpu.guestnice = guestnice;
 }
+#endif
 
-int CMonitorSystem::proc_stat_cpu_index(
-    const char* cpu_data, double elapsed_sec, OutputFields output_opts, cpu_specs_t* logical_cpu)
+int CMonitorSystem::proc_stat_cpu_index(const char* cpu_data, cpu_specs_t* cpu_values_out)
 {
-    long long user;
-    long long nice;
-    long long sys;
-    long long idle;
-    long long iowait;
-    long long hardirq;
-    long long softirq;
-    long long steal;
-    long long guest;
-    long long guestnice;
     int cpuno;
 
     // see http://man7.org/linux/man-pages/man5/proc.5.html
     // Look for "/proc/stat"
 
-    int count = sscanf(cpu_data, /* cpuNNN USER*/
+    /* cpu_data must be a pointer immediately after the 'cpu' chars of:
+         cpuNNN ...lots of counters
+    */
+    int count = sscanf(cpu_data, // force newline
         "%d %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", // force newline
-        &cpuno, &user, &nice, &sys, &idle, &iowait, &hardirq, &softirq, &steal, &guest, &guestnice);
+        &cpuno, &cpu_values_out->user, &cpu_values_out->nice, &cpu_values_out->sys, &cpu_values_out->idle,
+        &cpu_values_out->iowait, &cpu_values_out->hardirq, &cpu_values_out->softirq, &cpu_values_out->steal,
+        &cpu_values_out->guest, &cpu_values_out->guestnice);
     if (count != 11)
         return -1;
 
@@ -116,210 +126,135 @@ int CMonitorSystem::proc_stat_cpu_index(
         return -1;
     if (!is_monitored_cpu(cpuno))
         return -1;
-
-    if (output_opts != PF_NONE) {
-        char label[512];
-        sprintf(label, "cpu%d", cpuno);
-        m_pOutput->psubsection_start(label);
-
-        switch (output_opts) {
-        case PF_NONE:
-            assert(0);
-            break;
-        case PF_ALL:
-        case PF_USED_BY_CHART_SCRIPT_ONLY:
-            m_pOutput->pdouble("user", DELTA_LOGICAL(user)); /* counter */
-            m_pOutput->pdouble("nice", DELTA_LOGICAL(nice)); /* counter */
-            m_pOutput->pdouble("sys", DELTA_LOGICAL(sys)); /* counter */
-            m_pOutput->pdouble("idle", DELTA_LOGICAL(idle)); /* counter */
-            m_pOutput->pdouble("iowait", DELTA_LOGICAL(iowait)); /* counter */
-            m_pOutput->pdouble("hardirq", DELTA_LOGICAL(hardirq)); /* counter */
-            m_pOutput->pdouble("softirq", DELTA_LOGICAL(softirq)); /* counter */
-            m_pOutput->pdouble("steal", DELTA_LOGICAL(steal)); /* counter */
-            m_pOutput->pdouble("guest", DELTA_LOGICAL(guest)); /* counter */
-            m_pOutput->pdouble("guestnice", DELTA_LOGICAL(guestnice)); /* counter */
-            break;
-        }
-        m_pOutput->psubsection_end();
-    }
-    logical_cpu[cpuno].user = user;
-    logical_cpu[cpuno].nice = nice;
-    logical_cpu[cpuno].sys = sys;
-    logical_cpu[cpuno].idle = idle;
-    logical_cpu[cpuno].iowait = iowait;
-    logical_cpu[cpuno].hardirq = hardirq;
-    logical_cpu[cpuno].softirq = softirq;
-    logical_cpu[cpuno].steal = steal;
-    logical_cpu[cpuno].guest = guest;
-    logical_cpu[cpuno].guestnice = guestnice;
-
     return cpuno;
 }
 
 /*
 read /proc/stat
 */
-void CMonitorSystem::proc_stat(double elapsed_sec, OutputFields output_opts)
+void CMonitorSystem::sample_cpu_stat(double elapsed_sec, OutputFields output_opts)
 {
-    int count;
-    long long value;
-
-    /* Static data */
-    static FILE* fp = 0;
-    static char line[8192];
-    static int max_cpu_count;
-
-    static long long old_ctxt;
-    static long long old_processes;
-    // static cpu_specs_t total_cpu;
-    static cpu_specs_t logical_cpu[MAX_LOGICAL_CPU];
+    long long new_ctx, btime, new_processes, procs_running, procs_blocked;
 
     DEBUGLOG_FUNCTION_START();
-    CMonitorLogger::instance()->LogDebug("proc_stat(%.4f) max_cpu_count=%d\n", elapsed_sec, max_cpu_count);
-    if (fp == 0) {
-        if ((fp = fopen("/proc/stat", "r")) == NULL) {
-            CMonitorLogger::instance()->LogErrorWithErrno("failed to open file /proc/stat");
-            fp = 0;
-            return;
-        }
-    } else
-        rewind(fp);
 
-    if (output_opts != PF_NONE)
-        m_pOutput->psection_start("stat");
+    CMonitorLogger::instance()->LogDebug("proc_stat(%.4f) max_cpu_count=%d\n", elapsed_sec, m_cpu_count);
+    if (!m_cpu_stat.open_or_rewind()) {
+        CMonitorLogger::instance()->LogError("failed to re-open %s", m_cpu_stat.get_file().c_str());
+        return;
+    }
 
-    while (fgets(line, 1000, fp) != NULL) {
-        if (!strncmp(line, "cpu", 3)) {
+    cpu_specs_t new_values[MAX_LOGICAL_CPU];
+    cpu_specs_t tmp_values;
+    const char* line = m_cpu_stat.get_next_line();
+    while (line) {
+        if (strncmp(line, "cpu", 3) == 0) {
             if (line[3] == ' ') {
-                // found the summary line for ALL cpus together... skip it
+                // found the summary line for ALL cpus together, e.g.:
+                //     cpu  265510448 66285 143983783 14772309342 4657946 0 16861124 0 0 0
+                // skip it
+                line = m_cpu_stat.get_next_line();
                 continue;
             } else {
-                // found a line like:
+                // found a line for a specific CPU like:
                 //    cpu1 90470 3217 30294 291392 17250 0 3242 0 0 0
-
-                int cpuno = proc_stat_cpu_index(&line[3], elapsed_sec, output_opts, logical_cpu);
-                if (cpuno > max_cpu_count)
-                    max_cpu_count = cpuno;
+                // process it
+                int cpuno = proc_stat_cpu_index(&line[3], &tmp_values);
+                if (cpuno > m_cpu_count)
+                    m_cpu_count = cpuno;
+                if (cpuno >= 0)
+                    new_values[cpuno] = tmp_values;
             }
         } else if (!strncmp(line, "ctxt", 4)) {
-            value = 0;
-            count = sscanf(&line[5], "%lld", &value); /* counter */
-            if (count == 1) {
-                if (output_opts != PF_NONE) {
-                    m_pOutput->psubsection_start("counters");
-                    m_pOutput->pdouble("ctxt", ((double)(value - old_ctxt) / elapsed_sec));
-                }
-                old_ctxt = value;
-            }
+            new_ctx = 0;
+            sscanf(&line[5], "%lld", &new_ctx); /* counter */
         } else if (!strncmp(line, "btime", 5)) {
-            value = 0;
-            count = sscanf(&line[6], "%lld", &value); /* seconds since boot */
-            if (output_opts != PF_NONE)
-                m_pOutput->plong("btime", value);
+            btime = 0;
+            sscanf(&line[6], "%lld", &btime); /* seconds since boot */
         } else if (!strncmp(line, "processes", 9)) {
-            value = 0;
-            count = sscanf(&line[10], "%lld", &value); /* counter  actually forks */
-            if (output_opts != PF_NONE)
-                m_pOutput->pdouble("processes_forks", ((double)(value - old_processes) / elapsed_sec));
-            old_processes = value;
+            new_processes = 0;
+            sscanf(&line[10], "%lld", &new_processes); /* counter  actually forks */
         } else if (!strncmp(line, "procs_running", 13)) {
-            value = 0;
-            count = sscanf(&line[14], "%lld", &value);
-            if (output_opts != PF_NONE)
-                m_pOutput->plong("procs_running", value);
+            procs_running = 0;
+            sscanf(&line[14], "%lld", &procs_running);
         } else if (!strncmp(line, "procs_blocked", 13)) {
-            value = 0;
-            count = sscanf(&line[14], "%lld", &value);
-            if (output_opts != PF_NONE) {
-                m_pOutput->plong("procs_blocked", value);
-                m_pOutput->psubsection_end();
-            }
+            procs_blocked = 0;
+            sscanf(&line[14], "%lld", &procs_blocked);
         }
+
+        line = m_cpu_stat.get_next_line();
     }
-    if (output_opts != PF_NONE)
+
+    if (output_opts != PF_NONE) {
+        m_pOutput->psection_start("stat");
+        for (int i = 0; i < m_cpu_count; i++) {
+            if (!is_monitored_cpu(i))
+                continue;
+
+#define DELTA_CPU_STAT(stat) ((double)(new_values[i].stat - m_cpu_stat_prev_values[i].stat) / elapsed_sec)
+
+            m_pOutput->psubsection_start(fmt::format("cpu{:d}", i).c_str());
+            switch (output_opts) {
+            case PF_NONE:
+                assert(0);
+                break;
+            case PF_ALL:
+            case PF_USED_BY_CHART_SCRIPT_ONLY:
+                m_pOutput->pdouble("user", DELTA_CPU_STAT(user)); /* counter */
+                m_pOutput->pdouble("nice", DELTA_CPU_STAT(nice)); /* counter */
+                m_pOutput->pdouble("sys", DELTA_CPU_STAT(sys)); /* counter */
+                m_pOutput->pdouble("idle", DELTA_CPU_STAT(idle)); /* counter */
+                m_pOutput->pdouble("iowait", DELTA_CPU_STAT(iowait)); /* counter */
+                m_pOutput->pdouble("hardirq", DELTA_CPU_STAT(hardirq)); /* counter */
+                m_pOutput->pdouble("softirq", DELTA_CPU_STAT(softirq)); /* counter */
+                m_pOutput->pdouble("steal", DELTA_CPU_STAT(steal)); /* counter */
+                m_pOutput->pdouble("guest", DELTA_CPU_STAT(guest)); /* counter */
+                m_pOutput->pdouble("guestnice", DELTA_CPU_STAT(guestnice)); /* counter */
+                break;
+            }
+            m_pOutput->psubsection_end();
+        }
+
+        m_pOutput->psubsection_start("counters");
+        m_pOutput->pdouble("ctxt", ((double)(new_ctx - m_cpu_stat_old_ctxt) / elapsed_sec));
+        m_pOutput->plong("btime", btime);
+        m_pOutput->pdouble("processes_forks", ((double)(new_processes - m_cpu_stat_old_processes) / elapsed_sec));
+        m_pOutput->plong("procs_running", procs_running);
+        m_pOutput->plong("procs_blocked", procs_blocked);
+        m_pOutput->psubsection_end();
+
         m_pOutput->psection_end();
+    }
+
+    m_cpu_stat_old_ctxt = new_ctx;
+    m_cpu_stat_old_processes = new_processes;
+    for (int i = 0; i < m_cpu_count; i++)
+        m_cpu_stat_prev_values[i] = new_values[i];
 }
 
 /*
 read /proc/diskstats
 */
-void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts)
+void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_opts)
 {
-    // please refer https://www.kernel.org/doc/Documentation/iostats.txt
-
-    struct diskinfo {
-        long dk_major;
-        long dk_minor;
-        char dk_name[128];
-
-        // reads
-        long long dk_reads; // Field 1: This is the total number of reads completed successfully.
-        long long dk_rmerge; // Field 2: Reads and writes which are adjacent to each other may be merged for efficiency.
-        long long
-            dk_rkb; // Field 3: This is the total number of Kbytes read successfully. [converted by us from sectors]
-        long long dk_rmsec; // Field 4: This is the total number of milliseconds spent by all reads
-
-        // writes
-        long long dk_writes; // Same as Field 1 but for writes
-        long long dk_wmerge; // Same as Field 2 but for writes
-        long long dk_wkb; // Same as Field 3 but for writes
-        long long dk_wmsec; // Same as Field 4 but for writes
-
-        // others
-        long long dk_inflight; // Field 9: number of I/Os currently in progress
-        long long dk_time; // Field 10: This field increases so long as field 9 is nonzero. (milliseconds) [converted in
-                           // percentage]
-        long long dk_backlog; // Field 11: weighted # of milliseconds spent doing I/Os
-
-        // computed by ourselves:
-        long long dk_xfers; // sum of number of read/write operations
-        long long dk_bsize;
-    };
-
-    static struct diskinfo current;
-    static struct diskinfo* previous;
-    static long disks_found = 0, disks_sampled = 0;
-    static FILE* fp = 0;
-    char buf[1024];
+    static bool first_time = true;
     int dk_stats;
 
-    /* popen variables */
-    FILE* pop;
-    char tmpstr[1024 + 1];
-    long i;
-    long j;
-    long len;
-    int filtered_out = 0;
-
     DEBUGLOG_FUNCTION_START();
-    if (fp == (FILE*)0) {
-        /* Just count the number of disks */
-        pop = popen("lsblk --nodeps --output NAME,TYPE --raw 2>/dev/null", "r");
-        if (pop != NULL) {
-            /* throw away the headerline */
-            tmpstr[0] = 0;
-            disks_found = 0;
-            if (fgets(tmpstr, 127, pop)) {
-                for (;; disks_found++) {
-                    tmpstr[0] = 0;
-                    if (fgets(tmpstr, 127, pop) == NULL)
-                        break;
-                    // CMonitorLogger::instance()->LogDebug("DEBUG %ld disks - %s\n", disks, tmpstr);
-                }
-            }
-            pclose(pop);
-        } else {
-            CMonitorLogger::instance()->LogErrorWithErrno("failed to list number of disks using 'lsblk'");
-            disks_found = 0;
-        }
-        // CMonitorLogger::instance()->LogDebug("DEBUG %ld disks\n", disks);
-        previous = (diskinfo*)calloc(sizeof(struct diskinfo), disks_found);
+
+    if (first_time) {
+        /* popen variables */
+        FILE* pop;
+        char tmpstr[1024 + 1];
+        long i;
+        long j;
+        long len;
 
         pop = popen("lsblk --nodeps --output NAME,TYPE --raw 2>/dev/null", "r");
         if (pop != NULL) {
             /* throw away the headerline */
             if (fgets(tmpstr, 70, pop)) {
-                for (i = 0; i < disks_found; i++) {
+                for (i = 0;; i++) {
                     tmpstr[0] = 0;
                     if (fgets(tmpstr, 70, pop) == NULL)
                         break;
@@ -332,8 +267,7 @@ void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts
                     if (strncmp(tmpstr, "loop", 4) != 0) {
                         // CMonitorLogger::instance()->LogDebug("DEBUG saved %ld %s disk name\n", i,
                         // previous[i].dk_name);
-                        strcpy(previous[disks_sampled].dk_name, tmpstr);
-                        disks_sampled++;
+                        m_disks.insert(tmpstr);
                     } else {
                         CMonitorLogger::instance()->LogDebug("Discarding disk %s\n", tmpstr);
                         /* loop**** disks are not real */
@@ -341,29 +275,37 @@ void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts
                 }
             }
             pclose(pop);
-        } else
-            disks_sampled = 0;
-
-        if ((fp = fopen("/proc/diskstats", "r")) == NULL) {
-            CMonitorLogger::instance()->LogErrorWithErrno("failed to open - /proc/diskstats");
-            return;
         }
-    } else
-        rewind(fp);
+
+        CMonitorLogger::instance()->LogDebug("Found %zu disks to monitor\n", m_disks.size());
+        first_time = false;
+    }
+
+    if (!m_disk_stat.open_or_rewind()) {
+        CMonitorLogger::instance()->LogError("failed to re-open %s", m_disk_stat.get_file().c_str());
+        return;
+    }
+
+    // FIXME: break in 2 parts the parsing of the stat file and the output of measurements just like done for CPU and
+    // net stats
 
     if (output_opts != PF_NONE)
         m_pOutput->psection_start("disks");
-    while (fgets(buf, 1024, fp) != NULL) {
-        buf[strlen(buf) - 1] = 0; /* remove newline */
+
+    diskinfo_t current;
+    const char* buf = m_disk_stat.get_next_line();
+    while (buf) {
+        // char* pbuf = const_cast<char*>(buf);
+        // pbuf[strlen(buf) - 1] = 0; /* remove newline */ // unnecessary???
 
         // CMonitorLogger::instance()->LogDebug("DISKSTATS: \"%s\"", buf);
 
         /* zero the data ready for reading */
-        bzero(&current, sizeof(struct diskinfo));
+        bzero(&current, sizeof(diskinfo_t));
 
         // try to read all the 14 fields
-        dk_stats = sscanf(&buf[0], "%ld %ld %s %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld",
-            &current.dk_major, &current.dk_minor, // force newline
+        dk_stats = sscanf(buf, "%ld %ld %s %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", &current.dk_major,
+            &current.dk_minor, // force newline
             &current.dk_name[0], // force newline
             &current.dk_reads, &current.dk_rmerge, &current.dk_rkb, &current.dk_rmsec, // force newline
             &current.dk_writes, &current.dk_wmerge, &current.dk_wkb, &current.dk_wmsec, // force newline
@@ -390,49 +332,50 @@ void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts
         // f18m: not really sure this is correct... assumes that this field is updated 10 times per second
         current.dk_time /= 10.0; /* in milli-seconds to make it up to 100%, 1000/100 = 10 */
 
-        for (i = 0; i < disks_found; i++) {
-            // CMonitorLogger::instance()->LogDebug("DEBUG disks new %s old %s\n", current.dk_name,
-            // previous[i].dk_name);
-            if (!strcmp(current.dk_name, previous[i].dk_name)) {
+        const auto it_prev = m_previous_diskinfo.find(current.dk_name);
+        if (it_prev != m_previous_diskinfo.end()) {
+            const diskinfo_t& previous = it_prev->second;
 
-                if (!filtered_out && output_opts != PF_NONE) {
-                    m_pOutput->psubsection_start(current.dk_name);
+            if (output_opts != PF_NONE) {
+                m_pOutput->psubsection_start(current.dk_name);
 
-                    switch (output_opts) {
-                    case PF_NONE:
-                        assert(0);
-                        break;
+#define DELTA_DISK_STAT(member) ((double)(current.member - previous.member) / elapsed_sec)
 
-                    case PF_ALL:
-                        m_pOutput->pdouble("reads", (current.dk_reads - previous[i].dk_reads) / elapsed_sec);
-                        m_pOutput->pdouble("rmerge", (current.dk_rmerge - previous[i].dk_rmerge) / elapsed_sec);
-                        m_pOutput->pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed_sec);
-                        m_pOutput->pdouble("rmsec", (current.dk_rmsec - previous[i].dk_rmsec) / elapsed_sec);
+                switch (output_opts) {
+                case PF_NONE:
+                    assert(0);
+                    break;
 
-                        m_pOutput->pdouble("writes", (current.dk_writes - previous[i].dk_writes) / elapsed_sec);
-                        m_pOutput->pdouble("wmerge", (current.dk_wmerge - previous[i].dk_wmerge) / elapsed_sec);
-                        m_pOutput->pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed_sec);
-                        m_pOutput->pdouble("wmsec", (current.dk_wmsec - previous[i].dk_wmsec) / elapsed_sec);
+                case PF_ALL:
+                    m_pOutput->pdouble("reads", DELTA_DISK_STAT(dk_reads));
+                    m_pOutput->pdouble("rmerge", DELTA_DISK_STAT(dk_rmerge));
+                    m_pOutput->pdouble("rkb", DELTA_DISK_STAT(dk_rkb));
+                    m_pOutput->pdouble("rmsec", DELTA_DISK_STAT(dk_rmsec));
 
-                        m_pOutput->plong("inflight", current.dk_inflight);
-                        m_pOutput->pdouble("time", (current.dk_time - previous[i].dk_time) / elapsed_sec);
-                        m_pOutput->pdouble("backlog", (current.dk_backlog - previous[i].dk_backlog) / elapsed_sec);
-                        m_pOutput->pdouble("xfers", (current.dk_xfers - previous[i].dk_xfers) / elapsed_sec);
-                        m_pOutput->plong("bsize", current.dk_bsize);
-                        break;
+                    m_pOutput->pdouble("writes", DELTA_DISK_STAT(dk_writes));
+                    m_pOutput->pdouble("wmerge", DELTA_DISK_STAT(dk_wmerge));
+                    m_pOutput->pdouble("wkb", DELTA_DISK_STAT(dk_wkb));
+                    m_pOutput->pdouble("wmsec", DELTA_DISK_STAT(dk_wmsec));
 
-                    case PF_USED_BY_CHART_SCRIPT_ONLY:
-                        m_pOutput->pdouble("rkb", (current.dk_rkb - previous[i].dk_rkb) / elapsed_sec);
-                        m_pOutput->pdouble("wkb", (current.dk_wkb - previous[i].dk_wkb) / elapsed_sec);
-                        break;
-                    }
+                    m_pOutput->plong("inflight", current.dk_inflight);
+                    m_pOutput->pdouble("time", DELTA_DISK_STAT(dk_time));
+                    m_pOutput->pdouble("backlog", DELTA_DISK_STAT(dk_backlog));
+                    m_pOutput->pdouble("xfers", DELTA_DISK_STAT(dk_xfers));
+                    m_pOutput->plong("bsize", current.dk_bsize);
+                    break;
 
-                    m_pOutput->psubsection_end();
+                case PF_USED_BY_CHART_SCRIPT_ONLY:
+                    m_pOutput->pdouble("rkb", DELTA_DISK_STAT(dk_rkb));
+                    m_pOutput->pdouble("wkb", DELTA_DISK_STAT(dk_wkb));
+                    break;
                 }
-                memcpy(&previous[i], &current, sizeof(struct diskinfo));
-                break; /* once found stop searching */
+
+                m_pOutput->psubsection_end();
             }
         }
+
+        m_previous_diskinfo[current.dk_name] = current;
+        buf = m_disk_stat.get_next_line();
     }
     if (output_opts != PF_NONE)
         m_pOutput->psection_end();
@@ -441,7 +384,7 @@ void CMonitorSystem::proc_diskstats(double elapsed_sec, OutputFields output_opts
 /*
  read /proc/net/dev
  */
-void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
+void CMonitorSystem::sample_net_dev(double elapsed_sec, OutputFields output_opts)
 {
     static bool first_time = true;
 
@@ -477,6 +420,9 @@ void CMonitorSystem::proc_net_dev(double elapsed_sec, OutputFields output_opts)
             }
             pclose(pop);
         }
+
+        CMonitorLogger::instance()->LogDebug(
+            "Found %zu network interfaces to monitor\n", m_network_interfaces_up.size());
         first_time = false;
     }
 
@@ -526,6 +472,9 @@ bool CMonitorSystem::read_net_dev(
     */
     // clang-format on
 
+    // FIXME: instead of doing a fopen() here we could take as arg both a FastFileReader and the filename ;
+    //        then we invoke the given FastFileReader set_file() and read from it: in best case if filename didn't change
+    //        we will save the operation of opening a new FD!
     FILE* fp = 0;
     if ((fp = fopen(filename.c_str(), "r")) == NULL) {
         CMonitorLogger::instance()->LogErrorWithErrno("failed to open %s", filename.c_str());
@@ -538,14 +487,14 @@ bool CMonitorSystem::read_net_dev(
     if (fgets(buf, 1024, fp) == NULL) /* throw away the header line */
         return false;
 
-    long long junk;
+    uint64_t junk;
     while (fgets(buf, 1024, fp) != NULL) {
         strip_spaces(buf);
 
         char name[128];
         netinfo_t current;
         bzero(&current, sizeof(netinfo_t));
-        int ret = sscanf(&buf[0], "%s %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
+        int ret = sscanf(&buf[0], "%s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
             name, // force newline
             // input
             &current.if_ibytes, &current.if_ipackets, &current.if_ierrs, &current.if_idrop, &current.if_ififo,
@@ -575,9 +524,7 @@ bool CMonitorSystem::read_net_dev(
 bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, double elapsed_sec,
     const netinfo_map_t& new_stats, const netinfo_map_t& prev_stats, OutputFields output_opts)
 {
-#define CURRENT(member) (current.member)
-#define PREVIOUS(member) (previous.member)
-#define DELTA(member) (CURRENT(member) - PREVIOUS(member))
+#define DELTA_NET_STAT(member) ((double)(current.member - previous.member) / elapsed_sec)
 
     for (auto it : new_stats) {
         const std::string& name = it.first;
@@ -597,28 +544,28 @@ bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, dou
             break;
 
         case PF_ALL:
-            m_pOutput->plong("ibytes", DELTA(if_ibytes) / elapsed_sec);
-            m_pOutput->plong("ipackets", DELTA(if_ipackets) / elapsed_sec);
-            m_pOutput->plong("ierrs", DELTA(if_ierrs) / elapsed_sec);
-            m_pOutput->plong("idrop", DELTA(if_idrop) / elapsed_sec);
-            m_pOutput->plong("ififo", DELTA(if_ififo) / elapsed_sec);
-            m_pOutput->plong("iframe", DELTA(if_iframe) / elapsed_sec);
+            m_pOutput->plong("ibytes", DELTA_NET_STAT(if_ibytes));
+            m_pOutput->plong("ipackets", DELTA_NET_STAT(if_ipackets));
+            m_pOutput->plong("ierrs", DELTA_NET_STAT(if_ierrs));
+            m_pOutput->plong("idrop", DELTA_NET_STAT(if_idrop));
+            m_pOutput->plong("ififo", DELTA_NET_STAT(if_ififo));
+            m_pOutput->plong("iframe", DELTA_NET_STAT(if_iframe));
 
-            m_pOutput->plong("obytes", DELTA(if_obytes) / elapsed_sec);
-            m_pOutput->plong("opackets", DELTA(if_opackets) / elapsed_sec);
-            m_pOutput->plong("oerrs", DELTA(if_oerrs) / elapsed_sec);
-            m_pOutput->plong("odrop", DELTA(if_odrop) / elapsed_sec);
-            m_pOutput->plong("ofifo", DELTA(if_ofifo) / elapsed_sec);
+            m_pOutput->plong("obytes", DELTA_NET_STAT(if_obytes));
+            m_pOutput->plong("opackets", DELTA_NET_STAT(if_opackets));
+            m_pOutput->plong("oerrs", DELTA_NET_STAT(if_oerrs));
+            m_pOutput->plong("odrop", DELTA_NET_STAT(if_odrop));
+            m_pOutput->plong("ofifo", DELTA_NET_STAT(if_ofifo));
 
-            m_pOutput->plong("ocolls", DELTA(if_ocolls) / elapsed_sec);
-            m_pOutput->plong("ocarrier", DELTA(if_ocarrier) / elapsed_sec);
+            m_pOutput->plong("ocolls", DELTA_NET_STAT(if_ocolls));
+            m_pOutput->plong("ocarrier", DELTA_NET_STAT(if_ocarrier));
             break;
 
         case PF_USED_BY_CHART_SCRIPT_ONLY:
-            m_pOutput->plong("ibytes", DELTA(if_ibytes) / elapsed_sec);
-            m_pOutput->plong("obytes", DELTA(if_obytes) / elapsed_sec);
-            m_pOutput->plong("ipackets", DELTA(if_ipackets) / elapsed_sec);
-            m_pOutput->plong("opackets", DELTA(if_opackets) / elapsed_sec);
+            m_pOutput->plong("ibytes", DELTA_NET_STAT(if_ibytes));
+            m_pOutput->plong("obytes", DELTA_NET_STAT(if_obytes));
+            m_pOutput->plong("ipackets", DELTA_NET_STAT(if_ipackets));
+            m_pOutput->plong("opackets", DELTA_NET_STAT(if_opackets));
             break;
         }
         m_pOutput->psubsection_end();
@@ -630,82 +577,75 @@ bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, dou
 /*
  read /proc/uptime
 */
-void CMonitorSystem::proc_uptime()
+void CMonitorSystem::sample_uptime()
 {
-    static FILE* fp = 0;
-    char buf[1024 + 1];
-    int count;
-    long long value;
-    long long days;
-    long long hours;
-
-    DEBUGLOG_FUNCTION_START();
-    if (fp == 0) {
-        if ((fp = fopen("/proc/uptime", "r")) == NULL) {
-            return;
-        }
-    } else
-        rewind(fp);
-
-    if (fgets(buf, 1024, fp) != NULL) {
-        count = sscanf(buf, "%lld", &value);
-        if (count == 1) {
-            m_pOutput->psection_start("proc_uptime");
-            m_pOutput->plong("total_seconds", value);
-            days = value / 60 / 60 / 24;
-            hours = (value - (days * 60 * 60 * 24)) / 60 / 60;
-            m_pOutput->plong("days", days);
-            m_pOutput->plong("hours", hours);
-            m_pOutput->psection_end();
-        }
-    }
-}
-
-void CMonitorSystem::proc_loadavg()
-{
-    char buf[1024 + 1];
-    int count;
-    float load_avg_1min;
-    float load_avg_5min;
-    float load_avg_15min;
-    FILE* fp;
-
     DEBUGLOG_FUNCTION_START();
 
-    if ((fp = fopen("/proc/loadavg", "r")) == NULL) {
+    if (!m_uptime.open_or_rewind()) {
+        CMonitorLogger::instance()->LogError("failed to re-open %s", m_uptime.get_file().c_str());
         return;
     }
 
-    if (fgets(buf, 1024, fp) != NULL) {
-        /*
-                /proc/loadavg
-                The first three fields in this file are load average figures giving
-                the  number  of jobs in the run queue (state R) or waiting for disk
-                I/O (state D) averaged over 1, 5, and 15  minutes.
-                They are the same as the load average numbers given by
-                uptime(1) and other programs.  The fourth field consists of
-                two numbers separated by a slash (/).  The first of these is
-                the number of currently runnable kernel scheduling entities
-                (processes, threads).  The value after the slash is the number
-                of kernel scheduling entities that currently exist on the sys‐
-                tem.  The fifth field is the PID of the process that was most
-                recently created on the system.
-         */
+    const char* pline = m_uptime.get_next_line();
+    if (!pline)
+        return;
 
-        count = sscanf(buf, "%f %f %f", &load_avg_1min, &load_avg_5min, &load_avg_15min);
-        if (count == 3) {
-            m_pOutput->psection_start("proc_loadavg");
-            m_pOutput->pdouble("load_avg_1min", load_avg_1min);
-            m_pOutput->pdouble("load_avg_5min", load_avg_5min);
-            m_pOutput->pdouble("load_avg_15min", load_avg_15min);
-            m_pOutput->psection_end();
-        }
+    long long value;
+    long long days;
+    long long hours;
+    if (sscanf(pline, "%lld", &value) == 1) {
+        days = value / 60 / 60 / 24;
+        hours = (value - (days * 60 * 60 * 24)) / 60 / 60;
+
+        m_pOutput->psection_start("proc_uptime");
+        m_pOutput->plong("total_seconds", value);
+        m_pOutput->plong("days", days);
+        m_pOutput->plong("hours", hours);
+        m_pOutput->psection_end();
     }
-
-    fclose(fp);
 }
 
-void CMonitorSystem::proc_filesystems()
+void CMonitorSystem::sample_loadavg()
+{
+    DEBUGLOG_FUNCTION_START();
+
+    if (!m_loadavg.open_or_rewind()) {
+        CMonitorLogger::instance()->LogError("failed to re-open %s", m_loadavg.get_file().c_str());
+        return;
+    }
+
+    const char* pline = m_loadavg.get_next_line();
+    if (!pline)
+        return;
+
+    /*
+            /proc/loadavg
+            The first three fields in this file are load average figures giving
+            the  number  of jobs in the run queue (state R) or waiting for disk
+            I/O (state D) averaged over 1, 5, and 15  minutes.
+            They are the same as the load average numbers given by
+            uptime(1) and other programs.  The fourth field consists of
+            two numbers separated by a slash (/).  The first of these is
+            the number of currently runnable kernel scheduling entities
+            (processes, threads).  The value after the slash is the number
+            of kernel scheduling entities that currently exist on the sys‐
+            tem.  The fifth field is the PID of the process that was most
+            recently created on the system.
+     */
+
+    float load_avg_1min;
+    float load_avg_5min;
+    float load_avg_15min;
+    if (sscanf(pline, "%f %f %f", &load_avg_1min, &load_avg_5min, &load_avg_15min) == 3) {
+        m_pOutput->psection_start("proc_loadavg");
+        m_pOutput->pdouble("load_avg_1min", load_avg_1min);
+        m_pOutput->pdouble("load_avg_5min", load_avg_5min);
+        m_pOutput->pdouble("load_avg_15min", load_avg_15min);
+        m_pOutput->psection_end();
+    }
+}
+
+void CMonitorSystem::sample_filesystems()
 {
     FILE* fp;
     struct mntent* fs;
