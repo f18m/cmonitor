@@ -8,7 +8,7 @@ Source0:        cmonitor-collector-__RPM_VERSION__.tar.gz
 Requires:       fmt
 
 # these are the requirements that we need on COPR builds:
-BuildRequires:  gcc-c++, make, gtest-devel
+BuildRequires:  gcc-c++, make, gtest-devel, fmt-devel
 # python3-pip works and gets installed but then it fails later for unknown reasons
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
