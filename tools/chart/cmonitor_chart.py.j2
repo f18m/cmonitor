@@ -32,7 +32,7 @@ GRAPH_SOURCE_DATA_CGROUP = 2
 GRAPH_TYPE_AREA_CHART = 1
 GRAPH_TYPE_BUBBLE_CHART = 2
 
-SAVE_DEFLATED_JS_DATATABLES = False
+SAVE_DEFLATED_JS_DATATABLES = True
 JS_INDENT_SIZE = 2
 
 # see https://developers.google.com/chart/interactive/docs/reference#dateformat
@@ -174,7 +174,10 @@ class GoogleChartsTimeSeries(object):
         )
 
         # add DateFormatter to use custom formatting of the 1st column (like everywhere else we assume first column is the timestamp)
-        ret_string += "var date_formatter = new google.visualization.DateFormat({pattern: '%s'});\n" % (TOOLTIP_DATEFORMAT)
+        ret_string += (
+            "var date_formatter = new google.visualization.DateFormat({pattern: '%s'});\n"
+            % (TOOLTIP_DATEFORMAT)
+        )
         ret_string += "date_formatter.format(data_%s, 0);\n\n" % (graphName)
 
         return ret_string
