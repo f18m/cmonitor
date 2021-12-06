@@ -1,4 +1,5 @@
-COPR_CURRENT_SUBDIRECTORY:=$(shell readlink -f .) # this points to either "collector" or "tools" subdirectory, see below
+# this points to either "collector" or "tools" subdirectory, see below
+COPR_CURRENT_SUBDIRECTORY:=$(shell readlink -f .)
 ROOT_DIR:=$(COPR_CURRENT_SUBDIRECTORY)/..
 include $(ROOT_DIR)/Constants.mk
 
