@@ -157,7 +157,8 @@ struct option_extended {
     const char* additional_help;
 } const g_opts_extended[] = {
     // Data sampling options
-    { "Data sampling options", &g_long_opts[0], "Seconds between samples of data (default 60 seconds)." },
+    { "Data sampling options", &g_long_opts[0],
+        "Seconds between samples of data (default 60 seconds). Minimum value is 0.01sec, i.e. 10msecs." },
     { "Data sampling options", &g_long_opts[1],
         "Number of samples to collect; special values are:\n" // force newline
         "   '0': means forever (default value)\n" // force newline

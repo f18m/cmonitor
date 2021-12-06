@@ -9,7 +9,7 @@ containers in real-time.
 
 The project is composed by 2 parts: 
 1) a **lightweight agent** (80KB, native binary; no JVM, Python or other interpreters needed) to collect actual CPU/memory/disk statistics (Linux-only)
-   and store them in a JSON file; this is the so-called "cmonitor_collector" utility;
+   and store them in a JSON file; this is the so-called `cmonitor-collector` utility;
 2) some simple **Python tools to process the generated JSONs**; most important one is "cmonitor_chart" that turns the JSON into a self-contained HTML page
    using [Google Charts](https://developers.google.com/chart) to visualize all collected data.
 
@@ -26,8 +26,8 @@ Table of contents of this README:
   - [Yet-Another-Monitoring-Project?](#yet-another-monitoring-project)
   - [Supported Linux Kernels](#supported-linux-kernels)
   - [How to install](#how-to-install)
-    - [RPM (for Fedora, Centos)](#rpm)
-    - [Debian package (for Debian, Ubuntu, etc)](#ubuntu)
+    - [RPM (for Fedora, Centos)](#rpm-for-fedora-centos)
+    - [Debian package (for Debian, Ubuntu, etc)](#debian-package-for-debian-ubuntu-etc)
     - [Docker](#docker)
   - [How to use](#how-to-use)
     - [Step 1: collect stats](#step-1-collect-stats)
@@ -102,8 +102,8 @@ with per-thread granularity.
 
 ## Supported Linux Kernels
 
-Since version 2.0 this project supports both cgroups v1 and cgroups v2.
-This means that the "cmonitor_collector" utility can run on any Linux kernel regardless of its version and its boot options 
+Cmonitor version 2.0 and higher supports both cgroups v1 and cgroups v2.
+This means that the `cmonitor-collector` utility can run on any Linux kernel regardless of its version and its boot options 
 (since boot options may alter the cgroups technology in use).
 
 Note that `cmonitor-collector` utility is currently unit-tested against:
@@ -365,7 +365,7 @@ cmonitor_collector: Performance stats collector outputting JSON format.
 List of arguments that can be provided follows:
 
 Data sampling options
-  -s, --sampling-interval=<REQ ARG>     Seconds between samples of data (default 60 seconds).
+  -s, --sampling-interval=<REQ ARG>     Seconds between samples of data (default 60 seconds). Minimum value is 0.01sec, i.e. 10msecs.
   -c, --num-samples=<REQ ARG>           Number of samples to collect; special values are:
                                            '0': means forever (default value)
                                            'until-cgroup-alive': until the selected cgroup is alive
