@@ -316,7 +316,7 @@ Finding the name of the cgroup associated with your POD is tricky. It depends on
 ```
 PODNAME=<your-pod-name>
 CONTAINERNAME=<main-container-name>
-CONTAINERID=$(kubectl get pod ${PODNAME} -o json | jq -r '.status.containerStatuses[] | select(.name=="${CONTAINERNAME}") | .containerID' | sed  's@containerd://@@')
+CONTAINERID=$(kubectl get pod ${PODNAME} -o json | jq -r ".status.containerStatuses[] | select(.name==\"${CONTAINERNAME}\") | .containerID" | sed  's@containerd://@@')
 FULL_CGROUP_NAME=$(find /sys/fs/cgroup -name ${CONTAINERID} | head -1 |sed 's@/sys/fs/cgroup/memory/@@')
 
 cmonitor_collector \

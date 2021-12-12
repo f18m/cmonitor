@@ -158,13 +158,14 @@ struct option_extended {
 } const g_opts_extended[] = {
     // Data sampling options
     { "Data sampling options", &g_long_opts[0],
-        "Seconds between samples of data (default 60 seconds). Minimum value is 0.01sec, i.e. 10msecs." },
+        "Seconds between samples of data (default is 60 seconds). Minimum value is 0.01sec, i.e. 10msecs." },
     { "Data sampling options", &g_long_opts[1],
         "Number of samples to collect; special values are:\n" // force newline
         "   '0': means forever (default value)\n" // force newline
-        "   'until-cgroup-alive': until the selected cgroup is alive" },
+        "   'until-cgroup-alive': until the cgroup selected by --cgroup-name is alive" },
     { "Data sampling options", &g_long_opts[2],
-        "Allow multiple simultaneously-running instances of cmonitor_collector on this system." },
+        "Allow multiple simultaneously-running instances of cmonitor_collector on this system.\n"
+        "Default is to block attempts to start more than one background instance." },
     { "Data sampling options", &g_long_opts[3], "Stay in foreground." },
     { "Data sampling options", &g_long_opts[4],
         "Collect specified list of performance stats. Available performance stats are:\n" // force newline
@@ -184,33 +185,33 @@ struct option_extended {
         "  'all': the combination of all previous stats (this is the default)\n" // force newline
         "Note that a comma-separated list of above stats can be provided." },
     { "Data sampling options", &g_long_opts[5],
-        "Collect all available details about the stats families enabled by --collect.\n"
-        "By default, for each family, only the stats that are used by the 'cmonitor_chart' companion utility\n"
+        "Collect all available details for the performance statistics enabled by --collect.\n"
+        "By default, for each category, only the stats that are used by the 'cmonitor_chart' companion utility\n"
         "are collected. With this option a more detailed but larger JSON / InfluxDB data stream is produced." },
     { "Data sampling options", &g_long_opts[6],
         "If cgroup sampling is active (--collect=cgroups*), this option allows to provide explicitly the name of\n"
-        "the cgroup to monitor. If 'self' value is passed (the default), the statistics of the cgroups where \n"
-        "cmonitor_collector runs will be collected. Note that this option is mostly useful when running \n"
+        "the cgroup to monitor. If 'self' value is passed (the default), the statistics of the cgroups where\n"
+        "cmonitor_collector runs will be collected. Note that this option is mostly useful when running\n"
         "cmonitor_collector directly on the baremetal since a process running inside a container cannot monitor\n"
         "the performances of other containers." },
     { "Data sampling options", &g_long_opts[7],
         "If cgroup process/thread sampling is active (--collect=cgroup_processes/cgroup_threads) use the provided\n"
         "score threshold to filter out non-interesting processes/threads. The 'score' is a number that is linearly\n"
-        "increasing with the CPU usage. Defaults to value '1' to filter out all processes/threads having zero CPU\n"
-        "usage. Use '0' to turn off filtering by score." },
+        "increasing with the CPU usage. Defaults to '1' to filter out all processes/threads having zero CPU usage.\n"
+        "Use '0' to turn off filtering by score." },
     { "Data sampling options", &g_long_opts[8],
         "Allows to specify custom metadata key:value pairs that will be saved into the JSON output (if saving data\n"
         "locally) under the 'header.custom_metadata' path. See usage examples below.\n" },
 
     // Options to save data locally
     { "Options to save data locally", &g_long_opts[9],
-        "Program will write output files to provided directory (default cwd)." },
+        "Write output JSON and .err files to provided directory (defaults to current working directory)." },
     { "Options to save data locally", &g_long_opts[10],
         "Name the output files using provided prefix instead of defaulting to the filenames:\n"
         "\thostname_<year><month><day>_<hour><minutes>.json  (for JSON data)\n"
         "\thostname_<year><month><day>_<hour><minutes>.err   (for error log)\n"
-        "Use special prefix 'stdout' to indicate that you want the utility to write on stdout.\n"
-        "Use special prefix 'none' to indicate that you want to disable JSON generation." },
+        "Special argument 'stdout' means JSON output should be printed on stdout and errors/warnings on stderr.\n"
+        "Special argument 'none' means that JSON output must be disabled." },
     { "Options to save data locally", &g_long_opts[11],
         "Generate a pretty-printed JSON file instead of a machine-friendly JSON (the default).\n" },
 

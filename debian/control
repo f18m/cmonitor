@@ -2,7 +2,7 @@ Source: cmonitor
 Section: base
 Priority: optional
 Maintainer: Francesco Montorsi <francesco.montorsi@gmail.com>
-Build-Depends: debhelper (>=10), libgtest-dev
+Build-Depends: debhelper (>=10), libgtest-dev, libbenchmark-dev, libfmt-dev
 Standards-Version: 4.0.0
 Homepage: https://github.com/f18m/cmonitor
 
