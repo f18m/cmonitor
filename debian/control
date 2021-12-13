@@ -8,7 +8,7 @@ Homepage: https://github.com/f18m/cmonitor
 
 Package: cmonitor-collector
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, libfmt-dev
 Description: a container performance monitoring solution
   Package containing the C++ lightweight agent to collect all metrics from monitored systems
 
