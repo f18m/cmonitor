@@ -2,17 +2,20 @@ Source: cmonitor
 Section: base
 Priority: optional
 Maintainer: Francesco Montorsi <francesco.montorsi@gmail.com>
+# ABOUT LIBFMT:
+# VERSION: cmonitor-collector debian package is built on 'old' Ubuntu distributions like Ubuntu Bionic 18.04
+#          which ships an old libfmt-dev package version 4.0.0, see 
+#             https://packages.ubuntu.com/bionic/amd64/libfmt-dev/filelist
+#          so make sure not to use any new feature available only in libfmt > 4.0.0 !
+# RUNTIME: libfmt-dev provides a static library so that it's just a "Build-Depends" and not a "Depends": at runtime
+#          there's no need of that package being installed
 Build-Depends: debhelper (>=10), libgtest-dev, libbenchmark-dev, libfmt-dev
 Standards-Version: 4.0.0
 Homepage: https://github.com/f18m/cmonitor
 
-# IMPORTANT NOTE: cmonitor-collector debian package is built on 'old' Ubuntu distributions like Ubuntu Bionic 18.04
-#                 which ship an old libfmt-dev package version 4.0.0, see 
-#                   https://packages.ubuntu.com/bionic/amd64/libfmt-dev/filelist
-#                 so make sure not to use any new feature available only in libfmt > 4.0.0 !
 Package: cmonitor-collector
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}, libfmt-dev
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: a container performance monitoring solution
   Package containing the C++ lightweight agent to collect all metrics from monitored systems
 
