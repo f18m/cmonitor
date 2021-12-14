@@ -6,6 +6,10 @@ Build-Depends: debhelper (>=10), libgtest-dev, libbenchmark-dev, libfmt-dev
 Standards-Version: 4.0.0
 Homepage: https://github.com/f18m/cmonitor
 
+# IMPORTANT NOTE: cmonitor-collector debian package is built on 'old' Ubuntu distributions like Ubuntu Bionic 18.04
+#                 which ship an old libfmt-dev package version 4.0.0, see 
+#                   https://packages.ubuntu.com/bionic/amd64/libfmt-dev/filelist
+#                 so make sure not to use any new feature available only in libfmt > 4.0.0 !
 Package: cmonitor-collector
 Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}, libfmt-dev

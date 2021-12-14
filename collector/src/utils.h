@@ -24,6 +24,7 @@
 // Includes
 //------------------------------------------------------------------------------
 
+#include <chrono>
 #include <map>
 #include <set>
 #include <string.h>
@@ -58,3 +59,5 @@ bool read_integers_with_range_validation(
 void proc_read_numeric_stats_from(
     CMonitorOutputFrontend* pOutput, const char* statname, const std::set<std::string>& allowedStatsNames);
 std::string get_hostname();
+void format_timestamp(const std::chrono::time_point<std::chrono::system_clock>& now_ts, std::string& utcTime);
+bool get_timestamp(double* ts_for_delta_computation, std::string& utcTime);

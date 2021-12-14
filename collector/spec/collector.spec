@@ -8,6 +8,8 @@ Source0:        cmonitor-collector-__RPM_VERSION__.tar.gz
 Requires:       fmt
 
 # these are the requirements that we need on COPR builds:
+# IMPORTANT: cmonitor-collector RPM is built also on the 'old' Centos7 platform shipping fmt-devel-6.2.1
+#            so make sure not to use any feature of libfmt > 6.2.1
 BuildRequires:  gcc-c++, make, gtest-devel, fmt-devel
 # python3-pip works and gets installed but then it fails later for unknown reasons
 

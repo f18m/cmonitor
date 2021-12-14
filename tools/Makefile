@@ -43,6 +43,19 @@ statistics/cmonitor_statistics.py: statistics/cmonitor_statistics.py.j2
 	sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' statistics/cmonitor_statistics.py
 	chmod a+x statistics/cmonitor_statistics.py
 
+# TESTS
+
+TEST_KERNELS = \
+	centos7-Linux-3.10.0-x86_64 \
+	fedora35-Linux-5.14.17-x86_64 \
+	ubuntu20.04-Linux-5.4.0-x86_64
+
+test: chart/cmonitor_chart.py statistics/cmonitor_statistics.py 
+	for kk in $(TEST_KERNELS); do \
+		statistics/cmonitor_statistics.py --input=$(ROOT_DIR)/collector/src/tests/$$kk/expected-withthreads.json --output=tests/result-withthreads.json ; \
+	done
+
+
 
 #
 # RPM TARGETS

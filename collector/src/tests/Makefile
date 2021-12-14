@@ -26,7 +26,8 @@ OUT=$(OUTDIR)/unit_tests
 OBJS_UNIT_TESTS = \
     $(OUTDIR)/tests_cgroup.o \
     $(OUTDIR)/tests_fast_file_reader.o \
-    $(OUTDIR)/tests_main.o
+    $(OUTDIR)/tests_main.o \
+	$(OUTDIR)/tests_utils.o
 
 OBJS_CMONITOR_COLLECTOR = \
     $(OUTDIR)/cgroups_config.o \

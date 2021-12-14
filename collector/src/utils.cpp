@@ -433,3 +433,45 @@ void proc_read_numeric_stats_from(
     pOutput->psection_end();
     (void)fclose(fp);
 }
+
+void format_timestamp(const std::chrono::time_point<std::chrono::system_clock>& now_ts, std::string& utcTime)
+{
+    // and of course the string representation of the wall-clock sample, with millisec accuracy:
+    std::time_t sampling_time_in_secs = std::chrono::system_clock::to_time_t(now_ts);
+    size_t millisec_since_epoch
+        = std::chrono::duration_cast<std::chrono::milliseconds>(now_ts.time_since_epoch()).count() % 1000;
+
+    // IMPORTANT:
+#if 0
+    utcTime
+        = fmt::format("{:%04Y-%02m-%02dT%H:%M:%S}.{:03d}", fmt::gmtime(sampling_time_in_secs), millisec_since_epoch);
+    /*
+        this syntax is available only since libfmt >= 6.x.y. Ubuntu 18.04 (bionic) ships libfmt 4.x.y so we actually
+       rollout our own variation:
+    */
+#else
+    const std::tm* ptm = gmtime(&sampling_time_in_secs);
+    utcTime = fmt::format("{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}.{:03d}", // fn
+        1900 + ptm->tm_year, ptm->tm_mon + 1, ptm->tm_mday, // fn
+        ptm->tm_hour, ptm->tm_min, ptm->tm_sec, millisec_since_epoch);
+#endif
+}
+
+bool get_timestamp(double* ts_for_delta_computation, std::string& utcTime)
+{
+    struct timespec tv;
+    if (clock_gettime(CLOCK_MONOTONIC, &tv) != 0) {
+        *ts_for_delta_computation = 0;
+        return false;
+    }
+
+    // produce at the same time the timestamp which will be used for DELTA computations...
+    *ts_for_delta_computation = (double)tv.tv_sec + (double)tv.tv_nsec * 1.0e-9;
+
+    // ...and the wall-clock timestamp to associate to the new sample of statistics:
+    auto now_ts = std::chrono::system_clock::now();
+
+    // and of course the string representation of the wall-clock sample, with millisec accuracy:
+    format_timestamp(now_ts, utcTime);
+    return true;
+}
