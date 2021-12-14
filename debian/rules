@@ -13,9 +13,10 @@ export DH_VERBOSE=1
 	dh $@ 
 
 override_dh_auto_build:
-	$(MAKE) -C collector all DISABLE_UNIT_TESTS_BUILD=1 DISABLE_BENCHMARKS_BUILD=1 -j
+	# note that in Ubuntu Bionic 18.04 the fmtlib-dev package is 4.0.0:
+	$(MAKE) -C collector -j all DISABLE_UNIT_TESTS_BUILD=1 DISABLE_BENCHMARKS_BUILD=1 FMTLIB_MAJOR_VER=4
 	$(MAKE) -C tools
-        # just to give the same user experience of RPMs, remove the .py extension here
+	# just to give the same user experience of RPMs, remove the .py extension here
 	mv ./tools/chart/cmonitor_chart.py ./tools/chart/cmonitor_chart
 	mv ./tools/statistics/cmonitor_statistics.py ./tools/statistics/cmonitor_statistics
 

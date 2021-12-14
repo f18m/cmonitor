@@ -26,7 +26,7 @@ Can also be used with InfluxDB and Grafana.
 %setup
 
 %build
-%make_build DISABLE_UNIT_TESTS_BUILD=1 DISABLE_BENCHMARKS_BUILD=1
+%make_build DISABLE_UNIT_TESTS_BUILD=1 DISABLE_BENCHMARKS_BUILD=1 FMTLIB_MAJOR_VER=6
 
 %install
 rm -rf %{buildroot}

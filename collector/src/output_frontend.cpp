@@ -31,6 +31,11 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#ifndef FMTLIB_MAJOR_VER
+// assume fmtlib is >= 6.x.y
+#define FMTLIB_MAJOR_VER 6
+#endif
+
 //------------------------------------------------------------------------------
 // Init functions
 //------------------------------------------------------------------------------
@@ -284,7 +289,11 @@ void CMonitorOutputFrontend::push_current_sections_to_influxdb(bool is_header)
         gettimeofday(&tv, 0);
         uint64_t ts_nsec = ((uint64_t)tv.tv_sec * 1E9) + ((uint64_t)tv.tv_usec * 1E3);
 
+#ifdef FMTLIB_MAJOR_VER >= 6
         std::string ts_nsec_str = fmt::format_int(ts_nsec).str();
+#else
+        std::string ts_nsec_str = fmt::format("{}", ts_nsec);
+#endif
 
         std::string all_measurements;
         all_measurements.reserve(4096);
@@ -581,7 +590,11 @@ void CMonitorOutputFrontend::plong(const char* name, long long value)
     // according to
     //   https://www.zverovich.net/2020/06/13/fast-int-to-string-revisited.html
     // fmt::format_int is be the fastest way to convert integers
+#ifdef FMTLIB_MAJOR_VER >= 6
     auto fmt_string = fmt::format_int(value);
+#else
+    auto fmt_string = fmt::format("{}", value);
+#endif
     m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
 }
 
