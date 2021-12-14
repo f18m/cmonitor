@@ -21,5 +21,9 @@ else
 DOCKER_TAG=v$(CMONITOR_VERSION)-$(CMONITOR_RELEASE)
 endif
 
+ifeq ($(FMTLIB_MAJOR_VER),)
+# assume fmtlib is >= 6.x.y
+FMTLIB_MAJOR_VER:=6
+endif
 
 $(info CMONITOR_VERSION version is $(CMONITOR_VERSION), CMONITOR_RELEASE release is $(CMONITOR_RELEASE), DOCKER_TAG is $(DOCKER_TAG))
