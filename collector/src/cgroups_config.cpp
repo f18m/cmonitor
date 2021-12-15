@@ -303,7 +303,8 @@ void CMonitorCgroups::init( // force newline
 
         cgroup_paths_map_t cgroup_paths;
         if (!get_cgroup_paths_for_this_pid(cgroup_paths)) {
-            CMonitorLogger::instance()->LogDebug("Could not get the cgroup paths. CGroup mode disabled.\n");
+            CMonitorLogger::instance()->LogDebug(
+                "Could not get the cgroup paths for cmonitor_collector itself. CGroup mode disabled.\n");
             m_nCGroupsFound = CG_NONE;
             return;
         }
@@ -366,7 +367,7 @@ void CMonitorCgroups::init( // force newline
 
     switch (m_nCGroupsFound) {
     case CG_NONE:
-        break;
+        return;
     case CG_VERSION1:
         v1_read_limits();
         break;
