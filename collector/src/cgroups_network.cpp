@@ -65,6 +65,8 @@ void CMonitorCgroups::init_network(const std::string& cgroup_prefix_for_test)
         assert(0);
         return;
     }
+
+    CMonitorLogger::instance()->LogDebug("Successfully initialized cgroup network monitoring.\n");
 }
 
 void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields output_opts)

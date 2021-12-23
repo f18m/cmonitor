@@ -60,16 +60,14 @@ size_t CMonitorCgroups::sample_flat_keyed_file(
 
         std::string line;
         if (m_nCGroupsFound == CG_VERSION1) {
-            if (strncmp(pline, "total_", 6) != 0)
-            {
+            if (strncmp(pline, "total_", 6) != 0) {
                 pline = reader.get_next_line();
                 continue; // skip NON-totals: collect only cgroup-total values
             }
 
             // forget about the total_ prefix to make cgroups v1 stat names more similar to those of cgroups v2
             line = std::string(&pline[6]);
-        }
-        else
+        } else
             line = std::string(pline);
 
         if (line.back() == '\n')
@@ -124,6 +122,8 @@ void CMonitorCgroups::init_memory(const std::string& cgroup_prefix_for_test)
         assert(0);
         return;
     }
+
+    CMonitorLogger::instance()->LogDebug("Successfully initialized memory cgroup monitoring.\n");
 }
 
 void CMonitorCgroups::sample_memory(

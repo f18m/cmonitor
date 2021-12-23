@@ -435,6 +435,8 @@ void CMonitorCgroups::init_processes(const std::string& cgroup_prefix_for_test)
         assert(0);
         return;
     }
+
+    CMonitorLogger::instance()->LogDebug("Successfully initialized cgroup processes monitoring.\n");
 }
 
 void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_opts)

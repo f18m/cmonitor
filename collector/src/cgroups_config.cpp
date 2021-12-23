@@ -481,36 +481,34 @@ void CMonitorCgroups::v2_read_limits()
     // cgroup controller... it just means "no limit"... we need to handle that using UINT64_MAX
     if (!read_integer(m_cgroup_memory_kernel_path + "/memory.max", m_cgroup_memory_limit_bytes)) {
         CMonitorLogger::instance()->LogError(
-            "Could not read the memory limit from 'memory' cgroup. CGroup mode disabled.\n");
-        m_nCGroupsFound = CG_NONE;
-        return;
-    }
+            "Could not read the memory limit from 'memory' cgroup. Disabling monitoring of memory cgroup.\n");
+        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_MEMORY;
+    } else
+        CMonitorLogger::instance()->LogDebug("Found memory cgroup limiting to %luB, mounted at %s\n",
+            m_cgroup_memory_limit_bytes, m_cgroup_memory_kernel_path.c_str());
 
     if (!read_cpuset_cpus(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
-        CMonitorLogger::instance()->LogError("Could not read the CPUs from 'cpuset' cgroup. CGroup mode disabled.\n");
-        m_nCGroupsFound = CG_NONE;
-        return;
-    }
+        CMonitorLogger::instance()->LogError(
+            "Could not read the CPUs from 'cpuset' cgroup. Disabling monitoring of cpu cgroup.\n");
+        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_CPU_ACCT;
+    } else
+        CMonitorLogger::instance()->LogDebug("Found cpuset cgroup limiting to CPUs %s, mounted at %s\n",
+            stl_container2string(m_cgroup_cpus, ",").c_str(), m_cgroup_cpuset_kernel_path.c_str());
 
     // FIXME: m_cgroup_cpuacct_quota_us might assume the special value "max" reported by the
     // cgroup controller... it just means "no limit"... we need to handle that using UINT64_MAX
     if (!read_two_integers(
             m_cgroup_cpuacct_kernel_path + "/cpu.max", m_cgroup_cpuacct_quota_us, m_cgroup_cpuacct_period_us)) {
         CMonitorLogger::instance()->LogError(
-            "Could not read the CPU period from 'cpuacct' cgroup. CGroup mode disabled.\n");
-        m_nCGroupsFound = CG_NONE;
-        return;
-    }
+            "Could not read the CPU period from 'cpuacct' cgroup. Disabling monitoring of cpu cgroup.\n");
+        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_CPU_ACCT;
+    } else
+        CMonitorLogger::instance()->LogDebug("Found cpuacct cgroup limiting at %lu/%lu usecs mounted at %s\n",
+            m_cgroup_cpuacct_quota_us, m_cgroup_cpuacct_period_us, m_cgroup_cpuacct_kernel_path.c_str());
 
     // cpuset and memory cgroups found:
     CMonitorLogger::instance()->LogDebug(
         "CGroup monitoring successfully enabled. CGroup name is %s\n", m_cgroup_systemd_name.c_str());
-    CMonitorLogger::instance()->LogDebug("Found cpuset cgroup limiting to CPUs %s, mounted at %s\n",
-        stl_container2string(m_cgroup_cpus, ",").c_str(), m_cgroup_cpuset_kernel_path.c_str());
-    CMonitorLogger::instance()->LogDebug("Found cpuacct cgroup limiting at %lu/%lu usecs mounted at %s\n",
-        m_cgroup_cpuacct_quota_us, m_cgroup_cpuacct_period_us, m_cgroup_cpuacct_kernel_path.c_str());
-    CMonitorLogger::instance()->LogDebug("Found memory cgroup limiting to %luB, mounted at %s\n",
-        m_cgroup_memory_limit_bytes, m_cgroup_memory_kernel_path.c_str());
 }
 
 bool CMonitorCgroups::search_my_pid_in_cgroups()
@@ -560,7 +558,8 @@ bool CMonitorCgroups::search_my_pid_in_cgroups()
         //    m_cgroup_cpuset_kernel_path so
         //  when running outside a Docker container (directly under systemd) are different
         //  despite the "unified" hierarchy... try them one by one:
-        std::string paths[] = { m_cgroup_memory_kernel_path, m_cgroup_cpuacct_kernel_path, m_cgroup_cpuset_kernel_path };
+        std::string paths[]
+            = { m_cgroup_memory_kernel_path, m_cgroup_cpuacct_kernel_path, m_cgroup_cpuset_kernel_path };
 
         found = false;
         for (unsigned int i = 0; i < 3; i++) {

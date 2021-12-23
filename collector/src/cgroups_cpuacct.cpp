@@ -334,6 +334,8 @@ void CMonitorCgroups::init_cpuacct(const std::string& cgroup_prefix_for_test)
         assert(0);
         return;
     }
+
+    CMonitorLogger::instance()->LogDebug("Successfully initialized cpuacct cgroup monitoring.\n");
 }
 
 void CMonitorCgroups::sample_cpuacct(double elapsed_sec)
