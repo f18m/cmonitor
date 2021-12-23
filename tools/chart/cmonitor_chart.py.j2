@@ -50,17 +50,20 @@ TOOLTIP_DATEFORMAT = "HH:mm:ss.SSS z"
 verbose = False
 g_num_generated_charts = 1
 g_next_graph_need_stacking = 0
-g_datetime_field = "datetime"  # by default cmonitor_collector stores localtime as 'datetime' and UTC timestamps as 'utc'
+g_datetime = "localtz"  # can be changed to "UTC" with --utc; FIXME currently we always use just UTC, never localtz...
 
 # =======================================================================================================
 # GoogleChartsTimeSeries
-# This is the table of
-#    t;Y1;Y2;...;YN
-# data points for a GoogleCharts graph that is representing the evolution of N quantities over time
 # =======================================================================================================
 
 
 class GoogleChartsTimeSeries(object):
+    """
+    GoogleChartsTimeSeries is a table of
+       t;Y1;Y2;...;YN
+    data points for a GoogleCharts graph that is representing the evolution of N quantities over time
+    """
+
     def __init__(self, column_names):
         self.column_names = column_names  # must be a LIST of strings
         self.rows = []  # list of lists with values
@@ -82,8 +85,7 @@ class GoogleChartsTimeSeries(object):
             dateAsPythonObj.hour,
             dateAsPythonObj.minute,
             dateAsPythonObj.second,
-            dateAsPythonObj.microsecond
-            / 1000,  # NOTE: the JavaScript Date() object wants milliseconds
+            dateAsPythonObj.microsecond / 1000,  # NOTE: the JavaScript Date() object wants milliseconds
         )
 
     def addRow(self, row_data_list):
@@ -151,16 +153,10 @@ class GoogleChartsTimeSeries(object):
             )
 
             # then convert it base64 -> JS binary string
-            ret_string += (
-                "var deflated_data_binary_%s = window.atob(deflated_data_base64_%s);\n"
-                % (graphName, graphName)
-            )
+            ret_string += "var deflated_data_binary_%s = window.atob(deflated_data_base64_%s);\n" % (graphName, graphName)
 
             # now inflate it in the browser using "pako" library (https://github.com/nodeca/pako)
-            ret_string += (
-                "var inflated_data_%s = JSON.parse(pako.inflate(deflated_data_binary_%s, { to: 'string' }));\n"
-                % (graphName, graphName)
-            )
+            ret_string += "var inflated_data_%s = JSON.parse(pako.inflate(deflated_data_binary_%s, { to: 'string' }));\n" % (graphName, graphName)
         else:
             ret_string += "var inflated_data_%s = %s;\n" % (
                 graphName,
@@ -168,16 +164,10 @@ class GoogleChartsTimeSeries(object):
             )
 
         # finally create the GoogleCharts table from it:
-        ret_string += (
-            "var data_%s = google.visualization.arrayToDataTable(inflated_data_%s);\n"
-            % (graphName, graphName)
-        )
+        ret_string += "var data_%s = google.visualization.arrayToDataTable(inflated_data_%s);\n" % (graphName, graphName)
 
         # add DateFormatter to use custom formatting of the 1st column (like everywhere else we assume first column is the timestamp)
-        ret_string += (
-            "var date_formatter = new google.visualization.DateFormat({pattern: '%s'});\n"
-            % (TOOLTIP_DATEFORMAT)
-        )
+        ret_string += "var date_formatter = new google.visualization.DateFormat({pattern: '%s'});\n" % (TOOLTIP_DATEFORMAT)
         ret_string += "date_formatter.format(data_%s, 0);\n\n" % (graphName)
 
         return ret_string
@@ -185,15 +175,18 @@ class GoogleChartsTimeSeries(object):
 
 # =======================================================================================================
 # GoogleChartsGenericTable
-# This is the NxM table of
-#    Y1_1;Y2_1;...;YN_1
-#    ...
-#    Y1_M;Y2_M;...;YN_M
-# data points for a GoogleCharts graph for M different objects characterized by N features
 # =======================================================================================================
 
 
 class GoogleChartsGenericTable(object):
+    """
+    This is the NxM table of
+       Y1_1;Y2_1;...;YN_1
+       ...
+       Y1_M;Y2_M;...;YN_M
+    data points for a GoogleCharts graph for M different objects characterized by N features
+    """
+
     def __init__(self, column_names):
         self.column_names = column_names  # must be a LIST of strings
         self.rows = []  # list of lists with values
@@ -252,16 +245,10 @@ class GoogleChartsGenericTable(object):
             )
 
             # then convert it base64 -> JS binary string
-            ret_string += (
-                "var deflated_data_binary_%s = window.atob(deflated_data_base64_%s);\n"
-                % (graphName, graphName)
-            )
+            ret_string += "var deflated_data_binary_%s = window.atob(deflated_data_base64_%s);\n" % (graphName, graphName)
 
             # now inflate it in the browser using "pako" library (https://github.com/nodeca/pako)
-            ret_string += (
-                "var inflated_data_%s = JSON.parse(pako.inflate(deflated_data_binary_%s, { to: 'string' }));\n"
-                % (graphName, graphName)
-            )
+            ret_string += "var inflated_data_%s = JSON.parse(pako.inflate(deflated_data_binary_%s, { to: 'string' }));\n" % (graphName, graphName)
         else:
             ret_string += "var inflated_data_%s = %s;\n" % (
                 graphName,
@@ -269,20 +256,20 @@ class GoogleChartsGenericTable(object):
             )
 
         # finally create the GoogleCharts table from it:
-        ret_string += (
-            "var data_%s = google.visualization.arrayToDataTable(inflated_data_%s);\n"
-            % (graphName, graphName)
-        )
+        ret_string += "var data_%s = google.visualization.arrayToDataTable(inflated_data_%s);\n" % (graphName, graphName)
         return ret_string
 
 
 # =======================================================================================================
 # GoogleChartsGraph
-# This is a simple object that can generate JavaScript for GoogleChart drawing
 # =======================================================================================================
 
 
 class GoogleChartsGraph:
+    """
+    This is a simple object that can generate JavaScript for GoogleChart drawing
+    """
+
     def __init__(
         self,
         button_label="",
@@ -294,23 +281,19 @@ class GoogleChartsGraph:
         stack_state=False,
         y_axis_title="",
         series_for_2nd_yaxis=[],
-        data=[],
+        data=None,
     ):
         self.button_label = button_label
         self.combobox_label = combobox_label
-        assert (len(self.button_label) == 0 and len(self.combobox_label) > 0) or (
-            len(self.button_label) > 0 and len(self.combobox_label) == 0
-        )
+        assert (len(self.button_label) == 0 and len(self.combobox_label) > 0) or (len(self.button_label) > 0 and len(self.combobox_label) == 0)
         self.combobox_entry = combobox_entry
-        self.source_data = (
-            graph_source  # one of GRAPH_TYPE_BAREMETAL or GRAPH_TYPE_CGROUP
-        )
+        self.source_data = graph_source  # one of GRAPH_TYPE_BAREMETAL or GRAPH_TYPE_CGROUP
         self.graph_type = graph_type
         self.graph_title = graph_title
         self.stack_state = stack_state
         self.y_axis_title = y_axis_title
         self.series_for_2nd_yaxis = series_for_2nd_yaxis
-        self.data_table = data
+        self.data_table = data  # of type GoogleChartsGenericTable or GoogleChartsTimeSeries
         self.graph_title += ", STACKED graph" if self.stack_state else ""
 
         # generate new JS name for this graph
@@ -335,9 +318,7 @@ class GoogleChartsGraph:
 
         ret_string = ""
         ret_string += "var options_%s = {\n" % (self.js_name)
-        ret_string += (
-            '  chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n'
-        )
+        ret_string += '  chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},\n'
         ret_string += '  title: "%s",\n' % (self.graph_title)
         ret_string += '  focusTarget: "category",\n'
 
@@ -348,21 +329,14 @@ class GoogleChartsGraph:
         ret_string += '  explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },\n'
 
         # HORIZONTAL AXIS
-        ret_string += (
-            '  hAxis: { format: "%s", gridlines: { color: "lightgrey", count: 30 } },\n'
-            % X_AXIS_DATEFORMAT
-        )
+        ret_string += '  hAxis: { format: "%s", gridlines: { color: "lightgrey", count: 30 } },\n' % X_AXIS_DATEFORMAT
 
         # VERTICAL AXIS (OR AXES)
         if len(self.series_for_2nd_yaxis) > 0:
             # compute series that use 1st Y axis:
             num_series = self.data_table.getNumDataSeries()
             series_for_1st_yaxis = range(0, num_series)
-            series_for_1st_yaxis = [
-                item
-                for item in series_for_1st_yaxis
-                if item not in self.series_for_2nd_yaxis
-            ]
+            series_for_1st_yaxis = [item for item in series_for_1st_yaxis if item not in self.series_for_2nd_yaxis]
             # print("series_for_1st_yaxis: %s" % ','.join(str(x) for x in series_for_1st_yaxis))
             # print("self.series_for_2nd_yaxis: %s" % ','.join(str(x) for x in self.series_for_2nd_yaxis))
 
@@ -379,10 +353,7 @@ class GoogleChartsGraph:
             ret_string += '    1: { title: "%s" }\n' % str(self.y_axis_title[1])
             ret_string += "  },\n"
         else:
-            ret_string += (
-                '  vAxis: { title: "%s", gridlines: { color: "lightgrey", count: 11 } },\n'
-                % str(self.y_axis_title)
-            )
+            ret_string += '  vAxis: { title: "%s", gridlines: { color: "lightgrey", count: 11 } },\n' % str(self.y_axis_title)
 
         # graph stacking
         g_next_graph_need_stacking = self.stack_state
@@ -410,9 +381,7 @@ class GoogleChartsGraph:
         ret_string = ""
         ret_string += "var options_%s = {\n" % (self.js_name)
         ret_string += '  explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },\n'
-        ret_string += (
-            '  chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },\n'
-        )
+        ret_string += '  chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },\n'
         ret_string += '  title: "%s",\n' % (self.graph_title)
         ret_string += '  hAxis: { title:"%s" },\n' % str(self.y_axis_title[0])
         ret_string += '  vAxis: { title:"%s" },\n' % str(self.y_axis_title[1])
@@ -458,11 +427,14 @@ class GoogleChartsGraph:
 
 # =======================================================================================================
 # HtmlOutputPage
-# This is able to produce a self-contained HTML page with embedded JavaScript to draw performance charts
 # =======================================================================================================
 
 
 class HtmlOutputPage:
+    """
+    This is able to produce a self-contained HTML page with embedded JavaScript to draw performance charts
+    """
+
     def __init__(self, outfile, title):
         self.title = title
         self.outfile = outfile
@@ -564,16 +536,11 @@ function clear_chart() {
         self.file.write("function setup_button_click_handlers() {\n")
         for num, graph in enumerate(self.graphs, start=1):
             if len(graph.combobox_label) == 0:
-                self.file.write(
-                    '  document.getElementById("btn_draw_%s").addEventListener("click", draw_%s);\n'
-                    % (graph.js_name, graph.js_name)
-                )
+                self.file.write('  document.getElementById("btn_draw_%s").addEventListener("click", draw_%s);\n' % (graph.js_name, graph.js_name))
             else:
                 # this will be selected from a combobox, no need to hook into a button
                 pass
-        self.file.write(
-            '  document.getElementById("btn_show_config").addEventListener("click", show_config_window);\n'
-        )
+        self.file.write('  document.getElementById("btn_show_config").addEventListener("click", show_config_window);\n')
         self.file.write("}\n")  # end of setup_button_click_handlers()
 
         # add function to reset all comboboxes
@@ -584,13 +551,8 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
 """
         )
         for num, comboname in enumerate(sorted(combo_box_ctrls), start=1):
-            self.file.write(
-                '  if (combobox_to_exclude_from_reset != "%s")\n' % comboname
-            )
-            self.file.write(
-                '      document.getElementById("select_combobox_%s").value = "clear_chart";\n'
-                % comboname
-            )
+            self.file.write('  if (combobox_to_exclude_from_reset != "%s")\n' % comboname)
+            self.file.write('      document.getElementById("select_combobox_%s").value = "clear_chart";\n' % comboname)
         self.file.write("}\n")  # end of reset_combo_boxes()
 
         self.file.write(config)
@@ -599,31 +561,20 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
 
     def startHtmlBody(self, cgroupName, monitored_system):
         self.file.write("<body>\n")
-        self.file.write(
-            '  <h1>Monitoring data collected from <span id="monitored_system_span">'
-            + monitored_system
-            + "</span></h1>\n"
-        )
+        self.file.write('  <h1>Monitoring data collected from <span id="monitored_system_span">' + monitored_system + "</span></h1>\n")
         self.file.write('  <div id="button_div">\n')
         self.file.write('  <table id="button_table">\n')
 
         # Table header row
         self.file.write("  <tr>\n")
-        self.file.write(
-            '    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (Data collected from %s)</td>\n'
-            % cgroupName
-        )
-        self.file.write(
-            '    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>\n'
-        )
+        self.file.write('    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (Data collected from %s)</td>\n' % cgroupName)
+        self.file.write('    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>\n')
         self.file.write("  </tr>\n")
 
         # Datarow
         self.file.write("  <tr>\n")
         self.file.write('  <td id="button_table_col">\n')
-        self.file.write(
-            '    <button id="btn_show_config"><b>Configuration</b></button><br/>\n'
-        )
+        self.file.write('    <button id="btn_show_config"><b>Configuration</b></button><br/>\n')
         self.file.write('  </td><td id="button_table_col">\n')
 
         def write_buttons_for_graph_type(source_data):
@@ -638,26 +589,18 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
                         graphs_combobox[graph.combobox_label] = []
 
                     # add to the existing dict entry a new graph:
-                    graphs_combobox[graph.combobox_label].append(
-                        [graph.combobox_entry, graph.js_name]
-                    )
+                    graphs_combobox[graph.combobox_label].append([graph.combobox_entry, graph.js_name])
 
             # generate the CPU select box:
             if len(graphs_combobox) > 0:
                 for combobox_label in graphs_combobox.keys():
                     graph_list = graphs_combobox[combobox_label]
-                    self.file.write(
-                        '    <select id="select_combobox_%s" onchange="call_function_named(this.value)">\n'
-                        % (combobox_label)
-                    )
+                    self.file.write('    <select id="select_combobox_%s" onchange="call_function_named(this.value)">\n' % (combobox_label))
                     self.file.write('      <option value="clear_chart">None</option>\n')
                     for entry in graph_list:
                         button_label = entry[0]
                         js_name = entry[1]
-                        self.file.write(
-                            '      <option value="draw_%s">%s</option>\n'
-                            % (js_name, button_label)
-                        )
+                        self.file.write('      <option value="draw_%s">%s</option>\n' % (js_name, button_label))
                     self.file.write("    </select>\n")
                     nwritten_controls += 1
 
@@ -677,13 +620,7 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
                     else:
                         colour = "black"
                     self.file.write(
-                        '    <button id="btn_draw_'
-                        + graph.js_name
-                        + '" style="color:'
-                        + colour
-                        + '"><b>'
-                        + graph.button_label
-                        + "</b></button>\n"
+                        '    <button id="btn_draw_' + graph.js_name + '" style="color:' + colour + '"><b>' + graph.button_label + "</b></button>\n"
                     )
                     nwritten_controls += 1
 
@@ -710,13 +647,7 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
         self.file.write("    <table>\n")
         self.file.write("    <tr><td><ul>\n")
         for i, entry in enumerate(table_entries, start=1):
-            self.file.write(
-                "      <li>"
-                + entry[0]
-                + " <span id='bottom_table_val'>"
-                + entry[1]
-                + "</span></li>\n"
-            )
+            self.file.write("      <li>" + entry[0] + " <span id='bottom_table_val'>" + entry[1] + "</span></li>\n")
             if (i % 4) == 0:
                 self.file.write("      </ul></td><td><ul>\n")
         self.file.write("    </ul></td></tr>\n")
@@ -777,11 +708,7 @@ def cgroup_get_cpu_throttling(s):
         # throttling is new since cmonitor_collector 1.5-0
         nr_periods = s["cgroup_cpuacct_stats"]["throttling"]["nr_periods"]
         if nr_periods:
-            cpu_throttling = (
-                100
-                * s["cgroup_cpuacct_stats"]["throttling"]["nr_throttled"]
-                / nr_periods
-            )
+            cpu_throttling = 100 * s["cgroup_cpuacct_stats"]["throttling"]["nr_throttled"] / nr_periods
     return cpu_throttling
 
 
@@ -792,10 +719,7 @@ def cgroup_get_memory_limit(jheader, jdata):
 
     if jheader["cgroup_config"]["version"] == 1:
         # cgroups v1
-        system_total_bytes = (
-            jdata[0]["cgroup_memory_stats"]["stat.cache"]
-            + jdata[0]["cgroup_memory_stats"]["stat.rss"]
-        )
+        system_total_bytes = jdata[0]["cgroup_memory_stats"]["stat.cache"] + jdata[0]["cgroup_memory_stats"]["stat.rss"]
     else:
         # cgroups v2
         if "proc_meminfo" in jheader:
@@ -845,24 +769,16 @@ def generate_config_js(jheader):
     if "cgroup_config" in jheader:
         avail_cpus = jheader["cgroup_config"]["cpus"].split(",")
         jheader["cgroup_config"]["num_allowed_cpus"] = len(avail_cpus)
-        jheader["cgroup_config"]["memory_limit_bytes"] = sizeof_fmt(
-            int(jheader["cgroup_config"]["memory_limit_bytes"])
-        )
-        jheader["cgroup_config"]["cpus"] = jheader["cgroup_config"]["cpus"].replace(
-            ",", ", "
-        )
+        jheader["cgroup_config"]["memory_limit_bytes"] = sizeof_fmt(int(jheader["cgroup_config"]["memory_limit_bytes"]))
+        jheader["cgroup_config"]["cpus"] = jheader["cgroup_config"]["cpus"].replace(",", ", ")
 
     if "cmonitor" in jheader:
         if jheader["cmonitor"]["sample_num"] == 0:
             jheader["cmonitor"]["sample_num"] = "Infinite"
 
     if "proc_meminfo" in jheader:
-        jheader["proc_meminfo"]["MemTotal"] = sizeof_fmt(
-            int(jheader["proc_meminfo"]["MemTotal"])
-        )
-        jheader["proc_meminfo"]["Hugepagesize"] = sizeof_fmt(
-            int(jheader["proc_meminfo"]["Hugepagesize"])
-        )
+        jheader["proc_meminfo"]["MemTotal"] = sizeof_fmt(int(jheader["proc_meminfo"]["MemTotal"]))
+        jheader["proc_meminfo"]["Hugepagesize"] = sizeof_fmt(int(jheader["proc_meminfo"]["Hugepagesize"]))
 
     config_str = ""
     config_str += "\nfunction show_config_window() {\n"
@@ -883,12 +799,8 @@ def generate_config_js(jheader):
     config_str += configdump("identity", "Server Identity")
     config_str += configdump("os_release", "Operating System Release")
     config_str += configdump("proc_version", "Linux Kernel Version")
-    if (
-        "cgroup_config" in jheader
-    ):  # if cgroups are off, this section will not be present
-        config_str += configdump(
-            "cgroup_config", "Linux Control Group (CGroup) Configuration"
-        )
+    if "cgroup_config" in jheader:  # if cgroups are off, this section will not be present
+        config_str += configdump("cgroup_config", "Linux Control Group (CGroup) Configuration")
     if "lscpu" in jheader:  # Alpine docker has no lscpu utility
         config_str += configdump("lscpu", "CPU Overview")
     if "proc_meminfo" in jheader:
@@ -926,9 +838,7 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20, thread_fil
                     continue
                 cputime = entry["cpu_usr_total_secs"] + entry["cpu_sys_total_secs"]
                 iobytes = entry["io_total_read"] + entry["io_total_write"]
-                membytes = entry[
-                    "mem_rss_bytes"
-                ]  # take RSS, more realistic/useful compared to the "mem_virtual_bytes"
+                membytes = entry["mem_rss_bytes"]  # take RSS, more realistic/useful compared to the "mem_virtual_bytes"
                 thepid = entry["pid"]
 
                 # keep track of maxs:
@@ -977,33 +887,22 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20, thread_fil
         return "%s (%d)" % (process_dict[pid]["cmd"], pid)
 
     # now select the N top processes and put their data in a GoogleChart table:
-    topN_process_table = GoogleChartsGenericTable(
-        ["Command", "CPU time", "I/O " + io_unit, "Command", "Memory " + mem_unit]
-    )
+    topN_process_table = GoogleChartsGenericTable(["Command", "CPU time", "I/O " + io_unit, "Command", "Memory " + mem_unit])
     for i, pid in enumerate(topN_process_pids_list):
         p = process_dict[pid]
         nicecmd = get_nice_cmd(pid)
 
         if verbose:
-            print(
-                "Processing data for %d-th CPU-top-scorer process [%s]"
-                % (i + 1, nicecmd)
-            )
-        topN_process_table.addRow(
-            [p["cmd"], p["cpu"], p["io"] / io_divider, nicecmd, p["mem"] / mem_divider]
-        )
+            print("Processing data for %d-th CPU-top-scorer process [%s]" % (i + 1, nicecmd))
+        topN_process_table.addRow([p["cmd"], p["cpu"], p["io"] / io_divider, nicecmd, p["mem"] / mem_divider])
 
     # did we collect processes or threads?
-    string_collected_kpis = header["cmonitor"][
-        "collecting"
-    ]  # e.g. "cgroup_cpu,cgroup_memory,cgroup_threads"
+    string_collected_kpis = header["cmonitor"]["collecting"]  # e.g. "cgroup_cpu,cgroup_memory,cgroup_threads"
     collected_threads = "cgroup_threads" in string_collected_kpis
     if collected_threads:
         chart_desc_prefix = "Top %d threads " % numProcsToShow
         if verbose:
-            print(
-                "Threads (instead of processes) have been collected in the input JSON file."
-            )
+            print("Threads (instead of processes) have been collected in the input JSON file.")
     else:
         chart_desc_prefix = "Top %d processes " % numProcsToShow
 
@@ -1013,8 +912,7 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20, thread_fil
             button_label="CPU/Memory/Disk Bubbles",
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
             graph_type=GRAPH_TYPE_BUBBLE_CHART,
-            graph_title=chart_desc_prefix
-            + "for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
+            graph_title=chart_desc_prefix + "for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
             y_axis_title=["CPU time", "I/O " + io_unit],
             data=topN_process_table,
         )
@@ -1025,24 +923,16 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20, thread_fil
 
     # now generate instead a table of CPU/IO/MEMORY usage over time per process:
     process_table = {}
-    process_table["cpu"] = GoogleChartsTimeSeries(
-        ["Timestamp", "Limit/Quota", "Throttling"]
-        + [get_nice_cmd(pid) for pid in topN_process_pids_list]
-    )
-    process_table["io"] = GoogleChartsTimeSeries(
-        ["Timestamp"] + [get_nice_cmd(pid) for pid in topN_process_pids_list]
-    )
-    process_table["mem"] = GoogleChartsTimeSeries(
-        ["Timestamp", "Limit", "Alloc Failures"]
-        + [get_nice_cmd(pid) for pid in topN_process_pids_list]
-    )
+    process_table["cpu"] = GoogleChartsTimeSeries(["Timestamp", "Limit/Quota", "Throttling"] + [get_nice_cmd(pid) for pid in topN_process_pids_list])
+    process_table["io"] = GoogleChartsTimeSeries(["Timestamp"] + [get_nice_cmd(pid) for pid in topN_process_pids_list])
+    process_table["mem"] = GoogleChartsTimeSeries(["Timestamp", "Limit", "Alloc Failures"] + [get_nice_cmd(pid) for pid in topN_process_pids_list])
 
     cpu_quota_perc = cgroup_get_cpu_quota_percentage(header)
     for sample in jdata:
         try:
             row = {}
             for key in ["cpu", "io", "mem"]:
-                row[key] = [sample["timestamp"][g_datetime_field]]
+                row[key] = [sample["timestamp"]["UTC"]]
 
             # CPU graph has
             # - limit/quota and
@@ -1064,9 +954,7 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20, thread_fil
                 if json_key in sample["cgroup_tasks"]:
                     top_proc_sample = sample["cgroup_tasks"][json_key]
                     row["cpu"].append(top_proc_sample["cpu_tot"])
-                    row["io"].append(
-                        top_proc_sample["io_rchar"] + top_proc_sample["io_wchar"]
-                    )
+                    row["io"].append(top_proc_sample["io_rchar"] + top_proc_sample["io_wchar"])
                     row["mem"].append(top_proc_sample["mem_rss_bytes"] / mem_divider)
 
                     # keep track of maxs:
@@ -1109,9 +997,7 @@ def generate_cgroup_topN_procs(web, header, jdata, numProcsToShow=20, thread_fil
         GoogleChartsGraph(
             data=process_table["mem"],
             graph_title=chart_desc_prefix + "for memory usage (from cgroup stats)",
-            button_label="Memory by Thread"
-            if collected_threads
-            else "Memory by Process",
+            button_label="Memory by Thread" if collected_threads else "Memory by Process",
             y_axis_title="RSS Memory (%s)" % mem_unit,
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
             stack_state=False,
@@ -1153,7 +1039,7 @@ def generate_baremetal_disks_io(web, jdata):
             continue
 
         row = []
-        row.append(s["timestamp"][g_datetime_field])
+        row.append(s["timestamp"]["UTC"])
         for device in all_disks:
             # row.append(s["disks"][device]["time"])
             # row.append(s["disks"][device]["reads"])
@@ -1182,7 +1068,7 @@ def generate_baremetal_disks_io(web, jdata):
 #     fsstr = fsstr[:-1]
 #     startHtmlHead_line_graph(web, fsstr)
 #     for i, s in enumerate(jdata):
-#         web.write(",['Date(%s)' " % (googledate(s['timestamp'][g_datetime_field])))
+#         web.write(",['Date(%s)' " % (googledate(s['timestamp']["UTC"])))
 #         for fs in s["filesystems"].keys():
 #             web.write(", %.1f" % (s["filesystems"][fs]["fs_full_percent"]))
 #         web.write("]\n")
@@ -1219,7 +1105,7 @@ def generate_baremetal_network_traffic(web, jdata):
         if i == 0:
             continue
 
-        row = [s["timestamp"][g_datetime_field]]
+        row = [s["timestamp"]["UTC"]]
         for device in all_netdevices:
             try:
                 row.append(+s["network_interfaces"][device]["ibytes"] / divider)
@@ -1249,7 +1135,7 @@ def generate_baremetal_network_traffic(web, jdata):
         if i == 0:
             continue
 
-        row = [s["timestamp"][g_datetime_field]]
+        row = [s["timestamp"]["UTC"]]
         for device in all_netdevices:
             try:
                 row.append(+s["network_interfaces"][device]["ipackets"])
@@ -1296,9 +1182,7 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes):
             ]
         )
 
-    all_cpus_table = GoogleChartsTimeSeries(
-        ["Timestamp"] + [("CPU" + str(x)) for x in logical_cpus_indexes]
-    )
+    all_cpus_table = GoogleChartsTimeSeries(["Timestamp"] + [("CPU" + str(x)) for x in logical_cpus_indexes])
 
     #
     # MAIN LOOP
@@ -1309,7 +1193,7 @@ def generate_baremetal_cpus(web, jdata, logical_cpus_indexes):
         if i == 0:
             continue  # skip first sample
 
-        ts = s["timestamp"][g_datetime_field]
+        ts = s["timestamp"]["UTC"]
         all_cpus_row = [ts]
         for c in logical_cpus_indexes:
             cpu_stats = s["stat"]["cpu" + str(c)]
@@ -1376,10 +1260,7 @@ def generate_cgroup_cpus(web, jheader, jdata, logical_cpus_indexes):
     for c in logical_cpus_indexes:
         cpu_stats_table[c] = GoogleChartsTimeSeries(["Timestamp", "User", "System"])
 
-    all_cpus_table = GoogleChartsTimeSeries(
-        ["Timestamp", "Limit/Quota", "Throttling"]
-        + [("CPU" + str(x)) for x in logical_cpus_indexes]
-    )
+    all_cpus_table = GoogleChartsTimeSeries(["Timestamp", "Limit/Quota", "Throttling"] + [("CPU" + str(x)) for x in logical_cpus_indexes])
 
     #
     # MAIN LOOP
@@ -1393,7 +1274,7 @@ def generate_cgroup_cpus(web, jheader, jdata, logical_cpus_indexes):
             continue  # skip first sample
 
         try:
-            ts = s["timestamp"][g_datetime_field]
+            ts = s["timestamp"]["UTC"]
 
             all_cpus_row = [ts, cpu_quota_perc, cgroup_get_cpu_throttling(s)]
             for c in logical_cpus_indexes:
@@ -1460,9 +1341,7 @@ def generate_baremetal_memory(web, jdata):
     #
 
     mem_total_bytes = jdata[0]["proc_meminfo"]["MemTotal"]
-    baremetal_memory_stats = GoogleChartsTimeSeries(
-        ["Timestamp", "Used", "Cached (DiskRead)", "Free"]
-    )
+    baremetal_memory_stats = GoogleChartsTimeSeries(["Timestamp", "Used", "Cached (DiskRead)", "Free"])
     divider, unit = choose_byte_divider(mem_total_bytes)
 
     for i, s in enumerate(jdata):
@@ -1490,7 +1369,7 @@ def generate_baremetal_memory(web, jdata):
 
         baremetal_memory_stats.addRow(
             [
-                s["timestamp"][g_datetime_field],
+                s["timestamp"]["UTC"],
                 int((mem_total_bytes - mf - mc) / divider),  # compute used memory
                 int(mc / divider),  # cached
                 int(mf / divider),  # free
@@ -1522,9 +1401,7 @@ def generate_cgroup_memory(web, jheader, jdata):
     # See https://developers.google.com/chart/interactive/docs/reference
     #
 
-    cgroup_memory_stats = GoogleChartsTimeSeries(
-        ["Timestamp", "Used", "Cached (DiskRead)", "Alloc Failures", "Limit"]
-    )
+    cgroup_memory_stats = GoogleChartsTimeSeries(["Timestamp", "Used", "Cached (DiskRead)", "Alloc Failures", "Limit"])
 
     ver = int(jheader["cgroup_config"]["version"])
 
@@ -1547,7 +1424,7 @@ def generate_cgroup_memory(web, jheader, jdata):
                 mfail = s["cgroup_memory_stats"]["events.oom_kill"]
             cgroup_memory_stats.addRow(
                 [
-                    s["timestamp"][g_datetime_field],
+                    s["timestamp"]["UTC"],
                     mu / divider,
                     mc / divider,
                     mfail,
@@ -1588,9 +1465,7 @@ def generate_baremetal_avg_load(web, jheader, jdata):
     if "lscpu" in jheader:
         num_baremetal_cpus = int(jheader["lscpu"]["cpus"])
 
-    load_avg_stats = GoogleChartsTimeSeries(
-        ["Timestamp", "LoadAvg (1min)", "LoadAvg (5min)", "LoadAvg (15min)"]
-    )
+    load_avg_stats = GoogleChartsTimeSeries(["Timestamp", "LoadAvg (1min)", "LoadAvg (5min)", "LoadAvg (15min)"])
     for i, s in enumerate(jdata):
         if i == 0:
             continue  # skip first sample
@@ -1614,7 +1489,7 @@ def generate_baremetal_avg_load(web, jheader, jdata):
 
         load_avg_stats.addRow(
             [
-                s["timestamp"][g_datetime_field],
+                s["timestamp"]["UTC"],
                 100 * float(s["proc_loadavg"]["load_avg_1min"]) / num_baremetal_cpus,
                 100 * float(s["proc_loadavg"]["load_avg_5min"]) / num_baremetal_cpus,
                 100 * float(s["proc_loadavg"]["load_avg_15min"]) / num_baremetal_cpus,
@@ -1647,11 +1522,7 @@ def generate_monitoring_summary(jheader, jdata):
         ("Sampling Interval (s):", str(jheader["cmonitor"]["sample_interval_seconds"])),
         (
             "Total time sampled (hh:mm:ss):",
-            str(
-                datetime.timedelta(
-                    seconds=jheader["cmonitor"]["sample_interval_seconds"] * len(jdata)
-                )
-            ),
+            str(datetime.timedelta(seconds=jheader["cmonitor"]["sample_interval_seconds"] * len(jdata))),
         ),
         ("Version (cmonitor_collector):", jheader["cmonitor"]["version"]),
         ("Version (cmonitor_chart):", VERSION_STRING),
@@ -1765,9 +1636,7 @@ def load_json_data(infile):
 
     try:
         jheader = entry["header"]
-        jdata = entry[
-            "samples"
-        ]  # removes outer parts so we have a list of snapshot dictionaries
+        jdata = entry["samples"]  # removes outer parts so we have a list of snapshot dictionaries
     except:
         print("Unexpected JSON format. Aborting.")
         sys.exit(1)
@@ -1824,9 +1693,7 @@ def main_process_file(cfg):
     # detect num of CPUs:
     baremetal_logical_cpus_indexes = []
     if "stat" in jdata[0]:
-        baremetal_logical_cpus_indexes = collect_logical_cpu_indexes_from_section(
-            jdata_first_sample, "stat"
-        )
+        baremetal_logical_cpus_indexes = collect_logical_cpu_indexes_from_section(jdata_first_sample, "stat")
         if verbose:
             print(
                 "Found %d CPUs in baremetal stats with logical indexes [%s]"
@@ -1838,9 +1705,7 @@ def main_process_file(cfg):
 
     cgroup_logical_cpus_indexes = []
     if "cgroup_cpuacct_stats" in jdata_first_sample:
-        cgroup_logical_cpus_indexes = collect_logical_cpu_indexes_from_section(
-            jdata_first_sample, "cgroup_cpuacct_stats"
-        )
+        cgroup_logical_cpus_indexes = collect_logical_cpu_indexes_from_section(jdata_first_sample, "cgroup_cpuacct_stats")
         if verbose:
             print(
                 "Found %d CPUs in cgroup stats with logical indexes [%s]"
@@ -1867,9 +1732,7 @@ def main_process_file(cfg):
     # cgroup stats:
     web = generate_cgroup_cpus(web, jheader, jdata, cgroup_logical_cpus_indexes)
     web = generate_cgroup_memory(web, jheader, jdata)
-    web = generate_cgroup_topN_procs(
-        web, jheader, jdata, config["top_scorer"], config["thread_filter"]
-    )
+    web = generate_cgroup_topN_procs(web, jheader, jdata, config["top_scorer"], config["thread_filter"])
     web.endHtmlHead(generate_config_js(jheader))
 
     if verbose:
@@ -1877,9 +1740,7 @@ def main_process_file(cfg):
 
     # HTML BODY
     web.startHtmlBody(cgroupName, monitored_system)
-    web.appendHtmlTable(
-        "Monitoring Summary", generate_monitoring_summary(jheader, jdata)
-    )
+    web.appendHtmlTable("Monitoring Summary", generate_monitoring_summary(jheader, jdata))
     if len(baremetal_logical_cpus_indexes) > 0:
         web.appendHtmlTable(
             "Monitored System Summary",
@@ -1891,16 +1752,11 @@ def main_process_file(cfg):
             generate_monitored_summary(jheader, jdata, cgroup_logical_cpus_indexes),
         )
 
-    web.appendHtmlTable(
-        "About this", generate_about_this(jheader, jdata), div_id="bottom_about_div"
-    )
+    web.appendHtmlTable("About this", generate_about_this(jheader, jdata), div_id="bottom_about_div")
     web.endHtmlBody()
 
     end_time = time.time()
-    print(
-        "Completed processing of input JSON file of %d samples in %.3fsec. HTML output file is ready."
-        % (len(jdata), end_time - start_time)
-    )
+    print("Completed processing of input JSON file of %d samples in %.3fsec. HTML output file is ready." % (len(jdata), end_time - start_time))
 
 
 # =======================================================================================================
@@ -1914,25 +1770,16 @@ def usage():
     print("Utility to post-process data recorded by 'cmonitor_collector' and")
     print("create a self-contained HTML file for visualizing that data.")
     print("Typical usage:")
-    print(
-        "  %s --input=output_from_cmonitor_collector.json [--output=myreport.html]"
-        % sys.argv[0]
-    )
+    print("  %s --input=output_from_cmonitor_collector.json [--output=myreport.html]" % sys.argv[0])
     print("Required parameters:")
     print("  -i, --input=<file.json>    The JSON file to analyze.")
     print("Main options:")
     print("  -h, --help                 (this help)")
     print("  -v, --verbose              Be verbose.")
     print("  -o, --output=<file.html>   The name of the output HTML file.")
-    print(
-        "  -u, --utc                  Plot data using UTC timestamps instead of local timezone."
-    )
-    print(
-        "  -t, --top-scorer=N         Plot the N most-CPU-hungry processes/threads. Default is 20. Zero means plot all."
-    )
-    print(
-        "  -f, --filter=<tname>       Plot only the threads filtered by the selected substring . Default is None."
-    )
+    print("  -u, --utc                  Plot data using UTC timestamps instead of local timezone.")
+    print("  -t, --top-scorer=N         Plot the N most-CPU-hungry processes/threads. Default is 20. Zero means plot all.")
+    print("  -f, --filter=<tname>       Plot only the threads filtered by the selected substring . Default is None.")
     print("      --version              Print version and exit.")
     sys.exit(0)
 
@@ -1960,7 +1807,7 @@ def parse_command_line():
         usage()  # will exit program
 
     global verbose
-    global g_datetime_field
+    global g_datetime
     input_json = ""
     output_html = ""
     top_scorer = 20
@@ -1975,9 +1822,8 @@ def parse_command_line():
         elif o in ("-v", "--verbose"):
             verbose = True
         elif o in ("-u", "--utc"):
-            g_datetime_field = (
-                "UTC"  # instead of default 'datetime' which means local timezone
-            )
+            # instead of default 'datetime' which means local timezone
+            g_datetime = "UTC"
         elif o in ("-t", "--top-scorer"):
             try:
                 top_scorer = int(a)
