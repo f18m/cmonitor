@@ -377,6 +377,10 @@ void CMonitorCgroups::init( // force newline
         break;
     }
 
+    // if reading limits fail, we might have disabled cgroup monitoring:
+    if (m_nCGroupsFound == CG_NONE)
+        return;
+
     init_cpuacct(cgroup_prefix_for_test);
     init_memory(cgroup_prefix_for_test);
     init_network(cgroup_prefix_for_test);
