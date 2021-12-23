@@ -226,17 +226,45 @@ void CMonitorCgroups::init( // force newline
     m_cgroup_processes_include_threads = include_threads;
     m_proc_prefix = proc_prefix_for_test;
 
-    // ABSOLUTE PATH PREFIXES
+    if (!init_cgroup_path_prefixes(cgroup_prefix_for_test))
+        return; // the function has already logged errors
+    if (!finalize_cgroup_paths())
+        return; // the function has already logged errors
+
+    switch (m_nCGroupsFound) {
+    case CG_NONE:
+        return;
+    case CG_VERSION1:
+        v1_read_limits();
+        break;
+    case CG_VERSION2:
+        v2_read_limits();
+        break;
+    }
+
+    // if reading limits fail, we might have disabled cgroup monitoring:
+    if (m_nCGroupsFound == CG_NONE)
+        return; // the functions above have already logged errors
+
+    init_cpuacct(cgroup_prefix_for_test);
+    init_memory(cgroup_prefix_for_test);
+    init_network(cgroup_prefix_for_test);
+    init_processes(cgroup_prefix_for_test);
+}
+
+bool CMonitorCgroups::init_cgroup_path_prefixes(const std::string& cgroup_prefix_for_test)
+{
+    // This function will set ABSOLUTE CGROUP PATH PREFIXES
     // Typical examples (cgroup v1)
     //    m_cgroup_memory_kernel_path   = /sys/fs/cgroup/memory/
     //    m_cgroup_cpuacct_kernel_path  = /sys/fs/cgroup/cpu,cpuacct/     or     /sys/fs/cgroup/cpuacct,cpu/
     //    m_cgroup_cpuset_kernel_path   = /sys/fs/cgroup/cpuset/
     // Typical examples (cgroup v2)
     //    m_cgroup_memory_kernel_path = m_cgroup_cpuacct_kernel_path = m_cgroup_cpuset_kernel_path =
-    //    /sys/fs/cgroup/system.slice/
+    //        /sys/fs/cgroup/system.slice/
 
     std::string cgroupsv2_basepath;
-    std::string cpuacct_controller_name = "cpu,cpuacct";
+    m_cpuacct_controller_name = "cpu,cpuacct";
     if (!cgroup_prefix_for_test.empty()) {
 
         std::string dir = cgroup_prefix_for_test + "/sys/fs/cgroup/memory";
@@ -269,20 +297,20 @@ void CMonitorCgroups::init( // force newline
             CMonitorLogger::instance()->LogError(
                 "Could not find the 'memory' cgroup path prefix. CGroup mode disabled.\n");
             m_nCGroupsFound = CG_NONE;
-            return;
+            return false;
         }
 
-        if (!get_cgroup_v1_abs_path_prefix_for_this_pid(cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
+        if (!get_cgroup_v1_abs_path_prefix_for_this_pid(m_cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
 
             // on some Linux distributions, the name of the cgroup has the "cpu" and "cpuacct" names inverted..
             // retry inverting the order:
-            cpuacct_controller_name = "cpuacct,cpu";
+            m_cpuacct_controller_name = "cpuacct,cpu";
 
-            if (!get_cgroup_v1_abs_path_prefix_for_this_pid(cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
+            if (!get_cgroup_v1_abs_path_prefix_for_this_pid(m_cpuacct_controller_name, m_cgroup_cpuacct_kernel_path)) {
                 CMonitorLogger::instance()->LogError(
                     "Could not find the 'cpuacct' cgroup path prefix. CGroup mode disabled.\n");
                 m_nCGroupsFound = CG_NONE;
-                return;
+                return false;
             }
         }
 
@@ -290,10 +318,20 @@ void CMonitorCgroups::init( // force newline
             CMonitorLogger::instance()->LogError(
                 "Could not find the 'cpuset' cgroup path prefix. CGroup mode disabled.\n");
             m_nCGroupsFound = CG_NONE;
-            return;
+            return false;
         }
     }
 
+    CMonitorLogger::instance()->LogDebug("Detected cpuset cgroup mounted at %s\n", m_cgroup_cpuset_kernel_path.c_str());
+    CMonitorLogger::instance()->LogDebug(
+        "Detected cpuacct cgroup mounted at %s\n", m_cgroup_cpuacct_kernel_path.c_str());
+    CMonitorLogger::instance()->LogDebug("Detected memory cgroup mounted at %s\n", m_cgroup_memory_kernel_path.c_str());
+
+    return true;
+}
+
+bool CMonitorCgroups::finalize_cgroup_paths()
+{
     // NOW DETECT ACTUAL CGROUP PATHS TO MONITOR
 
     if (m_pCfg->m_strCGroupName.empty() || m_pCfg->m_strCGroupName == "self") {
@@ -307,26 +345,38 @@ void CMonitorCgroups::init( // force newline
             CMonitorLogger::instance()->LogDebug(
                 "Could not get the cgroup paths for cmonitor_collector itself. CGroup mode disabled.\n");
             m_nCGroupsFound = CG_NONE;
-            return;
+            return false;
         }
 
-        CMonitorLogger::instance()->LogDebug(
-            "Found cpuset cgroup mounted at %s\n", m_cgroup_cpuset_kernel_path.c_str());
-        CMonitorLogger::instance()->LogDebug(
-            "Found cpuacct cgroup mounted at %s\n", m_cgroup_cpuacct_kernel_path.c_str());
-        CMonitorLogger::instance()->LogDebug(
-            "Found memory cgroup mounted at %s\n", m_cgroup_memory_kernel_path.c_str());
+        if (cgroup_paths.find("name=systemd") == cgroup_paths.end()) {
+            CMonitorLogger::instance()->LogError("Could not find the cgroup controller 'name=systemd' inside "
+                                                 "'/proc/self/cgroup'. CGroup mode disabled.\n");
+            m_nCGroupsFound = CG_NONE;
+            return false;
+        }
 
-        // NOTE: in case we're inside a Docker or LXC container we should be able to find our own PID in one
-        //       of the "undecorated" absolute paths just read by get_cgroup_paths_for_this_pid()
         if (search_my_pid_in_cgroups()) {
+            // in this case we're likely inside a Docker or LXC container so we were able to find our own PID in one
+            // of the "undecorated" absolute paths detected previously by init_cgroup_path_prefixes()
             m_cgroup_systemd_name = cgroup_paths["name=systemd"];
         } else {
+
+            if (cgroup_paths.find("memory") == cgroup_paths.end() || // fn
+                cgroup_paths.find("cpuset") == cgroup_paths.end() || // fn
+                cgroup_paths.find(m_cpuacct_controller_name) == cgroup_paths.end()) {
+                CMonitorLogger::instance()->LogError(
+                    "Could not find one the required cgroup controllers 'memory', 'cpuset' or '%s' inside "
+                    "'/proc/self/cgroup'. CGroup mode disabled.\n",
+                    m_cpuacct_controller_name.c_str());
+                m_nCGroupsFound = CG_NONE;
+                return false;
+            }
+
             // try to adjust the full cgroup paths by adding the cgroup paths read from /proc/self/cgroup
             // to the absolute prefixes: this is typically necessary when running outside Docker/LXC but
             // just inside systemd:
             m_cgroup_memory_kernel_path += "/" + cgroup_paths["memory"];
-            m_cgroup_cpuacct_kernel_path += "/" + cgroup_paths[cpuacct_controller_name];
+            m_cgroup_cpuacct_kernel_path += "/" + cgroup_paths[m_cpuacct_controller_name];
             m_cgroup_cpuset_kernel_path += "/" + cgroup_paths["cpuset"];
             CMonitorLogger::instance()->LogDebug(
                 "Adjusting cpuset cgroup path to %s\n", m_cgroup_cpuset_kernel_path.c_str());
@@ -356,7 +406,7 @@ void CMonitorCgroups::init( // force newline
                 "[%s] does not exist. CGroup mode disabled.",
                 m_cgroup_memory_kernel_path.c_str());
             m_nCGroupsFound = CG_NONE;
-            return;
+            return false;
         }
 
         m_cgroup_systemd_name = m_pCfg->m_strCGroupName;
@@ -366,25 +416,7 @@ void CMonitorCgroups::init( // force newline
         CMonitorLogger::instance()->LogDebug("Set memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
     }
 
-    switch (m_nCGroupsFound) {
-    case CG_NONE:
-        return;
-    case CG_VERSION1:
-        v1_read_limits();
-        break;
-    case CG_VERSION2:
-        v2_read_limits();
-        break;
-    }
-
-    // if reading limits fail, we might have disabled cgroup monitoring:
-    if (m_nCGroupsFound == CG_NONE)
-        return;
-
-    init_cpuacct(cgroup_prefix_for_test);
-    init_memory(cgroup_prefix_for_test);
-    init_network(cgroup_prefix_for_test);
-    init_processes(cgroup_prefix_for_test);
+    return true;
 }
 
 void CMonitorCgroups::v1_read_limits()

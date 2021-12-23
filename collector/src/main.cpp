@@ -751,9 +751,13 @@ int CMonitorCollectorApp::run(int argc, char** argv)
 
     /* first time just sleep() a bit so the first snapshot has some real-ish data */
     if (m_cfg.m_nSamplingIntervalMsec <= 60000) {
+        CMonitorLogger::instance()->LogDebug(
+            "Sleeping for the first sampling interval=%lumsecs", m_cfg.m_nSamplingIntervalMsec);
         do_sampling_sleep();
-    } else
+    } else {
+        CMonitorLogger::instance()->LogDebug("Sleeping for the first sampling interval=60secs");
         sleep(60); /* if a long time between snapshot do a quick one now so we have one in the bank */
+    }
 
     std::set<std::string> charted_stats_from_meminfo;
     if (m_cfg.m_nOutputFields == PF_USED_BY_CHART_SCRIPT_ONLY) {

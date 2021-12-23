@@ -105,6 +105,8 @@ public:
 
 private:
     // cgroups config
+    bool init_cgroup_path_prefixes(const std::string& cgroup_prefix_for_test);
+    bool finalize_cgroup_paths();
     bool search_my_pid_in_cgroups();
     void v1_read_limits();
     void v2_read_limits();
@@ -164,6 +166,7 @@ private:
     //------------------------------------------------------------------------------
     // cpuacct controller
     //------------------------------------------------------------------------------
+    std::string m_cpuacct_controller_name;
     FastFileReader m_cgroup_cpuacct_v1_reader_sys_stat; // if has split user/system time
     FastFileReader m_cgroup_cpuacct_v1_reader_user_stat; // if has split user/system time
     FastFileReader m_cgroup_cpuacct_v1_reader_combined_stat; // if has COMBINED user/system time
