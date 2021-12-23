@@ -1312,14 +1312,18 @@ def generate_cgroup_cpus(web, jheader, jdata, logical_cpus_indexes):
             )
         )
 
+    ver = int(jheader["cgroup_config"]["version"])
+
     # Also produce the "all CPUs" graph that includes some very useful KPIs like
     # - CPU limit imposed on Linux CFS scheduler
     # - Amount of CPU throttling
+    # NOTE: when cgroups v2 are used, there's no per-CPU stat just the total CPU usage,
+    #       so we change the title of the tab to reflect that
     web.appendGoogleChart(
         GoogleChartsGraph(
             data=all_cpus_table,  # Data
-            graph_title="All logical CPUs available in the cgroup",
-            button_label="All CPUs",
+            graph_title="All logical CPUs available in the cgroup" if ver == 1 else "CPU usage measured in the cgroup",
+            button_label="All CPUs" if ver == 1 else "CPU",
             y_axis_title="Time (%)",
             graph_source=GRAPH_SOURCE_DATA_CGROUP,
             stack_state=False,
