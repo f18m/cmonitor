@@ -31,6 +31,7 @@ Table of contents of this README:
     - [Docker](#docker)
   - [How to build from sources](#how-to-build-from-sources)
     - [On Fedora, Centos](#on-fedora-centos)
+    - [On Debian, Ubuntu](#on-debian-ubuntu)
   - [How to use](#how-to-use)
     - [Step 1: collect stats](#step-1-collect-stats)
     - [Step 2: plot stats collected as JSON](#step-2-plot-stats-collected-as-json)
