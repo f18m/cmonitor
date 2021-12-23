@@ -553,15 +553,26 @@ bool CMonitorCgroups::search_my_pid_in_cgroups()
     case CG_VERSION2:
         // cgroups v2 use an unified hierarchy, so there's a single file to check:
         // see https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
-        // NOTE: m_cgroup_cpuset_kernel_path == m_cgroup_cpuacct_kernel_path == m_cgroup_cpuset_kernel_path so
-        //       any of these is equivalent:
-        if (search_integer(m_cgroup_cpuset_kernel_path + "/cgroup.procs", uint64_t(ourPid)))
-            CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the cgroup v2 at '%s'.\n", ourPid,
-                m_cgroup_cpuset_kernel_path.c_str());
-        else {
-            CMonitorLogger::instance()->LogDebug(
-                "Could not find our PID %d in the cgroup v2 at '%s'.\n", ourPid, m_cgroup_cpuset_kernel_path.c_str());
-            found = false;
+        // NOTE:
+        //  at least on Ubuntu 20.04 even with cgroupsv2, the various paths
+        //    m_cgroup_cpuset_kernel_path
+        //    m_cgroup_cpuacct_kernel_path
+        //    m_cgroup_cpuset_kernel_path so
+        //  when running outside a Docker container (directly under systemd) are different
+        //  despite the "unified" hierarchy... try them one by one:
+        std::string paths[] = { m_cgroup_memory_kernel_path, m_cgroup_cpuacct_kernel_path, m_cgroup_cpuset_kernel_path };
+
+        found = false;
+        for (unsigned int i = 0; i < 3; i++) {
+            if (search_integer(paths[i] + "/cgroup.procs", uint64_t(ourPid))) {
+                found = true;
+                CMonitorLogger::instance()->LogDebug(
+                    "Successfully found our PID %d in the cgroup v2 at '%s'.\n", ourPid, paths[i].c_str());
+                break;
+            } else {
+                CMonitorLogger::instance()->LogDebug(
+                    "Could not find our PID %d in the cgroup v2 at '%s'.\n", ourPid, paths[i].c_str());
+            }
         }
         break;
     }
