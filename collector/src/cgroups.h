@@ -82,13 +82,12 @@ public:
         memset(&m_cpuacct_prev_values_for_throttling, 0, sizeof(cpuacct_throttling_t));
     }
 
-    ~CMonitorCgroups()
-    {
-    }
+    ~CMonitorCgroups() { }
 
     // main setup
     // NOTE: arguments are used only during unit testing
-    void init(bool include_threads, const std::string& cgroup_prefix_for_test = "", const std::string& proc_prefix_for_test = "");
+    void init(bool include_threads, const std::string& cgroup_prefix_for_test = "",
+        const std::string& proc_prefix_for_test = "");
 
     // one-shot configuration info
     void output_config();
@@ -106,7 +105,7 @@ public:
 
 private:
     // cgroups config
-    bool init_check_for_our_pid();
+    bool search_my_pid_in_cgroups();
     void v1_read_limits();
     void v2_read_limits();
     void init_cpuacct(const std::string& cgroup_prefix_for_test);
@@ -184,7 +183,7 @@ private:
     FastFileReader m_cgroup_memory_v2_current;
     FastFileReader m_cgroup_memory_v1v2_stat;
     FastFileReader m_cgroup_memory_v1_failcnt;
-    FastFileReader m_cgroup_memory_v2_events;    
+    FastFileReader m_cgroup_memory_v2_events;
 
     //------------------------------------------------------------------------------
     // cgroup network

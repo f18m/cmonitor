@@ -114,6 +114,17 @@ Note that `cmonitor-collector` utility is currently unit-tested against:
 Other kernels will be tested in near future. Of course pull requests are welcome to extend coverage.
 See [tests folder](collector/src/tests) for more details.
 
+Regarding cgroup driver, `cmonitor-collector` is mostly tested with the `cgroupfs` driver (versus the `systemd` driver),
+even if it should work also with `systemd` driver.
+To find out which cgroup driver and which cgroup version you are using when launching e.g. Docker containers you can run:
+
+```
+docker info | grep -i cgroup
+```
+
+See this article https://lwn.net/Articles/676831/ for more details on the docker vs systemd friction in Linux world!
+
+
 ## How to install
 
 

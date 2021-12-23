@@ -135,7 +135,7 @@ bool are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
 
         if (fs_spec == "cgroup2" && fs_vfstype == "cgroup2") {
             // found the "cgroup type" that belongs to cgroups v2... note that in this "if" branch the "cgroup_type"
-            // is not used: cgroupsv2, also known as "unified cgroup hierarchy", will have a single path for the whole
+            // is not used: cgroupsv2, also known as "unified cgroup hierarchy", do have a single path for the whole
             // cgroup, instead of having multiple ones for each different "cgroup_type"
             cgroup_pathOUT = fs_file;
             return true;
@@ -257,6 +257,7 @@ void CMonitorCgroups::init( // force newline
     } else if (are_cgroups_v2_enabled(cgroupsv2_basepath)) {
         m_nCGroupsFound = CG_VERSION2;
 
+        // the unified hierarchy of cgroups used in v2 means that all cgroup controllers share the same path:
         m_cgroup_memory_kernel_path = cgroupsv2_basepath;
         m_cgroup_cpuacct_kernel_path = cgroupsv2_basepath;
         m_cgroup_cpuset_kernel_path = cgroupsv2_basepath;
@@ -316,9 +317,9 @@ void CMonitorCgroups::init( // force newline
         CMonitorLogger::instance()->LogDebug(
             "Found memory cgroup mounted at %s\n", m_cgroup_memory_kernel_path.c_str());
 
-        // NOTE: in case we're inside Docker or LXC we should be able to find ourselves inside the
-        //       paths composed only by the ABS PREFIXES
-        if (init_check_for_our_pid()) {
+        // NOTE: in case we're inside a Docker or LXC container we should be able to find our own PID in one
+        //       of the "undecorated" absolute paths just read by get_cgroup_paths_for_this_pid()
+        if (search_my_pid_in_cgroups()) {
             m_cgroup_systemd_name = cgroup_paths["name=systemd"];
         } else {
             // try to adjust the full cgroup paths by adding the cgroup paths read from /proc/self/cgroup
@@ -333,7 +334,7 @@ void CMonitorCgroups::init( // force newline
                 "Adjusting cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
             CMonitorLogger::instance()->LogDebug(
                 "Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
-            if (init_check_for_our_pid())
+            if (search_my_pid_in_cgroups())
                 m_cgroup_systemd_name = cgroup_paths["name=systemd"];
         }
     } else {
@@ -476,36 +477,57 @@ void CMonitorCgroups::v2_read_limits()
         m_cgroup_memory_limit_bytes, m_cgroup_memory_kernel_path.c_str());
 }
 
-bool CMonitorCgroups::init_check_for_our_pid()
+bool CMonitorCgroups::search_my_pid_in_cgroups()
 {
     // CGROUP CHECKS
     // now if we got the right paths, we should be able to find our pid in all these cgroups
     // NOTE: depending on the container technology (Docker, LXC or LXD) or on the absence of containers
-    //       but presence of cgroups (like those of e.g. systemd) we may have a masquerated PID
+    //       but presence of cgroups (like those created by systemd) we may have a masquerated PID
     //       (e.g. PID '8' inside a Docker container while the real PID is 2348 on baremetal)
 
     pid_t ourPid = getpid();
     bool found = true;
 
-    if (search_integer(m_cgroup_memory_kernel_path + "/tasks", uint64_t(ourPid)))
-        CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'memory' cgroup.\n", ourPid);
-    else {
-        CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'memory' cgroup.\n", ourPid);
+    switch (m_nCGroupsFound) {
+    case CG_NONE:
         found = false;
-    }
+        break;
+    case CG_VERSION1:
+        if (search_integer(m_cgroup_memory_kernel_path + "/tasks", uint64_t(ourPid)))
+            CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'memory' cgroup.\n", ourPid);
+        else {
+            CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'memory' cgroup.\n", ourPid);
+            found = false;
+        }
 
-    if (search_integer(m_cgroup_cpuacct_kernel_path + "/tasks", uint64_t(ourPid)))
-        CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'cpuacct' cgroup.\n", ourPid);
-    else {
-        CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'cpuacct' cgroup.\n", ourPid);
-        found = false;
-    }
+        if (search_integer(m_cgroup_cpuacct_kernel_path + "/tasks", uint64_t(ourPid)))
+            CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'cpuacct' cgroup.\n", ourPid);
+        else {
+            CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'cpuacct' cgroup.\n", ourPid);
+            found = false;
+        }
 
-    if (search_integer(m_cgroup_cpuset_kernel_path + "/tasks", uint64_t(ourPid)))
-        CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'cpuset' cgroup.\n", ourPid);
-    else {
-        CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'cpuset' cgroup.\n", ourPid);
-        found = false;
+        if (search_integer(m_cgroup_cpuset_kernel_path + "/tasks", uint64_t(ourPid)))
+            CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'cpuset' cgroup.\n", ourPid);
+        else {
+            CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'cpuset' cgroup.\n", ourPid);
+            found = false;
+        }
+        break;
+    case CG_VERSION2:
+        // cgroups v2 use an unified hierarchy, so there's a single file to check:
+        // see https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+        // NOTE: m_cgroup_cpuset_kernel_path == m_cgroup_cpuacct_kernel_path == m_cgroup_cpuset_kernel_path so
+        //       any of these is equivalent:
+        if (search_integer(m_cgroup_cpuset_kernel_path + "/cgroup.procs", uint64_t(ourPid)))
+            CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the cgroup v2 at '%s'.\n", ourPid,
+                m_cgroup_cpuset_kernel_path.c_str());
+        else {
+            CMonitorLogger::instance()->LogDebug(
+                "Could not find our PID %d in the cgroup v2 at '%s'.\n", ourPid, m_cgroup_cpuset_kernel_path.c_str());
+            found = false;
+        }
+        break;
     }
 
     return found;
