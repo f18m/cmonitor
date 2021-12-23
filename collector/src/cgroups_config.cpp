@@ -488,9 +488,10 @@ void CMonitorCgroups::v2_read_limits()
             m_cgroup_memory_limit_bytes, m_cgroup_memory_kernel_path.c_str());
 
     if (!read_cpuset_cpus(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
-        CMonitorLogger::instance()->LogError(
-            "Could not read the CPUs from 'cpuset' cgroup. Assuming all cpus are available.\n");
         CMonitorSystem::get_all_cpus(m_cgroup_cpus);
+        CMonitorLogger::instance()->LogError(
+            "Could not read the CPUs from 'cpuset' cgroup. Assuming all cpus are available: %s.\n",
+            stl_container2string(m_cgroup_cpus, ",").c_str());
     } else
         CMonitorLogger::instance()->LogDebug("Found cpuset cgroup limiting to CPUs %s, mounted at %s\n",
             stl_container2string(m_cgroup_cpus, ",").c_str(), m_cgroup_cpuset_kernel_path.c_str());
