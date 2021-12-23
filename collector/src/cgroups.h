@@ -158,10 +158,10 @@ private:
     //------------------------------------------------------------------------------
     // limits read from the cgroups controllers:
     //------------------------------------------------------------------------------
-    uint64_t m_cgroup_memory_limit_bytes = 0;
+    uint64_t m_cgroup_memory_limit_bytes = 0; // if UINT64_MAX indicates no memory limit is present
     std::set<uint64_t> m_cgroup_cpus;
     uint64_t m_cgroup_cpuacct_period_us = 0;
-    uint64_t m_cgroup_cpuacct_quota_us = 0;
+    uint64_t m_cgroup_cpuacct_quota_us = 0; // if UINT64_MAX indicates there's no cpu limit
 
     //------------------------------------------------------------------------------
     // cpuacct controller

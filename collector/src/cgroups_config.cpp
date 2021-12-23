@@ -481,16 +481,16 @@ void CMonitorCgroups::v2_read_limits()
     // cgroup controller... it just means "no limit"... we need to handle that using UINT64_MAX
     if (!read_integer(m_cgroup_memory_kernel_path + "/memory.max", m_cgroup_memory_limit_bytes)) {
         CMonitorLogger::instance()->LogError(
-            "Could not read the memory limit from 'memory' cgroup. Disabling monitoring of memory cgroup.\n");
-        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_MEMORY;
+            "Could not read the memory limit from 'memory' cgroup. Assuming no memory limit.\n");
+        m_cgroup_memory_limit_bytes = UINT64_MAX;
     } else
         CMonitorLogger::instance()->LogDebug("Found memory cgroup limiting to %luB, mounted at %s\n",
             m_cgroup_memory_limit_bytes, m_cgroup_memory_kernel_path.c_str());
 
     if (!read_cpuset_cpus(m_cgroup_cpuset_kernel_path, m_cgroup_cpus)) {
         CMonitorLogger::instance()->LogError(
-            "Could not read the CPUs from 'cpuset' cgroup. Disabling monitoring of cpu cgroup.\n");
-        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_CPU_ACCT;
+            "Could not read the CPUs from 'cpuset' cgroup. Assuming all cpus are available.\n");
+        CMonitorSystem::get_all_cpus(m_cgroup_cpus);
     } else
         CMonitorLogger::instance()->LogDebug("Found cpuset cgroup limiting to CPUs %s, mounted at %s\n",
             stl_container2string(m_cgroup_cpus, ",").c_str(), m_cgroup_cpuset_kernel_path.c_str());
@@ -500,8 +500,9 @@ void CMonitorCgroups::v2_read_limits()
     if (!read_two_integers(
             m_cgroup_cpuacct_kernel_path + "/cpu.max", m_cgroup_cpuacct_quota_us, m_cgroup_cpuacct_period_us)) {
         CMonitorLogger::instance()->LogError(
-            "Could not read the CPU period from 'cpuacct' cgroup. Disabling monitoring of cpu cgroup.\n");
-        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_CPU_ACCT;
+            "Could not read the CPU period from 'cpuacct' cgroup. Assuming no CPU limit.\n");
+        m_cgroup_cpuacct_quota_us = UINT64_MAX;
+        m_cgroup_cpuacct_period_us = 100000; // standard values
     } else
         CMonitorLogger::instance()->LogDebug("Found cpuacct cgroup limiting at %lu/%lu usecs mounted at %s\n",
             m_cgroup_cpuacct_quota_us, m_cgroup_cpuacct_period_us, m_cgroup_cpuacct_kernel_path.c_str());
