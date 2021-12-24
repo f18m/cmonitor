@@ -718,9 +718,17 @@ unsigned int CMonitorSystem::get_all_cpus(std::set<uint64_t>& cpu_indexes)
                 // found a line for a specific CPU like:
                 //    cpu1 90470 3217 30294 291392 17250 0 3242 0 0 0
                 // process it
-                uint64_t cpuno = 0;
-                string2int(&line[3], cpuno);
-                cpu_indexes.insert(cpuno);
+                const char* pStart = &line[3];
+                
+                /*
+                from the manpage:
+                Since 0 can legitimately be returned on both success and failure, the calling program should set errno to 0 before
+                the call, and then determine if an error occurred by checking whether errno has a nonzero value after the call.
+                */
+                errno = 0;
+                unsigned long cpuno = strtoul(pStart, NULL, 10);
+                if (errno != 0)
+                    cpu_indexes.insert(cpuno);
             }
         }
 
