@@ -107,7 +107,8 @@ private:
     // cgroups config
     bool init_cgroup_path_prefixes(const std::string& cgroup_prefix_for_test);
     bool finalize_cgroup_paths();
-    bool search_my_pid_in_cgroups();
+    bool search_my_pid_in_cgroups(); // sets m_cgroup_processes_path
+    bool search_processes_cgroup_path(); // sets m_cgroup_processes_path
     void v1_read_limits();
     void v2_read_limits();
     void init_cpuacct(const std::string& cgroup_prefix_for_test);
@@ -141,10 +142,15 @@ private:
     //------------------------------------------------------------------------------
     // paths of cgroups controllers to monitor (either our own cgroup or another one):
     //------------------------------------------------------------------------------
-    std::string m_cgroup_systemd_name;
-    std::string m_cgroup_memory_kernel_path;
-    std::string m_cgroup_cpuacct_kernel_path;
-    std::string m_cgroup_cpuset_kernel_path;
+    std::string m_cgroup_systemd_name; // contains the "name" of the cgroup
+    std::string
+        m_cgroup_memory_kernel_path; // contains the absolute path to the folder with memory cgroup controller files
+    std::string
+        m_cgroup_cpuacct_kernel_path; // contains the absolute path to the folder with cpuacct cgroup controller files
+    std::string
+        m_cgroup_cpuset_kernel_path; // contains the absolute path to the folder with cpuset cgroup controller files
+    std::string m_cgroup_processes_path; // contains the absolute path to the folder which contains either the "tasks"
+                                         // (v1) or "cgroups.procs|threads" (v2) files
     std::string m_proc_prefix; // used only during unit testing to insert an arbitrary prefix in front of "/proc"
 
     //------------------------------------------------------------------------------

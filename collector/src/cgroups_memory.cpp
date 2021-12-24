@@ -107,14 +107,30 @@ void CMonitorCgroups::init_memory(const std::string& cgroup_prefix_for_test)
     bool reopen_each_time = !cgroup_prefix_for_test.empty();
 
     m_cgroup_memory_v1v2_stat.set_file(m_cgroup_memory_kernel_path + "/memory.stat", reopen_each_time);
+    if (!m_cgroup_memory_v1v2_stat.open_or_rewind()) {
+        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_MEMORY;
+        CMonitorLogger::instance()->LogError(
+            "Could not read the memory statistics file '%s'. Disabling monitoring of memory cgroup.\n",
+            m_cgroup_memory_v1v2_stat.get_file().c_str());
+        return;
+    }
 
     switch (m_nCGroupsFound) {
     case CG_VERSION1:
         m_cgroup_memory_v1_failcnt.set_file(m_cgroup_memory_kernel_path + "/memory.failcnt", reopen_each_time);
+        // even if reading this file fails later on, we keep monitoring the memory controller
         break;
 
     case CG_VERSION2:
         m_cgroup_memory_v2_current.set_file(m_cgroup_memory_kernel_path + "/memory.current", reopen_each_time);
+        if (!m_cgroup_memory_v2_current.open_or_rewind()) {
+            m_pCfg->m_nCollectFlags &= ~PK_CGROUP_MEMORY;
+            CMonitorLogger::instance()->LogError(
+                "Could not read the memory statistics file '%s'. Disabling monitoring of memory cgroup.\n",
+                m_cgroup_memory_v2_current.get_file().c_str());
+            return;
+        }
+
         m_cgroup_memory_v2_events.set_file(m_cgroup_memory_kernel_path + "/memory.events", reopen_each_time);
         break;
 

@@ -355,7 +355,7 @@ bool CMonitorCgroups::finalize_cgroup_paths()
             return false;
         }
 
-        if (search_my_pid_in_cgroups()) {
+        if (search_my_pid_in_cgroups()) { // also updates m_cgroup_processes_path
             // in this case we're likely inside a Docker or LXC container so we were able to find our own PID in one
             // of the "undecorated" absolute paths detected previously by init_cgroup_path_prefixes()
             m_cgroup_systemd_name = cgroup_paths["name=systemd"];
@@ -384,7 +384,7 @@ bool CMonitorCgroups::finalize_cgroup_paths()
                 "Adjusting cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
             CMonitorLogger::instance()->LogDebug(
                 "Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
-            if (search_my_pid_in_cgroups())
+            if (search_my_pid_in_cgroups()) // also updates m_cgroup_processes_path
                 m_cgroup_systemd_name = cgroup_paths["name=systemd"];
         }
     } else {
@@ -411,9 +411,13 @@ bool CMonitorCgroups::finalize_cgroup_paths()
 
         m_cgroup_systemd_name = m_pCfg->m_strCGroupName;
 
+        // set m_cgroup_processes_path
+        search_processes_cgroup_path();
+
         CMonitorLogger::instance()->LogDebug("Set cpuset cgroup path to %s\n", m_cgroup_cpuset_kernel_path.c_str());
         CMonitorLogger::instance()->LogDebug("Set cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
         CMonitorLogger::instance()->LogDebug("Set memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
+        CMonitorLogger::instance()->LogDebug("Set processes cgroup path to %s\n", m_cgroup_processes_path.c_str());
     }
 
     return true;
@@ -549,6 +553,10 @@ bool CMonitorCgroups::search_my_pid_in_cgroups()
             CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'cpuset' cgroup.\n", ourPid);
             found = false;
         }
+
+        if (found)
+            // to set the path for the "tasks" file we can use whatever of the 3 paths above:
+            m_cgroup_processes_path = m_cgroup_memory_kernel_path;
         break;
     case CG_VERSION2:
         // cgroups v2 use an unified hierarchy, so there's a single file to check:
@@ -567,6 +575,7 @@ bool CMonitorCgroups::search_my_pid_in_cgroups()
         for (unsigned int i = 0; i < 3; i++) {
             if (search_integer(paths[i] + "/cgroup.procs", uint64_t(ourPid))) {
                 found = true;
+                m_cgroup_processes_path = paths[i];
                 CMonitorLogger::instance()->LogDebug(
                     "Successfully found our PID %d in the cgroup v2 at '%s'.\n", ourPid, paths[i].c_str());
                 break;
@@ -579,6 +588,40 @@ bool CMonitorCgroups::search_my_pid_in_cgroups()
     }
 
     return found;
+}
+
+bool CMonitorCgroups::search_processes_cgroup_path() // to be used in alternative to search_my_pid_in_cgroups() to set
+                                                     // m_cgroup_processes_path
+{
+    // set m_cgroup_processes_path
+    std::string paths[] = { m_cgroup_memory_kernel_path, m_cgroup_cpuacct_kernel_path, m_cgroup_cpuset_kernel_path };
+
+    std::string proc_file_name;
+    switch (m_nCGroupsFound) {
+    case CG_NONE:
+        return false;
+
+    case CG_VERSION1:
+        proc_file_name = "/tasks";
+        break;
+
+    case CG_VERSION2:
+        proc_file_name = "/cgroup.procs";
+        break;
+    }
+
+    for (unsigned int i = 0; i < 3; i++) {
+        std::string attempt = paths[i] + proc_file_name;
+        if (file_or_dir_exists(attempt.c_str())) {
+            m_cgroup_processes_path = paths[i];
+            CMonitorLogger::instance()->LogDebug("Successfully found list of PIDs/TIDs at '%s'.\n", attempt.c_str());
+            break;
+        } else {
+            CMonitorLogger::instance()->LogDebug("Could not find list of PIDs/TIDs at '%s'.\n", attempt.c_str());
+        }
+    }
+
+    return !m_cgroup_processes_path.empty();
 }
 
 void CMonitorCgroups::output_config()

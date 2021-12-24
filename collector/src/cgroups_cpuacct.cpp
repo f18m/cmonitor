@@ -305,6 +305,8 @@ void CMonitorCgroups::init_cpuacct(const std::string& cgroup_prefix_for_test)
     // Of course this does not happen in normal mode
     bool reopen_each_time = !cgroup_prefix_for_test.empty();
 
+    std::string main_file;
+    bool main_file_opened = false;
     switch (m_nCGroupsFound) {
     case CG_VERSION1: {
         std::string cgroup_stat_file = m_cgroup_cpuacct_kernel_path + "/cpuacct.usage_percpu_sys";
@@ -323,11 +325,15 @@ void CMonitorCgroups::init_cpuacct(const std::string& cgroup_prefix_for_test)
 
         m_cgroup_cpuacct_v1_reader_total_cpu_stat.set_file(
             m_cgroup_cpuacct_kernel_path + "/cpu.stat", reopen_each_time);
+        main_file_opened = m_cgroup_cpuacct_v1_reader_total_cpu_stat.open_or_rewind();
+        main_file = m_cgroup_cpuacct_v1_reader_total_cpu_stat.get_file();
     } break;
 
     case CG_VERSION2:
         m_cgroup_cpuacct_v2_reader_total_cpu_stat.set_file(
             m_cgroup_cpuacct_kernel_path + "/cpu.stat", reopen_each_time);
+        main_file_opened = m_cgroup_cpuacct_v2_reader_total_cpu_stat.open_or_rewind();
+        main_file = m_cgroup_cpuacct_v2_reader_total_cpu_stat.get_file();
         break;
 
     case CG_NONE:
@@ -335,6 +341,13 @@ void CMonitorCgroups::init_cpuacct(const std::string& cgroup_prefix_for_test)
         return;
     }
 
+    if (!main_file_opened) {
+        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_CPU_ACCT;
+        CMonitorLogger::instance()->LogError(
+            "Could not read the CPU statistics file '%s'. Disabling monitoring of cpuacct cgroup.\n",
+            main_file.c_str());
+        return;
+    }
     CMonitorLogger::instance()->LogDebug("Successfully initialized cpuacct cgroup monitoring.\n");
 }
 
