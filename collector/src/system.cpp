@@ -187,7 +187,7 @@ void CMonitorSystem::sample_cpu_stat(double elapsed_sec, OutputFields output_opt
 
     if (output_opts != PF_NONE) {
         m_pOutput->psection_start("stat");
-        for (int i = 0; i < m_cpu_count; i++) {
+        for (int i = 0; i <= m_cpu_count; i++) {
             if (!is_monitored_cpu(i))
                 continue;
 
@@ -228,7 +228,7 @@ void CMonitorSystem::sample_cpu_stat(double elapsed_sec, OutputFields output_opt
 
     m_cpu_stat_old_ctxt = new_ctx;
     m_cpu_stat_old_processes = new_processes;
-    for (int i = 0; i < m_cpu_count; i++)
+    for (int i = 0; i <= m_cpu_count; i++)
         m_cpu_stat_prev_values[i] = new_values[i];
 }
 
