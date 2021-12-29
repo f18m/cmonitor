@@ -110,22 +110,21 @@ This means that the `cmonitor-collector` utility can run on any Linux kernel reg
 (since boot options may alter the cgroups technology in use).
 
 Note that `cmonitor-collector` utility is currently unit-tested against:
-* Centos 7 (Linux kernel v3.10.0)
-* Ubuntu 20.04 (Linux kernel v5.4.0)
-* Fedora 35 (Linux kernel v5.14.17)
+* cgroups created by Docker Centos 7 (Linux kernel v3.10.0), click [here](collector/src/tests/centos7-Linux-3.10.0-x86_64/README.md) for more info
+* Ubuntu 20.04 (Linux kernel v5.4.0), click [here](collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64/README.md) for more info
+* Fedora 35 (Linux kernel v5.14.17), click [here](collector/src/tests/fedora35-Linux-5.14.17-x86_64/README.md) for more info
 
 Other kernels will be tested in near future. Of course pull requests are welcome to extend coverage.
-See [tests folder](collector/src/tests) for more details.
 
-Regarding cgroup driver, `cmonitor-collector` is mostly tested with the `cgroupfs` driver (versus the `systemd` driver),
-even if it should work also with `systemd` driver.
+Regarding cgroup driver, `cmonitor-collector` is tested against both the `cgroupfs` driver (used e.g. by Docker to create cgroups
+for containers using cgroups v1) and the `systemd` driver (which creates cgroups for the baremetal environment, not for containers).
 To find out which cgroup driver and which cgroup version you are using when launching e.g. Docker containers you can run:
 
 ```
 docker info | grep -i cgroup
 ```
 
-See this article https://lwn.net/Articles/676831/ for more details on the docker vs systemd friction in Linux world!
+You may also be interested in  this article https://lwn.net/Articles/676831/ for more details on the docker vs systemd friction in Linux world.
 
 
 ## How to install

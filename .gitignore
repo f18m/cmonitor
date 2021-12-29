@@ -8,7 +8,9 @@ examples/*/cmonitor_collector
 examples/*/example-load.sh
 
 # autogen from jinja2 templates
+tools/chart/cmonitor_chart
 tools/chart/cmonitor_chart.py
+tools/statistics/cmonitor_statistics
 tools/statistics/cmonitor_statistics.py
 
 # ides

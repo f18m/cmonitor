@@ -33,5 +33,6 @@ Sample#4:
 ## Software related to this specific unit testing data
 
 This folder allows to unit-test cmonitor_collector against cgroups created by:
-* Docker v19.03.15 using its own 'cgroupfs' cgroup driver and cgroups v1
-* Linux kernel 3.10.0
+* Docker v20.10.9 using 'systemd' cgroup driver and cgroups v2
+* Linux kernel 5.4.17
+* OS: Fedora 35 Linux
