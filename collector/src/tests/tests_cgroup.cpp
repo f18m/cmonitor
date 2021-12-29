@@ -169,6 +169,25 @@ TEST(CGroups, centos7_Linux_3_10_0_docker_withthreads)
         4 /* nsamples */);
 }
 
+#if 0
+TEST(CGroups, centos7_Linux_3_10_0_systemd_nothreads)
+{
+    run_cmonitor_on_tarball_samples( // force newline
+        "nothreads", // force newline
+        "centos7-Linux-3.10.0-x86_64-systemd", // force newline
+        "docker/27d5147ebb2620bfd9c20f728e0785f55e523efd0bb25a1a8e225c7fa9e0e335", false /* no threads */,
+        4 /* nsamples */);
+}
+TEST(CGroups, centos7_Linux_3_10_0_systemd_withthreads)
+{
+    run_cmonitor_on_tarball_samples( // force newline
+        "withthreads", // force newline
+        "centos7-Linux-3.10.0-x86_64-systemd", // force newline
+        "docker/27d5147ebb2620bfd9c20f728e0785f55e523efd0bb25a1a8e225c7fa9e0e335", true /* with threads */,
+        4 /* nsamples */);
+}
+#endif
+
 TEST(CGroups, ubuntu2004_Linux_5_4_0_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
