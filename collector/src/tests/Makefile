@@ -45,7 +45,8 @@ OBJS = $(OBJS_UNIT_TESTS) $(OBJS_CMONITOR_COLLECTOR)
 HEADERS = $(wildcard ../*.h)
 
 TEST_KERNELS = \
-	centos7-Linux-3.10.0-x86_64 \
+	centos7-Linux-3.10.0-x86_64-docker \
+	centos7-Linux-3.10.0-x86_64-systemd \
 	fedora35-Linux-5.14.17-x86_64 \
 	ubuntu20.04-Linux-5.4.0-x86_64
 

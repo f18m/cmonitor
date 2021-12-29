@@ -152,19 +152,19 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
 //------------------------------------------------------------------------------
 // unit tests on cgroups v1
 //------------------------------------------------------------------------------
-TEST(CGroups, centos7_Linux_3_10_0_nothreads)
+TEST(CGroups, centos7_Linux_3_10_0_docker_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
         "nothreads", // force newline
-        "centos7-Linux-3.10.0-x86_64", // force newline
+        "centos7-Linux-3.10.0-x86_64-docker", // force newline
         "docker/27d5147ebb2620bfd9c20f728e0785f55e523efd0bb25a1a8e225c7fa9e0e335", false /* no threads */,
         4 /* nsamples */);
 }
-TEST(CGroups, centos7_Linux_3_10_0_withthreads)
+TEST(CGroups, centos7_Linux_3_10_0_docker_withthreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
         "withthreads", // force newline
-        "centos7-Linux-3.10.0-x86_64", // force newline
+        "centos7-Linux-3.10.0-x86_64-docker", // force newline
         "docker/27d5147ebb2620bfd9c20f728e0785f55e523efd0bb25a1a8e225c7fa9e0e335", true /* with threads */,
         4 /* nsamples */);
 }
