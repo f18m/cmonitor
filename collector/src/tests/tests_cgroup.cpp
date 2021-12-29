@@ -83,6 +83,9 @@ void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx, uint64_
 void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::string& kernel_under_test,
     const std::string& cgroup_name, bool include_threads, unsigned int nsamples)
 {
+    // reset number of logged errors to keep each gtest isolated
+    CMonitorLogger::instance()->reset_num_errors();
+
     // prepare AUX objects
     std::string result_json_file = get_unit_test_abs_dir() + kernel_under_test + "/result-" + test_name + ".json";
     std::string expected_json_file = get_unit_test_abs_dir() + kernel_under_test + "/expected-" + test_name + ".json";
@@ -169,7 +172,7 @@ TEST(CGroups, centos7_Linux_3_10_0_docker_withthreads)
         4 /* nsamples */);
 }
 
-#if 0
+#if 1
 TEST(CGroups, centos7_Linux_3_10_0_systemd_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
