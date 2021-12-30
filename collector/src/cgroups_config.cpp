@@ -35,8 +35,6 @@
 #define GIGABYTE (1000ul * 1000ul * 1000ul)
 #define MEMORY_LIMIT_MAX_VALUE (1000 * 1000 * GIGABYTE)
 
-typedef std::map<std::string /* controller type */, std::string /* path */> cgroup_paths_map_t;
-
 // ----------------------------------------------------------------------------------
 // C++ Helper functions
 // ----------------------------------------------------------------------------------
@@ -55,8 +53,11 @@ std::string CGroupDetected2string(CGroupDetected k)
     }
 }
 
-/* static */
-bool get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT)
+// ----------------------------------------------------------------------------------
+// Path Helper functions
+// ----------------------------------------------------------------------------------
+
+bool CMonitorCgroups::get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT)
 {
     /*
      *
@@ -82,7 +83,7 @@ bool get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT)
                         1:name=systemd:/user.slice/user-0.slice/session-5.scope
                         0::/user.slice/user-0.slice/session-5.scope
      */
-    std::ifstream inputf("/proc/self/cgroup");
+    std::ifstream inputf(m_proc_self_cgroup);
     if (!inputf.is_open())
         return false; // cannot read the cgroup information!
 
@@ -102,8 +103,7 @@ bool get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT)
     return !cgroup_pathsOUT.empty();
 }
 
-/* static */
-bool are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
+bool CMonitorCgroups::are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
 {
     /*
      * ABOUT /proc/%d/mounts:
@@ -117,7 +117,7 @@ bool are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
      *      cgroup2 /sys/fs/cgroup cgroup2 rw,seclabel,nosuid,nodev,noexec,relatime,nsdelegate 0 0
      *
      */
-    std::ifstream inputf("/proc/self/mounts");
+    std::ifstream inputf(m_proc_self_mounts);
     if (!inputf.is_open())
         return false; // cannot read the cgroup information!
 
@@ -145,8 +145,8 @@ bool are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
     return false; // cgroup name not found
 }
 
-/* static */
-bool get_cgroup_v1_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std::string& cgroup_pathOUT)
+bool CMonitorCgroups::get_cgroup_v1_abs_path_prefix_for_this_pid(
+    const std::string& cgroup_type, std::string& cgroup_pathOUT)
 {
     /*
      *
@@ -177,7 +177,7 @@ bool get_cgroup_v1_abs_path_prefix_for_this_pid(const std::string& cgroup_type, 
      *      cgroup2 /sys/fs/cgroup cgroup2 rw,seclabel,nosuid,nodev,noexec,relatime,nsdelegate 0 0
      *
      */
-    std::ifstream inputf("/proc/self/mounts");
+    std::ifstream inputf(m_proc_self_mounts);
     if (!inputf.is_open())
         return false; // cannot read the cgroup information!
 
@@ -217,7 +217,8 @@ bool get_cgroup_v1_abs_path_prefix_for_this_pid(const std::string& cgroup_type, 
 void CMonitorCgroups::init( // force newline
     bool include_threads, // force newline
     const std::string& cgroup_prefix_for_test, // force newline
-    const std::string& proc_prefix_for_test)
+    const std::string& proc_prefix_for_test, // force newline
+    uint64_t my_own_pid_for_test)
 {
     DEBUGLOG_FUNCTION_START();
 
@@ -225,8 +226,12 @@ void CMonitorCgroups::init( // force newline
     m_cgroup_systemd_name = "N/A";
     m_cgroup_processes_include_threads = include_threads;
     m_proc_prefix = proc_prefix_for_test;
+    if (my_own_pid_for_test == UINT64_MAX)
+        m_my_pid = getpid();
+    else
+        m_my_pid = my_own_pid_for_test;
 
-    if (!init_cgroup_path_prefixes(cgroup_prefix_for_test))
+    if (!init_cgroup_path_prefixes(cgroup_prefix_for_test, my_own_pid_for_test))
         return; // the function has already logged errors
     if (!finalize_cgroup_paths())
         return; // the function has already logged errors
@@ -252,7 +257,7 @@ void CMonitorCgroups::init( // force newline
     init_processes(cgroup_prefix_for_test);
 }
 
-bool CMonitorCgroups::init_cgroup_path_prefixes(const std::string& cgroup_prefix_for_test)
+bool CMonitorCgroups::init_cgroup_path_prefixes(const std::string& cgroup_prefix_for_test, uint64_t my_own_pid_for_test)
 {
     // This function will set ABSOLUTE CGROUP PATH PREFIXES
     // Typical examples (cgroup v1)
@@ -263,8 +268,20 @@ bool CMonitorCgroups::init_cgroup_path_prefixes(const std::string& cgroup_prefix
     //    m_cgroup_memory_kernel_path = m_cgroup_cpuacct_kernel_path = m_cgroup_cpuset_kernel_path =
     //        /sys/fs/cgroup/system.slice/
 
+    if (my_own_pid_for_test == UINT64_MAX) {
+        m_proc_self_cgroup = "/proc/self/cgroup";
+        m_proc_self_mounts = "/proc/self/mounts";
+    } else {
+        // read all information to a) understand cgroup version and b) find out cgroup paths
+        // from a unit testing file instead of looking at our own PID kernel files!!
+        std::string t = m_proc_prefix + "/proc/" + fmt::format("{}", my_own_pid_for_test);
+        m_proc_self_cgroup = t + "/cgroup";
+        m_proc_self_mounts = t + "/mounts";
+    }
+
     std::string cgroupsv2_basepath;
     m_cpuacct_controller_name = "cpu,cpuacct";
+#if 0 // unit testing special path that we can now remove
     if (!cgroup_prefix_for_test.empty()) {
 
         std::string dir = cgroup_prefix_for_test + "/sys/fs/cgroup/memory";
@@ -282,7 +299,10 @@ bool CMonitorCgroups::init_cgroup_path_prefixes(const std::string& cgroup_prefix
             m_nCGroupsFound = CG_VERSION2;
         }
 
-    } else if (are_cgroups_v2_enabled(cgroupsv2_basepath)) {
+    } else
+#endif
+
+    if (are_cgroups_v2_enabled(cgroupsv2_basepath)) {
         m_nCGroupsFound = CG_VERSION2;
 
         // the unified hierarchy of cgroups used in v2 means that all cgroup controllers share the same path:
@@ -525,7 +545,6 @@ bool CMonitorCgroups::search_my_pid_in_cgroups()
     //       but presence of cgroups (like those created by systemd) we may have a masquerated PID
     //       (e.g. PID '8' inside a Docker container while the real PID is 2348 on baremetal)
 
-    pid_t ourPid = getpid();
     bool found = true;
 
     switch (m_nCGroupsFound) {
@@ -533,24 +552,24 @@ bool CMonitorCgroups::search_my_pid_in_cgroups()
         found = false;
         break;
     case CG_VERSION1:
-        if (search_integer(m_cgroup_memory_kernel_path + "/tasks", uint64_t(ourPid)))
-            CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'memory' cgroup.\n", ourPid);
+        if (search_integer(m_cgroup_memory_kernel_path + "/tasks", uint64_t(m_my_pid)))
+            CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'memory' cgroup.\n", m_my_pid);
         else {
-            CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'memory' cgroup.\n", ourPid);
+            CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'memory' cgroup.\n", m_my_pid);
             found = false;
         }
 
-        if (search_integer(m_cgroup_cpuacct_kernel_path + "/tasks", uint64_t(ourPid)))
-            CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'cpuacct' cgroup.\n", ourPid);
+        if (search_integer(m_cgroup_cpuacct_kernel_path + "/tasks", uint64_t(m_my_pid)))
+            CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'cpuacct' cgroup.\n", m_my_pid);
         else {
-            CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'cpuacct' cgroup.\n", ourPid);
+            CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'cpuacct' cgroup.\n", m_my_pid);
             found = false;
         }
 
-        if (search_integer(m_cgroup_cpuset_kernel_path + "/tasks", uint64_t(ourPid)))
-            CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'cpuset' cgroup.\n", ourPid);
+        if (search_integer(m_cgroup_cpuset_kernel_path + "/tasks", uint64_t(m_my_pid)))
+            CMonitorLogger::instance()->LogDebug("Successfully found our PID %d in the 'cpuset' cgroup.\n", m_my_pid);
         else {
-            CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'cpuset' cgroup.\n", ourPid);
+            CMonitorLogger::instance()->LogDebug("Could not find our PID %d in the 'cpuset' cgroup.\n", m_my_pid);
             found = false;
         }
 
@@ -573,15 +592,15 @@ bool CMonitorCgroups::search_my_pid_in_cgroups()
 
         found = false;
         for (unsigned int i = 0; i < 3; i++) {
-            if (search_integer(paths[i] + "/cgroup.procs", uint64_t(ourPid))) {
+            if (search_integer(paths[i] + "/cgroup.procs", uint64_t(m_my_pid))) {
                 found = true;
                 m_cgroup_processes_path = paths[i];
                 CMonitorLogger::instance()->LogDebug(
-                    "Successfully found our PID %d in the cgroup v2 at '%s'.\n", ourPid, paths[i].c_str());
+                    "Successfully found our PID %d in the cgroup v2 at '%s'.\n", m_my_pid, paths[i].c_str());
                 break;
             } else {
                 CMonitorLogger::instance()->LogDebug(
-                    "Could not find our PID %d in the cgroup v2 at '%s'.\n", ourPid, paths[i].c_str());
+                    "Could not find our PID %d in the cgroup v2 at '%s'.\n", m_my_pid, paths[i].c_str());
             }
         }
         break;

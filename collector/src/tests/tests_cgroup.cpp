@@ -81,7 +81,8 @@ void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx, uint64_
 }
 
 void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::string& kernel_under_test,
-    const std::string& cgroup_name, bool include_threads, unsigned int nsamples)
+    const std::string& cgroup_name, bool include_threads, unsigned int nsamples,
+    uint64_t simulated_cmonitor_collector_pid = UINT64_MAX)
 {
     // reset number of logged errors to keep each gtest isolated
     CMonitorLogger::instance()->reset_num_errors();
@@ -107,7 +108,7 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
 
     // allocate the class under test:
     CMonitorCgroups t(&cfg, &actual_output);
-    t.init(include_threads, current_sample_abs_dir, current_sample_abs_dir);
+    t.init(include_threads, current_sample_abs_dir, current_sample_abs_dir, simulated_cmonitor_collector_pid);
 
     // start feeding fixed, test data
     actual_output.pheader_start();
@@ -178,16 +179,15 @@ TEST(CGroups, centos7_Linux_3_10_0_systemd_nothreads)
     run_cmonitor_on_tarball_samples( // force newline
         "nothreads", // force newline
         "centos7-Linux-3.10.0-x86_64-systemd", // force newline
-        "docker/27d5147ebb2620bfd9c20f728e0785f55e523efd0bb25a1a8e225c7fa9e0e335", false /* no threads */,
-        4 /* nsamples */);
+        "self" /* cgroup name: ask to autodetect cgroup under monitor */, false /* no threads */, 4 /* nsamples */, // fn
+        489830 /* simulated_cmonitor_collector_pid: in reality it's the PID of a Bash but fits just fine our testing purposes */);
 }
 TEST(CGroups, centos7_Linux_3_10_0_systemd_withthreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
         "withthreads", // force newline
         "centos7-Linux-3.10.0-x86_64-systemd", // force newline
-        "docker/27d5147ebb2620bfd9c20f728e0785f55e523efd0bb25a1a8e225c7fa9e0e335", true /* with threads */,
-        4 /* nsamples */);
+        "self" /* cgroup name: ask to autodetect cgroup under monitor */, true /* with threads */, 4 /* nsamples */);
 }
 #endif
 

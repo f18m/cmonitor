@@ -101,13 +101,24 @@ function init_baremetal_cgroups()
         cgroup_CPUSET="cpuset/$( cat /proc/self/cgroup | grep 'cpuset' | sed 's@[0-9]*:cpuset:\(.*\)@\1@g' )"
         cgroup_BLKIO="blkio/$( cat /proc/self/cgroup | grep 'blkio' | sed 's@[0-9]*:blkio:\(.*\)@\1@g' )"
         cgroup_HUGETLB="hugetlb/$( cat /proc/self/cgroup | grep 'hugetlb' | sed 's@[0-9]*:hugetlb:\(.*\)@\1@g' )"
+        cgroup_SYSTEMD="systemd/$( cat /proc/self/cgroup | grep 'name=systemd' | sed 's@[0-9]*:name=systemd:\(.*\)@\1@g' )"
+
+        # FIXME: we should start the 'process_name' inside current SCOPE here
+
+        # PIDs that belong to the current SLICE/SCOPE can be found in the systemd folder:
+        pids_to_save="$( cat /sys/fs/cgroup/${cgroup_SYSTEMD}/tasks | tr '\n' ' ' )"
+
     elif [ "${cgroups_ver}" = "2" ]; then
         # cgroups v2 folders:
         cgroup_UNIFIED="$( cat /proc/self/cgroup | sed 's@0::@@g' )"
+
+        pids_to_save="$( cat /sys/fs/cgroup/${cgroup_UNIFIED}/cgroup.threads | tr '\n' ' ' )"
     else
         echo "!!! Cannot understand cgroup version in use from 'docker info' !!! Aborting"
         exit 2
     fi
+    
+    echo "Monitoring PIDs: ${pids_to_save}"
 }
 
 function copy_all_cgroup_folders_v1()
@@ -126,7 +137,9 @@ function copy_all_cgroup_folders_v1()
         #rsync --inplace -rlptgo ${dir_to_copy} /tmp/cmonitor-temp/${dir_to_copy}
 
         # cp instead is capable:
-        cp -ar ${dir_to_copy}/* /tmp/cmonitor-temp/${dir_to_copy} 2>/dev/null
+        # IMPORTANT: do not perform a RECURSIVE copy: we may capture nested cgroups which are not interesting to us...
+        #            cmonitor_collector is not going to use nested cgroup information in any manner anyhow
+        cp --no-dereference --preserve=all ${dir_to_copy}/* /tmp/cmonitor-temp/${dir_to_copy} 2>/dev/null
     done
 }
 

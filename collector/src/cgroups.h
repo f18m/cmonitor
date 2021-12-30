@@ -65,6 +65,8 @@ typedef struct {
     uint64_t throttled_time_nsec;
 } cpuacct_throttling_t;
 
+typedef std::map<std::string /* controller type */, std::string /* path */> cgroup_paths_map_t;
+
 //------------------------------------------------------------------------------
 // The CMonitorCgroups object
 //------------------------------------------------------------------------------
@@ -85,9 +87,11 @@ public:
     ~CMonitorCgroups() { }
 
     // main setup
-    // NOTE: arguments are used only during unit testing
-    void init(bool include_threads, const std::string& cgroup_prefix_for_test = "",
-        const std::string& proc_prefix_for_test = "");
+    // NOTE: arguments _for_test are used only during unit testing
+    void init(bool include_threads, // force newline
+        const std::string& cgroup_prefix_for_test = "", // force newline
+        const std::string& proc_prefix_for_test = "", // force newline
+        uint64_t my_own_pid_for_test = UINT64_MAX);
 
     // one-shot configuration info
     void output_config();
@@ -105,7 +109,10 @@ public:
 
 private:
     // cgroups config
-    bool init_cgroup_path_prefixes(const std::string& cgroup_prefix_for_test);
+    bool get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT);
+    bool are_cgroups_v2_enabled(std::string& cgroup_pathOUT);
+    bool get_cgroup_v1_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std::string& cgroup_pathOUT);
+    bool init_cgroup_path_prefixes(const std::string& cgroup_prefix_for_test, uint64_t my_own_pid_for_test);
     bool finalize_cgroup_paths();
     bool search_my_pid_in_cgroups(); // sets m_cgroup_processes_path
     bool search_processes_cgroup_path(); // sets m_cgroup_processes_path
@@ -138,20 +145,20 @@ private:
 private:
     // main switch that indicates if init() was successful or not
     CGroupDetected m_nCGroupsFound = CG_NONE;
+    pid_t m_my_pid = 0;
 
     //------------------------------------------------------------------------------
     // paths of cgroups controllers to monitor (either our own cgroup or another one):
     //------------------------------------------------------------------------------
     std::string m_cgroup_systemd_name; // contains the "name" of the cgroup
-    std::string
-        m_cgroup_memory_kernel_path; // contains the absolute path to the folder with memory cgroup controller files
-    std::string
-        m_cgroup_cpuacct_kernel_path; // contains the absolute path to the folder with cpuacct cgroup controller files
-    std::string
-        m_cgroup_cpuset_kernel_path; // contains the absolute path to the folder with cpuset cgroup controller files
-    std::string m_cgroup_processes_path; // contains the absolute path to the folder which contains either the "tasks"
+    std::string m_cgroup_memory_kernel_path; // contains the abs path to the folder with memory controller files
+    std::string m_cgroup_cpuacct_kernel_path; // contains the abs path to the folder with cpuacct controller files
+    std::string m_cgroup_cpuset_kernel_path; // contains the abs path to the folder with cpuset controller files
+    std::string m_cgroup_processes_path; // contains the abs path to the folder which contains either the "tasks"
                                          // (v1) or "cgroups.procs|threads" (v2) files
     std::string m_proc_prefix; // used only during unit testing to insert an arbitrary prefix in front of "/proc"
+    std::string m_proc_self_cgroup; // defaults to "/proc/self/cgroup" but is changed during unit testing
+    std::string m_proc_self_mounts; // defaults to "/proc/self/mounts" but is changed during unit testing
 
     //------------------------------------------------------------------------------
     // counters of how many times each cgroup_proc_*() main API has been invoked

@@ -56,10 +56,10 @@ all: $(OUT)
 
 test: $(OUT)
 	@echo "Running unit test binary $(OUT)"
-	sudo $(OUT)
+	sudo $(OUT) --gtest_filter=*centos7_Linux_3_10_0_systemd_nothreads
 tests: $(OUT)
 	@echo "Running unit test binary $(OUT)"
-	sudo $(OUT)
+	sudo $(OUT) --gtest_filter=*centos7_Linux_3_10_0_systemd_nothreads
 
 debug:
 	gdb $(OUT)
