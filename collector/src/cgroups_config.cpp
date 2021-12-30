@@ -83,6 +83,8 @@ bool CMonitorCgroups::get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_p
                         1:name=systemd:/user.slice/user-0.slice/session-5.scope
                         0::/user.slice/user-0.slice/session-5.scope
      */
+    CMonitorLogger::instance()->LogDebug("Inspecting file %s\n", m_proc_self_cgroup.c_str());
+
     std::ifstream inputf(m_proc_self_cgroup);
     if (!inputf.is_open())
         return false; // cannot read the cgroup information!
@@ -117,6 +119,9 @@ bool CMonitorCgroups::are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
      *      cgroup2 /sys/fs/cgroup cgroup2 rw,seclabel,nosuid,nodev,noexec,relatime,nsdelegate 0 0
      *
      */
+
+    CMonitorLogger::instance()->LogDebug("Inspecting file %s\n", m_proc_self_mounts.c_str());
+
     std::ifstream inputf(m_proc_self_mounts);
     if (!inputf.is_open())
         return false; // cannot read the cgroup information!
@@ -177,6 +182,8 @@ bool CMonitorCgroups::get_cgroup_v1_abs_path_prefix_for_this_pid(
      *      cgroup2 /sys/fs/cgroup cgroup2 rw,seclabel,nosuid,nodev,noexec,relatime,nsdelegate 0 0
      *
      */
+    CMonitorLogger::instance()->LogDebug("Inspecting file %s\n", m_proc_self_mounts.c_str());
+
     std::ifstream inputf(m_proc_self_mounts);
     if (!inputf.is_open())
         return false; // cannot read the cgroup information!
@@ -279,19 +286,20 @@ bool CMonitorCgroups::init_cgroup_path_prefixes(const std::string& cgroup_prefix
         m_proc_self_mounts = t + "/mounts";
     }
 
-    std::string cgroupsv2_basepath;
-    m_cpuacct_controller_name = "cpu,cpuacct";
-#if 0 // unit testing special path that we can now remove
-    if (!cgroup_prefix_for_test.empty()) {
+    // unit testing support:
+    if (!cgroup_prefix_for_test.empty())
+        assert(file_or_dir_exists(cgroup_prefix_for_test.c_str()));
 
-        std::string dir = cgroup_prefix_for_test + "/sys/fs/cgroup/memory";
-        if (file_or_dir_exists(dir.c_str())) {
+    /*
+        {
             // assume we're unit testing cgroups v1
             m_cgroup_memory_kernel_path = cgroup_prefix_for_test + "/sys/fs/cgroup/memory"; // force newline
             m_cgroup_cpuacct_kernel_path = cgroup_prefix_for_test + "/sys/fs/cgroup/cpu,cpuacct"; // force newline
             m_cgroup_cpuset_kernel_path = cgroup_prefix_for_test + "/sys/fs/cgroup/cpuset"; // force newline
             m_nCGroupsFound = CG_VERSION1;
-        } else {
+        }
+        else
+        {
             // assume we're unit testing cgroups v2
             m_cgroup_memory_kernel_path = cgroup_prefix_for_test;
             m_cgroup_cpuacct_kernel_path = cgroup_prefix_for_test;
@@ -299,16 +307,18 @@ bool CMonitorCgroups::init_cgroup_path_prefixes(const std::string& cgroup_prefix
             m_nCGroupsFound = CG_VERSION2;
         }
 
-    } else
-#endif
+    } else*/
+
+    std::string cgroupsv2_basepath;
+    m_cpuacct_controller_name = "cpu,cpuacct";
 
     if (are_cgroups_v2_enabled(cgroupsv2_basepath)) {
         m_nCGroupsFound = CG_VERSION2;
 
         // the unified hierarchy of cgroups used in v2 means that all cgroup controllers share the same path:
-        m_cgroup_memory_kernel_path = cgroupsv2_basepath;
-        m_cgroup_cpuacct_kernel_path = cgroupsv2_basepath;
-        m_cgroup_cpuset_kernel_path = cgroupsv2_basepath;
+        m_cgroup_memory_kernel_path = cgroup_prefix_for_test + cgroupsv2_basepath;
+        m_cgroup_cpuacct_kernel_path = cgroup_prefix_for_test + cgroupsv2_basepath;
+        m_cgroup_cpuset_kernel_path = cgroup_prefix_for_test + cgroupsv2_basepath;
     } else {
         // try to detect cgroups v1
         m_nCGroupsFound = CG_VERSION1;
@@ -340,8 +350,15 @@ bool CMonitorCgroups::init_cgroup_path_prefixes(const std::string& cgroup_prefix
             m_nCGroupsFound = CG_NONE;
             return false;
         }
+
+        // add unit-testing special prefix if any:
+        m_cgroup_memory_kernel_path = cgroup_prefix_for_test + m_cgroup_memory_kernel_path;
+        m_cgroup_cpuacct_kernel_path = cgroup_prefix_for_test + m_cgroup_cpuacct_kernel_path;
+        m_cgroup_cpuset_kernel_path = cgroup_prefix_for_test + m_cgroup_cpuset_kernel_path;
     }
 
+    CMonitorLogger::instance()->LogDebug(
+        "Detected cgroup version %s\n", CGroupDetected2string(m_nCGroupsFound).c_str());
     CMonitorLogger::instance()->LogDebug("Detected cpuset cgroup mounted at %s\n", m_cgroup_cpuset_kernel_path.c_str());
     CMonitorLogger::instance()->LogDebug(
         "Detected cpuacct cgroup mounted at %s\n", m_cgroup_cpuacct_kernel_path.c_str());
@@ -358,7 +375,8 @@ bool CMonitorCgroups::finalize_cgroup_paths()
 
         // assume the user wants to monitor the same cgroup where cmonitor_collector is running:
 
-        CMonitorLogger::instance()->LogDebug("No cgroup name provided. Trying to autodetect my own cgroup.");
+        CMonitorLogger::instance()->LogDebug("No cgroup name provided; defaulting to 'self' cgroup monitoring; thus "
+                                             "trying to autodetect my own cgroup.");
 
         cgroup_paths_map_t cgroup_paths;
         if (!get_cgroup_paths_for_this_pid(cgroup_paths)) {
@@ -370,31 +388,32 @@ bool CMonitorCgroups::finalize_cgroup_paths()
 
         if (cgroup_paths.find("name=systemd") == cgroup_paths.end()) {
             CMonitorLogger::instance()->LogError("Could not find the cgroup controller 'name=systemd' inside "
-                                                 "'/proc/self/cgroup'. CGroup mode disabled.\n");
+                                                 "'%s'. CGroup mode disabled.\n",
+                m_proc_self_cgroup.c_str());
             m_nCGroupsFound = CG_NONE;
             return false;
         }
 
+        m_cgroup_systemd_name = cgroup_paths["name=systemd"];
+
         if (search_my_pid_in_cgroups()) { // also updates m_cgroup_processes_path
             // in this case we're likely inside a Docker or LXC container so we were able to find our own PID in one
             // of the "undecorated" absolute paths detected previously by init_cgroup_path_prefixes()
-            m_cgroup_systemd_name = cgroup_paths["name=systemd"];
         } else {
 
             if (cgroup_paths.find("memory") == cgroup_paths.end() || // fn
                 cgroup_paths.find("cpuset") == cgroup_paths.end() || // fn
                 cgroup_paths.find(m_cpuacct_controller_name) == cgroup_paths.end()) {
-                CMonitorLogger::instance()->LogError(
-                    "Could not find one the required cgroup controllers 'memory', 'cpuset' or '%s' inside "
-                    "'/proc/self/cgroup'. CGroup mode disabled.\n",
-                    m_cpuacct_controller_name.c_str());
+                CMonitorLogger::instance()->LogError("Could not find one the required cgroup controllers 'memory', "
+                                                     "'cpuset' or '%s' inside '%s'. CGroup mode disabled.\n",
+                    m_cpuacct_controller_name.c_str(), m_proc_self_cgroup.c_str());
                 m_nCGroupsFound = CG_NONE;
                 return false;
             }
 
             // try to adjust the full cgroup paths by adding the cgroup paths read from /proc/self/cgroup
-            // to the absolute prefixes: this is typically necessary when running outside Docker/LXC but
-            // just inside systemd:
+            // to the absolute prefixes obtained from /proc/self/mounts: this is typically necessary when running
+            // outside Docker/LXC and thus just inside a cgroup created by systemd:
             m_cgroup_memory_kernel_path += "/" + cgroup_paths["memory"];
             m_cgroup_cpuacct_kernel_path += "/" + cgroup_paths[m_cpuacct_controller_name];
             m_cgroup_cpuset_kernel_path += "/" + cgroup_paths["cpuset"];
@@ -405,7 +424,15 @@ bool CMonitorCgroups::finalize_cgroup_paths()
             CMonitorLogger::instance()->LogDebug(
                 "Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
             if (search_my_pid_in_cgroups()) // also updates m_cgroup_processes_path
-                m_cgroup_systemd_name = cgroup_paths["name=systemd"];
+            {
+                // successfully found our PID...
+
+            } else {
+                CMonitorLogger::instance()->LogError(
+                    "Could not find the cgroup where my own PID %d is located. CGroup mode disabled.\n", m_my_pid);
+                m_nCGroupsFound = CG_NONE;
+                return false;
+            }
         }
     } else {
         CMonitorLogger::instance()->LogDebug(
@@ -573,9 +600,10 @@ bool CMonitorCgroups::search_my_pid_in_cgroups()
             found = false;
         }
 
-        if (found)
+        if (found) {
             // to set the path for the "tasks" file we can use whatever of the 3 paths above:
             m_cgroup_processes_path = m_cgroup_memory_kernel_path;
+        }
         break;
     case CG_VERSION2:
         // cgroups v2 use an unified hierarchy, so there's a single file to check:
@@ -609,8 +637,8 @@ bool CMonitorCgroups::search_my_pid_in_cgroups()
     return found;
 }
 
-bool CMonitorCgroups::search_processes_cgroup_path() // to be used in alternative to search_my_pid_in_cgroups() to set
-                                                     // m_cgroup_processes_path
+bool CMonitorCgroups::search_processes_cgroup_path() // to be used in alternative to search_my_pid_in_cgroups() to
+                                                     // set m_cgroup_processes_path
 {
     // set m_cgroup_processes_path
     std::string paths[] = { m_cgroup_memory_kernel_path, m_cgroup_cpuacct_kernel_path, m_cgroup_cpuset_kernel_path };

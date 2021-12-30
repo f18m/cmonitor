@@ -65,13 +65,13 @@ void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx, uint64_
     // decompress tarball
     char buff[1024];
     snprintf(buff, 1024, "/usr/bin/tar -C %s -xf %s", orig_sample_abs_dir.c_str(), orig_sample_tarball.c_str());
-    printf("Executing now: %s\n", buff);
+    printf("GTEST SETUP: executing now: %s\n", buff);
     int ret = system(buff);
     if (WIFEXITED(ret) == false || WEXITSTATUS(ret) != 0)
         exit(124);
 
     // update symlink current-sample -> sample{sampleIdx}
-    printf("Adjusting symlink %s\n", current_sample_abs_dir.c_str());
+    printf("GTEST SETUP: adjusting symlink %s\n", current_sample_abs_dir.c_str());
     unlink(current_sample_abs_dir.c_str());
     if (symlink(orig_sample_abs_dir.c_str(), current_sample_abs_dir.c_str()) != 0)
         exit(125);
@@ -82,7 +82,7 @@ void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx, uint64_
 
 void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::string& kernel_under_test,
     const std::string& cgroup_name, bool include_threads, unsigned int nsamples,
-    uint64_t simulated_cmonitor_collector_pid = UINT64_MAX)
+    uint64_t simulated_cmonitor_collector_pid = UINT64_MAX, CGroupDetected expected_cgroup_ver = CG_VERSION1)
 {
     // reset number of logged errors to keep each gtest isolated
     CMonitorLogger::instance()->reset_num_errors();
@@ -106,9 +106,12 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
     uint64_t prev_ts;
     prepare_sample_dir(kernel_under_test, 1, prev_ts); // prepare before invoking cgroup_init()
 
+    printf(" --- now starting actual CMonitorGroups code under test ---\n");
+
     // allocate the class under test:
     CMonitorCgroups t(&cfg, &actual_output);
     t.init(include_threads, current_sample_abs_dir, current_sample_abs_dir, simulated_cmonitor_collector_pid);
+    ASSERT_EQ(t.get_detected_cgroup_version(), expected_cgroup_ver);
 
     // start feeding fixed, test data
     actual_output.pheader_start();
@@ -135,6 +138,8 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
     }
     actual_output.psample_array_end();
     actual_output.close();
+
+    printf(" --- completed running code to test, now starting result verification ---\n");
 
     // make sure no errors have been found in the processing of files so far
     ASSERT_EQ(CMonitorLogger::instance()->get_num_errors(), 0);
@@ -173,15 +178,16 @@ TEST(CGroups, centos7_Linux_3_10_0_docker_withthreads)
         4 /* nsamples */);
 }
 
-#if 1
 TEST(CGroups, centos7_Linux_3_10_0_systemd_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
         "nothreads", // force newline
         "centos7-Linux-3.10.0-x86_64-systemd", // force newline
         "self" /* cgroup name: ask to autodetect cgroup under monitor */, false /* no threads */, 4 /* nsamples */, // fn
-        489830 /* simulated_cmonitor_collector_pid: in reality it's the PID of a Bash but fits just fine our testing purposes */);
+        775367 /* simulated_cmonitor_collector_pid: in reality it's the PID of a Bash but fits just fine our testing purposes */);
 }
+
+#if 0
 TEST(CGroups, centos7_Linux_3_10_0_systemd_withthreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
@@ -218,7 +224,7 @@ TEST(CGroups, fedora35_Linux_5_14_17_nothreads)
         "nothreads", // force newline
         "fedora35-Linux-5.14.17-x86_64", // force newline
         "sys/fs/cgroup/system.slice/docker-1f22b7238553cf04966d0a54b9e3ee30824bb6c2a4d27433911960f03b2251e6.scope/",
-        false /* with threads */, 4 /* nsamples */);
+        false /* with threads */, 4 /* nsamples */, 1378, CG_VERSION2);
 }
 TEST(CGroups, fedora35_Linux_5_14_17_withthreads)
 {
@@ -226,5 +232,5 @@ TEST(CGroups, fedora35_Linux_5_14_17_withthreads)
         "withthreads", // force newline
         "fedora35-Linux-5.14.17-x86_64", // force newline
         "sys/fs/cgroup/system.slice/docker-1f22b7238553cf04966d0a54b9e3ee30824bb6c2a4d27433911960f03b2251e6.scope/",
-        true /* with threads */, 4 /* nsamples */);
+        true /* with threads */, 4 /* nsamples */, 1378, CG_VERSION2);
 }

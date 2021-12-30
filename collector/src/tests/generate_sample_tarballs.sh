@@ -106,7 +106,13 @@ function init_baremetal_cgroups()
         # FIXME: we should start the 'process_name' inside current SCOPE here
 
         # PIDs that belong to the current SLICE/SCOPE can be found in the systemd folder:
-        pids_to_save="$( cat /sys/fs/cgroup/${cgroup_SYSTEMD}/tasks | tr '\n' ' ' )"
+        # NOTE: this is NOT the expected behavior: when the user starts cmonitor_collector outside Docker he's interested
+        #       in monitoring all non-containerized processes so we should collect all tasks under e.g. MEMORY controller
+        #pids_to_save="$( cat /sys/fs/cgroup/${cgroup_SYSTEMD}/tasks | tr '\n' ' ' )"
+
+        # NOTE: do not take all processes on the system... just first 50 for speed reason
+        pids_to_save="$( cat /sys/fs/cgroup/${cgroup_MEMORY}/tasks | head -n50 | tr '\n' ' ' )"
+        
 
     elif [ "${cgroups_ver}" = "2" ]; then
         # cgroups v2 folders:
@@ -151,6 +157,7 @@ function copy_all_cgroup_folder_v2()
     mkdir -p /tmp/cmonitor-temp/${dir_to_copy}
     cp -ar ${dir_to_copy}/* /tmp/cmonitor-temp/${dir_to_copy} 2>/dev/null
 }
+
 
 function copy_all_proc_files_SLOW()
 {

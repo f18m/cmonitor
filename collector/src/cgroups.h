@@ -42,9 +42,9 @@
 #define CGROUP_COLLECTOR_BUFF_SIZE (8192)
 
 enum CGroupDetected {
-    CG_NONE, // force newline
-    CG_VERSION1, // force newline
-    CG_VERSION2 // force newline
+    CG_NONE = 0, // force newline
+    CG_VERSION1 = 1, // force newline
+    CG_VERSION2 = 2 // force newline
 };
 
 std::string CGroupDetected2string(CGroupDetected k);
@@ -106,6 +106,7 @@ public:
     // misc helpers
     bool cgroup_still_exists();
     std::set<uint64_t> get_cgroup_cpus() const { return m_cgroup_cpus; }
+    CGroupDetected get_detected_cgroup_version() const { return m_nCGroupsFound; }
 
 private:
     // cgroups config
