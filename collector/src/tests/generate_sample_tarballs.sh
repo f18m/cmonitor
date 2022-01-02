@@ -25,6 +25,8 @@ pids_to_save=""
 function init_docker_cgroups()
 {
     echo "Launching the docker ${docker_name} from which we will sample unit test data"
+    docker stop ${docker_name} # in case it already exists
+    sleep 1
     docker run \
         --detach \
         --interactive \

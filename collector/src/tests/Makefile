@@ -56,13 +56,15 @@ all: $(OUT)
 
 test: $(OUT)
 	@echo "Running unit test binary $(OUT)"
-	sudo $(OUT)
+	sudo $(OUT) $(ARGS)
 tests: $(OUT)
 	@echo "Running unit test binary $(OUT)"
-	sudo $(OUT)
+	sudo $(OUT) $(ARGS)
 
 debug:
-	gdb $(OUT)
+	gdb $(OUT) $(ARGS)
+test_debug:
+	gdb $(OUT) $(ARGS)
 
 $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBS)

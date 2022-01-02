@@ -68,9 +68,11 @@ ifneq ($(DISABLE_BENCHMARKS_BUILD),1)
 endif
 
 test:
-	$(MAKE) -C tests test
+	$(MAKE) -C tests test ARGS=$(ARGS)
 tests:
-	$(MAKE) -C tests test
+	$(MAKE) -C tests test ARGS=$(ARGS)
+test_debug:
+	$(MAKE) -C tests test_debug ARGS=$(ARGS)
 
 benchmark:
 	$(MAKE) -C benchmarks benchmarks

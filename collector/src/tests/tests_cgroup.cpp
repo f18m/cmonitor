@@ -187,15 +187,14 @@ TEST(CGroups, centos7_Linux_3_10_0_systemd_nothreads)
         775367 /* simulated_cmonitor_collector_pid: in reality it's the PID of a Bash but fits just fine our testing purposes */);
 }
 
-#if 0
 TEST(CGroups, centos7_Linux_3_10_0_systemd_withthreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
-        "withthreads", // force newline
+        "withthreads", // force newline 
         "centos7-Linux-3.10.0-x86_64-systemd", // force newline
-        "self" /* cgroup name: ask to autodetect cgroup under monitor */, true /* with threads */, 4 /* nsamples */);
+        "self" /* cgroup name: ask to autodetect cgroup under monitor */, true /* with threads */, 4 /* nsamples */, // fn
+        775367 /* simulated_cmonitor_collector_pid: in reality it's the PID of a Bash but fits just fine our testing purposes */);
 }
-#endif
 
 TEST(CGroups, ubuntu2004_Linux_5_4_0_nothreads)
 {
@@ -218,19 +217,21 @@ TEST(CGroups, ubuntu2004_Linux_5_4_0_withthreads)
 // unit tests on cgroups v2
 //------------------------------------------------------------------------------
 
-TEST(CGroups, fedora35_Linux_5_14_17_nothreads)
+TEST(CGroups, fedora35_Linux_5_14_17_docker_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
         "nothreads", // force newline
-        "fedora35-Linux-5.14.17-x86_64", // force newline
-        "sys/fs/cgroup/system.slice/docker-1f22b7238553cf04966d0a54b9e3ee30824bb6c2a4d27433911960f03b2251e6.scope/",
-        false /* with threads */, 4 /* nsamples */, 1378, CG_VERSION2);
+        "fedora35-Linux-5.14.17-x86_64-docker", // force newline
+        "system.slice/docker-e0e29196c8e3e1c215ad16d7770a68505448f462370bdcbf6f6570d5df1fc9e5.scope/",
+        false /* with threads */, 4 /* nsamples */,
+        1788 /* pid of a process inside the docker to correctly autodetect the cgroups v2 */, CG_VERSION2);
 }
-TEST(CGroups, fedora35_Linux_5_14_17_withthreads)
+TEST(CGroups, fedora35_Linux_5_14_17_docker_withthreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
         "withthreads", // force newline
-        "fedora35-Linux-5.14.17-x86_64", // force newline
-        "sys/fs/cgroup/system.slice/docker-1f22b7238553cf04966d0a54b9e3ee30824bb6c2a4d27433911960f03b2251e6.scope/",
-        true /* with threads */, 4 /* nsamples */, 1378, CG_VERSION2);
+        "fedora35-Linux-5.14.17-x86_64-docker", // force newline
+        "system.slice/docker-e0e29196c8e3e1c215ad16d7770a68505448f462370bdcbf6f6570d5df1fc9e5.scope/",
+        true /* with threads */, 4 /* nsamples */,
+        1788 /* pid of a process inside the docker to correctly autodetect the cgroups v2 */, CG_VERSION2);
 }

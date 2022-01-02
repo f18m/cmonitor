@@ -138,7 +138,7 @@ bool CMonitorCgroups::are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
         std::string fs_vfstype = tuple[2];
         // std::string fs_mntops = tuple[3];
 
-        if (fs_spec == "cgroup2" && fs_vfstype == "cgroup2") {
+        if (fs_spec == "cgroup" && fs_vfstype == "cgroup2") {
             // found the "cgroup type" that belongs to cgroups v2... note that in this "if" branch the "cgroup_type"
             // is not used: cgroupsv2, also known as "unified cgroup hierarchy", do have a single path for the whole
             // cgroup, instead of having multiple ones for each different "cgroup_type"
@@ -233,10 +233,6 @@ void CMonitorCgroups::init( // force newline
     m_cgroup_systemd_name = "N/A";
     m_cgroup_processes_include_threads = include_threads;
     m_proc_prefix = proc_prefix_for_test;
-    if (my_own_pid_for_test == UINT64_MAX)
-        m_my_pid = getpid();
-    else
-        m_my_pid = my_own_pid_for_test;
 
     if (!init_cgroup_path_prefixes(cgroup_prefix_for_test, my_own_pid_for_test))
         return; // the function has already logged errors
@@ -276,15 +272,21 @@ bool CMonitorCgroups::init_cgroup_path_prefixes(const std::string& cgroup_prefix
     //        /sys/fs/cgroup/system.slice/
 
     if (my_own_pid_for_test == UINT64_MAX) {
+        // normal behavior (no unit tests)
+        m_my_pid = getpid();
         m_proc_self_cgroup = "/proc/self/cgroup";
         m_proc_self_mounts = "/proc/self/mounts";
     } else {
         // read all information to a) understand cgroup version and b) find out cgroup paths
         // from a unit testing file instead of looking at our own PID kernel files!!
+        m_my_pid = my_own_pid_for_test;
         std::string t = m_proc_prefix + "/proc/" + fmt::format("{}", my_own_pid_for_test);
         m_proc_self_cgroup = t + "/cgroup";
         m_proc_self_mounts = t + "/mounts";
     }
+
+    CMonitorLogger::instance()->LogDebug("My own PID is %d; self cgroup file is %s; self mounts file is %s\n", m_my_pid,
+        m_proc_self_cgroup.c_str(), m_proc_self_mounts.c_str());
 
     // unit testing support:
     if (!cgroup_prefix_for_test.empty())
@@ -319,6 +321,8 @@ bool CMonitorCgroups::init_cgroup_path_prefixes(const std::string& cgroup_prefix
         m_cgroup_memory_kernel_path = cgroup_prefix_for_test + cgroupsv2_basepath;
         m_cgroup_cpuacct_kernel_path = cgroup_prefix_for_test + cgroupsv2_basepath;
         m_cgroup_cpuset_kernel_path = cgroup_prefix_for_test + cgroupsv2_basepath;
+
+        CMonitorLogger::instance()->LogDebug("Detected cgroups v2 with path %s\n", m_cgroup_memory_kernel_path.c_str());
     } else {
         // try to detect cgroups v1
         m_nCGroupsFound = CG_VERSION1;
