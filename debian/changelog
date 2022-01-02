@@ -1,3 +1,24 @@
+cmonitor (2.1.0-1ubuntu2) bionic; urgency=medium
+
+  * Fix debian package by declaring libfmt-dev dependency
+
+ -- Francesco Montorsi <francesco.montorsi@gmail.com>  Mon, 13 Dec 2021 22:23:34 +0000
+
+cmonitor (2.1.0-1ubuntu1) bionic; urgency=medium
+
+  * collector: backward incompat change: generate delta CPU throttling values instead of absolute values: this is more coherent with delta CPU utilization values already produced
+  * collector: added "cgroup_network" as possible --collect option parameter: it works by taking the first PID inside the cgroup and then tracking the network statistics of its /proc//net/dev file; in practice provide insight on how much network traffic is done by a cgroup
+  * collector: add FastFileReader class to centralize the way kernel files are opened and read; this produced a noticeable speedup in sampling time
+  * collector: add fmtlib dependency and replace all occurrences of s[n]printf() during sampling and output generation to speedup cmonitor_collector
+  * collector: add sub-second sampling possibility; now --sampling-interval accepts floating point values;
+  * collector: do not log when a process disappears from cgroup
+  * collector: use fastfilereader for sampling disk statistics and other stats
+  * collector: close FDs for files used just during header info generation
+  * collector: fix hostname collection
+  * chart: improve rendering of date/time in output charts: add millisec accuracy in tooltip
+
+ -- Francesco Montorsi <francesco.montorsi@gmail.com>  Sun, 12 Dec 2021 15:48:01 +0000
+
 cmonitor (2.0.0-1ubuntu9) bionic; urgency=medium
 
   * Fix release by removing i386 also from cmonitor-tools
