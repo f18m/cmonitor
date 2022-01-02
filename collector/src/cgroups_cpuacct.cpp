@@ -241,7 +241,7 @@ bool CMonitorCgroups::sample_cpuacct_v2_counters(bool print, double elapsed_sec,
     unsigned int nFoundCpuUsageValues = 0;
     std::string label;
     uint64_t value;
-    cpuacct_throttling_t counter_throttling;
+    cpuacct_throttling_t counter_throttling = {0};
     const char* pline = m_cgroup_cpuacct_v2_reader_total_cpu_stat.get_next_line();
     while (pline) {
 

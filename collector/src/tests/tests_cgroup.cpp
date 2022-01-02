@@ -80,9 +80,12 @@ void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx, uint64_
     sample_timestamp_nsec = std::stoul(get_file_string(current_sample_abs_dir + "/sample-timestamp"));
 }
 
-void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::string& kernel_under_test,
-    const std::string& cgroup_name, bool include_threads, unsigned int nsamples,
-    uint64_t simulated_cmonitor_collector_pid = UINT64_MAX, CGroupDetected expected_cgroup_ver = CG_VERSION1)
+void run_cmonitor_on_tarball_samples( // fn
+    /* config params */
+    const std::string& test_name, const std::string& kernel_under_test, const std::string& cgroup_name,
+    bool include_threads, unsigned int nsamples, uint64_t simulated_cmonitor_collector_pid = UINT64_MAX,
+    /* expected */
+    CGroupDetected expected_cgroup_ver = CG_VERSION1, uint64_t num_logged_errors = 0)
 {
     // reset number of logged errors to keep each gtest isolated
     CMonitorLogger::instance()->reset_num_errors();
@@ -142,7 +145,7 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
     printf(" --- completed running code to test, now starting result verification ---\n");
 
     // make sure no errors have been found in the processing of files so far
-    ASSERT_EQ(CMonitorLogger::instance()->get_num_errors(), 0);
+    ASSERT_EQ(CMonitorLogger::instance()->get_num_errors(), num_logged_errors);
 
     // now before reading back the resulting JSON hide/mask-out the precise location of the unit testing data;
     // that's because on the developer machine this will be an absolute path like
@@ -155,7 +158,7 @@ void run_cmonitor_on_tarball_samples(const std::string& test_name, const std::st
     // now compare produced JSON with expected JSON
     std::string result_json_str = get_file_string(result_json_file);
     std::string expected_json_str = get_file_string(expected_json_file);
-    ASSERT_EQ(result_json_str, expected_json_str);
+    ASSERT_EQ(result_json_str, expected_json_str); 
 }
 
 //------------------------------------------------------------------------------
@@ -234,4 +237,25 @@ TEST(CGroups, fedora35_Linux_5_14_17_docker_withthreads)
         "system.slice/docker-e0e29196c8e3e1c215ad16d7770a68505448f462370bdcbf6f6570d5df1fc9e5.scope/",
         true /* with threads */, 4 /* nsamples */,
         1788 /* pid of a process inside the docker to correctly autodetect the cgroups v2 */, CG_VERSION2);
+}
+
+TEST(CGroups, fedora35_Linux_5_14_17_systemd_nothreads)
+{
+    run_cmonitor_on_tarball_samples( // force newline
+        "nothreads", // force newline
+        "fedora35-Linux-5.14.17-x86_64-systemd", // force newline
+        "self" /* cgroup name: ask to autodetect cgroup under monitor */, false /* with threads */, 4 /* nsamples */,
+        1459, /* simulated_cmonitor_collector_pid: in reality it's the PID of a SSHD but fits just fine our testing
+                purposes */
+        CG_VERSION2, 2 /* num_logged_errors: absence of cpu.max and cpuset.cpus */);
+}
+TEST(CGroups, fedora35_Linux_5_14_17_systemd_withthreads)
+{
+    run_cmonitor_on_tarball_samples( // force newline
+        "withthreads", // force newline
+        "fedora35-Linux-5.14.17-x86_64-systemd", // force newline
+        "self" /* cgroup name: ask to autodetect cgroup under monitor */, true /* with threads */, 4 /* nsamples */,
+        1459, /* simulated_cmonitor_collector_pid: in reality it's the PID of a SSHD but fits just fine our testing
+                purposes */
+        CG_VERSION2, 2 /* num_logged_errors: absence of cpu.max and cpuset.cpus */);
 }

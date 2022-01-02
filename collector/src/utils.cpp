@@ -307,6 +307,34 @@ bool read_integer(std::string filePath, uint64_t& value)
     return bRet;
 }
 
+bool read_cgroupv2_integer_or_max(std::string filePath, uint64_t& value)
+{
+    FILE* stream = fopen(filePath.c_str(), "r");
+    if (!stream) {
+        CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", filePath.c_str());
+        return false; // file does not exist or not readable
+    }
+
+    // read a single integer from the file
+    char buffer[64];
+    size_t result = fread(buffer, 1, 64, stream);
+    if (result == 0 || result >= 64)
+        return false; // failed reading even 1 char
+    fclose(stream);
+
+    if (buffer[result - 1] != '\n')
+        return false; // IMPORTANT: cgroups v2 use always new-line separated values
+    buffer[result - 1] = '\0'; // remove last newline
+
+    if (strcmp(buffer, "max") == 0) {
+        // consider operation successful and return UINT64_MAX
+        value = UINT64_MAX;
+        return true;
+    }
+
+    return string2int(buffer, value);
+}
+
 bool read_two_integers(std::string filePath, uint64_t& value1, uint64_t& value2)
 {
     FILE* stream = fopen(filePath.c_str(), "r");

@@ -60,15 +60,13 @@ std::string CGroupDetected2string(CGroupDetected k)
 bool CMonitorCgroups::get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT)
 {
     /*
-     *
      * ABOUT /proc/%d/cgroup:
      *   See http://man7.org/linux/man-pages/man7/cgroups.7.html, look for "/proc/[pid]/cgroup (since Linux 2.6.24)"
      *   Each line is composed by:
      *                     hierarchy-ID:controller-list:cgroup-path
-     *   and the "controller-list"="name=systemd" seems to be always the indicative name of the whole cgroup.
-     *   Example contents on a baremetal process:
-     *
-     *   	$ cat /proc/self/cgroup
+     *   where the line with EMPTY controller-list seems to be always the indicative name of the whole cgroup.
+     *   Example contents on a baremetal process using systemd cgroups v1:
+             $ cat /proc/self/cgroup
                         12:pids:/user.slice/user-0.slice/session-5.scope
                         11:cpuset:/
                         10:perf_event:/
@@ -82,6 +80,11 @@ bool CMonitorCgroups::get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_p
                         2:net_cls,net_prio:/
                         1:name=systemd:/user.slice/user-0.slice/session-5.scope
                         0::/user.slice/user-0.slice/session-5.scope
+
+     *   Example contents on a baremetal process using systemd or docker cgroups v2:
+            $ cat /proc/self/cgroup
+                        0::/user.slice/user-0.slice/session-1.scope
+
      */
     CMonitorLogger::instance()->LogDebug("Inspecting file %s\n", m_proc_self_cgroup.c_str());
 
@@ -127,24 +130,35 @@ bool CMonitorCgroups::are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
         return false; // cannot read the cgroup information!
 
     std::string line;
+    unsigned int nline = 0;
     while (std::getline(inputf, line)) {
         // cout << line << '\n';
         std::vector<std::string> tuple = split_string_in_array(line, ' ');
-        if (tuple.size() != 6)
+        if (tuple.size() != 6) {
+            CMonitorLogger::instance()->LogDebug("Invalid mount format found at line %d: [%s]\n", nline, line.c_str());
             return false; // invalid format
+        }
 
         std::string fs_spec = tuple[0];
         std::string fs_file = tuple[1];
         std::string fs_vfstype = tuple[2];
         // std::string fs_mntops = tuple[3];
 
-        if (fs_spec == "cgroup" && fs_vfstype == "cgroup2") {
+        /*
+         NOTE: strangely enoug the "fs_spec" seems to be sometime "cgroup" (e.g. checkout
+         fedora35-Linux-5.14.17-x86_64-docker unit test data) and sometimes "cgroup2" (e.g. checkout
+         fedora35-Linux-5.14.17-x86_64-systemd unit test data)... regardless of that the "fs_vfstype" is always
+         "cgroup2" for v2 of cgroups!
+        */
+        if ((fs_spec == "cgroup" || fs_spec == "cgroup2") && fs_vfstype == "cgroup2") {
             // found the "cgroup type" that belongs to cgroups v2... note that in this "if" branch the "cgroup_type"
             // is not used: cgroupsv2, also known as "unified cgroup hierarchy", do have a single path for the whole
             // cgroup, instead of having multiple ones for each different "cgroup_type"
             cgroup_pathOUT = fs_file;
             return true;
         }
+
+        nline++;
     }
 
     return false; // cgroup name not found
@@ -378,6 +392,7 @@ bool CMonitorCgroups::finalize_cgroup_paths()
     if (m_pCfg->m_strCGroupName.empty() || m_pCfg->m_strCGroupName == "self") {
 
         // assume the user wants to monitor the same cgroup where cmonitor_collector is running:
+        // (presumably a systemd-created cgroup outside of any container)
 
         CMonitorLogger::instance()->LogDebug("No cgroup name provided; defaulting to 'self' cgroup monitoring; thus "
                                              "trying to autodetect my own cgroup.");
@@ -390,54 +405,104 @@ bool CMonitorCgroups::finalize_cgroup_paths()
             return false;
         }
 
-        if (cgroup_paths.find("name=systemd") == cgroup_paths.end()) {
-            CMonitorLogger::instance()->LogError("Could not find the cgroup controller 'name=systemd' inside "
-                                                 "'%s'. CGroup mode disabled.\n",
-                m_proc_self_cgroup.c_str());
-            m_nCGroupsFound = CG_NONE;
-            return false;
-        }
-
-        m_cgroup_systemd_name = cgroup_paths["name=systemd"];
-
-        if (search_my_pid_in_cgroups()) { // also updates m_cgroup_processes_path
-            // in this case we're likely inside a Docker or LXC container so we were able to find our own PID in one
-            // of the "undecorated" absolute paths detected previously by init_cgroup_path_prefixes()
-        } else {
-
-            if (cgroup_paths.find("memory") == cgroup_paths.end() || // fn
-                cgroup_paths.find("cpuset") == cgroup_paths.end() || // fn
-                cgroup_paths.find(m_cpuacct_controller_name) == cgroup_paths.end()) {
-                CMonitorLogger::instance()->LogError("Could not find one the required cgroup controllers 'memory', "
-                                                     "'cpuset' or '%s' inside '%s'. CGroup mode disabled.\n",
-                    m_cpuacct_controller_name.c_str(), m_proc_self_cgroup.c_str());
+        switch (m_nCGroupsFound) {
+        case CG_NONE:
+            assert(0);
+            break;
+        case CG_VERSION1:
+            if (cgroup_paths.find("name=systemd") == cgroup_paths.end()) {
+                CMonitorLogger::instance()->LogError("Could not find the cgroup controller 'name=systemd' inside "
+                                                     "'%s'. CGroup mode disabled.\n",
+                    m_proc_self_cgroup.c_str());
                 m_nCGroupsFound = CG_NONE;
                 return false;
             }
+            m_cgroup_systemd_name = cgroup_paths["name=systemd"];
 
-            // try to adjust the full cgroup paths by adding the cgroup paths read from /proc/self/cgroup
-            // to the absolute prefixes obtained from /proc/self/mounts: this is typically necessary when running
-            // outside Docker/LXC and thus just inside a cgroup created by systemd:
-            m_cgroup_memory_kernel_path += "/" + cgroup_paths["memory"];
-            m_cgroup_cpuacct_kernel_path += "/" + cgroup_paths[m_cpuacct_controller_name];
-            m_cgroup_cpuset_kernel_path += "/" + cgroup_paths["cpuset"];
-            CMonitorLogger::instance()->LogDebug(
-                "Adjusting cpuset cgroup path to %s\n", m_cgroup_cpuset_kernel_path.c_str());
-            CMonitorLogger::instance()->LogDebug(
-                "Adjusting cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
-            CMonitorLogger::instance()->LogDebug(
-                "Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
-            if (search_my_pid_in_cgroups()) // also updates m_cgroup_processes_path
-            {
-                // successfully found our PID...
+            CMonitorLogger::instance()->LogDebug("Detected as cgroup name: %s", m_cgroup_systemd_name.c_str());
 
+            if (search_my_pid_in_cgroups()) { // also updates m_cgroup_processes_path
+                // in this case we're likely inside a Docker or LXC container so we were able to find our own PID in one
+                // of the "undecorated" absolute paths detected previously by init_cgroup_path_prefixes()
             } else {
-                CMonitorLogger::instance()->LogError(
-                    "Could not find the cgroup where my own PID %d is located. CGroup mode disabled.\n", m_my_pid);
+
+                if (cgroup_paths.find("memory") == cgroup_paths.end() || // fn
+                    cgroup_paths.find("cpuset") == cgroup_paths.end() || // fn
+                    cgroup_paths.find(m_cpuacct_controller_name) == cgroup_paths.end()) {
+                    CMonitorLogger::instance()->LogError("Could not find one the required cgroup controllers 'memory', "
+                                                         "'cpuset' or '%s' inside '%s'. CGroup mode disabled.\n",
+                        m_cpuacct_controller_name.c_str(), m_proc_self_cgroup.c_str());
+                    m_nCGroupsFound = CG_NONE;
+                    return false;
+                }
+
+                // try to adjust the full cgroup paths by adding the cgroup paths read from /proc/self/cgroup
+                // to the absolute prefixes obtained from /proc/self/mounts: this is typically necessary when running
+                // outside Docker/LXC and thus just inside a cgroup created by systemd:
+                m_cgroup_memory_kernel_path += "/" + cgroup_paths["memory"];
+                m_cgroup_cpuacct_kernel_path += "/" + cgroup_paths[m_cpuacct_controller_name];
+                m_cgroup_cpuset_kernel_path += "/" + cgroup_paths["cpuset"];
+                CMonitorLogger::instance()->LogDebug(
+                    "Adjusting cpuset cgroup path to %s\n", m_cgroup_cpuset_kernel_path.c_str());
+                CMonitorLogger::instance()->LogDebug(
+                    "Adjusting cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
+                CMonitorLogger::instance()->LogDebug(
+                    "Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
+                if (search_my_pid_in_cgroups()) // also updates m_cgroup_processes_path
+                {
+                    // successfully found our PID...
+
+                } else {
+                    CMonitorLogger::instance()->LogError(
+                        "Could not find the cgroup where my own PID %d is located. CGroup mode disabled.\n", m_my_pid);
+                    m_nCGroupsFound = CG_NONE;
+                    return false;
+                }
+            }
+            break;
+        case CG_VERSION2:
+            if (cgroup_paths.find("") == cgroup_paths.end()) {
+                CMonitorLogger::instance()->LogError("Could not find the cgroup controller 'name=systemd' inside "
+                                                     "'%s'. CGroup mode disabled.\n",
+                    m_proc_self_cgroup.c_str());
                 m_nCGroupsFound = CG_NONE;
                 return false;
             }
+            m_cgroup_systemd_name = cgroup_paths[""];
+
+            CMonitorLogger::instance()->LogDebug("Detected as cgroup name: %s", m_cgroup_systemd_name.c_str());
+
+            if (search_my_pid_in_cgroups()) { // also updates m_cgroup_processes_path
+                // in this case we're likely inside a Docker or LXC container so we were able to find our own PID in one
+                // of the "undecorated" absolute paths detected previously by init_cgroup_path_prefixes()
+            } else {
+
+                // try to adjust the full cgroup paths by adding the cgroup paths read from /proc/self/cgroup
+                // to the absolute prefixes obtained from /proc/self/mounts: this is typically necessary when running
+                // outside Docker/LXC and thus just inside a cgroup created by systemd:
+                m_cgroup_memory_kernel_path += "/" + m_cgroup_systemd_name;
+                m_cgroup_cpuacct_kernel_path += "/" + m_cgroup_systemd_name;
+                m_cgroup_cpuset_kernel_path += "/" + m_cgroup_systemd_name;
+                CMonitorLogger::instance()->LogDebug(
+                    "Adjusting cpuset cgroup path to %s\n", m_cgroup_cpuset_kernel_path.c_str());
+                CMonitorLogger::instance()->LogDebug(
+                    "Adjusting cpuacct cgroup path to %s\n", m_cgroup_cpuacct_kernel_path.c_str());
+                CMonitorLogger::instance()->LogDebug(
+                    "Adjusting memory cgroup path to %s\n", m_cgroup_memory_kernel_path.c_str());
+                if (search_my_pid_in_cgroups()) // also updates m_cgroup_processes_path
+                {
+                    // successfully found our PID...
+
+                } else {
+                    CMonitorLogger::instance()->LogError(
+                        "Could not find the cgroup where my own PID %d is located. CGroup mode disabled.\n", m_my_pid);
+                    m_nCGroupsFound = CG_NONE;
+                    return false;
+                }
+            }
+            break;
         }
+
     } else {
         CMonitorLogger::instance()->LogDebug(
             "Cgroup name [%s] provided. Trying to detect the paths for the actual cgroups to monitor.",
@@ -531,10 +596,11 @@ void CMonitorCgroups::v1_read_limits()
 void CMonitorCgroups::v2_read_limits()
 {
     // READ LIMITS IMPOSED BY CGROUPS
+    // see https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
 
-    // FIXME: m_cgroup_memory_limit_bytes might assume the special value "max" reported by the
-    // cgroup controller... it just means "no limit"... we need to handle that using UINT64_MAX
-    if (!read_integer(m_cgroup_memory_kernel_path + "/memory.max", m_cgroup_memory_limit_bytes)) {
+    // NOTE: m_cgroup_memory_limit_bytes might assume the special value "max" reported by the
+    // cgroup controller... it just means "no limit"... we set UINT64_MAX in that case
+    if (!read_cgroupv2_integer_or_max(m_cgroup_memory_kernel_path + "/memory.max", m_cgroup_memory_limit_bytes)) {
         CMonitorLogger::instance()->LogError(
             "Could not read the memory limit from 'memory' cgroup. Assuming no memory limit.\n");
         m_cgroup_memory_limit_bytes = UINT64_MAX;
