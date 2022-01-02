@@ -83,7 +83,7 @@ void prepare_sample_dir(std::string kernel_test, unsigned int sampleIdx, uint64_
 void run_cmonitor_on_tarball_samples( // fn
     /* config params */
     const std::string& test_name, const std::string& kernel_under_test, const std::string& cgroup_name,
-    bool include_threads, unsigned int nsamples, uint64_t simulated_cmonitor_collector_pid = UINT64_MAX,
+    bool include_threads, unsigned int nsamples, uint64_t simulated_cmonitor_collector_pid,
     /* expected */
     CGroupDetected expected_cgroup_ver = CG_VERSION1, uint64_t num_logged_errors = 0)
 {
@@ -112,6 +112,9 @@ void run_cmonitor_on_tarball_samples( // fn
     printf(" --- now starting actual CMonitorGroups code under test ---\n");
 
     // allocate the class under test:
+    // NOTE: the 'simulated_cmonitor_collector_pid' PID is important to remove ANY dependency of CMonitorGroups code
+    //       from the PID of this gtest executable and make sure it never uses stuff like /proc/self/mounts but rather
+    //       reads some unit-test-data file instead
     CMonitorCgroups t(&cfg, &actual_output);
     t.init(include_threads, current_sample_abs_dir, current_sample_abs_dir, simulated_cmonitor_collector_pid);
     ASSERT_EQ(t.get_detected_cgroup_version(), expected_cgroup_ver);
@@ -169,16 +172,18 @@ TEST(CGroups, centos7_Linux_3_10_0_docker_nothreads)
     run_cmonitor_on_tarball_samples( // force newline
         "nothreads", // force newline
         "centos7-Linux-3.10.0-x86_64-docker", // force newline
-        "docker/27d5147ebb2620bfd9c20f728e0785f55e523efd0bb25a1a8e225c7fa9e0e335", false /* no threads */,
-        4 /* nsamples */);
+        "docker/d20c1d74e74b4ee40954136e18d33ea85d7333dda4dca0161806395c2d26913c", false /* no threads */,
+        4 /* nsamples */,
+        1232906  /* simulated_cmonitor_collector_pid: in reality it's the PID of a REDIS but fits just fine our testing purposes */);
 }
 TEST(CGroups, centos7_Linux_3_10_0_docker_withthreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
         "withthreads", // force newline
         "centos7-Linux-3.10.0-x86_64-docker", // force newline
-        "docker/27d5147ebb2620bfd9c20f728e0785f55e523efd0bb25a1a8e225c7fa9e0e335", true /* with threads */,
-        4 /* nsamples */);
+        "docker/d20c1d74e74b4ee40954136e18d33ea85d7333dda4dca0161806395c2d26913c", true /* with threads */,
+        4 /* nsamples */,
+        1232906  /* simulated_cmonitor_collector_pid: in reality it's the PID of a REDIS but fits just fine our testing purposes */);
 }
 
 TEST(CGroups, centos7_Linux_3_10_0_systemd_nothreads)
@@ -199,13 +204,15 @@ TEST(CGroups, centos7_Linux_3_10_0_systemd_withthreads)
         775367 /* simulated_cmonitor_collector_pid: in reality it's the PID of a Bash but fits just fine our testing purposes */);
 }
 
+#if 0
 TEST(CGroups, ubuntu2004_Linux_5_4_0_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
         "nothreads", // force newline
         "ubuntu20.04-Linux-5.4.0-x86_64", // force newline
         "docker//fffe499793dc451b96e4d8628adfcd762d1a8177d8627d8e879c56ca093bc7ef", false /* with threads */,
-        4 /* nsamples */);
+        4 /* nsamples */,
+        2525  /* simulated_cmonitor_collector_pid: in reality it's the PID of a REDIS but fits just fine our testing purposes */);
 }
 TEST(CGroups, ubuntu2004_Linux_5_4_0_withthreads)
 {
@@ -213,8 +220,10 @@ TEST(CGroups, ubuntu2004_Linux_5_4_0_withthreads)
         "withthreads", // force newline
         "ubuntu20.04-Linux-5.4.0-x86_64", // force newline
         "docker//fffe499793dc451b96e4d8628adfcd762d1a8177d8627d8e879c56ca093bc7ef", true /* with threads */,
-        4 /* nsamples */);
+        4 /* nsamples */,
+        2525  /* simulated_cmonitor_collector_pid: in reality it's the PID of a REDIS but fits just fine our testing purposes */);
 }
+#endif
 
 //------------------------------------------------------------------------------
 // unit tests on cgroups v2
