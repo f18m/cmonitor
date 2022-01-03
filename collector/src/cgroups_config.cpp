@@ -85,6 +85,7 @@ bool CMonitorCgroups::get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_p
             $ cat /proc/self/cgroup
                         0::/user.slice/user-0.slice/session-1.scope
 
+        See https://github.com/systemd/systemd/blob/main/docs/CGROUP_DELEGATION.md
      */
     CMonitorLogger::instance()->LogDebug("Inspecting file %s\n", m_proc_self_cgroup.c_str());
 
@@ -121,16 +122,18 @@ bool CMonitorCgroups::are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
      *     under Docker:
      *      cgroup2 /sys/fs/cgroup cgroup2 rw,seclabel,nosuid,nodev,noexec,relatime,nsdelegate 0 0
      *
+     *   See https://github.com/systemd/systemd/blob/main/docs/CGROUP_DELEGATION.md
      */
 
     CMonitorLogger::instance()->LogDebug("Inspecting file %s\n", m_proc_self_mounts.c_str());
+    cgroup_pathOUT = "";
 
     std::ifstream inputf(m_proc_self_mounts);
     if (!inputf.is_open())
         return false; // cannot read the cgroup information!
 
     std::string line;
-    unsigned int nline = 0;
+    unsigned int nline = 0, ncgroups_v2 = 0, ncgroups_v1 = 0;
     while (std::getline(inputf, line)) {
         // cout << line << '\n';
         std::vector<std::string> tuple = split_string_in_array(line, ' ');
@@ -155,10 +158,24 @@ bool CMonitorCgroups::are_cgroups_v2_enabled(std::string& cgroup_pathOUT)
             // is not used: cgroupsv2, also known as "unified cgroup hierarchy", do have a single path for the whole
             // cgroup, instead of having multiple ones for each different "cgroup_type"
             cgroup_pathOUT = fs_file;
-            return true;
+            ncgroups_v2++;
+        }
+        else if (fs_vfstype == "cgroup")
+        {
+            ncgroups_v1++;
         }
 
         nline++;
+    }
+
+    if (ncgroups_v1 == 0 && ncgroups_v2>=1)
+    {
+        /* 
+            As described here: https://github.com/systemd/systemd/blob/main/docs/CGROUP_DELEGATION.md#three-different-tree-setups-
+            systemd has 3 working modes; in "hybrid" mode (used e.g. on Ubuntu 20.04) we want to monitor cgroups v1 only; for this
+            reason we return true (v2 version) only if we are sure we're not in "hybrid" mode (ncgroups_v1 == 0)!
+        */
+        return true;
     }
 
     return false; // cgroup name not found

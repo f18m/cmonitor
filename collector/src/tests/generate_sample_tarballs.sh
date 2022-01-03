@@ -99,7 +99,7 @@ function init_baremetal_cgroups()
     if [ "${cgroups_ver}" = "1" ]; then
         # cgroups v1 folders:
         cgroup_MEMORY="memory/$( cat /proc/self/cgroup | grep 'memory' | sed 's@[0-9]*:memory:\(.*\)@\1@g' )"
-        cgroup_CPUACCT="cpu,cpuacct/$( cat /proc/self/cgroup | grep 'cpuacct' | sed 's@[0-9]*:cpuacct,cpu:\(.*\)@\1@g' )"
+        cgroup_CPUACCT="cpu,cpuacct/$( cat /proc/self/cgroup | grep 'cpuacct' | sed 's@[0-9]*:cpu,cpuacct:\(.*\)@\1@g' )"
         cgroup_CPUSET="cpuset/$( cat /proc/self/cgroup | grep 'cpuset' | sed 's@[0-9]*:cpuset:\(.*\)@\1@g' )"
         cgroup_BLKIO="blkio/$( cat /proc/self/cgroup | grep 'blkio' | sed 's@[0-9]*:blkio:\(.*\)@\1@g' )"
         cgroup_HUGETLB="hugetlb/$( cat /proc/self/cgroup | grep 'hugetlb' | sed 's@[0-9]*:hugetlb:\(.*\)@\1@g' )"
