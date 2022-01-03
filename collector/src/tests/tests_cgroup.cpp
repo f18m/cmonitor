@@ -109,6 +109,9 @@ void run_cmonitor_on_tarball_samples( // fn
     uint64_t prev_ts;
     prepare_sample_dir(kernel_under_test, 1, prev_ts); // prepare before invoking cgroup_init()
 
+    // the PID provided must exist inside the sample directory
+    ASSERT_TRUE(file_or_dir_exists(fmt::format("{}/proc/{}", current_sample_abs_dir, simulated_cmonitor_collector_pid).c_str()));
+
     printf(" --- now starting actual CMonitorGroups code under test ---\n");
 
     // allocate the class under test:
@@ -234,18 +237,18 @@ TEST(CGroups, fedora35_Linux_5_14_17_docker_nothreads)
     run_cmonitor_on_tarball_samples( // force newline
         "nothreads", // force newline
         "fedora35-Linux-5.14.17-x86_64-docker", // force newline
-        "system.slice/docker-e0e29196c8e3e1c215ad16d7770a68505448f462370bdcbf6f6570d5df1fc9e5.scope/",
+        "system.slice/docker-3cfe7ca058f43dbb15a6cc68c472978a14c93fd7e263384dd0a1fa1517f6d7f0.scope/",
         false /* with threads */, 4 /* nsamples */,
-        1788 /* pid of a process inside the docker to correctly autodetect the cgroups v2 */, CG_VERSION2);
+        3834 /* pid of a process inside the docker to correctly autodetect the cgroups v2 */, CG_VERSION2);
 }
 TEST(CGroups, fedora35_Linux_5_14_17_docker_withthreads)
 {
     run_cmonitor_on_tarball_samples( // force newline
         "withthreads", // force newline
         "fedora35-Linux-5.14.17-x86_64-docker", // force newline
-        "system.slice/docker-e0e29196c8e3e1c215ad16d7770a68505448f462370bdcbf6f6570d5df1fc9e5.scope/",
+        "system.slice/docker-3cfe7ca058f43dbb15a6cc68c472978a14c93fd7e263384dd0a1fa1517f6d7f0.scope/",
         true /* with threads */, 4 /* nsamples */,
-        1788 /* pid of a process inside the docker to correctly autodetect the cgroups v2 */, CG_VERSION2);
+        3834 /* pid of a process inside the docker to correctly autodetect the cgroups v2 */, CG_VERSION2);
 }
 
 TEST(CGroups, fedora35_Linux_5_14_17_systemd_nothreads)
@@ -254,7 +257,7 @@ TEST(CGroups, fedora35_Linux_5_14_17_systemd_nothreads)
         "nothreads", // force newline
         "fedora35-Linux-5.14.17-x86_64-systemd", // force newline
         "self" /* cgroup name: ask to autodetect cgroup under monitor */, false /* with threads */, 4 /* nsamples */,
-        1459, /* simulated_cmonitor_collector_pid: in reality it's the PID of a SSHD but fits just fine our testing
+        1003, /* simulated_cmonitor_collector_pid: in reality it's the PID of a SSHD but fits just fine our testing
                 purposes */
         CG_VERSION2, 2 /* num_logged_errors: absence of cpu.max and cpuset.cpus */);
 }
@@ -264,7 +267,7 @@ TEST(CGroups, fedora35_Linux_5_14_17_systemd_withthreads)
         "withthreads", // force newline
         "fedora35-Linux-5.14.17-x86_64-systemd", // force newline
         "self" /* cgroup name: ask to autodetect cgroup under monitor */, true /* with threads */, 4 /* nsamples */,
-        1459, /* simulated_cmonitor_collector_pid: in reality it's the PID of a SSHD but fits just fine our testing
+        1003, /* simulated_cmonitor_collector_pid: in reality it's the PID of a SSHD but fits just fine our testing
                 purposes */
         CG_VERSION2, 2 /* num_logged_errors: absence of cpu.max and cpuset.cpus */);
 }

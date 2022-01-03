@@ -258,6 +258,9 @@ else
     init_baremetal_cgroups
 fi
 
+# SELinux, if present (like on FC35) is an obstacle...
+setenforce 0
+
 # generate each sample
 for nsample in $(seq 1 $nsamples); do
     echo "** Generating tarball for the ${nsample}-th sample of process=${process_name} inside docker named=${docker_name}"
