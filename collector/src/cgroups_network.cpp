@@ -21,7 +21,8 @@
 #include "cgroups.h"
 #include "logger.h"
 #include "output_frontend.h"
-#include "utils.h"
+#include "utils_files.h"
+#include "utils_string.h"
 #include <assert.h>
 #include <fstream>
 #include <pwd.h>
@@ -68,8 +69,8 @@ void CMonitorCgroups::init_network(const std::string& cgroup_prefix_for_test)
 
     if (!m_cgroup_network_reader_pids.open_or_rewind()) {
         m_pCfg->m_nCollectFlags &= ~PK_CGROUP_NETWORK_INTERFACES;
-        CMonitorLogger::instance()->LogError(
-            "Could not read the cgroup with list of pids from file '%s'. Disabling monitoring of network interfaces of cgroup.\n",
+        CMonitorLogger::instance()->LogError("Could not read the cgroup with list of pids from file '%s'. Disabling "
+                                             "monitoring of network interfaces of cgroup.\n",
             m_cgroup_network_reader_pids.get_file().c_str());
         return;
     }

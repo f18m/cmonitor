@@ -21,7 +21,8 @@
 #include "header_info.h"
 #include "logger.h"
 #include "output_frontend.h"
-#include "utils.h"
+#include "utils_files.h"
+#include "utils_misc.h"
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <netdb.h>
@@ -66,7 +67,7 @@ void CMonitorHeaderInfo::header_identity()
     std::string strFullHostname = get_hostname();
     m_pOutput->pstring("hostname", strFullHostname.c_str());
 
-    // remove everything aftr first dot:
+    // remove everything after first dot:
     std::string shortHostname(strFullHostname);
     size_t dot_pos = shortHostname.find('.');
     if (dot_pos != std::string::npos)
@@ -89,6 +90,11 @@ void CMonitorHeaderInfo::header_identity()
     std::string all_ips;
     if (getifaddrs(&interfaces) == 0) { /* retrieve the current interfaces */
         for (ifaddrs_ptr = interfaces; ifaddrs_ptr != NULL; ifaddrs_ptr = ifaddrs_ptr->ifa_next) {
+
+            if (strncmp(ifaddrs_ptr->ifa_name, "veth", 4) == 0) {
+                /* veth**** interfaces are not real/interesting interfaces... skip them */
+                continue;
+            }
 
             if (ifaddrs_ptr->ifa_addr) {
                 switch (ifaddrs_ptr->ifa_addr->sa_family) {

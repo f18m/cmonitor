@@ -27,7 +27,7 @@ OBJS_UNIT_TESTS = \
     $(OUTDIR)/tests_cgroup.o \
     $(OUTDIR)/tests_fast_file_reader.o \
     $(OUTDIR)/tests_main.o \
-	$(OUTDIR)/tests_utils.o
+	$(OUTDIR)/tests_utils_misc.o
 
 OBJS_CMONITOR_COLLECTOR = \
     $(OUTDIR)/cgroups_config.o \
@@ -39,7 +39,9 @@ OBJS_CMONITOR_COLLECTOR = \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/output_frontend.o \
     $(OUTDIR)/system.o \
-    $(OUTDIR)/utils.o
+    $(OUTDIR)/utils_files.o \
+    $(OUTDIR)/utils_misc.o \
+    $(OUTDIR)/utils_string.o
 
 OBJS = $(OBJS_UNIT_TESTS) $(OBJS_CMONITOR_COLLECTOR)
 HEADERS = $(wildcard ../*.h)

@@ -36,7 +36,9 @@ OBJS_CMONITOR_COLLECTOR = \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/output_frontend.o \
     $(OUTDIR)/system.o \
-    $(OUTDIR)/utils.o
+    $(OUTDIR)/utils_files.o \
+    $(OUTDIR)/utils_misc.o \
+    $(OUTDIR)/utils_string.o
 
 OBJS = $(OBJS_BENCHMARKS) $(OBJS_CMONITOR_COLLECTOR)
 

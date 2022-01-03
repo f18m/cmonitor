@@ -1,6 +1,5 @@
 /*
- * utils.h --  a few reusable C++ utility functions for string/file
- *             manipulation
+ * utils_files.h --  a few reusable C++ utility functions for file manipulation
  * Developer: Francesco Montorsi.
  * (C) Copyright 2018 Francesco Montorsi
 
@@ -35,22 +34,6 @@
 class CMonitorOutputFrontend;
 
 //------------------------------------------------------------------------------
-// String utilities
-//------------------------------------------------------------------------------
-unsigned int replace_string(std::string& str, const std::string& from, const std::string& to, bool allOccurrences);
-std::string to_lower(const std::string& orig_str);
-std::string trim_string(const std::string& s);
-void strip_spaces(char* s);
-bool string2int(const char* s, uint64_t& result);
-bool string2double(const char* s, double& result);
-template <typename T> std::string stl_container2string(const T& par, const std::string& delim);
-std::vector<std::string> split_string_in_array(const std::string& str, char splitter);
-bool split_string_on_first_separator(const std::string& str, char separator, std::string& before, std::string& after);
-bool split_label_value(const std::string& str, char separator, std::string& label, uint64_t& value);
-bool parse_string_with_multiple_ranges(const std::string& data, std::vector<int>& result);
-bool parse_string_with_multiple_ranges(const std::string& data, std::set<int>& result);
-
-//------------------------------------------------------------------------------
 // File utilities
 //------------------------------------------------------------------------------
 bool file_or_dir_exists(const char* filename);
@@ -62,14 +45,3 @@ bool read_integers_with_range_validation(
     const std::string& filename, uint64_t lower_limit, uint64_t upper_limit, std::set<uint64_t>& cpus);
 void proc_read_numeric_stats_from(
     CMonitorOutputFrontend* pOutput, const char* statname, const std::set<std::string>& allowedStatsNames);
-
-//------------------------------------------------------------------------------
-// Timestamp utilities
-//------------------------------------------------------------------------------
-void format_timestamp(const std::chrono::time_point<std::chrono::system_clock>& now_ts, std::string& utcTime);
-bool get_timestamp(double* ts_for_delta_computation, std::string& utcTime);
-
-//------------------------------------------------------------------------------
-// Hostname utilities
-//------------------------------------------------------------------------------
-std::string get_hostname();

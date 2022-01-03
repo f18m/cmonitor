@@ -21,7 +21,8 @@
 #include "cgroups.h"
 #include "logger.h"
 #include "output_frontend.h"
-#include "utils.h"
+#include "utils_files.h"
+#include "utils_string.h"
 #include <assert.h>
 #include <fstream>
 #include <pwd.h>

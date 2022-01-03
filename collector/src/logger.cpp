@@ -19,7 +19,7 @@
 
 #include "logger.h"
 #include "cmonitor.h"
-#include "utils.h"
+#include "utils_files.h"
 #include <stdarg.h> /* va_list, va_start, va_arg, va_end */
 
 //------------------------------------------------------------------------------
@@ -139,7 +139,7 @@ void CMonitorLogger::LogErrorWithErrno(const char* line, ...)
         // errors always go in their dedicated file
         fprintf(m_outputErr, "ERROR: %s (errno=%d, %s)\n", currLogLine, errno, strerror(errno));
     }
-    
+
     if (m_bDebugEnabled) {
         // in debug mode stdout is still open, so we can printf:
         printf("ERROR: %s (errno=%d, %s)\n", currLogLine, errno, strerror(errno));
