@@ -139,7 +139,7 @@ public:
     // Utility shared with CMonitorCgroups
     //------------------------------------------------------------------------------
 
-    static unsigned int get_all_cpus(std::set<uint64_t>& cpu_indexes);
+    static unsigned int get_all_cpus(std::set<uint64_t>& cpu_indexes, const std::string& stat_file = "/proc/stat");
 
     static bool read_net_dev(
         const std::string& filename, const std::set<std::string>& net_iface_whitelist, netinfo_map_t& out_infos);

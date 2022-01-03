@@ -204,7 +204,7 @@ TEST(CGroups, centos7_Linux_3_10_0_systemd_withthreads)
         775367 /* simulated_cmonitor_collector_pid: in reality it's the PID of a Bash but fits just fine our testing purposes */);
 }
 
-#if 0
+#if 0 // FIXME reenable
 TEST(CGroups, ubuntu2004_Linux_5_4_0_nothreads)
 {
     run_cmonitor_on_tarball_samples( // force newline

@@ -47,8 +47,10 @@ HEADERS = $(wildcard ../*.h)
 TEST_KERNELS = \
 	centos7-Linux-3.10.0-x86_64-docker \
 	centos7-Linux-3.10.0-x86_64-systemd \
-	fedora35-Linux-5.14.17-x86_64 \
-	ubuntu20.04-Linux-5.4.0-x86_64
+	fedora35-Linux-5.14.17-x86_64-docker \
+	fedora35-Linux-5.14.17-x86_64-systemd \
+	ubuntu20.04-Linux-5.4.0-x86_64-docker \
+	ubuntu20.04-Linux-5.4.0-x86_64-systemd
 
 # Targets
 

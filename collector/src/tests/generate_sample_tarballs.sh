@@ -206,6 +206,10 @@ function copy_selected_proc_files()
             cp -a ${task}/stat ${task}/statm ${task}/status ${task}/io        $dst_dir
         done
     done
+
+    dst_dir="/tmp/cmonitor-temp/proc/"
+    echo "Saving system-wide stats files"
+    cp -a /proc/stat /proc/diskstats /proc/uptime /proc/loadavg /etc/mtab     $dst_dir
 }
 
 function generate_sample_tarball()

@@ -694,9 +694,9 @@ void CMonitorSystem::sample_filesystems()
 }
 
 /* static */
-unsigned int CMonitorSystem::get_all_cpus(std::set<uint64_t>& cpu_indexes)
+unsigned int CMonitorSystem::get_all_cpus(std::set<uint64_t>& cpu_indexes, const std::string& stat_file)
 {
-    FastFileReader cpu_stat("/proc/stat");
+    FastFileReader cpu_stat(stat_file);
 
     cpu_indexes.clear();
 
