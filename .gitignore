@@ -8,7 +8,9 @@ examples/*/cmonitor_collector
 examples/*/example-load.sh
 
 # autogen from jinja2 templates
+tools/chart/cmonitor_chart
 tools/chart/cmonitor_chart.py
+tools/statistics/cmonitor_statistics
 tools/statistics/cmonitor_statistics.py
 
 # ides
@@ -19,14 +21,22 @@ tools/statistics/cmonitor_statistics.py
 .vscode
 
 # unit test results
-collector/src/tests/centos7-Linux-3.10.0-x86_64/result*.json
-collector/src/tests/centos7-Linux-3.10.0-x86_64/current-sample
-collector/src/tests/centos7-Linux-3.10.0-x86_64/sample*/proc/
-collector/src/tests/centos7-Linux-3.10.0-x86_64/sample*/sys/
-collector/src/tests/centos7-Linux-3.10.0-x86_64/sample*/sample-timestamp
-collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64/result*.json
-collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64/sample*
-collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64/current-sample
-collector/src/tests/fedora35-Linux-5.14.17-x86_64/result*.json
-collector/src/tests/fedora35-Linux-5.14.17-x86_64/sample*
-collector/src/tests/fedora35-Linux-5.14.17-x86_64/current-sample
+collector/src/tests/centos7-Linux-3.10.0-x86_64-docker/result*.json
+collector/src/tests/centos7-Linux-3.10.0-x86_64-docker/sample*
+collector/src/tests/centos7-Linux-3.10.0-x86_64-docker/current-sample
+collector/src/tests/centos7-Linux-3.10.0-x86_64-systemd/result*.json
+collector/src/tests/centos7-Linux-3.10.0-x86_64-systemd/sample*
+collector/src/tests/centos7-Linux-3.10.0-x86_64-systemd/current-sample
+collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64-docker/result*.json
+collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64-docker/sample*
+collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64-docker/current-sample
+collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64-systemd/result*.json
+collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64-systemd/sample*
+collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64-systemd/current-sample
+collector/src/tests/fedora35-Linux-5.14.17-x86_64-docker/result*.json
+collector/src/tests/fedora35-Linux-5.14.17-x86_64-docker/sample*
+collector/src/tests/fedora35-Linux-5.14.17-x86_64-docker/current-sample
+collector/src/tests/fedora35-Linux-5.14.17-x86_64-systemd/result*.json
+collector/src/tests/fedora35-Linux-5.14.17-x86_64-systemd/sample*
+collector/src/tests/fedora35-Linux-5.14.17-x86_64-systemd/current-sample
+

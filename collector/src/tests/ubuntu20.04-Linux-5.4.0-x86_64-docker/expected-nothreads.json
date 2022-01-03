@@ -1,0 +1,288 @@
+{
+    "header": {
+        "cgroup_config": {
+            "name": "docker/d19cdffb6d5cac225c19a074e1cf0442df9bfcecf39f8b1581ce6784e73971f3",
+            "version": "1",
+            "memory_path": "/removed-unit-test-data-location/sys/fs/cgroup/memory/docker/d19cdffb6d5cac225c19a074e1cf0442df9bfcecf39f8b1581ce6784e73971f3",
+            "cpuacct_path": "/removed-unit-test-data-location/sys/fs/cgroup/cpu,cpuacct/docker/d19cdffb6d5cac225c19a074e1cf0442df9bfcecf39f8b1581ce6784e73971f3",
+            "cpuset_path": "/removed-unit-test-data-location/sys/fs/cgroup/cpuset/docker/d19cdffb6d5cac225c19a074e1cf0442df9bfcecf39f8b1581ce6784e73971f3",
+            "cpus": "0,1",
+            "cpu_quota_perc": 0.900,
+            "memory_limit_bytes": 10485760
+        }
+    },
+    "samples": [
+    {
+        "cgroup_memory_stats": {
+            "stat.cache": 6742016,
+            "stat.rss": 1642496,
+            "stat.rss_huge": 0,
+            "stat.shmem": 0,
+            "stat.mapped_file": 5947392,
+            "stat.dirty": 0,
+            "stat.writeback": 0,
+            "stat.pgpgin": 4587,
+            "stat.pgpgout": 2521,
+            "stat.pgfault": 2508,
+            "stat.pgmajfault": 66,
+            "stat.inactive_anon": 811008,
+            "stat.active_anon": 811008,
+            "stat.inactive_file": 3301376,
+            "stat.active_file": 3485696,
+            "stat.unevictable": 0,
+            "failcnt": 443
+        }
+    },
+    {
+        "cgroup_cpuacct_stats": {
+            "cpu0": {
+                "user": 0.268,
+                "sys": 0.000
+            },
+            "cpu1": {
+                "user": 0.000,
+                "sys": 0.000
+            },
+            "throttling": {
+                "nr_periods": 23,
+                "nr_throttled": 0,
+                "throttled_time": 0
+            },
+            "cpu_tot": {
+                "user": 0.268,
+                "sys": 0.000
+            }
+        },
+        "cgroup_memory_stats": {
+            "stat.cache": 6742016,
+            "stat.rss": 1642496,
+            "stat.rss_huge": 0,
+            "stat.shmem": 0,
+            "stat.mapped_file": 5947392,
+            "stat.dirty": 0,
+            "stat.writeback": 0,
+            "stat.pgpgin": 4587,
+            "stat.pgpgout": 2521,
+            "stat.pgfault": 2508,
+            "stat.pgmajfault": 66,
+            "stat.inactive_anon": 811008,
+            "stat.active_anon": 811008,
+            "stat.inactive_file": 3301376,
+            "stat.active_file": 3485696,
+            "stat.unevictable": 0,
+            "failcnt": 443
+        },
+        "cgroup_tasks": {
+            "pid_2063": {
+                "cmon_score": 0,
+                "cmd": "redis-server",
+                "pid": 2063,
+                "ppid": 2039,
+                "pgrp": 2063,
+                "priority": 20,
+                "nice": 0,
+                "session": 2063,
+                "tty_nr": 34816,
+                "state": "Sleeping-interruptible",
+                "threads": 5,
+                "start_time_secs": 141.890,
+                "uid": 0,
+                "username": "root",
+                "cpu_tot": 0.000,
+                "cpu_usr": 0.000,
+                "cpu_sys": 0.000,
+                "cpu_usr_total_secs": 0.020,
+                "cpu_sys_total_secs": 0.040,
+                "cpu_last": 0,
+                "mem_minor_fault": 0.000,
+                "mem_major_fault": 0.000,
+                "mem_virtual_bytes": 54087680,
+                "mem_rss_bytes": 7217152,
+                "mem_rss_limit": -1,
+                "io_delayacct_blkio_secs": 0.050,
+                "io_rchar": 3087,
+                "io_wchar": 0,
+                "io_read_bytes": 0,
+                "io_write_bytes": 0,
+                "io_total_read": 114040,
+                "io_total_write": 9772
+            }
+        },
+        "cgroup_network": {
+            "eth0": {
+                "ibytes": 56,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            }
+        }
+    },
+    {
+        "cgroup_cpuacct_stats": {
+            "cpu0": {
+                "user": 39.791,
+                "sys": 0.000
+            },
+            "cpu1": {
+                "user": 3.091,
+                "sys": 0.000
+            },
+            "throttling": {
+                "nr_periods": 51,
+                "nr_throttled": 0,
+                "throttled_time": 0
+            },
+            "cpu_tot": {
+                "user": 42.882,
+                "sys": 0.000
+            }
+        },
+        "cgroup_memory_stats": {
+            "stat.cache": 2215936,
+            "stat.rss": 1912832,
+            "stat.rss_huge": 0,
+            "stat.shmem": 0,
+            "stat.mapped_file": 1622016,
+            "stat.dirty": 0,
+            "stat.writeback": 0,
+            "stat.pgpgin": 5280,
+            "stat.pgpgout": 4295,
+            "stat.pgfault": 2673,
+            "stat.pgmajfault": 132,
+            "stat.inactive_anon": 811008,
+            "stat.active_anon": 946176,
+            "stat.inactive_file": 1372160,
+            "stat.active_file": 630784,
+            "stat.unevictable": 0,
+            "failcnt": 443
+        },
+        "cgroup_tasks": {
+            "pid_2063": {
+                "cmon_score": 24800,
+                "cmd": "redis-server",
+                "pid": 2063,
+                "ppid": 2039,
+                "pgrp": 2063,
+                "priority": 20,
+                "nice": 0,
+                "session": 2063,
+                "tty_nr": 34816,
+                "state": "Sleeping-interruptible",
+                "threads": 5,
+                "start_time_secs": 141.890,
+                "uid": 0,
+                "username": "root",
+                "cpu_tot": 46.179,
+                "cpu_usr": 3.910,
+                "cpu_sys": 42.269,
+                "cpu_usr_total_secs": 0.230,
+                "cpu_sys_total_secs": 2.310,
+                "cpu_last": 0,
+                "mem_minor_fault": 12.476,
+                "mem_major_fault": 6.517,
+                "mem_virtual_bytes": 56709120,
+                "mem_rss_bytes": 2740224,
+                "mem_rss_limit": -1,
+                "io_delayacct_blkio_secs": 0.050,
+                "io_rchar": 412803,
+                "io_wchar": 72576,
+                "io_read_bytes": 487367,
+                "io_write_bytes": 0,
+                "io_total_read": 2330951,
+                "io_total_write": 399537
+            }
+        },
+        "cgroup_network": {
+            "eth0": {
+                "ibytes": 1463774,
+                "obytes": 1051307,
+                "ipackets": 15866,
+                "opackets": 14809
+            }
+        }
+    },
+    {
+        "cgroup_cpuacct_stats": {
+            "cpu0": {
+                "user": 12.077,
+                "sys": 0.000
+            },
+            "cpu1": {
+                "user": 3.274,
+                "sys": 0.000
+            },
+            "throttling": {
+                "nr_periods": 45,
+                "nr_throttled": 0,
+                "throttled_time": 0
+            },
+            "cpu_tot": {
+                "user": 15.350,
+                "sys": 0.000
+            }
+        },
+        "cgroup_memory_stats": {
+            "stat.cache": 2215936,
+            "stat.rss": 1912832,
+            "stat.rss_huge": 0,
+            "stat.shmem": 0,
+            "stat.mapped_file": 1622016,
+            "stat.dirty": 0,
+            "stat.writeback": 0,
+            "stat.pgpgin": 5280,
+            "stat.pgpgout": 4295,
+            "stat.pgfault": 2673,
+            "stat.pgmajfault": 132,
+            "stat.inactive_anon": 811008,
+            "stat.active_anon": 946176,
+            "stat.inactive_file": 1372160,
+            "stat.active_file": 630784,
+            "stat.unevictable": 0,
+            "failcnt": 443
+        },
+        "cgroup_tasks": {
+            "pid_2063": {
+                "cmon_score": 9600,
+                "cmd": "redis-server",
+                "pid": 2063,
+                "ppid": 2039,
+                "pgrp": 2063,
+                "priority": 20,
+                "nice": 0,
+                "session": 2063,
+                "tty_nr": 34816,
+                "state": "Sleeping-interruptible",
+                "threads": 5,
+                "start_time_secs": 141.890,
+                "uid": 0,
+                "username": "root",
+                "cpu_tot": 13.154,
+                "cpu_usr": 0.685,
+                "cpu_sys": 12.469,
+                "cpu_usr_total_secs": 0.280,
+                "cpu_sys_total_secs": 3.220,
+                "cpu_last": 0,
+                "mem_minor_fault": 0.000,
+                "mem_major_fault": 0.000,
+                "mem_virtual_bytes": 56709120,
+                "mem_rss_bytes": 2740224,
+                "mem_rss_limit": -1,
+                "io_delayacct_blkio_secs": 0.050,
+                "io_rchar": 117984,
+                "io_wchar": 20418,
+                "io_read_bytes": 0,
+                "io_write_bytes": 0,
+                "io_total_read": 3192012,
+                "io_total_write": 548552
+            }
+        },
+        "cgroup_network": {
+            "eth0": {
+                "ibytes": 382167,
+                "obytes": 276822,
+                "ipackets": 4126,
+                "opackets": 3899
+            }
+        }
+    }    ]
+}

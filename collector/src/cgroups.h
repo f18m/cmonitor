@@ -42,9 +42,9 @@
 #define CGROUP_COLLECTOR_BUFF_SIZE (8192)
 
 enum CGroupDetected {
-    CG_NONE, // force newline
-    CG_VERSION1, // force newline
-    CG_VERSION2 // force newline
+    CG_NONE = 0, // force newline
+    CG_VERSION1 = 1, // force newline
+    CG_VERSION2 = 2 // force newline
 };
 
 std::string CGroupDetected2string(CGroupDetected k);
@@ -65,6 +65,8 @@ typedef struct {
     uint64_t throttled_time_nsec;
 } cpuacct_throttling_t;
 
+typedef std::map<std::string /* controller type */, std::string /* path */> cgroup_paths_map_t;
+
 //------------------------------------------------------------------------------
 // The CMonitorCgroups object
 //------------------------------------------------------------------------------
@@ -82,13 +84,14 @@ public:
         memset(&m_cpuacct_prev_values_for_throttling, 0, sizeof(cpuacct_throttling_t));
     }
 
-    ~CMonitorCgroups()
-    {
-    }
+    ~CMonitorCgroups() { }
 
     // main setup
-    // NOTE: arguments are used only during unit testing
-    void init(bool include_threads, const std::string& cgroup_prefix_for_test = "", const std::string& proc_prefix_for_test = "");
+    // NOTE: arguments _for_test are used only during unit testing
+    void init(bool include_threads, // force newline
+        const std::string& cgroup_prefix_for_test = "", // force newline
+        const std::string& proc_prefix_for_test = "", // force newline
+        uint64_t my_own_pid_for_test = UINT64_MAX);
 
     // one-shot configuration info
     void output_config();
@@ -103,10 +106,18 @@ public:
     // misc helpers
     bool cgroup_still_exists();
     std::set<uint64_t> get_cgroup_cpus() const { return m_cgroup_cpus; }
+    CGroupDetected get_detected_cgroup_version() const { return m_nCGroupsFound; }
 
 private:
     // cgroups config
-    bool init_check_for_our_pid();
+    bool get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT);
+    bool are_cgroups_v2_enabled(std::string& cgroup_pathOUT);
+    bool get_cgroup_v1_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std::string& cgroup_pathOUT);
+    bool detect_cgroup_ver_and_paths_from_myself(const std::string& cgroup_prefix_for_test, uint64_t my_own_pid_for_test);
+    bool detect_my_own_cgroup();
+    bool detect_user_provided_cgroup();
+    bool search_my_pid_in_cgroups(); // sets m_cgroup_processes_path
+    bool search_processes_cgroup_path(); // sets m_cgroup_processes_path
     void v1_read_limits();
     void v2_read_limits();
     void init_cpuacct(const std::string& cgroup_prefix_for_test);
@@ -136,15 +147,20 @@ private:
 private:
     // main switch that indicates if init() was successful or not
     CGroupDetected m_nCGroupsFound = CG_NONE;
+    pid_t m_my_pid = 0;
 
     //------------------------------------------------------------------------------
     // paths of cgroups controllers to monitor (either our own cgroup or another one):
     //------------------------------------------------------------------------------
-    std::string m_cgroup_systemd_name;
-    std::string m_cgroup_memory_kernel_path;
-    std::string m_cgroup_cpuacct_kernel_path;
-    std::string m_cgroup_cpuset_kernel_path;
+    std::string m_cgroup_systemd_name; // contains the "name" of the cgroup
+    std::string m_cgroup_memory_kernel_path; // contains the abs path to the folder with memory controller files
+    std::string m_cgroup_cpuacct_kernel_path; // contains the abs path to the folder with cpuacct controller files
+    std::string m_cgroup_cpuset_kernel_path; // contains the abs path to the folder with cpuset controller files
+    std::string m_cgroup_processes_path; // contains the abs path to the folder which contains either the "tasks"
+                                         // (v1) or "cgroups.procs|threads" (v2) files
     std::string m_proc_prefix; // used only during unit testing to insert an arbitrary prefix in front of "/proc"
+    std::string m_proc_self_cgroup; // defaults to "/proc/self/cgroup" but is changed during unit testing
+    std::string m_proc_self_mounts; // defaults to "/proc/self/mounts" but is changed during unit testing
 
     //------------------------------------------------------------------------------
     // counters of how many times each cgroup_proc_*() main API has been invoked
@@ -157,14 +173,15 @@ private:
     //------------------------------------------------------------------------------
     // limits read from the cgroups controllers:
     //------------------------------------------------------------------------------
-    uint64_t m_cgroup_memory_limit_bytes = 0;
+    uint64_t m_cgroup_memory_limit_bytes = 0; // if UINT64_MAX indicates no memory limit is present
     std::set<uint64_t> m_cgroup_cpus;
     uint64_t m_cgroup_cpuacct_period_us = 0;
-    uint64_t m_cgroup_cpuacct_quota_us = 0;
+    uint64_t m_cgroup_cpuacct_quota_us = 0; // if UINT64_MAX indicates there's no cpu limit
 
     //------------------------------------------------------------------------------
     // cpuacct controller
     //------------------------------------------------------------------------------
+    std::string m_cpuacct_controller_name;
     FastFileReader m_cgroup_cpuacct_v1_reader_sys_stat; // if has split user/system time
     FastFileReader m_cgroup_cpuacct_v1_reader_user_stat; // if has split user/system time
     FastFileReader m_cgroup_cpuacct_v1_reader_combined_stat; // if has COMBINED user/system time
@@ -184,7 +201,7 @@ private:
     FastFileReader m_cgroup_memory_v2_current;
     FastFileReader m_cgroup_memory_v1v2_stat;
     FastFileReader m_cgroup_memory_v1_failcnt;
-    FastFileReader m_cgroup_memory_v2_events;    
+    FastFileReader m_cgroup_memory_v2_events;
 
     //------------------------------------------------------------------------------
     // cgroup network

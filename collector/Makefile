@@ -20,6 +20,9 @@ all:
 
 test: 
 	$(MAKE) -C src test
+
+test_debug: 
+	$(MAKE) -C src test_debug
 	
 clean:
 	$(MAKE) -C src clean

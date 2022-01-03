@@ -54,17 +54,27 @@ void CMonitorCgroups::init_network(const std::string& cgroup_prefix_for_test)
         // of course here we're assuming that the "tasks" under the cpuacct cgroup are the ones
         // the user is interested to monitor... in theory the "tasks" under other controllers like "memory"
         // might be different; in practice with Docker/LXC/Kube that does not happen
-        m_cgroup_network_reader_pids.set_file(m_cgroup_cpuacct_kernel_path + "/tasks", reopen_each_time);
+        m_cgroup_network_reader_pids.set_file(m_cgroup_processes_path + "/tasks", reopen_each_time);
         break;
 
     case CG_VERSION2:
-        m_cgroup_network_reader_pids.set_file(m_cgroup_cpuacct_kernel_path + "/cgroup.procs", reopen_each_time);
+        m_cgroup_network_reader_pids.set_file(m_cgroup_processes_path + "/cgroup.procs", reopen_each_time);
         break;
 
     case CG_NONE:
         assert(0);
         return;
     }
+
+    if (!m_cgroup_network_reader_pids.open_or_rewind()) {
+        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_NETWORK_INTERFACES;
+        CMonitorLogger::instance()->LogError(
+            "Could not read the cgroup with list of pids from file '%s'. Disabling monitoring of network interfaces of cgroup.\n",
+            m_cgroup_network_reader_pids.get_file().c_str());
+        return;
+    }
+
+    CMonitorLogger::instance()->LogDebug("Successfully initialized cgroup network monitoring.\n");
 }
 
 void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields output_opts)

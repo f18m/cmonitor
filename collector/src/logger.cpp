@@ -73,7 +73,7 @@ void CMonitorLogger::LogDebug(const char* line, ...)
 
     va_list args;
     va_start(args, line);
-    vsnprintf(currLogLine, MAX_LOG_LINE_LEN-1, line, args);
+    vsnprintf(currLogLine, MAX_LOG_LINE_LEN - 1, line, args);
     va_end(args);
 
     // in debug mode stdout is still open, so we can printf:
@@ -90,7 +90,7 @@ void CMonitorLogger::LogError(const char* line, ...)
     char currLogLine[MAX_LOG_LINE_LEN];
     va_list args;
     va_start(args, line);
-    vsnprintf(currLogLine, MAX_LOG_LINE_LEN-1, line, args);
+    vsnprintf(currLogLine, MAX_LOG_LINE_LEN - 1, line, args);
     va_end(args);
 
     if (!m_outputErr && !m_strErrorFileName.empty()) {
@@ -103,10 +103,18 @@ void CMonitorLogger::LogError(const char* line, ...)
     if (m_outputErr) {
         // errors always go in their dedicated file
         fprintf(m_outputErr, "ERROR: %s", currLogLine);
-        
+
         size_t lastCh = strlen(currLogLine) - 1;
         if (currLogLine[lastCh] != '\n')
             fprintf(m_outputErr, "\n");
+    }
+
+    if (m_bDebugEnabled) {
+        // in debug mode stdout is still open, so we can printf:
+        printf("ERROR: %s", currLogLine);
+        size_t lastCh = strlen(currLogLine) - 1;
+        if (currLogLine[lastCh] != '\n')
+            printf("\n");
     }
 }
 
@@ -117,7 +125,7 @@ void CMonitorLogger::LogErrorWithErrno(const char* line, ...)
     char currLogLine[MAX_LOG_LINE_LEN];
     va_list args;
     va_start(args, line);
-    vsnprintf(currLogLine, MAX_LOG_LINE_LEN-1, line, args);
+    vsnprintf(currLogLine, MAX_LOG_LINE_LEN - 1, line, args);
     va_end(args);
 
     if (!m_outputErr && !m_strErrorFileName.empty()) {
@@ -130,5 +138,13 @@ void CMonitorLogger::LogErrorWithErrno(const char* line, ...)
     if (m_outputErr) {
         // errors always go in their dedicated file
         fprintf(m_outputErr, "ERROR: %s (errno=%d, %s)\n", currLogLine, errno, strerror(errno));
+    }
+    
+    if (m_bDebugEnabled) {
+        // in debug mode stdout is still open, so we can printf:
+        printf("ERROR: %s (errno=%d, %s)\n", currLogLine, errno, strerror(errno));
+        size_t lastCh = strlen(currLogLine) - 1;
+        if (currLogLine[lastCh] != '\n')
+            printf("\n");
     }
 }

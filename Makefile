@@ -39,8 +39,7 @@ ifndef BINDIR
 	@exit 1
 endif
 	$(MAKE) -C collector install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
-	$(MAKE) -C tools/chart install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
-	$(MAKE) -C tools/statistics install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
+	$(MAKE) -C tools install DESTDIR=$(DESTDIR) BINDIR=$(BINDIR)
 
 valgrind:
 	$(MAKE) -C collector valgrind

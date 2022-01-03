@@ -45,9 +45,12 @@ OBJS = $(OBJS_UNIT_TESTS) $(OBJS_CMONITOR_COLLECTOR)
 HEADERS = $(wildcard ../*.h)
 
 TEST_KERNELS = \
-	centos7-Linux-3.10.0-x86_64 \
-	fedora35-Linux-5.14.17-x86_64 \
-	ubuntu20.04-Linux-5.4.0-x86_64
+	centos7-Linux-3.10.0-x86_64-docker \
+	centos7-Linux-3.10.0-x86_64-systemd \
+	fedora35-Linux-5.14.17-x86_64-docker \
+	fedora35-Linux-5.14.17-x86_64-systemd \
+	ubuntu20.04-Linux-5.4.0-x86_64-docker \
+	ubuntu20.04-Linux-5.4.0-x86_64-systemd
 
 # Targets
 
@@ -55,13 +58,15 @@ all: $(OUT)
 
 test: $(OUT)
 	@echo "Running unit test binary $(OUT)"
-	sudo $(OUT)
+	sudo $(OUT) $(ARGS)
 tests: $(OUT)
 	@echo "Running unit test binary $(OUT)"
-	sudo $(OUT)
+	sudo $(OUT) $(ARGS)
 
 debug:
-	gdb $(OUT)
+	gdb $(OUT) $(ARGS)
+test_debug:
+	gdb $(OUT) $(ARGS)
 
 $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBS)

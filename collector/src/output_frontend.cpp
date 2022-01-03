@@ -68,8 +68,8 @@ void CMonitorOutputFrontend::init_json_output_file(const std::string& filenamePr
 
         // open output files
         if ((m_outputJson = fopen(outFile.c_str(), "w")) == 0) {
-            perror("opening file for stdout");
-            fprintf(stderr, "ERROR nmon filename=%s\n", outFile.c_str());
+            CMonitorLogger::instance()->LogErrorWithErrno(
+                "Failed to open %s as JSON file for saving output.\n", outFile.c_str());
             exit(13);
         }
 

@@ -416,25 +416,36 @@ void CMonitorCgroups::init_processes(const std::string& cgroup_prefix_for_test)
     switch (m_nCGroupsFound) {
     case CG_VERSION1:
         // in cgroups v1 all TIDs are available in the cgroup file named "tasks"
-        // of course here we're assuming that the "tasks" under the cpuacct cgroup are the ones
-        // the user is interested to monitor... in theory the "tasks" under other controllers like "memory"
+        // of course here we're assuming that the "tasks" under the "memory" cgroup are the ones
+        // the user is interested to monitor... in theory the "tasks" under other controllers like "cpuacct"
         // might be different; in practice with Docker/LXC/Kube that does not happen
-        m_cgroup_processes_reader_pids.set_file(m_cgroup_cpuacct_kernel_path + "/tasks", reopen_each_time);
+        m_cgroup_processes_reader_pids.set_file(m_cgroup_processes_path + "/tasks", reopen_each_time);
         break;
 
     case CG_VERSION2:
         // with cgroups v2, there are 2 different files that contain PIDs/TIDs so we can just
         // read the right file up-front based on 'include_threads':
         if (m_cgroup_processes_include_threads)
-            m_cgroup_processes_reader_pids.set_file(m_cgroup_cpuacct_kernel_path + "/cgroup.threads", reopen_each_time);
+            m_cgroup_processes_reader_pids.set_file(m_cgroup_processes_path + "/cgroup.threads", reopen_each_time);
         else
-            m_cgroup_processes_reader_pids.set_file(m_cgroup_cpuacct_kernel_path + "/cgroup.procs", reopen_each_time);
+            m_cgroup_processes_reader_pids.set_file(m_cgroup_processes_path + "/cgroup.procs", reopen_each_time);
         break;
 
     case CG_NONE:
         assert(0);
         return;
     }
+
+    if (!m_cgroup_processes_reader_pids.open_or_rewind()) {
+        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_PROCESSES;
+        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_THREADS;
+        CMonitorLogger::instance()->LogError("Could not read the cgroup with list of pids from file '%s'. Disabling "
+                                             "monitoring of processes/threads inside cgroup.\n",
+            m_cgroup_processes_reader_pids.get_file().c_str());
+        return;
+    }
+
+    CMonitorLogger::instance()->LogDebug("Successfully initialized cgroup processes monitoring.\n");
 }
 
 void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_opts)

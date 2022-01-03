@@ -29,6 +29,9 @@ Table of contents of this README:
     - [RPM (for Fedora, Centos)](#rpm-for-fedora-centos)
     - [Debian package (for Debian, Ubuntu, etc)](#debian-package-for-debian-ubuntu-etc)
     - [Docker](#docker)
+  - [How to build from sources](#how-to-build-from-sources)
+    - [On Fedora, Centos](#on-fedora-centos)
+    - [On Debian, Ubuntu](#on-debian-ubuntu)
   - [How to use](#how-to-use)
     - [Step 1: collect stats](#step-1-collect-stats)
     - [Step 2: plot stats collected as JSON](#step-2-plot-stats-collected-as-json)
@@ -107,12 +110,22 @@ This means that the `cmonitor-collector` utility can run on any Linux kernel reg
 (since boot options may alter the cgroups technology in use).
 
 Note that `cmonitor-collector` utility is currently unit-tested against:
-* Centos 7 (Linux kernel v3.10.0)
-* Ubuntu 20.04 (Linux kernel v5.4.0)
-* Fedora 35 (Linux kernel v5.14.17)
+* cgroups created by Docker/systemd on Centos 7 (Linux kernel v3.10.0), click [here](collector/src/tests/centos7-Linux-3.10.0-x86_64-docker/README.md) for more info
+* cgroups created by Docker/systemd on Ubuntu 20.04 (Linux kernel v5.4.0), click [here](collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64-docker/README.md) for more info
+* cgroups created by Docker/systemd on Fedora 35 (Linux kernel v5.14.17), click [here](collector/src/tests/fedora35-Linux-5.14.17-x86_64-docker/README.md) for more info
 
 Other kernels will be tested in near future. Of course pull requests are welcome to extend coverage.
-See [tests folder](collector/src/tests) for more details.
+
+Regarding cgroup driver, `cmonitor-collector` is tested against both the `cgroupfs` driver (used e.g. by Docker to create cgroups
+for containers using cgroups v1) and the `systemd` driver (which creates cgroups for the baremetal environment, not for containers).
+To find out which cgroup driver and which cgroup version you are using when launching e.g. Docker containers you can run:
+
+```
+docker info | grep -i cgroup
+```
+
+You may also be interested in  this article https://lwn.net/Articles/676831/ for more details on the docker vs systemd friction in Linux world.
+
 
 ## How to install
 
@@ -163,6 +176,33 @@ docker pull f18m/cmonitor
 
 which downloads the Docker image for this project from [Docker Hub](https://hub.docker.com/r/f18m/cmonitor).
 See below for examples on how to run the Docker image.
+
+
+## How to build from sources
+
+### On Fedora, Centos
+
+First of all, checkout this repository on your Linux box using git or decompressing a tarball of a release.
+Then run:
+
+```
+sudo dnf install -y gcc-c++ make gtest-devel fmt-devel
+make all -j
+make test                                    # optional step to run unit tests
+sudo make install DESTDIR=/usr/local BINDIR=bin   # to install in /usr/local/bin
+```
+
+### On Debian, Ubuntu
+
+First of all, checkout this repository on your Linux box using git or decompressing a tarball of a release.
+Then run:
+
+```
+sudo apt install -y libgtest-dev libbenchmark-dev python3 libfmt-dev g++
+make all -j
+make test                                    # optional step to run unit tests
+sudo make install DESTDIR=/usr/local BINDIR=bin   # to install in /usr/local/bin
+```
 
 
 

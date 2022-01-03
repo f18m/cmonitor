@@ -1,0 +1,1138 @@
+{
+    "header": {
+        "cgroup_config": {
+            "name": "/user.slice/user-0.slice/session-10106.scope",
+            "version": "1",
+            "memory_path": "/removed-unit-test-data-location/sys/fs/cgroup/memory//user.slice",
+            "cpuacct_path": "/removed-unit-test-data-location/sys/fs/cgroup/cpu,cpuacct//user.slice",
+            "cpuset_path": "/removed-unit-test-data-location/sys/fs/cgroup/cpuset//",
+            "cpus": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39",
+            "cpu_quota_perc": -1.000,
+            "memory_limit_bytes": -1.000
+        }
+    },
+    "samples": [
+    {
+        "cgroup_memory_stats": {
+            "stat.cache": 48044187648,
+            "stat.rss": 9645748224,
+            "stat.rss_huge": 0,
+            "stat.mapped_file": 93372416,
+            "stat.swap": 285999104,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.pgfault": 0,
+            "stat.pgmajfault": 0,
+            "stat.inactive_anon": 1610219520,
+            "stat.active_anon": 8267718656,
+            "stat.inactive_file": 24369836032,
+            "stat.active_file": 23442071552,
+            "stat.unevictable": 0,
+            "failcnt": 0
+        }
+    },
+    {
+        "cgroup_cpuacct_stats": {
+            "cpu0": {
+                "user": 1.595
+            },
+            "cpu1": {
+                "user": 0.933
+            },
+            "cpu2": {
+                "user": 1.356
+            },
+            "cpu3": {
+                "user": 7.709
+            },
+            "cpu4": {
+                "user": 0.017
+            },
+            "cpu5": {
+                "user": 1.112
+            },
+            "cpu6": {
+                "user": 4.111
+            },
+            "cpu7": {
+                "user": 0.105
+            },
+            "cpu8": {
+                "user": 0.031
+            },
+            "cpu9": {
+                "user": 0.025
+            },
+            "cpu10": {
+                "user": 0.608
+            },
+            "cpu11": {
+                "user": 0.835
+            },
+            "cpu12": {
+                "user": 0.261
+            },
+            "cpu13": {
+                "user": 1.382
+            },
+            "cpu14": {
+                "user": 0.123
+            },
+            "cpu15": {
+                "user": 0.032
+            },
+            "cpu16": {
+                "user": 0.004
+            },
+            "cpu17": {
+                "user": 0.007
+            },
+            "cpu18": {
+                "user": 0.067
+            },
+            "cpu19": {
+                "user": 0.048
+            },
+            "cpu20": {
+                "user": 0.000
+            },
+            "cpu21": {
+                "user": 39.588
+            },
+            "cpu22": {
+                "user": 2.148
+            },
+            "cpu23": {
+                "user": 0.045
+            },
+            "cpu24": {
+                "user": 0.233
+            },
+            "cpu25": {
+                "user": 0.293
+            },
+            "cpu26": {
+                "user": 0.012
+            },
+            "cpu27": {
+                "user": 0.282
+            },
+            "cpu28": {
+                "user": 0.697
+            },
+            "cpu29": {
+                "user": 0.053
+            },
+            "cpu30": {
+                "user": 0.000
+            },
+            "cpu31": {
+                "user": 15.137
+            },
+            "cpu32": {
+                "user": 4.706
+            },
+            "cpu33": {
+                "user": 0.030
+            },
+            "cpu34": {
+                "user": 0.200
+            },
+            "cpu35": {
+                "user": 0.606
+            },
+            "cpu36": {
+                "user": 0.002
+            },
+            "cpu37": {
+                "user": 0.055
+            },
+            "cpu38": {
+                "user": 0.000
+            },
+            "cpu39": {
+                "user": 0.001
+            },
+            "throttling": {
+                "nr_periods": 0,
+                "nr_throttled": 0,
+                "throttled_time": 0
+            },
+            "cpu_tot": {
+                "user": 84.448,
+                "sys": 0.000
+            }
+        },
+        "cgroup_memory_stats": {
+            "stat.cache": 48044933120,
+            "stat.rss": 9648078848,
+            "stat.rss_huge": 0,
+            "stat.mapped_file": 93372416,
+            "stat.swap": 285999104,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.pgfault": 0,
+            "stat.pgmajfault": 0,
+            "stat.inactive_anon": 1610219520,
+            "stat.active_anon": 8270000128,
+            "stat.inactive_file": 24370372608,
+            "stat.active_file": 23442280448,
+            "stat.unevictable": 0,
+            "failcnt": 0
+        },
+        "cgroup_tasks": {
+            "pid_775367": {
+                "cmon_score": 100,
+                "cmd": "cpptools",
+                "pid": 775367,
+                "ppid": 1,
+                "pgrp": 673125,
+                "priority": 20,
+                "nice": 0,
+                "session": 673125,
+                "tty_nr": 0,
+                "state": "Sleeping-interruptible",
+                "threads": 60,
+                "start_time_secs": 4280798.110,
+                "uid": 0,
+                "username": "root",
+                "cpu_tot": 0.067,
+                "cpu_usr": 0.000,
+                "cpu_sys": 0.067,
+                "cpu_usr_total_secs": 542.230,
+                "cpu_sys_total_secs": 178.030,
+                "cpu_last": 12,
+                "mem_minor_fault": 0.000,
+                "mem_major_fault": 0.000,
+                "mem_virtual_bytes": 6771142656,
+                "mem_rss_bytes": 1957486592,
+                "mem_rss_limit": -1,
+                "io_delayacct_blkio_secs": 0.000,
+                "io_rchar": 0,
+                "io_wchar": 0,
+                "io_read_bytes": 0,
+                "io_write_bytes": 0,
+                "io_total_read": 24763599650,
+                "io_total_write": 729181138
+            }
+        },
+        "cgroup_network": {
+            "br-0babd71b0e11": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-1a20f6f5f4a1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-61e4d329ad98": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-6e5c5345b3cc": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-9406b57c917a": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-dad653fba6aa": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-e4759077474e": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-eb648a719a2a": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-f25d319c255d": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "docker0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "eno1": {
+                "ibytes": 39529,
+                "obytes": 6378,
+                "ipackets": 93,
+                "opackets": 33
+            },
+            "eno2": {
+                "ibytes": 29124,
+                "obytes": 0,
+                "ipackets": 48,
+                "opackets": 0
+            },
+            "eno3": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "eno4": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "enp132s0f0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "enp132s0f1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-2": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-3": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-2": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-3": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "net_tap0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "tailscale0": {
+                "ibytes": 530,
+                "obytes": 1472,
+                "ipackets": 7,
+                "opackets": 8
+            },
+            "tilep2p1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "tilep2p2": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "virbr0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "virbr0-nic": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            }
+        }
+    },
+    {
+        "cgroup_cpuacct_stats": {
+            "cpu0": {
+                "user": 0.012
+            },
+            "cpu1": {
+                "user": 0.087
+            },
+            "cpu2": {
+                "user": 0.875
+            },
+            "cpu3": {
+                "user": 9.557
+            },
+            "cpu4": {
+                "user": 0.043
+            },
+            "cpu5": {
+                "user": 0.027
+            },
+            "cpu6": {
+                "user": 3.667
+            },
+            "cpu7": {
+                "user": 0.204
+            },
+            "cpu8": {
+                "user": 0.229
+            },
+            "cpu9": {
+                "user": 0.101
+            },
+            "cpu10": {
+                "user": 0.021
+            },
+            "cpu11": {
+                "user": 0.215
+            },
+            "cpu12": {
+                "user": 0.271
+            },
+            "cpu13": {
+                "user": 0.915
+            },
+            "cpu14": {
+                "user": 0.062
+            },
+            "cpu15": {
+                "user": 0.022
+            },
+            "cpu16": {
+                "user": 0.004
+            },
+            "cpu17": {
+                "user": 0.007
+            },
+            "cpu18": {
+                "user": 0.028
+            },
+            "cpu19": {
+                "user": 0.068
+            },
+            "cpu20": {
+                "user": 0.000
+            },
+            "cpu21": {
+                "user": 39.991
+            },
+            "cpu22": {
+                "user": 1.108
+            },
+            "cpu23": {
+                "user": 0.027
+            },
+            "cpu24": {
+                "user": 0.180
+            },
+            "cpu25": {
+                "user": 0.076
+            },
+            "cpu26": {
+                "user": 0.000
+            },
+            "cpu27": {
+                "user": 0.014
+            },
+            "cpu28": {
+                "user": 0.286
+            },
+            "cpu29": {
+                "user": 0.000
+            },
+            "cpu30": {
+                "user": 0.000
+            },
+            "cpu31": {
+                "user": 12.815
+            },
+            "cpu32": {
+                "user": 4.010
+            },
+            "cpu33": {
+                "user": 0.073
+            },
+            "cpu34": {
+                "user": 0.236
+            },
+            "cpu35": {
+                "user": 0.892
+            },
+            "cpu36": {
+                "user": 0.000
+            },
+            "cpu37": {
+                "user": 0.000
+            },
+            "cpu38": {
+                "user": 0.000
+            },
+            "cpu39": {
+                "user": 0.017
+            },
+            "throttling": {
+                "nr_periods": 0,
+                "nr_throttled": 0,
+                "throttled_time": 0
+            },
+            "cpu_tot": {
+                "user": 76.141,
+                "sys": 0.000
+            }
+        },
+        "cgroup_memory_stats": {
+            "stat.cache": 48045613056,
+            "stat.rss": 9645580288,
+            "stat.rss_huge": 0,
+            "stat.mapped_file": 93372416,
+            "stat.swap": 285999104,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.pgfault": 0,
+            "stat.pgmajfault": 0,
+            "stat.inactive_anon": 1610219520,
+            "stat.active_anon": 8267407360,
+            "stat.inactive_file": 24370921472,
+            "stat.active_file": 23442411520,
+            "stat.unevictable": 0,
+            "failcnt": 0
+        },
+        "cgroup_tasks": {
+            "pid_775367": {
+                "cmon_score": 0,
+                "cmd": "cpptools",
+                "pid": 775367,
+                "ppid": 1,
+                "pgrp": 673125,
+                "priority": 20,
+                "nice": 0,
+                "session": 673125,
+                "tty_nr": 0,
+                "state": "Sleeping-interruptible",
+                "threads": 60,
+                "start_time_secs": 4280798.110,
+                "uid": 0,
+                "username": "root",
+                "cpu_tot": 0.000,
+                "cpu_usr": 0.000,
+                "cpu_sys": 0.000,
+                "cpu_usr_total_secs": 542.230,
+                "cpu_sys_total_secs": 178.030,
+                "cpu_last": 12,
+                "mem_minor_fault": 0.000,
+                "mem_major_fault": 0.000,
+                "mem_virtual_bytes": 6771142656,
+                "mem_rss_bytes": 1957486592,
+                "mem_rss_limit": -1,
+                "io_delayacct_blkio_secs": 0.000,
+                "io_rchar": 0,
+                "io_wchar": 0,
+                "io_read_bytes": 0,
+                "io_write_bytes": 0,
+                "io_total_read": 24763599650,
+                "io_total_write": 729181138
+            }
+        },
+        "cgroup_network": {
+            "br-0babd71b0e11": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-1a20f6f5f4a1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-61e4d329ad98": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-6e5c5345b3cc": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-9406b57c917a": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-dad653fba6aa": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-e4759077474e": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-eb648a719a2a": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-f25d319c255d": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "docker0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "eno1": {
+                "ibytes": 34905,
+                "obytes": 6001,
+                "ipackets": 66,
+                "opackets": 29
+            },
+            "eno2": {
+                "ibytes": 31071,
+                "obytes": 0,
+                "ipackets": 41,
+                "opackets": 0
+            },
+            "eno3": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "eno4": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "enp132s0f0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "enp132s0f1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-2": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-3": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-2": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-3": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "net_tap0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "tailscale0": {
+                "ibytes": 833,
+                "obytes": 2412,
+                "ipackets": 11,
+                "opackets": 11
+            },
+            "tilep2p1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "tilep2p2": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "virbr0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "virbr0-nic": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            }
+        }
+    },
+    {
+        "cgroup_cpuacct_stats": {
+            "cpu0": {
+                "user": 0.011
+            },
+            "cpu1": {
+                "user": 0.005
+            },
+            "cpu2": {
+                "user": 0.860
+            },
+            "cpu3": {
+                "user": 10.646
+            },
+            "cpu4": {
+                "user": 0.026
+            },
+            "cpu5": {
+                "user": 0.700
+            },
+            "cpu6": {
+                "user": 0.012
+            },
+            "cpu7": {
+                "user": 0.080
+            },
+            "cpu8": {
+                "user": 0.045
+            },
+            "cpu9": {
+                "user": 0.014
+            },
+            "cpu10": {
+                "user": 0.084
+            },
+            "cpu11": {
+                "user": 0.146
+            },
+            "cpu12": {
+                "user": 0.291
+            },
+            "cpu13": {
+                "user": 0.775
+            },
+            "cpu14": {
+                "user": 0.037
+            },
+            "cpu15": {
+                "user": 0.012
+            },
+            "cpu16": {
+                "user": 0.003
+            },
+            "cpu17": {
+                "user": 0.007
+            },
+            "cpu18": {
+                "user": 0.012
+            },
+            "cpu19": {
+                "user": 0.045
+            },
+            "cpu20": {
+                "user": 0.000
+            },
+            "cpu21": {
+                "user": 40.766
+            },
+            "cpu22": {
+                "user": 2.255
+            },
+            "cpu23": {
+                "user": 0.008
+            },
+            "cpu24": {
+                "user": 0.085
+            },
+            "cpu25": {
+                "user": 0.000
+            },
+            "cpu26": {
+                "user": 0.000
+            },
+            "cpu27": {
+                "user": 0.000
+            },
+            "cpu28": {
+                "user": 0.010
+            },
+            "cpu29": {
+                "user": 0.000
+            },
+            "cpu30": {
+                "user": 0.000
+            },
+            "cpu31": {
+                "user": 15.398
+            },
+            "cpu32": {
+                "user": 1.571
+            },
+            "cpu33": {
+                "user": 0.002
+            },
+            "cpu34": {
+                "user": 0.060
+            },
+            "cpu35": {
+                "user": 0.206
+            },
+            "cpu36": {
+                "user": 0.000
+            },
+            "cpu37": {
+                "user": 0.000
+            },
+            "cpu38": {
+                "user": 0.000
+            },
+            "cpu39": {
+                "user": 0.000
+            },
+            "throttling": {
+                "nr_periods": 0,
+                "nr_throttled": 0,
+                "throttled_time": 0
+            },
+            "cpu_tot": {
+                "user": 74.171,
+                "sys": 0.000
+            }
+        },
+        "cgroup_memory_stats": {
+            "stat.cache": 48046862336,
+            "stat.rss": 9645985792,
+            "stat.rss_huge": 0,
+            "stat.mapped_file": 93372416,
+            "stat.swap": 285999104,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.pgfault": 0,
+            "stat.pgmajfault": 0,
+            "stat.inactive_anon": 1610219520,
+            "stat.active_anon": 8267853824,
+            "stat.inactive_file": 24371474432,
+            "stat.active_file": 23443111936,
+            "stat.unevictable": 0,
+            "failcnt": 0
+        },
+        "cgroup_tasks": {
+            "pid_775367": {
+                "cmon_score": 0,
+                "cmd": "cpptools",
+                "pid": 775367,
+                "ppid": 1,
+                "pgrp": 673125,
+                "priority": 20,
+                "nice": 0,
+                "session": 673125,
+                "tty_nr": 0,
+                "state": "Sleeping-interruptible",
+                "threads": 60,
+                "start_time_secs": 4280798.110,
+                "uid": 0,
+                "username": "root",
+                "cpu_tot": 0.000,
+                "cpu_usr": 0.000,
+                "cpu_sys": 0.000,
+                "cpu_usr_total_secs": 542.230,
+                "cpu_sys_total_secs": 178.030,
+                "cpu_last": 12,
+                "mem_minor_fault": 0.000,
+                "mem_major_fault": 0.000,
+                "mem_virtual_bytes": 6771142656,
+                "mem_rss_bytes": 1957486592,
+                "mem_rss_limit": -1,
+                "io_delayacct_blkio_secs": 0.000,
+                "io_rchar": 0,
+                "io_wchar": 0,
+                "io_read_bytes": 0,
+                "io_write_bytes": 0,
+                "io_total_read": 24763599650,
+                "io_total_write": 729181138
+            }
+        },
+        "cgroup_network": {
+            "br-0babd71b0e11": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-1a20f6f5f4a1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-61e4d329ad98": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-6e5c5345b3cc": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-9406b57c917a": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-dad653fba6aa": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-e4759077474e": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-eb648a719a2a": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "br-f25d319c255d": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "docker0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "eno1": {
+                "ibytes": 25524,
+                "obytes": 3012,
+                "ipackets": 62,
+                "opackets": 14
+            },
+            "eno2": {
+                "ibytes": 22826,
+                "obytes": 0,
+                "ipackets": 45,
+                "opackets": 0
+            },
+            "eno3": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "eno4": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "enp132s0f0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "enp132s0f1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-2": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci1-3": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-2": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "gxpci2-3": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "net_tap0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "tailscale0": {
+                "ibytes": 275,
+                "obytes": 1044,
+                "ipackets": 5,
+                "opackets": 6
+            },
+            "tilep2p1": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "tilep2p2": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "virbr0": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            },
+            "virbr0-nic": {
+                "ibytes": 0,
+                "obytes": 0,
+                "ipackets": 0,
+                "opackets": 0
+            }
+        }
+    }    ]
+}
