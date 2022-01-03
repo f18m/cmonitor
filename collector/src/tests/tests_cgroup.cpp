@@ -243,8 +243,18 @@ TEST(CGroups, ubuntu2004_Linux_5_4_0_systemd_nothreads)
         "ubuntu20.04-Linux-5.4.0-x86_64-systemd", // force newline
         "self", false /* with threads */,
         4 /* nsamples */,
-        1688  /* simulated_cmonitor_collector_pid: in reality it's the PID of a REDIS but fits just fine our testing purposes */,
-        CG_VERSION1);
+        2502  /* simulated_cmonitor_collector_pid: in reality it's the PID of a REDIS but fits just fine our testing purposes */,
+        CG_VERSION1 /* Ubuntu 20.04 has HYBRID SYSTEMD MODE WITH BOTH CGROUPS V1 AND CGROUPS V2... BUT WE SAMPLE ONLY CGROUPS V1 */);
+}
+TEST(CGroups, ubuntu2004_Linux_5_4_0_systemd_withthreads)
+{
+    run_cmonitor_on_tarball_samples( // force newline
+        "withthreads", // force newline
+        "ubuntu20.04-Linux-5.4.0-x86_64-systemd", // force newline
+        "self", true /* with threads */,
+        4 /* nsamples */,
+        2502  /* simulated_cmonitor_collector_pid: in reality it's the PID of a REDIS but fits just fine our testing purposes */,
+        CG_VERSION1 /* Ubuntu 20.04 has HYBRID SYSTEMD MODE WITH BOTH CGROUPS V1 AND CGROUPS V2... BUT WE SAMPLE ONLY CGROUPS V1 */);
 }
 
 //------------------------------------------------------------------------------

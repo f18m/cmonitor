@@ -40,6 +40,8 @@ bool CMonitorCgroups::read_cpuset_cpus(std::string kernelPath, std::set<uint64_t
 
 bool CMonitorCgroups::read_cpuacct_line(FastFileReader& reader, std::vector<uint64_t>& valuesINT /* OUT */)
 {
+    //CMonitorLogger::instance()->LogDebug("reading %s", reader.get_file().c_str());
+
     if (!reader.open_or_rewind()) {
         CMonitorLogger::instance()->LogError("failed to re-open %s", reader.get_file().c_str());
         return false;
