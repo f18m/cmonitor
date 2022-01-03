@@ -110,9 +110,9 @@ This means that the `cmonitor-collector` utility can run on any Linux kernel reg
 (since boot options may alter the cgroups technology in use).
 
 Note that `cmonitor-collector` utility is currently unit-tested against:
-* cgroups created by Docker Centos 7 (Linux kernel v3.10.0), click [here](collector/src/tests/centos7-Linux-3.10.0-x86_64/README.md) for more info
-* Ubuntu 20.04 (Linux kernel v5.4.0), click [here](collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64/README.md) for more info
-* Fedora 35 (Linux kernel v5.14.17), click [here](collector/src/tests/fedora35-Linux-5.14.17-x86_64/README.md) for more info
+* cgroups created by Docker/systemd on Centos 7 (Linux kernel v3.10.0), click [here](collector/src/tests/centos7-Linux-3.10.0-x86_64-docker/README.md) for more info
+* cgroups created by Docker/systemd on Ubuntu 20.04 (Linux kernel v5.4.0), click [here](collector/src/tests/ubuntu20.04-Linux-5.4.0-x86_64-docker/README.md) for more info
+* cgroups created by Docker/systemd on Fedora 35 (Linux kernel v5.14.17), click [here](collector/src/tests/fedora35-Linux-5.14.17-x86_64-docker/README.md) for more info
 
 Other kernels will be tested in near future. Of course pull requests are welcome to extend coverage.
 

@@ -113,8 +113,9 @@ private:
     bool get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT);
     bool are_cgroups_v2_enabled(std::string& cgroup_pathOUT);
     bool get_cgroup_v1_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std::string& cgroup_pathOUT);
-    bool init_cgroup_path_prefixes(const std::string& cgroup_prefix_for_test, uint64_t my_own_pid_for_test);
-    bool finalize_cgroup_paths();
+    bool detect_cgroup_ver_and_paths_from_myself(const std::string& cgroup_prefix_for_test, uint64_t my_own_pid_for_test);
+    bool detect_my_own_cgroup();
+    bool detect_user_provided_cgroup();
     bool search_my_pid_in_cgroups(); // sets m_cgroup_processes_path
     bool search_processes_cgroup_path(); // sets m_cgroup_processes_path
     void v1_read_limits();
