@@ -153,16 +153,17 @@ void CMonitorHeaderInfo::header_cmonitor_info(
 {
     m_pOutput->psection_start("cmonitor");
 
-    char command[1024] = { 0 };
+    // rebuild the string used to start this app:
+    std::string command;
     for (int i = 0; i < argc; i++) {
-        strcat(command, argv[i]);
+        command += argv[i];
         if (i != argc - 1)
-            strcat(command, " ");
+            command += " ";
     }
 
     // -------------------------------------------------
     // the full set of arguments provided by commandline & version
-    m_pOutput->pstring("command", command);
+    m_pOutput->pstring("command", command.c_str());
     m_pOutput->pstring("version", VERSION_STRING);
 
     // -------------------------------------------------
