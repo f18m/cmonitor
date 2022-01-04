@@ -21,10 +21,10 @@
 #include "header_info.h"
 #include "logger.h"
 #include "output_frontend.h"
+#include "system.h"
 #include "utils_files.h"
 #include "utils_misc.h"
 #include <arpa/inet.h>
-#include <ifaddrs.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <stdarg.h> /* va_list, va_start, va_arg, va_end */
@@ -55,12 +55,6 @@ void CMonitorHeaderInfo::header_identity()
     struct addrinfo* info = NULL;
     struct addrinfo* p = NULL;
 
-    /* network IP addresses */
-    struct ifaddrs* interfaces = NULL;
-    struct ifaddrs* ifaddrs_ptr = NULL;
-    char address_buf[INET6_ADDRSTRLEN];
-    char* str;
-
     DEBUGLOG_FUNCTION_START();
 
     m_pOutput->psection_start("identity");
@@ -87,48 +81,16 @@ void CMonitorHeaderInfo::header_identity()
         }
     }
 
-    std::string all_ips;
-    if (getifaddrs(&interfaces) == 0) { /* retrieve the current interfaces */
-        for (ifaddrs_ptr = interfaces; ifaddrs_ptr != NULL; ifaddrs_ptr = ifaddrs_ptr->ifa_next) {
+    netdevices_map_t netdev;
+    if (CMonitorSystem::get_net_dev_list(netdev, true /* include_only_interfaces_up */)) {
+        std::string all_ips;
+        for (auto entry : netdev) {
+            if (entry.first == "lo")
+                continue; // skip loopback -- it does not identify a server
 
-            if (strncmp(ifaddrs_ptr->ifa_name, "veth", 4) == 0) {
-                /* veth**** interfaces are not real/interesting interfaces... skip them */
-                continue;
-            }
-
-            if (ifaddrs_ptr->ifa_addr) {
-                switch (ifaddrs_ptr->ifa_addr->sa_family) {
-                case AF_INET:
-                    if ((str = (char*)inet_ntop(ifaddrs_ptr->ifa_addr->sa_family,
-                             &((struct sockaddr_in*)ifaddrs_ptr->ifa_addr)->sin_addr, address_buf, sizeof(address_buf)))
-                        != NULL) {
-                        sprintf(label, "%s_IP4", ifaddrs_ptr->ifa_name);
-                        m_pOutput->pstring(label, str);
-                        all_ips += std::string(str) + ",";
-                    }
-                    break;
-                case AF_INET6:
-                    if ((str = (char*)inet_ntop(ifaddrs_ptr->ifa_addr->sa_family,
-                             &((struct sockaddr_in6*)ifaddrs_ptr->ifa_addr)->sin6_addr, address_buf,
-                             sizeof(address_buf)))
-                        != NULL) {
-                        sprintf(label, "%s_IP6", ifaddrs_ptr->ifa_name);
-                        m_pOutput->pstring(label, str);
-                        all_ips += std::string(str) + ",";
-                    }
-                    break;
-                default:
-                    // sprintf(label,"%s_Not_Supported_%d", ifaddrs_ptr->ifa_name, ifaddrs_ptr->ifa_addr->sa_family);
-                    // m_pOutput->pstring(label,"");
-                    break;
-                }
-            } else {
-                sprintf(label, "%s_network_ignored", ifaddrs_ptr->ifa_name);
-                m_pOutput->pstring(label, "null_address");
-            }
+            m_pOutput->pstring(entry.first.c_str(), entry.second.c_str());
+            all_ips += std::string(entry.second) + ",";
         }
-
-        freeifaddrs(interfaces); /* free the dynamic memory */
 
         if (all_ips.size() > 1) {
             all_ips.pop_back(); // remove last comma

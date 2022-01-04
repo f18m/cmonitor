@@ -142,7 +142,7 @@ void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields
 
     // read new stats
     netinfo_map_t new_stats;
-    CMonitorSystem::read_net_dev(filename, empty_whitelist, new_stats);
+    CMonitorSystem::read_net_dev_stats(filename, empty_whitelist, new_stats);
 
     // output delta stats
     if (output_opts != PF_NONE) {

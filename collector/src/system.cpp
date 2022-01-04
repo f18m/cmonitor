@@ -22,8 +22,12 @@
 #include "output_frontend.h"
 #include "utils_files.h"
 #include "utils_string.h"
+#include <arpa/inet.h>
 #include <assert.h>
+#include <ifaddrs.h>
 #include <mntent.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
 #include <sys/vfs.h>
 
 // ----------------------------------------------------------------------------------
@@ -392,35 +396,13 @@ void CMonitorSystem::sample_net_dev(double elapsed_sec, OutputFields output_opts
     DEBUGLOG_FUNCTION_START();
 
     if (first_time) {
-        /* popen variables */
-        FILE* pop;
-        char tmpstr[1024 + 1];
-
-        // find only interfaces that are UP
-        pop = popen("/sbin/ifconfig -s 2>/dev/null", "r");
-        if (pop != NULL) {
-            /* throw away the headerline */
-            if (fgets(tmpstr, 1024, pop)) {
-                for (int i = 0;; i++) {
-                    tmpstr[0] = 0;
-                    if (fgets(tmpstr, 1024, pop) == NULL)
-                        break;
-                    tmpstr[strlen(tmpstr)] = 0; /* remove NL char */
-                    int len = strlen(tmpstr);
-                    for (int j = 0; j < len; j++)
-                        if (tmpstr[j] == ' ')
-                            tmpstr[j] = 0;
-
-                    if (strncmp(tmpstr, "veth", 4) != 0) {
-                        m_network_interfaces_up.insert(tmpstr);
-                    } else {
-                        /* veth**** interfaces are not real */
-                        CMonitorLogger::instance()->LogDebug("Discarding net interface %s\n", tmpstr);
-                    }
-                }
-            }
-            pclose(pop);
-        }
+        // here all network interfaces are considered even if DOWN: the reason is that later on they may become UP
+        // and in such case they will become interesting; to maintain all output samples identical over time,
+        // thus all network interfaces are considered
+        netdevices_map_t devices_and_addresses;
+        CMonitorSystem::get_net_dev_list(devices_and_addresses, false /* include_only_interfaces_up */);
+        for (auto entry : devices_and_addresses)
+            m_network_interfaces_up.insert(entry.first);
 
         CMonitorLogger::instance()->LogDebug(
             "Found %zu network interfaces to monitor\n", m_network_interfaces_up.size());
@@ -444,7 +426,7 @@ void CMonitorSystem::sample_net_dev(double elapsed_sec, OutputFields output_opts
     // clang-format on
 
     netinfo_map_t new_stats;
-    read_net_dev("/proc/net/dev", m_network_interfaces_up, new_stats);
+    read_net_dev_stats("/proc/net/dev", m_network_interfaces_up, new_stats);
 
     if (output_opts != PF_NONE) {
         m_pOutput->psection_start("network_interfaces");
@@ -457,7 +439,70 @@ void CMonitorSystem::sample_net_dev(double elapsed_sec, OutputFields output_opts
 }
 
 /* static */
-bool CMonitorSystem::read_net_dev(
+bool CMonitorSystem::get_net_dev_list(netdevices_map_t& out_map, bool include_only_interfaces_up)
+{
+    std::string all_ips;
+    struct ifaddrs* interfaces = NULL;
+    struct ifaddrs* ifaddrs_ptr = NULL;
+    char address_buf[INET6_ADDRSTRLEN];
+    char* str = NULL;
+
+    DEBUGLOG_FUNCTION_START();
+
+    /* retrieve the current interfaces */
+    if (getifaddrs(&interfaces) != 0) {
+        CMonitorLogger::instance()->LogErrorWithErrno(
+            "getifaddrs() failed; cannot retrieve list of network interfaces.\n");
+        return false;
+    }
+
+    for (ifaddrs_ptr = interfaces; ifaddrs_ptr != NULL; ifaddrs_ptr = ifaddrs_ptr->ifa_next) {
+
+        if (strncmp(ifaddrs_ptr->ifa_name, "veth", 4) == 0) {
+            /* veth**** interfaces are not real/interesting interfaces... skip them */
+            CMonitorLogger::instance()->LogDebug(
+                "skipping network device '%s' since it's a virtual ETH dev\n", ifaddrs_ptr->ifa_name);
+            continue;
+        }
+
+        if (include_only_interfaces_up && (ifaddrs_ptr->ifa_flags & IFF_UP) == 0) {
+            CMonitorLogger::instance()->LogDebug(
+                "skipping network device '%s' since it's DOWN\n", ifaddrs_ptr->ifa_name);
+            continue;
+        }
+
+        if (ifaddrs_ptr->ifa_addr) {
+            switch (ifaddrs_ptr->ifa_addr->sa_family) {
+            case AF_INET:
+                if ((str = (char*)inet_ntop(ifaddrs_ptr->ifa_addr->sa_family,
+                         &((struct sockaddr_in*)ifaddrs_ptr->ifa_addr)->sin_addr, address_buf, sizeof(address_buf)))
+                    != NULL) {
+                    out_map[ifaddrs_ptr->ifa_name] = str;
+                }
+                break;
+            case AF_INET6:
+                if ((str = (char*)inet_ntop(ifaddrs_ptr->ifa_addr->sa_family,
+                         &((struct sockaddr_in6*)ifaddrs_ptr->ifa_addr)->sin6_addr, address_buf, sizeof(address_buf)))
+                    != NULL) {
+                    out_map[ifaddrs_ptr->ifa_name] = str;
+                }
+                break;
+            default:
+                // sprintf(label,"%s_Not_Supported_%d", ifaddrs_ptr->ifa_name, ifaddrs_ptr->ifa_addr->sa_family);
+                // m_pOutput->pstring(label,"");
+                break;
+            }
+        } else {
+            out_map[ifaddrs_ptr->ifa_name] = "";
+        }
+    }
+
+    freeifaddrs(interfaces); /* free the dynamic memory */
+    return true;
+}
+
+/* static */
+bool CMonitorSystem::read_net_dev_stats(
     const std::string& filename, const std::set<std::string>& net_iface_whitelist, netinfo_map_t& out_stats)
 {
     // clang-format off

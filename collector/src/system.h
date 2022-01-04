@@ -36,6 +36,8 @@
 // Types
 //------------------------------------------------------------------------------
 
+typedef std::map<std::string /* interface name */, std::string /* address */> netdevices_map_t;
+
 typedef struct {
     uint64_t if_ibytes;
     uint64_t if_ipackets;
@@ -52,7 +54,7 @@ typedef struct {
     uint64_t if_ocarrier;
 } netinfo_t;
 
-typedef std::map<std::string /* interface name */, netinfo_t> netinfo_map_t;
+typedef std::map<std::string /* interface name */, netinfo_t /* stats */> netinfo_map_t;
 
 /*
  * Structure to store CPU usage specs as reported by Linux kernel
@@ -141,7 +143,8 @@ public:
 
     static unsigned int get_all_cpus(std::set<uint64_t>& cpu_indexes, const std::string& stat_file = "/proc/stat");
 
-    static bool read_net_dev(
+    static bool get_net_dev_list(netdevices_map_t& out_map, bool include_only_interfaces_up);
+    static bool read_net_dev_stats(
         const std::string& filename, const std::set<std::string>& net_iface_whitelist, netinfo_map_t& out_infos);
     static bool output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, double elapsed_sec,
         const netinfo_map_t& new_stats, const netinfo_map_t& prev_stats, OutputFields output_opts);
