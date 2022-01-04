@@ -17,7 +17,7 @@
 - Add tests on cmonitor_statistics tool taking the expected JSONs of unit tests
 - Add tests on:
    CMonitorSystem
-   -> challenge is it uses "lsblk" and "ifconfig" utilities, does not just read the filesystem!
+   -> challenge is it uses "lsblk" utility, does not just read the filesystem!
    CMonitorHeaderInfo
 
 - add more sampled data for CMonitorCGroup, for several kernels

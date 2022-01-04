@@ -127,7 +127,7 @@ regen_docker_userapp:
 	$(CMONITOR_COLLECTOR) \
 		--sampling-interval=0.5 \
 		--num-samples=240 \
-		--collect=cgroup_cpu,cgroup_memory,cgroup_threads \
+		--collect=cgroup_cpu,cgroup_memory,cgroup_threads,cgroup_network \
 		--foreground \
 		--output-filename=docker-userapp.json \
 		--cgroup-name=$(CGROUP_NAME) \

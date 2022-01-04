@@ -676,13 +676,57 @@ class CMonitorGraphGenerator:
         self.jheader = jheader  # a dictionary with cmonitor_collector "header" JSON object
         self.jdata = jdata  # a list of dictionaries with cmonitor_collector "samples" objects
 
-        # the first sample is used to get "immutable" data that we know won't change across all samples
+        # in many places below we need to get "immutable" data that we know won't change across all samples
         # like the names of network devices or the list of CPUs...
-        self.jdata_first_sample = self.jdata[0]
+        # since for some metrics the very sample does not contain any KPI (e.g. cgroup network traffic is generated
+        # only for samples after the first one) if possible we pick the 2nd sample and not the 1st one:
+        assert len(self.jdata) >= 2
+        self.sample_template = self.jdata[1]
+
+        # detect num of CPUs:
+        self.baremetal_logical_cpus_indexes = []
+        if "stat" in self.sample_template:
+            self.baremetal_logical_cpus_indexes = CMonitorGraphGenerator.collect_logical_cpu_indexes_from_section(self.sample_template, "stat")
+            if verbose:
+                print(
+                    "Found %d CPUs in baremetal stats with logical indexes [%s]"
+                    % (
+                        len(self.baremetal_logical_cpus_indexes),
+                        ", ".join(str(x) for x in self.baremetal_logical_cpus_indexes),
+                    )
+                )
+
+        self.cgroup_logical_cpus_indexes = []
+        if "cgroup_cpuacct_stats" in self.sample_template:
+            self.cgroup_logical_cpus_indexes = CMonitorGraphGenerator.collect_logical_cpu_indexes_from_section(
+                self.sample_template, "cgroup_cpuacct_stats"
+            )
+            if verbose:
+                print(
+                    "Found %d CPUs in cgroup stats with logical indexes [%s]"
+                    % (
+                        len(self.cgroup_logical_cpus_indexes),
+                        ", ".join(str(x) for x in self.cgroup_logical_cpus_indexes),
+                    )
+                )
 
     # =======================================================================================================
     # Private helpers
     # =======================================================================================================
+
+    @staticmethod
+    def collect_logical_cpu_indexes_from_section(jsample, section_name):
+        """
+        Walks over given JSON sample looking for keys 'cpuXYZ' and storing all 'XYZ' CPU indexes.
+        Returns a list of CPU indexes
+        """
+        logical_cpus_indexes = []
+        for key in jsample[section_name]:
+            if key.startswith("cpu") and key != "cpu_total" and key != "cpu_tot":
+                cpuIdx = int(key[3:])
+                logical_cpus_indexes.append(cpuIdx)
+                # print("%s %s" %(key, cpuIdx))
+        return logical_cpus_indexes
 
     def __choose_byte_divider(self, mem_total_bytes):
         divider = 1
@@ -735,7 +779,7 @@ class CMonitorGraphGenerator:
 
         if self.jheader["cgroup_config"]["version"] == 1:
             # cgroups v1
-            system_total_bytes = self.jdata[0]["cgroup_memory_stats"]["stat.cache"] + self.jdata[0]["cgroup_memory_stats"]["stat.rss"]
+            system_total_bytes = self.sample_template["cgroup_memory_stats"]["stat.cache"] + self.sample_template["cgroup_memory_stats"]["stat.rss"]
         else:
             # cgroups v2
             if "proc_meminfo" in self.jheader:
@@ -744,7 +788,7 @@ class CMonitorGraphGenerator:
                 # we have no clue what will be the "max memory" to plot (unless we do full scanning of all samples,
                 # which of course is very slow)... so we assume that twice of memory used by first sample will be
                 # a good approx:
-                system_total_bytes = self.jdata[0]["cgroup_memory_stats"]["stat.current"] * 2
+                system_total_bytes = self.sample_template["cgroup_memory_stats"]["stat.current"] * 2
 
         if cgroup_limit_bytes == -1:
             divider, unit = self.__choose_byte_divider(system_total_bytes)
@@ -756,7 +800,7 @@ class CMonitorGraphGenerator:
     # Public API
     # =======================================================================================================
 
-    def generate_config_js(self):
+    def generate_config_viewer(self):
         """
         Creates into output document a snippet of Javascript code to open a new HTML window with
         a basic rendering of cmonitor_collector configuration and the monitored server.
@@ -836,7 +880,7 @@ class CMonitorGraphGenerator:
 
     def generate_cgroup_topN_procs(self, numProcsToShow=20, thread_filter=""):
         # if process data was not collected, just return:
-        if "cgroup_tasks" not in self.jdata[0]:
+        if "cgroup_tasks" not in self.sample_template:
             return
 
         # build a dictionary containing cumulative metrics for CPU/IO/MEM data for each process
@@ -1028,10 +1072,10 @@ class CMonitorGraphGenerator:
 
     def generate_baremetal_disks_io(self):
         # if disk data was not collected, just return:
-        if "disks" not in self.jdata[0]:
+        if "disks" not in self.sample_template:
             return
 
-        all_disks = self.jdata[0]["disks"].keys()
+        all_disks = self.sample_template["disks"].keys()
         if len(all_disks) == 0:
             return
 
@@ -1082,7 +1126,7 @@ class CMonitorGraphGenerator:
     # def generate_filesystems(self.output_page, self.jdata):
     #     global self.graphs
     #     fsstr = ""
-    #     for fs in self.jdata[0]["filesystems"].keys():
+    #     for fs in self.sample_template["filesystems"].keys():
     #         fsstr = fsstr + "'" + fs + "',"
     #     fsstr = fsstr[:-1]
     #     startHtmlHead_line_graph(self.output_page, fsstr)
@@ -1094,12 +1138,12 @@ class CMonitorGraphGenerator:
     #     self.output_page.appendGoogleChart(GoogleChartsGraph( 'File Systems Used percent')
     #     return
 
-    def generate_baremetal_network_traffic(self):
+    def __generate_network_traffic_graphs(self, graph_source, sample_section_name, graph_desc):
         # if network traffic data was not collected, just return:
-        if "network_interfaces" not in self.jdata[0]:
+        if sample_section_name not in self.sample_template:
             return
 
-        all_netdevices = self.jdata[0]["network_interfaces"].keys()
+        all_netdevices = self.sample_template[sample_section_name].keys()
         if len(all_netdevices) == 0:
             return
 
@@ -1126,8 +1170,8 @@ class CMonitorGraphGenerator:
             row = [s["timestamp"]["UTC"]]
             for device in all_netdevices:
                 try:
-                    row.append(+s["network_interfaces"][device]["ibytes"] / divider)
-                    row.append(-s["network_interfaces"][device]["obytes"] / divider)
+                    row.append(+s[sample_section_name][device]["ibytes"] / divider)
+                    row.append(-s[sample_section_name][device]["obytes"] / divider)
                 except KeyError:
                     if verbose:
                         print("Missing key '%s' while parsing sample %d" % (device, i))
@@ -1137,10 +1181,10 @@ class CMonitorGraphGenerator:
 
         self.output_page.appendGoogleChart(
             GoogleChartsGraph(
-                graph_title="Network Traffic in MB/s (from baremetal stats)",
+                graph_title=f"Network Traffic in MB/s {graph_desc}",
                 button_label="Network Traffic (MB/s)",
                 y_axis_title="MB/s",
-                graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
+                graph_source=graph_source,
                 stack_state=False,
                 data=net_table,
             )
@@ -1156,8 +1200,8 @@ class CMonitorGraphGenerator:
             row = [s["timestamp"]["UTC"]]
             for device in all_netdevices:
                 try:
-                    row.append(+s["network_interfaces"][device]["ipackets"])
-                    row.append(-s["network_interfaces"][device]["opackets"])
+                    row.append(+s[sample_section_name][device]["ipackets"])
+                    row.append(-s[sample_section_name][device]["opackets"])
                 except KeyError:
                     if verbose:
                         print("Missing key '%s' while parsing sample %d" % (device, i))
@@ -1167,24 +1211,30 @@ class CMonitorGraphGenerator:
 
         self.output_page.appendGoogleChart(
             GoogleChartsGraph(
-                graph_title="Network Traffic in PPS (from baremetal stats)",
+                graph_title=f"Network Traffic in PPS {graph_desc}",
                 button_label="Network Traffic (PPS)",
                 y_axis_title="PPS",
-                graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
+                graph_source=graph_source,
                 stack_state=False,
                 data=net_table,
             )
         )
         return
 
-    def generate_baremetal_cpus(self, logical_cpus_indexes):
+    def generate_baremetal_network_traffic(self):
+        self.__generate_network_traffic_graphs(GRAPH_SOURCE_DATA_BAREMETAL, "network_interfaces", "(from baremetal stats)")
+
+    def generate_cgroup_network_traffic(self):
+        self.__generate_network_traffic_graphs(GRAPH_SOURCE_DATA_CGROUP, "cgroup_network", "(from cgroup stats)")
+
+    def generate_baremetal_cpus(self):
         # if baremetal CPU data was not collected, just return:
-        if "stat" not in self.jdata[0]:
+        if "stat" not in self.sample_template:
             return
 
         # prepare empty tables
         baremetal_cpu_stats = {}
-        for c in logical_cpus_indexes:
+        for c in self.baremetal_logical_cpus_indexes:
             baremetal_cpu_stats[c] = GoogleChartsTimeSeries(
                 [
                     "Timestamp",
@@ -1199,7 +1249,7 @@ class CMonitorGraphGenerator:
                 ]
             )
 
-        all_cpus_table = GoogleChartsTimeSeries(["Timestamp"] + [("CPU" + str(x)) for x in logical_cpus_indexes])
+        all_cpus_table = GoogleChartsTimeSeries(["Timestamp"] + [("CPU" + str(x)) for x in self.baremetal_logical_cpus_indexes])
 
         #
         # MAIN LOOP
@@ -1212,7 +1262,7 @@ class CMonitorGraphGenerator:
 
             ts = s["timestamp"]["UTC"]
             all_cpus_row = [ts]
-            for c in logical_cpus_indexes:
+            for c in self.baremetal_logical_cpus_indexes:
                 cpu_stats = s["stat"]["cpu" + str(c)]
                 cpu_total = (
                     cpu_stats["user"]
@@ -1241,7 +1291,7 @@ class CMonitorGraphGenerator:
             all_cpus_table.addRow(all_cpus_row)
 
         # Produce the javascript:
-        for c in logical_cpus_indexes:
+        for c in self.baremetal_logical_cpus_indexes:
             self.output_page.appendGoogleChart(
                 GoogleChartsGraph(
                     data=baremetal_cpu_stats[c],  # Data
@@ -1267,16 +1317,18 @@ class CMonitorGraphGenerator:
         )
         return
 
-    def generate_cgroup_cpus(self, logical_cpus_indexes):
-        if "cgroup_cpuacct_stats" not in self.jdata[0]:
+    def generate_cgroup_cpus(self):
+        if "cgroup_cpuacct_stats" not in self.sample_template:
             return  # cgroup mode not enabled at collection time!
 
         # prepare empty tables
         cpu_stats_table = {}
-        for c in logical_cpus_indexes:
+        for c in self.cgroup_logical_cpus_indexes:
             cpu_stats_table[c] = GoogleChartsTimeSeries(["Timestamp", "User", "System"])
 
-        all_cpus_table = GoogleChartsTimeSeries(["Timestamp", "Limit/Quota", "Throttling"] + [("CPU" + str(x)) for x in logical_cpus_indexes])
+        all_cpus_table = GoogleChartsTimeSeries(
+            ["Timestamp", "Limit/Quota", "Throttling"] + [("CPU" + str(x)) for x in self.cgroup_logical_cpus_indexes]
+        )
 
         #
         # MAIN LOOP
@@ -1293,7 +1345,7 @@ class CMonitorGraphGenerator:
                 ts = s["timestamp"]["UTC"]
 
                 all_cpus_row = [ts, cpu_quota_perc, CMonitorGraphGenerator.cgroup_get_cpu_throttling(s)]
-                for c in logical_cpus_indexes:
+                for c in self.cgroup_logical_cpus_indexes:
                     # get data:
                     cpu_stats = s["cgroup_cpuacct_stats"]["cpu" + str(c)]
                     if "sys" in cpu_stats:
@@ -1315,7 +1367,7 @@ class CMonitorGraphGenerator:
         self.__print_data_loading_stats("cgroup CPU", n_invalid_samples)
 
         # Produce 1 graph for each CPU:
-        for c in logical_cpus_indexes:
+        for c in self.cgroup_logical_cpus_indexes:
             self.output_page.appendGoogleChart(
                 GoogleChartsGraph(
                     data=cpu_stats_table[c],  # Data
@@ -1350,7 +1402,7 @@ class CMonitorGraphGenerator:
 
     def generate_baremetal_memory(self):
         # if baremetal memory data was not collected, just return:
-        if "proc_meminfo" not in self.jdata[0]:
+        if "proc_meminfo" not in self.sample_template:
             return
 
         #
@@ -1359,7 +1411,7 @@ class CMonitorGraphGenerator:
         # See https://developers.google.com/chart/interactive/docs/reference
         #
 
-        mem_total_bytes = self.jdata[0]["proc_meminfo"]["MemTotal"]
+        mem_total_bytes = self.sample_template["proc_meminfo"]["MemTotal"]
         baremetal_memory_stats = GoogleChartsTimeSeries(["Timestamp", "Used", "Cached (DiskRead)", "Free"])
         divider, unit = self.__choose_byte_divider(mem_total_bytes)
 
@@ -1410,7 +1462,7 @@ class CMonitorGraphGenerator:
 
     def generate_cgroup_memory(self):
         # if cgroup data was not collected, just return:
-        if "cgroup_memory_stats" not in self.jdata[0]:
+        if "cgroup_memory_stats" not in self.sample_template:
             return
 
         #
@@ -1530,8 +1582,8 @@ class CMonitorGraphGenerator:
         monitoring_summary = [
             # ( "User:", self.jheader["cmonitor"]["username"] ),   # not really useful
             ("Collected:", self.jheader["cmonitor"]["collecting"].replace(",", ", ")),
-            # ( "Started sampling at:", self.jdata_first_sample["timestamp"]["datetime"] + " (Local)" ),   # not really useful
-            ("Started sampling at:", self.jdata_first_sample["timestamp"]["UTC"] + " (UTC)"),
+            # ( "Started sampling at:", self.sample_template["timestamp"]["datetime"] + " (Local)" ),   # not really useful
+            ("Started sampling at:", self.jdata[0]["timestamp"]["UTC"] + " (UTC)"),
             ("Samples:", str(len(self.jdata))),
             ("Sampling Interval (s):", str(self.jheader["cmonitor"]["sample_interval_seconds"])),
             (
@@ -1551,11 +1603,11 @@ class CMonitorGraphGenerator:
         #       will not be available from inside a container, which is where cmonitor_collector usually runs...
         #       so we mostly show CPU stats:
         all_disks = []
-        if "disks" in self.jdata_first_sample:
-            all_disks = self.jdata_first_sample["disks"].keys()
+        if "disks" in self.sample_template:
+            all_disks = self.sample_template["disks"].keys()
         all_netdevices = []
-        if "network_interfaces" in self.jdata_first_sample:
-            all_netdevices = self.jdata_first_sample["network_interfaces"].keys()
+        if "network_interfaces" in self.sample_template:
+            all_netdevices = self.sample_template["network_interfaces"].keys()
 
         cpu_model = "Unknown"
         bogomips = "Unknown"
@@ -1574,16 +1626,16 @@ class CMonitorGraphGenerator:
         ]
         return monitored_summary
 
-    def generate_monitored_summary(self, baremetal_logical_cpus_indexes, cgroup_logical_cpus_indexes):
-        if len(baremetal_logical_cpus_indexes) > 0:
+    def generate_monitored_summary(self):
+        if len(self.baremetal_logical_cpus_indexes) > 0:
             self.output_page.appendHtmlTable(
                 "Monitored System Summary",
-                self.__generate_monitored_summary_with_cpus(baremetal_logical_cpus_indexes),
+                self.__generate_monitored_summary_with_cpus(self.baremetal_logical_cpus_indexes),
             )
-        elif len(cgroup_logical_cpus_indexes) > 0:
+        elif len(self.cgroup_logical_cpus_indexes) > 0:
             self.output_page.appendHtmlTable(
                 "Monitored System Summary",
-                self.__generate_monitored_summary_with_cpus(cgroup_logical_cpus_indexes),
+                self.__generate_monitored_summary_with_cpus(self.cgroup_logical_cpus_indexes),
             )
 
     def generate_about_this(self):
@@ -1598,20 +1650,6 @@ class CMonitorGraphGenerator:
 # =======================================================================================================
 # MAIN SCRIPT PREPARE DATA
 # =======================================================================================================
-
-
-def collect_logical_cpu_indexes_from_section(jsample, section_name):
-    """
-    Walks over given JSON sample looking for keys 'cpuXYZ' and storing all 'XYZ' CPU indexes.
-    Returns a list of CPU indexes
-    """
-    logical_cpus_indexes = []
-    for key in jsample[section_name]:
-        if key.startswith("cpu") and key != "cpu_total" and key != "cpu_tot":
-            cpuIdx = int(key[3:])
-            logical_cpus_indexes.append(cpuIdx)
-            # print("%s %s" %(key, cpuIdx))
-    return logical_cpus_indexes
 
 
 def load_json_data(infile):
@@ -1708,34 +1746,9 @@ def main_process_file(cfg):
         if "cmonitor_chart_name" in jheader["custom_metadata"]:
             cgroupName = "docker/" + jheader["custom_metadata"]["cmonitor_chart_name"]
 
-    jdata_first_sample = jdata[0]
+    sample_template = jdata[0]
     if verbose:
         print("Found %d data samples" % len(jdata))
-
-    # detect num of CPUs:
-    baremetal_logical_cpus_indexes = []
-    if "stat" in jdata[0]:
-        baremetal_logical_cpus_indexes = collect_logical_cpu_indexes_from_section(jdata_first_sample, "stat")
-        if verbose:
-            print(
-                "Found %d CPUs in baremetal stats with logical indexes [%s]"
-                % (
-                    len(baremetal_logical_cpus_indexes),
-                    ", ".join(str(x) for x in baremetal_logical_cpus_indexes),
-                )
-            )
-
-    cgroup_logical_cpus_indexes = []
-    if "cgroup_cpuacct_stats" in jdata_first_sample:
-        cgroup_logical_cpus_indexes = collect_logical_cpu_indexes_from_section(jdata_first_sample, "cgroup_cpuacct_stats")
-        if verbose:
-            print(
-                "Found %d CPUs in cgroup stats with logical indexes [%s]"
-                % (
-                    len(cgroup_logical_cpus_indexes),
-                    ", ".join(str(x) for x in cgroup_logical_cpus_indexes),
-                )
-            )
 
     print("Opening output file %s" % outfile)
     out_doc = HtmlOutputPage(outfile, "Monitoring data for " + monitored_system)
@@ -1745,25 +1758,26 @@ def main_process_file(cfg):
     graph_generator.output_page.startHtmlHead()
 
     # baremetal stats:
-    graph_generator.generate_baremetal_cpus(baremetal_logical_cpus_indexes)
+    graph_generator.generate_baremetal_cpus()
     graph_generator.generate_baremetal_memory()
     graph_generator.generate_baremetal_network_traffic()
     graph_generator.generate_baremetal_disks_io()
     graph_generator.generate_baremetal_avg_load()
 
     # cgroup stats:
-    graph_generator.generate_cgroup_cpus(cgroup_logical_cpus_indexes)
+    graph_generator.generate_cgroup_cpus()
     graph_generator.generate_cgroup_memory()
     graph_generator.generate_cgroup_topN_procs(config["top_scorer"], config["thread_filter"])
+    graph_generator.generate_cgroup_network_traffic()
 
-    graph_generator.generate_config_js()
+    graph_generator.generate_config_viewer()
 
     # HTML BODY -- now we start actual HTML body which are just a few tables with buttons
     #              that invoke the JS code produced earlier inside the <HEAD>
     graph_generator.output_page.startHtmlBody(cgroupName, monitored_system)
 
     graph_generator.generate_monitoring_summary()
-    graph_generator.generate_monitored_summary(baremetal_logical_cpus_indexes, cgroup_logical_cpus_indexes)
+    graph_generator.generate_monitored_summary()
     graph_generator.generate_about_this()
 
     graph_generator.output_page.endHtmlBody()

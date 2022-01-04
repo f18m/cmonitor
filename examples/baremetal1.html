@@ -2705,6 +2705,64 @@ function draw_graph91() {
   reset_combo_boxes("");
 }
 
+function draw_graph92() {
+  var deflated_data_base64_graph92 = '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\n';
+  var deflated_data_binary_graph92 = window.atob(deflated_data_base64_graph92);
+  var inflated_data_graph92 = JSON.parse(pako.inflate(deflated_data_binary_graph92, { to: 'string' }));
+  var data_graph92 = google.visualization.arrayToDataTable(inflated_data_graph92);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph92, 0);
+
+  var options_graph92 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Network Traffic in MB/s (from cgroup stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "MB/s", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph92, options_graph92);
+  g_current_data = data_graph92;
+  g_current_options = options_graph92;
+  reset_combo_boxes("");
+}
+
+function draw_graph93() {
+  var deflated_data_base64_graph93 = 'eNq9WutuK0UMfpf8AjGRxpe58Zu3qI5QutlARE8b9QQEQrw79nRz2aJDfbzSqq2a9Xg7nzz+fJs+PPy9Of91Gjc/bva783g+fh43YfO0exyfRPTTRfRP2Dy+biHioexqbsNw+OH4vPmPcPvy+/lNijtgxuGRxwNcVe+Fd6rDIZfxEfN+LDfVO+FNleM4cMu0zyVeVe+FN9VygFj2A1Yc6Kp6L7ypVkKqBWrl/XBVvRfeVHfjEFPeMxPWq+q9cFLdvwy/ja8TxulhWhqfXyaL6KebEK9CvAnpKqSbkK9CvgpPQPglHuJl6fL8XgHeKVwA/PLnaTjCdnr/8jRfhNniuzdxtojzRZot0v0izvbE+Z442xPne+JsT5zvibM98brn83j++bw7TXtenqbF8+749GXYPY3T8u35onB8Gk94mkBdnuaLOFu8gPpjPP9KFAvz5Dd3gjuV2pBbaTeVSXCnchjG3ZDLTWUSXFSOr48Xx3v7PFvYPh+H2aI8d4VP4aHT/TuMCAEwYAAKxCEHgvT9JsQPvoTaYZtSqPih6lf+QAlb/F+Vr2IEAZnAAJLkvS0UeS+SEyaSwEwumCgwa7HYsogtcwuNvbYUkMAukJQDo8WWQEkOnEKNCw4cmgskC8hGBpDyYthWeRe8bolyFFhcKFMOCdnEHTFF4tCKF6S4tfx8O8gk/E7JxO+Sw1Z+3D6JNWwpujAKv1M1gUxiCDEmRLdTspM5SemdbaGy01t+Q/KiRA1jLpTC75xM1MEmm4h65SWh0odSCF6iJVRiqXpgFJo3oItPbim5UArBSwZrcmQJ6HVJQPeAlNMOpZm8kiQIid2blzrdXVwQhd8Vs8mOtWdffzjXIsWFUdhdkyl5d7evC2KQkJtdGOW7YTSdtSYMMXxMfjv6MKqHmWo10PiD6r1eYnuPWmjdqo3W8c2MUNZ1xxKKFBgmI2pVzf6s7QYoJsnmvkFiMERY95yL5I7QLFGHshYFWkWSu7mpzlq3dFuiKfCwBA4pgPykVpDgAqk1V6oGkKmXqsIbd5+IsYdXD8okKG0NWFVbFsk2gOBnTnagrEJtBIspEVCbG84LUg35wnhVeqMtRsaim8hbtaxL8KoEJ7Dlw6zcIVoQhqQbri6UynE2oQTRljKySpZfEIcQXTBZQ5Gx2JWkkyWu5+w9cXTW5FU5zjHaHFMLLW0vkReUvJ6A2YTknNGAkpvmnlz18P30IRdG4Tg3C8iOkUKBtREKwROi6bCxJ+Da1oaoaaeaehspJLXH8/c2zmDelNqZbHGyB6BQvKEcdP6KLpBC7Gya+b01Nzrjrf5Q7kjdUtRIXY42iLkPu/0QfWfNfepaTPOfXl2wsBpXPmvWqY64WDMN9KNOwop//NMHfsmFUqhdo4napOGDF1TmkmiaC6NQu9o6xSx7aOebl9Tl5AIp1K7Zxps4GdKbavrk1IMShNy1mYIkp95zA4D/tKsLopC7QbYGIAnk7tlub2h9ILXtZrJei0jpU9PK1a6AFG43U7WL3aOktIC4ZE5O4IIpHSrZLj61uGi0AKXOuri5UCZparP1tk7zTvH2s+ox7InmGKreaJpmA7qHavOCSOkZBglI8WjItl4Re15bUvCyC6KOvmv9lpo8rw1RRwO2mzpob/cNbtb4+gbByDq+SNYh9PKcWFwohdlkKi9a7DfUhdY9axJak6mHBZ0ASTGomXFliEJqTjZSQ8fYVreikDpFC6lJYo4UBjkU91Wn899C+G38k6ttktY3aXldWpPSOtuuOrNkbB1IgjeC54+qyE//ApqUW9U=\n';
+  var deflated_data_binary_graph93 = window.atob(deflated_data_base64_graph93);
+  var inflated_data_graph93 = JSON.parse(pako.inflate(deflated_data_binary_graph93, { to: 'string' }));
+  var data_graph93 = google.visualization.arrayToDataTable(inflated_data_graph93);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph93, 0);
+
+  var options_graph93 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Network Traffic in PPS (from cgroup stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "PPS", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph93, options_graph93);
+  g_current_data = data_graph93;
+  g_current_options = options_graph93;
+  reset_combo_boxes("");
+}
+
 function setup_button_click_handlers() {
   document.getElementById("btn_draw_graph40").addEventListener("click", draw_graph40);
   document.getElementById("btn_draw_graph41").addEventListener("click", draw_graph41);
@@ -2718,6 +2776,8 @@ function setup_button_click_handlers() {
   document.getElementById("btn_draw_graph89").addEventListener("click", draw_graph89);
   document.getElementById("btn_draw_graph90").addEventListener("click", draw_graph90);
   document.getElementById("btn_draw_graph91").addEventListener("click", draw_graph91);
+  document.getElementById("btn_draw_graph92").addEventListener("click", draw_graph92);
+  document.getElementById("btn_draw_graph93").addEventListener("click", draw_graph93);
   document.getElementById("btn_show_config").addEventListener("click", show_config_window);
 }
 
@@ -3014,6 +3074,8 @@ function show_config_window() {
     <button id="btn_draw_graph89" style="color:red"><b>CPU by Process</b></button>
     <button id="btn_draw_graph90" style="color:black"><b>IO by Process</b></button>
     <button id="btn_draw_graph91" style="color:darkorange"><b>Memory by Process</b></button>
+    <button id="btn_draw_graph92" style="color:darkblue"><b>Network Traffic (MB/s)</b></button>
+    <button id="btn_draw_graph93" style="color:darkblue"><b>Network Traffic (PPS)</b></button>
       </td><td id="button_table_col">
     <select id="select_combobox_baremetal_cpus" onchange="call_function_named(this.value)">
       <option value="clear_chart">None</option>

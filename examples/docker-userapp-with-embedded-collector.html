@@ -1545,6 +1545,64 @@ function draw_graph51() {
   reset_combo_boxes("");
 }
 
+function draw_graph52() {
+  var deflated_data_base64_graph52 = 'eNqNmM3qFTEMxd9lVopRmiZpWte+xR8XihcU/FpcFyK+uyd+gBs9gTuXMvyYOU16mnQeHr5d96+fb9fz682r++3+7sPtkuv9q9e397j14s+t73Ld7m/Hk3cfr1+jp5++3K+X8vATeTTHVNEpJtMkdv3c8/El49mo6x/gEQV3GpxLrN3gUiJH570DoHVA/Gd0wAWwI1EPwtPROCfAjsYZkqOjcW6AnbSYSmpHoznA2QEToHcyPQCuDmgAW2tnyWlNxg/ATsBjAuwEPAJgRyMMc6b+B3TBfdjlTKOUgwpKJajkbxxybHDMgHFlMMnJxtOQiORPg0FO8onCHicPx+APngGb0siAhTQyYFsaGXCVRgLcIY1TCcdSKiBtccrEeFRjYQKcqt2OYSqIPQ2+CmI/F6VQpNahlOJxOTmG+pTOsSpPXNocpJT8xqrUNoKGwrSDY7UJJcWsihKPGwwQh8cNDkjlU3AlxeM3VsWIz9SrFPHwwgXZWJOwQXYW5QLGtVULQ/cE2ADUoRTaAlNKIQV0T5hlhDQuDEZI48pghPTJp4kUeHAMKfDNMaQgGi9FCvagGIyQm2uDEXLzuJURjlHMK8KcCtHFqS3aWEPYKXloAy0HD1mg5WBzNFwnKGSIw6HUEg2lFFry4G/EQCM5htgHV6YI/poUq/FyjqH4J3/pRPXfPB5WnQnPk+G3F8cWMK7NcEQ4XBsMYIcHBA6ww7XBAna4NnjAB9cGE/jgcYMLfDBtP6+xKYU50PrpUj2YUQoHIOW6aqBcGHzgkyuDD3xyaRg7rZ5ePghaF718EMa1WfW4XBt8EMbjBh+ENRKKNswHxbz23MkxtGHO4wYfhCfF4IMIrg0+yGxg6AFoax11UKVnPLgdVFJqNSo7DouglFJa9d85VvV/cQz1n9bZKB/k4drgA95NRPkgD9cGH+Th2uCDPbg2+GAPrg0+2IPnHT7Y43CsOgFOoRPg84zqSzlVp1BObeSKUKsOZ0khbGuHQilKi8qqbz6qg2NoY3RyDD+6B6365qPOpzmrDePaZjRav1UfRDV4AgzjWBxDPVtcm2Wj91v1IZT3fqs+g+pqLI9KBF8gZYHk2qKOcH9re/kDAEYlyw==\n';
+  var deflated_data_binary_graph52 = window.atob(deflated_data_base64_graph52);
+  var inflated_data_graph52 = JSON.parse(pako.inflate(deflated_data_binary_graph52, { to: 'string' }));
+  var data_graph52 = google.visualization.arrayToDataTable(inflated_data_graph52);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph52, 0);
+
+  var options_graph52 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Network Traffic in MB/s (from cgroup stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "MB/s", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph52, options_graph52);
+  g_current_data = data_graph52;
+  g_current_options = options_graph52;
+  reset_combo_boxes("");
+}
+
+function draw_graph53() {
+  var deflated_data_base64_graph53 = 'eNqFmM2qFEEMhd+lV4olVCpJpeLat7i4UBzwgn+LcSHiu3ty9S49gZmhaT6mT50+naT64eHXdf/5/Xa9uT6+v9/uj19u17g+v/9w+4xTb59P/R7X7f5pvnr8ev09ev3tx/16Nx6ekBdrLhmyho6lw099zOLlNeaY/4FyCJhsGBu+T8PE8JjdtSYg7SD8hnfQBtRJkoQFnaa1AHWalo+YnaZ1AHV2q4yQTpMaoNVBAci6OzcB7Q5SQG0G9shWuCWgzkxfgDoz3QF1mhDwXPIfyOos4p1LKWEgnBIBIvhV5kidHFEgXAlCndH8CwwO/i8IdAZfEOKckRxBnrmzukbjrPponNUzGmdNRmOsGaRwIvBEUcIhZXNCh3LHfEMsJ6raMEQGPKWmyoCna1MChX8nJQR/E4sjqPlhHKmSz6WsScr0P6RaVWMKiv1xjlQxCIpoFXruCwLryX1BYkO4XBNSmP8hVeD5iqzKO7cOqY0mT4htdIHaQLiWau/0OUVsQSQl0EJVKAFr6XO6KrihXAiCG8qVILhhiy8H1ppzBNba4Qis9eZCsPZMiiC4cbgWBDcO96WCm0oRK/c44UM2J86QJgeoUNw2R0vmljhaMluL4ptOAcVakxJ7iAslMGI6vwoOxIMj8NS5EoGpe1GkjrdxBI0y+IUWOuXha9bq2tx7xedsjmwgXItixE2uBYHV5ItGYjW5FkRWk2tBZm1yLQitTe4LUmuTaXn6zkMJ6KX9x0bNIUoJDOrCddSBcCHIrS2uBLm1xaXg2Gj3scqt095ilVtXrkVrhuNakFtX7gty69rcIIwiNiliVeMWRzCKGPcFuXULiiC37lwLchvRIOiXdFz02iTRPQeeQhBBid10QmxaQAglpHqlcaR65eYIeiXtUV65jeRakFvecb1yG8m1ILeRXAtyeybXgtyeybUgt2fye4jcnpkcqa7JCXRNvh6v+YsTtQviBHaWLAe7Ng1BAZSVpEBg33/4NTA9y+QI2rssjuBDa8Gu9wJifDmrRhGuZXkz8ux6ySXOjVUc++YIesPmWjSamWfXyy0+8+x6tSW7uc1lML/RFdngWry2Fc9a3v0BmvSxtA==\n';
+  var deflated_data_binary_graph53 = window.atob(deflated_data_base64_graph53);
+  var inflated_data_graph53 = JSON.parse(pako.inflate(deflated_data_binary_graph53, { to: 'string' }));
+  var data_graph53 = google.visualization.arrayToDataTable(inflated_data_graph53);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph53, 0);
+
+  var options_graph53 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Network Traffic in PPS (from cgroup stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "PPS", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph53, options_graph53);
+  g_current_data = data_graph53;
+  g_current_options = options_graph53;
+  reset_combo_boxes("");
+}
+
 function setup_button_click_handlers() {
   document.getElementById("btn_draw_graph40").addEventListener("click", draw_graph40);
   document.getElementById("btn_draw_graph41").addEventListener("click", draw_graph41);
@@ -1556,6 +1614,8 @@ function setup_button_click_handlers() {
   document.getElementById("btn_draw_graph49").addEventListener("click", draw_graph49);
   document.getElementById("btn_draw_graph50").addEventListener("click", draw_graph50);
   document.getElementById("btn_draw_graph51").addEventListener("click", draw_graph51);
+  document.getElementById("btn_draw_graph52").addEventListener("click", draw_graph52);
+  document.getElementById("btn_draw_graph53").addEventListener("click", draw_graph53);
   document.getElementById("btn_show_config").addEventListener("click", show_config_window);
 }
 
@@ -1778,6 +1838,8 @@ function show_config_window() {
     <button id="btn_draw_graph49" style="color:red"><b>CPU by Process</b></button>
     <button id="btn_draw_graph50" style="color:black"><b>IO by Process</b></button>
     <button id="btn_draw_graph51" style="color:darkorange"><b>Memory by Process</b></button>
+    <button id="btn_draw_graph52" style="color:darkblue"><b>Network Traffic (MB/s)</b></button>
+    <button id="btn_draw_graph53" style="color:darkblue"><b>Network Traffic (PPS)</b></button>
       </td><td id="button_table_col">
     <select id="select_combobox_baremetal_cpus" onchange="call_function_named(this.value)">
       <option value="clear_chart">None</option>
