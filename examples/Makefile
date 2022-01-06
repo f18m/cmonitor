@@ -11,7 +11,8 @@ EXAMPLE_JSON_FILES=\
 	docker-collecting-baremetal-stats.json.gz \
 	docker-userapp-with-embedded-collector.json.gz \
 	docker-userapp-with-embedded-collector.json.gz \
-	docker-userapp.json.gz
+	docker-userapp.json.gz \
+	docker-stress-test.json.gz
 CMONITOR_COLLECTOR=$(TOPDIR)/collector/bin/glibc/cmonitor_collector
 
 SHELL:=/bin/bash 
@@ -96,6 +97,7 @@ PODMAN:=0
 endif
 
 ifeq ($(PODMAN),0)
+# NOTE: we know that docker creates a cgroup always named docker/container-ID
 CGROUP_NAME=docker/$$(docker ps --no-trunc -aqf name=userapp)
 else
 CGROUP_NAME=machine.slice/libpod-$$(docker ps --no-trunc -aqf name=userapp).scope/container/
@@ -123,7 +125,6 @@ regen_docker_userapp:
 		sleep 1 ; \
 	done
 	@echo "Now running cmonitor_collector on the baremetal to monitor for 2 minutes the 'userapp' container:"
-	# NOTE: we know that docker creates a cgroup always named docker/container-ID
 	$(CMONITOR_COLLECTOR) \
 		--sampling-interval=0.5 \
 		--num-samples=240 \
@@ -137,6 +138,42 @@ regen_docker_userapp:
 	docker stop userapp
 	gzip -f docker-userapp.json
 
+
+STRESS_TEST_DOCKER_CPUS:=0,1
+STRESS_TEST_DOCKER_CPU_QUOTA:=2
+
+ifeq ($(PODMAN),0)
+# NOTE: we know that docker creates a cgroup always named docker/container-ID
+STRESS_TEST_CGROUP_NAME=docker/$$(docker ps --no-trunc -aqf name=stress)
+else
+STRESS_TEST_CGROUP_NAME=machine.slice/libpod-$$(docker ps --no-trunc -aqf name=stress).scope/container/
+endif
+
+regen_docker_stress_test:
+	-docker stop stress >/dev/null 2>&1
+	docker run \
+		--detach \
+		--interactive \
+		--tty \
+		--rm \
+		--cpuset-cpus=$(STRESS_TEST_DOCKER_CPUS) \
+		--cpus=$(STRESS_TEST_DOCKER_CPU_QUOTA) \
+		--name stress \
+		alexeiled/stress-ng \
+		--cpu $(STRESS_TEST_DOCKER_CPU_QUOTA) --metrics-brief
+	sleep 3
+	@echo "Now running cmonitor_collector on the baremetal to monitor for 15secs the 'stress' docker:"
+	$(CMONITOR_COLLECTOR) \
+		--sampling-interval=0.5 \
+		--num-samples=30 \
+		--collect=cgroup_cpu,cgroup_memory,cgroup_threads,cgroup_network \
+		--foreground \
+		--output-filename=docker-stress-test.json \
+		--cgroup-name=$(STRESS_TEST_CGROUP_NAME) \
+		--score-threshold=0 \
+		--custom-metadata="cmonitor_chart_name:stress (Redis docker)"
+	docker stop stress
+	gzip -f docker-stress-test.json
 
 
 #
