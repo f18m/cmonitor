@@ -793,6 +793,10 @@ class CMonitorGraphGenerator:
             print("Parsed correctly %d samples for [%s] category" % (len(self.jdata), desc))
 
     def __cgroup_get_cpu_quota_percentage(self):
+        """
+        Returns a number, in percentage, that indicates how much&many CPUs can be used.
+        E.g. possible values are 50%, 140%, 300% or -1 to indicate no limit.
+        """
         cpu_quota_perc = 100
         if "cpu_quota_perc" in self.jheader["cgroup_config"]:
             cpu_quota_perc = 100 * self.jheader["cgroup_config"]["cpu_quota_perc"]
@@ -940,7 +944,7 @@ class CMonitorGraphGenerator:
         self.output_page.appendGoogleChart(
             GoogleChartsGraph(
                 data=topN_process_table,
-                button_label="CPU/Memory/Disk Bubbles",
+                button_label="CPU/Memory/Disk Bubbles by Thread" if self.collected_threads else "CPU/Memory/Disk Bubbles by Process",
                 graph_source=GRAPH_SOURCE_DATA_CGROUP,
                 graph_type=GRAPH_TYPE_BUBBLE_CHART,
                 graph_title=chart_desc_prefix + "for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
@@ -953,21 +957,38 @@ class CMonitorGraphGenerator:
     def __generate_topN_procs_cpu_io_mem_vs_time(self, process_dict, topN_process_pids_list, chart_desc_prefix):
         # now that first pass is done, adjust units for memory
         mem_limit_bytes, mem_divider, mem_unit = self.__cgroup_get_memory_limit()
+        cpu_quota_perc = self.__cgroup_get_cpu_quota_percentage()
 
         def get_nice_process_or_thread_name(pid):
             return "%s (%d)" % (process_dict[pid]["cmd"], pid)
 
         # now generate instead a table of CPU/IO/MEMORY usage over time per process:
         process_table = {}
-        process_table["cpu"] = GoogleChartsTimeSeries(
-            ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_process_pids_list] + ["Idle", "Throttling"]
-        )
+
+        if cpu_quota_perc > 0:
+            # it is possible to compute the "idle" time inside this cgroup and it's possible that CPU is throttled...
+            # so in such case we add 2 more data series to the chart:
+            process_table["cpu"] = GoogleChartsTimeSeries(
+                ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_process_pids_list] + ["Idle", "Throttling"]
+            )
+            y_axes_max_value = cpu_quota_perc * 1.1
+            columns_for_2nd_yaxis = ["Throttling"]
+            y_axes_titles = ["CPU (%)", "CPU Throttling (%)"]
+        else:
+            # no CPU limit... creating an "idle" column (considering as max CPU all the CPUs available) tend to produce weird
+            # results out-of-scale (imagine servers with hundreds of CPUs and cmonitor_collector monitoring just a Redis container!)
+            # so we do not place any "idle" column. The "throttling" column does not apply either.
+            assert cpu_quota_perc == -1
+            process_table["cpu"] = GoogleChartsTimeSeries(["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_process_pids_list])
+            y_axes_max_value = None  # let Google Charts autocompute the Y axes limits
+            columns_for_2nd_yaxis = []
+            y_axes_titles = ["CPU (%)"]
+
         process_table["io"] = GoogleChartsTimeSeries(["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_process_pids_list])
         process_table["mem"] = GoogleChartsTimeSeries(
             ["Timestamp", "Limit", "Alloc Failures"] + [get_nice_process_or_thread_name(pid) for pid in topN_process_pids_list]
         )
 
-        cpu_quota_perc = self.__cgroup_get_cpu_quota_percentage()
         max_byte_value_dict = {}
         max_byte_value_dict["mem_rss"] = 0
         max_byte_value_dict["io_total"] = 0
@@ -1010,11 +1031,12 @@ class CMonitorGraphGenerator:
                         row["mem"].append(0)
 
                 # CPU graph has
-                # - idle
+                # - idle (if cpu_quota_perc > 0)
                 # - throttling
                 # as additional columns right after the last PID serie
-                row["cpu"].append(max(cpu_quota_perc - tot_cpu_usage_perc, 0))
-                row["cpu"].append(CMonitorGraphGenerator.cgroup_get_cpu_throttling(sample))
+                if cpu_quota_perc > 0:
+                    row["cpu"].append(max(cpu_quota_perc - tot_cpu_usage_perc, 0))
+                    row["cpu"].append(CMonitorGraphGenerator.cgroup_get_cpu_throttling(sample))
 
                 for key in ["cpu", "io", "mem"]:
                     process_table[key].addRow(row[key])
@@ -1022,33 +1044,23 @@ class CMonitorGraphGenerator:
                 # print("Missing cgroup data while parsing sample %d" % i)
                 pass
 
-        # produce the 3 graphs "by process/by thread":
-        if self.collected_threads:
-            # take any contribute of any thread/process and stack it together: this way it becomes easier to spot
-            # when the cgroup CPU limit was hit and due to which threads/processes
-            self.output_page.appendGoogleChart(
-                GoogleChartsGraph(
-                    data=process_table["cpu"],
-                    graph_title=chart_desc_prefix + "for CPU usage (from cgroup stats)",
-                    button_label="CPU by Thread",
-                    graph_source=GRAPH_SOURCE_DATA_CGROUP,
-                    stack_state=True,
-                    y_axes_titles=["CPU (%)", "CPU Throttling (%)"],
-                    columns_for_2nd_yaxis=["Throttling"],
-                    y_axes_max_value=cpu_quota_perc * 1.1,
-                )
+        # CPU by thread/process:
+        # take any contribute of any thread/process and stack it together: this way it becomes easier to spot
+        # when the cgroup CPU limit was hit and due to which threads/processes
+        self.output_page.appendGoogleChart(
+            GoogleChartsGraph(
+                data=process_table["cpu"],
+                graph_title=chart_desc_prefix + "for CPU usage (from cgroup stats)",
+                button_label="CPU by Thread" if self.collected_threads else "CPU by Process",
+                graph_source=GRAPH_SOURCE_DATA_CGROUP,
+                stack_state=True,
+                y_axes_titles=y_axes_titles,
+                # throttling should not be stacked to the CPU usage contributions, so move it on 2nd y axis:
+                columns_for_2nd_yaxis=columns_for_2nd_yaxis,
+                # make the 2 axes have the same identical Y scale to make it easier to read it:
+                y_axes_max_value=y_axes_max_value,
             )
-        else:
-            self.output_page.appendGoogleChart(
-                GoogleChartsGraph(
-                    data=process_table["cpu"],
-                    graph_title=chart_desc_prefix + "for CPU usage (from cgroup stats)",
-                    button_label="CPU by Process",
-                    y_axes_titles=["CPU (%)"],
-                    graph_source=GRAPH_SOURCE_DATA_CGROUP,
-                    stack_state=False,
-                )
-            )
+        )
 
         self.output_page.appendGoogleChart(
             GoogleChartsGraph(
