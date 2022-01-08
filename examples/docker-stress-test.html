@@ -217,7 +217,7 @@ function draw_graph5() {
 }
 
 function draw_graph6() {
-  var deflated_data_base64_graph6 = 'eNqLjlZyzs/NTcxLUdJRcg4IVSjJzE0FMj31/RWcKktSi0HCcAW+qbn5RZVQiVidaKXikqLU4mLdvHTd5IJSJR1DCz1DUwMkYKRjbKBnoIOqTkHD0MLEwNDETFNJx8TE3MzSyELPAJdp+AwwxWmAkg5Ql4mOqbmBsTmKdohWA0sToFZjQ2NzU2MzoNZYAOmASFo=\n';
+  var deflated_data_base64_graph6 = 'eNp9jD0PgjAURf8KeZMmj/pKv2CVycHooFPDQLRBh4KhdeDfW6ODDHinm/veOdZCPXjf9ldAqI/nLN69S3W3OWTbKbqQ+uk2uvZ93zs/jNN3b9BCiKMLIe+7/PJ4AvKScUU/KVAQI5z/ZSteSuJSrwGlNLoqSkZLtn8CtSgATJREZUiYGf5BqZIJFVwYJXRCmxeD5Ufz\n';
   var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
   var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
@@ -241,7 +241,7 @@ function draw_graph6() {
 }
 
 function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNqdlE1PwzAMhv8K6mmTvJGk+bA5c+SCxG3aYUAFk/alLTsgxH/HoxhpuMuqSm3f1umjN3Ecz2afVf7YNdVd9brITV6umwqq1eK5WXHoXkJfUD0s18t8+3jc5gX/8fS+3+a8Wm7e+OOQ983hMNm8TV52x5uRRW+sj+NLI+FspI0a8uNqDrMfy5EzzoGFCNaDD1AnoIRMOWOmBk430TSGKMKRiyyC1ywGK1JmKdF/NiUvUmIJPJo/1gmMFqyxTKcrNKHTdEKRAuwNW9cd1l6kDBN6tWa0IiXWsnHQ+XIiZZYwataKlFjHvumMbXMc2klfYQlx4Hpr9u2oDxIps0RG+zqREstPcto3/i77GkxUa+MeqeKLOkoDRcoskS4NjCIlNrKvLg0MImWWKJ2fhTZJ7SZhXaQTO+OgXHHLIl0aWPdxRQimu3X0qEkC24H2mDGxq66LlEQKbOCOM7BZMRpM0GcXRUosvw47fUwGk/T29OmQwQEOdHXsSipRaJzICZ5/A0xDoIU=\n';
+  var deflated_data_base64_graph7 = 'eNqtlc1u2zAQhF+l0CkFGIM/u+Ruz7303puRQ9oIaQAnDWL1UBR9965DjcIcTAmoBVsDUNDH2eWQ2u//DNPv53H4NNzdTuP08DgObjjcfhsPNvQZQ3/dcJxexuPx+un++vvzrw9XQcgHyh+HM0/43ZM66pVOo1/uDqdJvv54+TlNh4en++HG7V/nuoo+RhdcdoEcsUvFaRF7R3WXOUP8zts/S9HlEomn4bMgcQSQcIBUUFTxb1eQFZAWraBSCFJBxEEbS31H6kj8DJLggg9GKpXkYv9NY8OCQGYLlNqmUJdE3jwkeCDITEpNMdZqXkOp0Fs5swC1faUomCdGdRGCBnMLkrxCUskgBQhIpV0q6oKiWSoGqmvEtbh5pfrvmclL9CSZgSV0CsGKxya9Ja2AVJfQRQgc5RbkuUuyuy4hzHNr4oamnGK2ZK5t5a6NrmrdC2cx9tMlbwKZQZGaSnJeAakib5IhALUpKbFvKZsl5E0Ygtp8a0lWQDbZkre63pI2HA1UzIL8f3Pt2FXkTdK7+Q3Ukko/JeLY+607oFuZurCtrhUKe4SvFAg2Erck7VbGdnRe4gg2DnvGWgtkdRvZxytf4EAwDPuy+QvQI0UnlzAUzdAcPfERUkFJ2+Pf9vVrZ2/+AT2Q4WA=\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
@@ -256,7 +256,17 @@ function draw_graph7() {
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "CPU (%)", gridlines: { color: "lightgrey", count: 11 } },
+    series: {
+     0: {targetAxisIndex:0},
+     1: {targetAxisIndex:0},
+     2: {targetAxisIndex:0},
+     3: {targetAxisIndex:0},
+     4: {targetAxisIndex:1},
+    },
+    vAxes: {
+      0: { title: "CPU (%)", maxValue: 220 },
+      1: { title: "CPU Throttling (%)", maxValue: 220 }
+    },
     isStacked:  1
   };
 
