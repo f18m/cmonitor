@@ -26,8 +26,9 @@ import time
 
 VERSION_STRING = "__RPM_VERSION__-__RPM_RELEASE__"
 
-GRAPH_SOURCE_DATA_BAREMETAL = 1
-GRAPH_SOURCE_DATA_CGROUP = 2
+GRAPH_SOURCE_DATA_IS_BAREMETAL = 1
+GRAPH_SOURCE_DATA_IS_CGROUP_TOTALS = 2
+GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS = 3
 
 GRAPH_TYPE_AREA_CHART = 1
 GRAPH_TYPE_BUBBLE_CHART = 2
@@ -295,7 +296,7 @@ class GoogleChartsGraph:
         button_label="",
         combobox_label="",
         combobox_entry="",
-        graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
+        graph_source=GRAPH_SOURCE_DATA_IS_BAREMETAL,
         graph_type=GRAPH_TYPE_AREA_CHART,
         graph_title="",
         stack_state=False,
@@ -499,7 +500,7 @@ class HtmlOutputPage:
      ul { margin: 0 0 0 0;padding-left: 20px; }
      button { margin-bottom: 3px; }
      #monitored_system_span { background-color: white; color: red; padding: 4px; }
-     #button_table { width:100%; border-collapse: collapse; }
+     #button_table { width:100%; border-collapse: collapse; margin-bottom: 5px; }
      .button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
      #config_viewer_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto; overflow: auto}
      .config_sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}
@@ -636,8 +637,8 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
         self.file.write("  <tr>\n")
         self.file.write('    <td class="button_table_col">Static Info</td>\n')
         self.file.write('    <td class="button_table_col"><b>CGroup</b> stats (Data collected from %s)</td>\n' % cgroup_name)
-        self.file.write('    <td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from %s)</td>\n' % cgroup_name)
-        self.file.write('    <td class="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>\n')
+        self.file.write('    <td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from cgroup and /proc)</td>\n')
+        self.file.write('    <td class="button_table_col"><b>Baremetal</b> stats (Data collected only from /proc)</td>\n')
         self.file.write("  </tr>\n")
 
         # Datarow
@@ -696,9 +697,11 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
             if nwritten_controls == 0:
                 self.file.write("N/A")
 
-        write_buttons_for_graph_type(GRAPH_SOURCE_DATA_CGROUP)
+        write_buttons_for_graph_type(GRAPH_SOURCE_DATA_IS_CGROUP_TOTALS)
         self.file.write('      </td><td class="button_table_col">\n')
-        write_buttons_for_graph_type(GRAPH_SOURCE_DATA_BAREMETAL)
+        write_buttons_for_graph_type(GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS)
+        self.file.write('      </td><td class="button_table_col">\n')
+        write_buttons_for_graph_type(GRAPH_SOURCE_DATA_IS_BAREMETAL)
 
         self.file.write("  </td></tr>\n")
         self.file.write("  </table>\n")
@@ -816,7 +819,7 @@ class CMonitorGraphGenerator:
                     )
                 )
 
-        # load some basic fields from the JSON
+        # load IDENTITY of monitored system
         self.monitored_system = "Unknown"
         if "identity" in self.jheader:
             if "hostname" in self.jheader["identity"]:
@@ -825,12 +828,18 @@ class CMonitorGraphGenerator:
             if "cmonitor_chart_name" in self.jheader["custom_metadata"]:
                 self.monitored_system = self.jheader["custom_metadata"]["cmonitor_chart_name"]
 
+        # get the CGROUP name
         self.cgroup_name = "None"
         if "cgroup_config" in self.jheader and "name" in self.jheader["cgroup_config"]:
             self.cgroup_name = self.jheader["cgroup_config"]["name"]
         if "custom_metadata" in self.jheader:
             if "cmonitor_chart_name" in self.jheader["custom_metadata"]:
                 self.cgroup_name = "docker/" + self.jheader["custom_metadata"]["cmonitor_chart_name"]
+
+        # get the CGROUP version (v1 or v2 ?)
+        self.cgroup_ver = None
+        if "cgroup_config" in self.jheader and "version" in self.jheader["cgroup_config"]:
+            self.cgroup_ver = int(self.jheader["cgroup_config"]["version"])
 
         # finally create the main HTML output page object
         self.output_page = HtmlOutputPage(outfile, "Monitoring data for " + self.monitored_system)
@@ -871,8 +880,16 @@ class CMonitorGraphGenerator:
         if "cgroup_config" in self.jheader:
             avail_cpus = self.jheader["cgroup_config"]["cpus"].split(",")
             self.jheader["cgroup_config"]["num_allowed_cpus"] = len(avail_cpus)
-            self.jheader["cgroup_config"]["memory_limit_bytes"] = sizeof_fmt(int(self.jheader["cgroup_config"]["memory_limit_bytes"]))
             self.jheader["cgroup_config"]["cpus"] = self.jheader["cgroup_config"]["cpus"].replace(",", ", ")
+
+            curr_value = int(self.jheader["cgroup_config"]["memory_limit_bytes"])
+            if curr_value == -1:
+                self.jheader["cgroup_config"]["memory_limit_bytes"] = "NO LIMIT"
+            else:
+                self.jheader["cgroup_config"]["memory_limit_bytes"] = sizeof_fmt(curr_value)
+
+            if self.jheader["cgroup_config"]["cpu_quota_perc"] == -1:
+                self.jheader["cgroup_config"]["cpu_quota_perc"] = "NO LIMIT"
 
         if "cmonitor" in self.jheader:
             if self.jheader["cmonitor"]["sample_num"] == 0:
@@ -891,6 +908,9 @@ class CMonitorGraphGenerator:
         elif mem_total_bytes > 9e6:
             divider = 1e6
             unit = "MB"
+        elif mem_total_bytes > 9e3:
+            divider = 1e3
+            unit = "kB"
         # print("%d -> %s, %d" % (mem_total_bytes,unit, divider))
         return (divider, unit)
 
@@ -931,36 +951,65 @@ class CMonitorGraphGenerator:
         return cpu_throttling
 
     def __cgroup_get_memory_limit(self):
+        """
+        Returns the 3-tuple (memory_limit_bytes, divider, unit) where
+        * memory_limit_bytes can be -1 if there's no limit
+        * divider is the divider associated with "unit"
+        * unit is a string like "MB" or "GB" to use as best memory unit
+        """
+        cgroup_limit_bytes = -1
         if "memory_limit_bytes" in self.jheader["cgroup_config"]:
             # IMPORTANT: this value could be -1 if there's no limit
-            cgroup_limit_bytes = self.jheader["cgroup_config"]["memory_limit_bytes"]
+            cgroup_limit_bytes = int(self.jheader["cgroup_config"]["memory_limit_bytes"])
 
-        if self.jheader["cgroup_config"]["version"] == 1:
-            # cgroups v1
-            system_total_bytes = self.sample_template["cgroup_memory_stats"]["stat.cache"] + self.sample_template["cgroup_memory_stats"]["stat.rss"]
-        else:
-            # cgroups v2
-            if "proc_meminfo" in self.jheader:
-                system_total_bytes = self.jheader["proc_meminfo"]["MemTotal"]
-            else:
-                # we have no clue what will be the "max memory" to plot (unless we do full scanning of all samples,
-                # which of course is very slow)... so we assume that twice of memory used by first sample will be
-                # a good approx:
-                system_total_bytes = self.sample_template["cgroup_memory_stats"]["stat.current"] * 2
-
-        if cgroup_limit_bytes == -1:
-            divider, unit = self.__choose_byte_divider(system_total_bytes)
-        else:
+        if cgroup_limit_bytes != -1:
+            # this cgroup does have a memory limit
             divider, unit = self.__choose_byte_divider(cgroup_limit_bytes)
+            if verbose:
+                print("Cgroup memory limit is %lu. Best memory unit: %s" % (cgroup_limit_bytes, unit))
+            return cgroup_limit_bytes, divider, unit
+
+        # cgroup has no memory limit imposed... take the total amount of memory to choose best divider and mem unit
+        # if "proc_meminfo" in self.jheader:
+        #    max_memory_value_bytes = self.jheader["proc_meminfo"]["MemTotal"]
+        # else:
+        #    # cmonitor_collector was started WITHOUT the --collect=memory option... so we don't have DIRECT information about the
+        #    # will be the "max memory" to plot (unless we do full scanning of all samples,
+        #    # which of course is very slow)... and we don't even know the total memory of the system.
+        #    # Still we can try to get a clue:
+        #    if self.cgroup_ver == 1:
+        #        # cgroups v1: assume as upper bound of memory the sum of CACHE + RSS of the template sample
+        #        max_memory_value_bytes = (
+        #            self.sample_template["cgroup_memory_stats"]["stat.cache"] + self.sample_template["cgroup_memory_stats"]["stat.rss"]
+        #        )
+        #    else:
+        #        # cgroups v2: assume that twice of memory used by first sample will be a good approx:
+        #        max_memory_value_bytes = self.sample_template["cgroup_memory_stats"]["stat.current"] * 2
+
+        #  cgroup has no memory limit imposed... do a full scan to get the highest memory value that will appear:
+        max_memory_value_bytes = 0
+        for i, sample in enumerate(self.jdata):
+            if self.cgroup_ver == 1:
+                mu = sample["cgroup_memory_stats"]["stat.rss"]
+                mc = sample["cgroup_memory_stats"]["stat.cache"]
+            else:
+                # cgroups v2
+                mu = sample["cgroup_memory_stats"]["stat.anon"]
+                mc = sample["cgroup_memory_stats"]["stat.file"]
+
+            max_memory_value_bytes = max(max_memory_value_bytes, mu, mc)
+
+        divider, unit = self.__choose_byte_divider(max_memory_value_bytes)
+        if verbose:
+            print("Cgroup has NO memory limit; using as max memory value %lu. Best memory unit: %s" % (max_memory_value_bytes, unit))
+
         return cgroup_limit_bytes, divider, unit
 
-    # =======================================================================================================
-    # Public API
-    # =======================================================================================================
-
     def __generate_topN_procs_bubble_chart(self, process_dict, topN_process_pids_list, max_byte_value_dict, chart_desc_prefix):
+        # take advantage of the first pass on all SAMPLES: we already know what is the MAX value for both memory and IO
         mem_divider, mem_unit = self.__choose_byte_divider(max_byte_value_dict["mem_rss"])
         io_divider, io_unit = self.__choose_byte_divider(max_byte_value_dict["io_total"])
+
         cpu_label = "CPU time"
         io_label = "I/O " + io_unit
         thread_proc_label = "Thread" if self.collected_threads else "Process"
@@ -983,16 +1032,19 @@ class CMonitorGraphGenerator:
             GoogleChartsGraph(
                 data=topN_process_table,
                 button_label="CPU/Memory/Disk Bubbles by Thread" if self.collected_threads else "CPU/Memory/Disk Bubbles by Process",
-                graph_source=GRAPH_SOURCE_DATA_CGROUP,
+                graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS,
                 graph_type=GRAPH_TYPE_BUBBLE_CHART,
                 graph_title=chart_desc_prefix + "for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
                 y_axes_titles=[cpu_label, io_label],
             )
         )
 
-    def __generate_topN_procs_cpu_io_mem_vs_time(self, process_dict, topN_process_pids_list, chart_desc_prefix):
-        # now that first pass is done, adjust units for memory
+    def __generate_topN_procs_cpu_io_mem_vs_time(self, process_dict, topN_process_pids_list, max_byte_value_dict, chart_desc_prefix):
+        # take advantage of the first pass on all SAMPLES: we already know what is the MAX value for both memory and IO
         mem_limit_bytes, mem_divider, mem_unit = self.__cgroup_get_memory_limit()
+        # mem_divider, mem_unit = self.__choose_byte_divider(max_byte_value_dict["mem_rss"])
+        io_divider, io_unit = self.__choose_byte_divider(max_byte_value_dict["io_total"])
+
         cpu_quota_perc = self.__cgroup_get_cpu_quota_percentage()
 
         def get_nice_process_or_thread_name(pid):
@@ -1025,9 +1077,9 @@ class CMonitorGraphGenerator:
             ["Timestamp", "Limit", "Alloc Failures"] + [get_nice_process_or_thread_name(pid) for pid in topN_process_pids_list]
         )
 
-        max_byte_value_dict = {}
-        max_byte_value_dict["mem_rss"] = 0
-        max_byte_value_dict["io_total"] = 0
+        # max_byte_value_dict = {}
+        # max_byte_value_dict["mem_rss"] = 0
+        # max_byte_value_dict["io_total"] = 0
         for sample in self.jdata:
             try:
                 row = {}
@@ -1049,7 +1101,7 @@ class CMonitorGraphGenerator:
                         top_proc_sample = sample["cgroup_tasks"][json_key]
 
                         cpu = top_proc_sample["cpu_tot"]
-                        io = top_proc_sample["io_rchar"] + top_proc_sample["io_wchar"]
+                        io = (top_proc_sample["io_rchar"] + top_proc_sample["io_wchar"]) / io_divider
                         mem = top_proc_sample["mem_rss_bytes"] / mem_divider
 
                         tot_cpu_usage_perc += cpu
@@ -1058,8 +1110,8 @@ class CMonitorGraphGenerator:
                         row["mem"].append(mem)
 
                         # keep track of maxs:
-                        max_byte_value_dict["mem_rss"] = max(mem, max_byte_value_dict["mem_rss"])
-                        max_byte_value_dict["io_total"] = max(io, max_byte_value_dict["io_total"])
+                        # max_byte_value_dict["mem_rss"] = max(mem, max_byte_value_dict["mem_rss"])
+                        # max_byte_value_dict["io_total"] = max(io, max_byte_value_dict["io_total"])
                     else:
                         # probably this process was born later or dead earlier than this timestamp
                         row["cpu"].append(0)
@@ -1088,24 +1140,13 @@ class CMonitorGraphGenerator:
                 data=process_table["cpu"],
                 graph_title=chart_desc_prefix + "for CPU usage (from cgroup stats)",
                 button_label="CPU by Thread" if self.collected_threads else "CPU by Process",
-                graph_source=GRAPH_SOURCE_DATA_CGROUP,
+                graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS,
                 stack_state=True,
                 y_axes_titles=y_axes_titles,
                 # throttling should not be stacked to the CPU usage contributions, so move it on 2nd y axis:
                 columns_for_2nd_yaxis=columns_for_2nd_yaxis,
                 # make the 2 axes have the same identical Y scale to make it easier to read it:
                 y_axes_max_value=y_axes_max_value,
-            )
-        )
-
-        self.output_page.appendGoogleChart(
-            GoogleChartsGraph(
-                data=process_table["io"],
-                graph_title=chart_desc_prefix + "for I/O usage (from cgroup stats)",
-                button_label="IO by Thread" if self.collected_threads else "IO by Process",
-                y_axes_titles=["IO Read+Write (Bytes Per Sec)"],
-                graph_source=GRAPH_SOURCE_DATA_CGROUP,
-                stack_state=False,
             )
         )
 
@@ -1118,10 +1159,25 @@ class CMonitorGraphGenerator:
                 graph_title=chart_desc_prefix + "for memory usage (from cgroup stats)",
                 button_label="Memory by Thread" if self.collected_threads else "Memory by Process",
                 y_axes_titles=["RSS Memory (%s)" % mem_unit],
-                graph_source=GRAPH_SOURCE_DATA_CGROUP,
+                graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS,
                 stack_state=False,
             )
         )
+
+        self.output_page.appendGoogleChart(
+            GoogleChartsGraph(
+                data=process_table["io"],
+                graph_title=chart_desc_prefix + "for I/O usage (from cgroup stats)",
+                button_label="IO by Thread" if self.collected_threads else "IO by Process",
+                y_axes_titles=["IO Read+Write (%s)" % io_unit],
+                graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS,
+                stack_state=False,
+            )
+        )
+
+    # =======================================================================================================
+    # Public API
+    # =======================================================================================================
 
     def generate_cgroup_topN_procs(self, numProcsToShow=20, thread_filter=""):
         # if process data was not collected, just return:
@@ -1197,8 +1253,8 @@ class CMonitorGraphGenerator:
         else:
             chart_desc_prefix = "Top %d processes " % numProcsToShow
 
+        self.__generate_topN_procs_cpu_io_mem_vs_time(process_dict, topN_process_pids_list, max_byte_value_dict, chart_desc_prefix)
         self.__generate_topN_procs_bubble_chart(process_dict, topN_process_pids_list, max_byte_value_dict, chart_desc_prefix)
-        self.__generate_topN_procs_cpu_io_mem_vs_time(process_dict, topN_process_pids_list, chart_desc_prefix)
 
     def generate_baremetal_disks_io(self):
         # if disk data was not collected, just return:
@@ -1246,7 +1302,7 @@ class CMonitorGraphGenerator:
             GoogleChartsGraph(
                 data=disk_table,
                 button_label="Disk I/O",
-                graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
+                graph_source=GRAPH_SOURCE_DATA_IS_BAREMETAL,
                 graph_title="Disk I/O (from baremetal stats)",
                 y_axes_titles=["MB"],
             )
@@ -1313,7 +1369,7 @@ class CMonitorGraphGenerator:
             GoogleChartsGraph(
                 data=net_table,
                 graph_title=f"Network Traffic in MB/s {graph_desc}",
-                button_label="Network Traffic (MB/s)",
+                button_label="Network (MB/s)",
                 y_axes_titles=["MB/s"],
                 graph_source=graph_source,
                 stack_state=False,
@@ -1343,7 +1399,7 @@ class CMonitorGraphGenerator:
             GoogleChartsGraph(
                 data=net_table,
                 graph_title=f"Network Traffic in PPS {graph_desc}",
-                button_label="Network Traffic (PPS)",
+                button_label="Network (PPS)",
                 y_axes_titles=["PPS"],
                 graph_source=graph_source,
                 stack_state=False,
@@ -1352,10 +1408,10 @@ class CMonitorGraphGenerator:
         return
 
     def generate_baremetal_network_traffic(self):
-        self.__generate_network_traffic_graphs(GRAPH_SOURCE_DATA_BAREMETAL, "network_interfaces", "(from baremetal stats)")
+        self.__generate_network_traffic_graphs(GRAPH_SOURCE_DATA_IS_BAREMETAL, "network_interfaces", "(from baremetal stats)")
 
     def generate_cgroup_network_traffic(self):
-        self.__generate_network_traffic_graphs(GRAPH_SOURCE_DATA_CGROUP, "cgroup_network", "(from cgroup stats)")
+        self.__generate_network_traffic_graphs(GRAPH_SOURCE_DATA_IS_CGROUP_TOTALS, "cgroup_network", "(from cgroup stats)")
 
     def generate_baremetal_cpus(self):
         # if baremetal CPU data was not collected, just return:
@@ -1429,7 +1485,7 @@ class CMonitorGraphGenerator:
                     combobox_label="baremetal_cpus",
                     combobox_entry="CPU" + str(c),
                     y_axes_titles=["Time (%)"],
-                    graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
+                    graph_source=GRAPH_SOURCE_DATA_IS_BAREMETAL,
                     stack_state=True,
                 )
             )
@@ -1441,7 +1497,7 @@ class CMonitorGraphGenerator:
                 graph_title="All logical CPUs (from baremetal stats)",
                 button_label="All CPUs",
                 y_axes_titles=["Time (%)"],
-                graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
+                graph_source=GRAPH_SOURCE_DATA_IS_BAREMETAL,
                 stack_state=False,
             )
         )
@@ -1505,12 +1561,10 @@ class CMonitorGraphGenerator:
                     combobox_label="cgroup_cpus",
                     combobox_entry="CPU" + str(c),
                     y_axes_titles=["Time (%)"],
-                    graph_source=GRAPH_SOURCE_DATA_CGROUP,
+                    graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_TOTALS,
                     stack_state=True,
                 )
             )
-
-        ver = int(self.jheader["cgroup_config"]["version"])
 
         # Also produce the "all CPUs" graph that includes some very useful KPIs like
         # - CPU limit imposed on Linux CFS scheduler
@@ -1520,10 +1574,10 @@ class CMonitorGraphGenerator:
         self.output_page.appendGoogleChart(
             GoogleChartsGraph(
                 data=all_cpus_table,  # Data
-                graph_title="All logical CPUs available in the cgroup" if ver == 1 else "CPU usage measured in the cgroup",
-                button_label="All CPUs" if ver == 1 else "CPU",
+                graph_title="All logical CPUs available in the cgroup" if self.cgroup_ver == 1 else "CPU usage measured in the cgroup",
+                button_label="All CPUs" if self.cgroup_ver == 1 else "CPU",
                 y_axes_titles=["Time (%)"],
-                graph_source=GRAPH_SOURCE_DATA_CGROUP,
+                graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_TOTALS,
                 stack_state=False,
             )
         )
@@ -1584,7 +1638,7 @@ class CMonitorGraphGenerator:
                 graph_title="Memory usage in " + unit + " (from baremetal stats)",
                 button_label="Memory",
                 y_axes_titles=[unit],
-                graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
+                graph_source=GRAPH_SOURCE_DATA_IS_BAREMETAL,
                 stack_state=True,
             )
         )
@@ -1601,11 +1655,22 @@ class CMonitorGraphGenerator:
         # See https://developers.google.com/chart/interactive/docs/reference
         #
 
-        cgroup_memory_stats = GoogleChartsTimeSeries(["Timestamp", "Used", "Cached (DiskRead)", "Alloc Failures", "Limit"])
-
-        ver = int(self.jheader["cgroup_config"]["version"])
-
         mem_limit_bytes, divider, unit = self.__cgroup_get_memory_limit()
+        if mem_limit_bytes > 0:
+            # it is possible to compute the "free" memory inside this cgroup and it's possible to have allocation failures
+            # so in such case we add 2 more data series to the chart:
+            cgroup_memory_stats = GoogleChartsTimeSeries(["Timestamp", "Used", "Cached (DiskRead)", "Free", "Alloc Failures"])
+            y_axes_max_value = mem_limit_bytes * 1.1
+            columns_for_2nd_yaxis = ["Alloc Failures"]
+            y_axes_titles = ["Memory (%s)" % unit, "Alloc Failures"]
+        else:
+            # no memory limit... creating the "free" series (considering all the system memory as actual limit) tend to produce weird
+            # results out-of-scale so we do not place any "idle" column. The "alloc failures" column does not apply either.
+            assert mem_limit_bytes == -1
+            cgroup_memory_stats = GoogleChartsTimeSeries(["Timestamp", "Used", "Cached (DiskRead)"])
+            y_axes_max_value = None  # let Google Charts autocompute the Y axes limits
+            columns_for_2nd_yaxis = []
+            y_axes_titles = ["Memory (%s)" % unit]
 
         n_invalid_samples = 0
         for i, s in enumerate(self.jdata):
@@ -1613,7 +1678,10 @@ class CMonitorGraphGenerator:
                 continue  # skip first sample
 
             try:
-                if ver == 1:
+                # mu = memory actually Used
+                # mc = memory used as Cache
+                # mfail = memory alloc failures inside cgroup
+                if self.cgroup_ver == 1:
                     mu = s["cgroup_memory_stats"]["stat.rss"]
                     mc = s["cgroup_memory_stats"]["stat.cache"]
                     mfail = s["cgroup_memory_stats"]["failcnt"]
@@ -1622,15 +1690,28 @@ class CMonitorGraphGenerator:
                     mu = s["cgroup_memory_stats"]["stat.anon"]
                     mc = s["cgroup_memory_stats"]["stat.file"]
                     mfail = s["cgroup_memory_stats"]["events.oom_kill"]
-                cgroup_memory_stats.addRow(
-                    [
-                        s["timestamp"]["UTC"],
-                        mu / divider,
-                        mc / divider,
-                        mfail,
-                        mem_limit_bytes / divider,  # imposed limit of memory in this cgroup
-                    ]
-                )
+
+                mfree = mem_limit_bytes - mu - mc
+
+                if mem_limit_bytes > 0:
+                    cgroup_memory_stats.addRow(
+                        [
+                            s["timestamp"]["UTC"],
+                            int(mu / divider),
+                            int(mc / divider),
+                            int(mfree / divider),
+                            mfail,
+                        ]
+                    )
+                else:
+                    cgroup_memory_stats.addRow(
+                        [
+                            s["timestamp"]["UTC"],
+                            int(mu / divider),
+                            int(mc / divider),
+                        ]
+                    )
+
             except KeyError as e:  # avoid crashing if a key is not present in the dictionary...
                 print(f"Missing cgroup data while parsing {i}-th sample: {e}")
                 n_invalid_samples += 1
@@ -1642,12 +1723,13 @@ class CMonitorGraphGenerator:
         self.output_page.appendGoogleChart(
             GoogleChartsGraph(
                 data=cgroup_memory_stats,  # Data
-                graph_title="Used memory in " + unit + " (from memory cgroup)",
+                graph_title="Used memory in %s (from memory cgroup)" % unit,
                 button_label="Memory",
-                y_axes_titles=[unit, "Alloc Failures"],
-                graph_source=GRAPH_SOURCE_DATA_CGROUP,
-                stack_state=False,
-                columns_for_2nd_yaxis=["Alloc Failures"],
+                graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_TOTALS,
+                stack_state=True,
+                y_axes_titles=y_axes_titles,
+                columns_for_2nd_yaxis=columns_for_2nd_yaxis,
+                y_axes_max_value=y_axes_max_value,
             )
         )
 
@@ -1702,7 +1784,7 @@ class CMonitorGraphGenerator:
                 graph_title="Average Load " + " (from baremetal stats)",
                 button_label="Average Load",
                 y_axes_titles=["Load (%)"],
-                graph_source=GRAPH_SOURCE_DATA_BAREMETAL,
+                graph_source=GRAPH_SOURCE_DATA_IS_BAREMETAL,
                 stack_state=False,
             )
         )
@@ -1806,7 +1888,7 @@ class CMonitorGraphGenerator:
 
 
 # =======================================================================================================
-# MAIN SCRIPT PREPARE DATA
+# JSON input parsing
 # =======================================================================================================
 
 
@@ -1878,28 +1960,8 @@ def load_json_data(infile):
     return entry
 
 
-def main_process_file(cfg):
-    infile = cfg["input_json"]
-    outfile = config["output_html"]
-    start_time = time.time()
-
-    # load the JSON
-    entry = load_json_data(infile)
-    jheader = entry["header"]
-    jdata = entry["samples"]
-    if verbose:
-        print("Found %d data samples" % len(jdata))
-
-    print("Opening output file %s" % outfile)
-    graph_generator = CMonitorGraphGenerator(outfile, jheader, jdata)
-    graph_generator.write(config["top_scorer"], config["thread_filter"])
-
-    end_time = time.time()
-    print("Completed processing of input JSON file of %d samples in %.3fsec. HTML output file is ready." % (len(jdata), end_time - start_time))
-
-
 # =======================================================================================================
-# MAIN
+# CLI options
 # =======================================================================================================
 
 
@@ -2007,4 +2069,18 @@ def parse_command_line():
 
 if __name__ == "__main__":
     config = parse_command_line()
-    main_process_file(config)
+    start_time = time.time()
+
+    # load the JSON
+    entry = load_json_data(config["input_json"])
+    jheader = entry["header"]
+    jdata = entry["samples"]
+    if verbose:
+        print("Found %d data samples" % len(jdata))
+
+    print("Opening output file %s" % config["output_html"])
+    graph_generator = CMonitorGraphGenerator(config["output_html"], jheader, jdata)
+    graph_generator.write(config["top_scorer"], config["thread_filter"])
+
+    end_time = time.time()
+    print("Completed processing of input JSON file of %d samples in %.3fsec. HTML output file is ready." % (len(jdata), end_time - start_time))

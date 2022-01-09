@@ -9,7 +9,7 @@
      ul { margin: 0 0 0 0;padding-left: 20px; }
      button { margin-bottom: 3px; }
      #monitored_system_span { background-color: white; color: red; padding: 4px; }
-     #button_table { width:100%; border-collapse: collapse; }
+     #button_table { width:100%; border-collapse: collapse; margin-bottom: 5px; }
      .button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
      #config_viewer_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto; overflow: auto}
      .config_sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}
@@ -187,7 +187,7 @@ function draw_graph4() {
 }
 
 function draw_graph5() {
-  var deflated_data_base64_graph5 = 'eNqllDFLBDEQhf/KkeqEOZlkZzYZO/GwshKslivW28AF91DctRDxvzsc2IrwIEWYzPt4xUeG4Susn2813IRpXOvazjVQmMfnOvto/zv6pvC01Mmf7sbjqU6b7b4tL491nK58djvPr8fN/djmj/e6+OChndsaDjRcCNvEKVGknqKQKHWFJBcP8jVzn1mjpss9Jc5ZhJh2se7Y/gBYNgRgJIUxgJUEAIS9QYcBrAgCiN5AMYCVHgEkb5AxgBVEJOm8gWEAM0QkXxFLGMAMEsmPCQYwg0TqvUGPAcwgkbI3KBjADBKpkDIkklHE4sqIRuofGhZXRiRSv2JxZUQhXy9YXPlfAh1+ADgHpfc=\n';
+  var deflated_data_base64_graph5 = 'eNqN07Fqw0AQhOFXCVfZsMXqdHu3kzZ+AkMq4UKODmJiQ8BqgvG7ewmkSGMGhBCnjyl+uGm6pfXnu6fXtMxrX0+XniSd52M/x9Hu7+gu6f3al/j1Nn989uVlsztdv/Z9XrbpINMv3GTNWQapMhQpJqNLab5NUpua5KztiUQDJSHFlZTwzMiisTmSEl4oOcSmkRJeKZljs5ESTpUvY2yClABVvsQbmZQAVz4eFFICXPkam5WUAFe+xaaTEuDKu5hy5SED6Uyp7hZ3g3SmVHWLT9KZUs0ti5PO9H/xwwN5eBkO\n';
   var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
   var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
   var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
@@ -196,23 +196,14 @@ function draw_graph5() {
 
   var options_graph5 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Used memory in GB (from memory cgroup)",
+    title: "Used memory in kB (from memory cgroup), STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    series: {
-     0: {targetAxisIndex:0},
-     1: {targetAxisIndex:0},
-     3: {targetAxisIndex:0},
-     2: {targetAxisIndex:1},
-    },
-    vAxes: {
-      0: { title: "GB" },
-      1: { title: "Alloc Failures" }
-    },
-    isStacked:  0
+    vAxis: { title: "Memory (kB)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
   };
 
   set_main_chart_div_as_visible();
@@ -226,39 +217,14 @@ function draw_graph5() {
 }
 
 function draw_graph6() {
-  var deflated_data_base64_graph6 = 'eNp9jD0PgjAURf8KeZMmj/pKv2CVycHooFPDQLRBh4KhdeDfW6ODDHinm/veOdZCPXjf9ldAqI/nLN69S3W3OWTbKbqQ+uk2uvZ93zs/jNN3b9BCiKMLIe+7/PJ4AvKScUU/KVAQI5z/ZSteSuJSrwGlNLoqSkZLtn8CtSgATJREZUiYGf5BqZIJFVwYJXRCmxeD5Ufz\n';
+  var deflated_data_base64_graph6 = 'eNqtlc1u2zAQhF+l0CkFGIM/u+Ruz7303puRQ9oIaQAnDWL1UBR9965DjcIcTAmoBVsDUNDH2eWQ2u//DNPv53H4NNzdTuP08DgObjjcfhsPNvQZQ3/dcJxexuPx+un++vvzrw9XQcgHyh+HM0/43ZM66pVOo1/uDqdJvv54+TlNh4en++HG7V/nuoo+RhdcdoEcsUvFaRF7R3WXOUP8zts/S9HlEomn4bMgcQSQcIBUUFTxb1eQFZAWraBSCFJBxEEbS31H6kj8DJLggg9GKpXkYv9NY8OCQGYLlNqmUJdE3jwkeCDITEpNMdZqXkOp0Fs5swC1faUomCdGdRGCBnMLkrxCUskgBQhIpV0q6oKiWSoGqmvEtbh5pfrvmclL9CSZgSV0CsGKxya9Ja2AVJfQRQgc5RbkuUuyuy4hzHNr4oamnGK2ZK5t5a6NrmrdC2cx9tMlbwKZQZGaSnJeAakib5IhALUpKbFvKZsl5E0Ygtp8a0lWQDbZkre63pI2HA1UzIL8f3Pt2FXkTdK7+Q3Ukko/JeLY+607oFuZurCtrhUKe4SvFAg2Erck7VbGdnRe4gg2DnvGWgtkdRvZxytf4EAwDPuy+QvQI0UnlzAUzdAcPfERUkFJ2+Pf9vVrZ2/+AT2Q4WA=\n';
   var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
   var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
-  var options_graph6 = {
-    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
-    chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
-    title: "Top 20 threads for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
-    hAxis: { title:"CPU time" },
-    vAxis: { title:"I/O Bytes" },
-    sizeAxis: { maxSize: 200 },
-    bubble: { textStyle: {fontSize: 15} }
-  };
-
-  if (g_chart && g_chart.clearChart)
-    g_chart.clearChart();
-  set_main_chart_div_as_visible();
-  g_chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));
-  g_chart.draw(data_graph6, options_graph6);
-  g_current_data = data_graph6;
-  g_current_options = options_graph6;
-  reset_combo_boxes("");
-}
-
-function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNqtlc1u2zAQhF+l0CkFGIM/u+Ruz7303puRQ9oIaQAnDWL1UBR9965DjcIcTAmoBVsDUNDH2eWQ2u//DNPv53H4NNzdTuP08DgObjjcfhsPNvQZQ3/dcJxexuPx+un++vvzrw9XQcgHyh+HM0/43ZM66pVOo1/uDqdJvv54+TlNh4en++HG7V/nuoo+RhdcdoEcsUvFaRF7R3WXOUP8zts/S9HlEomn4bMgcQSQcIBUUFTxb1eQFZAWraBSCFJBxEEbS31H6kj8DJLggg9GKpXkYv9NY8OCQGYLlNqmUJdE3jwkeCDITEpNMdZqXkOp0Fs5swC1faUomCdGdRGCBnMLkrxCUskgBQhIpV0q6oKiWSoGqmvEtbh5pfrvmclL9CSZgSV0CsGKxya9Ja2AVJfQRQgc5RbkuUuyuy4hzHNr4oamnGK2ZK5t5a6NrmrdC2cx9tMlbwKZQZGaSnJeAakib5IhALUpKbFvKZsl5E0Ygtp8a0lWQDbZkre63pI2HA1UzIL8f3Pt2FXkTdK7+Q3Ukko/JeLY+607oFuZurCtrhUKe4SvFAg2Erck7VbGdnRe4gg2DnvGWgtkdRvZxytf4EAwDPuy+QvQI0UnlzAUzdAcPfERUkFJ2+Pf9vVrZ2/+AT2Q4WA=\n';
-  var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
-  var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
-  var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
-  date_formatter.format(data_graph7, 0);
+  date_formatter.format(data_graph6, 0);
 
-  var options_graph7 = {
+  var options_graph6 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Top 20 threads for CPU usage (from cgroup stats), STACKED graph",
     focusTarget: "category",
@@ -284,6 +250,36 @@ function draw_graph7() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph6, options_graph6);
+  g_current_data = data_graph6;
+  g_current_options = options_graph6;
+  reset_combo_boxes("");
+}
+
+function draw_graph7() {
+  var deflated_data_base64_graph7 = 'eNqtksFKxDAQhl9lyWkXpmWSziQZb4J48g3KHupapNDVxXYPIr67gyLiYUH4hZCEmcyX//D1/VtYX09juAoPwzqu03EMFObhfpy9dPNdeqdwNx2n1XvX8/x82NwO03x+GRcvLKufS/P02BxO5802VuEoeXepo786X1U22YU99Z8fbhOnRJEyRSFR6gpZqT7VcMsciUmk5NZS/bl0sSutdvkiw9/+A8OKgQwjqQwzrCaMIT5UO5hhVUBG9BwKM6xmkJE8R4EZVkHHpPMcBjPMQMfEd0swwwx1zJcJzDBDHcueI8MMM9Sx4jkqzDBDHaukjDpmFGGCMmiY+hBMUAb9Ur/CBGXQLk1UYYLyX93afwBMkM+5\n';
+  var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
+  var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
+  var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph7, 0);
+
+  var options_graph7 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Top 20 threads for memory usage (from cgroup stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "RSS Memory (kB)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph7, options_graph7);
   g_current_data = data_graph7;
   g_current_options = options_graph7;
@@ -291,7 +287,7 @@ function draw_graph7() {
 }
 
 function draw_graph8() {
-  var deflated_data_base64_graph8 = 'eNqN0sFKxEAMBuBXkTntQhYy06TN73nfouxh1UGEVRZbD7L47kZFxMOS0FKG5Jv/8NN5vpT1/dzLbXk4rn19eu6Fyul4108+2v+OPqgs62tflt3L4+7+/HazqSZcZdyWKxv9t/mZMmRbDjR/524at0aVRqpCojRMhMn8Fn89V5WRpBQmhAokxgkFa5ES9qwhoWASqupZmlCwMVTNs6aEgoWtyuBZSCggbFX8i5ZQQNyqv5CEAuJWR88aEwqIW508yxIKiFs1Uo5bBdWEUQ47Vf+fE0Y5bFT9mDDKYZ/ayBJG+a/NwycNQRRI\n';
+  var deflated_data_base64_graph8 = 'eNqV00FLw0AQBeC/IntqYSqzm5nNPM/+i9BD1SBClWLiQcT/7qD0oFB4QhKWmW/f5ZFp+ijr+2kuN+XhsM7r0/NcpBwPd/MxR7fn0aeUZX2dl2X38ri7P71dbWqYVuvbcmHjvzY/U4Vty16m79xN09akSpdqYi7DKBgjb+m1nt+LNsT+YTGCtBALpS2icdY0cwfaIoy0NXOdtohO2pa5I20RZBc2ZC5oC5BdWH7RaAuwXeQDoy3AdtEzt9MWYLsYMzdoC7BdhLiyXUAqLV3JJjz/IFq6kj14HmnpSrbgTYKWrn872H8Bhbc1VA==\n';
   var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
   var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
   var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
@@ -306,7 +302,7 @@ function draw_graph8() {
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "IO Read+Write (Bytes Per Sec)", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "IO Read+Write (kB)", gridlines: { color: "lightgrey", count: 11 } },
     isStacked:  0
   };
 
@@ -321,29 +317,24 @@ function draw_graph8() {
 }
 
 function draw_graph9() {
-  var deflated_data_base64_graph9 = 'eNqtlE1LAzEQhv9KyamFWZlkJx+vN0E8+Q9KD7UusrDV4m4PIv53B8WDSA/CCyEZZsiT9/CQ7fY9LG+nIVyHx/0yLONxCBKm/cMweev2p/Uh4X48jovPbqbp5bC624/T+XWYvTEvfs7d81N3OJ1X69hMo5XNpUn+NfnuKmwTdrL9enCdNCWJUiSaWJa+CmrzW10cOoWo6JWqWS1I7U/dx77mvlyENTEmDBUsGMSa8mBoiQQz9WQ9D4ZmLFj0ZJkHQyssWPJklQdDY0lrvScDDwawpDXfkXgwgCatLxgPBtCkLZ6s8GAATdrqyRoPBtCkbZKVJi0k8lBZWcpm/7R5qKwsYbOXPFRWlq45SeOhsv5b1t0nz8wJjg==\n';
+  var deflated_data_base64_graph9 = 'eNqLjlZyzs/NTcxLUdJRcg4IVSjJzE0FMj31/RWynYCMkIyi1ESQpG9qbn5RJUgwVidaqbikKLW4WDcvXTe5oFRJx9BCz9DUAAkY6RjoGRjroKpT0DC0MDEwNDHTVNIxMTE307M0ssBlGD79prj0K4F0meiYmgP1miNphmg0sDQBajQ2NDbXMzU2i40FAOiURH8=\n';
   var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
   var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
   var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
-  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
-  date_formatter.format(data_graph9, 0);
-
   var options_graph9 = {
-    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 threads for memory usage (from cgroup stats)",
-    focusTarget: "category",
-    tooltip: { textStyle: { fontSize: 12 } },
-    legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
-    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "RSS Memory (GB)", gridlines: { color: "lightgrey", count: 11 } },
-    isStacked:  0
+    chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
+    title: "Top 20 threads for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
+    hAxis: { title:"CPU time" },
+    vAxis: { title:"I/O kB" },
+    sizeAxis: { maxSize: 200 },
+    bubble: { textStyle: {fontSize: 15} }
   };
 
-  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  set_main_chart_div_as_visible();
+  g_chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph9, options_graph9);
   g_current_data = data_graph9;
   g_current_options = options_graph9;
@@ -465,8 +456,8 @@ function set_main_chart_div_as_visible() {
   <tr>
     <td class="button_table_col">Static Info</td>
     <td class="button_table_col"><b>CGroup</b> stats (Data collected from docker/stress (Redis docker))</td>
-    <td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from docker/stress (Redis docker))</td>
-    <td class="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
+    <td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from cgroup and /proc)</td>
+    <td class="button_table_col"><b>Baremetal</b> stats (Data collected only from /proc)</td>
   </tr>
   <tr>
   <td class="button_table_col">
@@ -479,12 +470,13 @@ function set_main_chart_div_as_visible() {
     </select>
     <button id="btn_draw_graph4" style="color:red"><b>All CPUs</b></button>
     <button id="btn_draw_graph5" style="color:darkorange"><b>Memory</b></button>
-    <button id="btn_draw_graph6" style="color:red"><b>CPU/Memory/Disk Bubbles by Thread</b></button>
-    <button id="btn_draw_graph7" style="color:red"><b>CPU by Thread</b></button>
+    <button id="btn_draw_graph10" style="color:darkblue"><b>Network (MB/s)</b></button>
+    <button id="btn_draw_graph11" style="color:darkblue"><b>Network (PPS)</b></button>
+      </td><td class="button_table_col">
+    <button id="btn_draw_graph6" style="color:red"><b>CPU by Thread</b></button>
+    <button id="btn_draw_graph7" style="color:darkorange"><b>Memory by Thread</b></button>
     <button id="btn_draw_graph8" style="color:black"><b>IO by Thread</b></button>
-    <button id="btn_draw_graph9" style="color:darkorange"><b>Memory by Thread</b></button>
-    <button id="btn_draw_graph10" style="color:darkblue"><b>Network Traffic (MB/s)</b></button>
-    <button id="btn_draw_graph11" style="color:darkblue"><b>Network Traffic (PPS)</b></button>
+    <button id="btn_draw_graph9" style="color:red"><b>CPU/Memory/Disk Bubbles by Thread</b></button>
       </td><td class="button_table_col">
     <button id="btn_draw_graph1" style="color:black"><b>Average Load</b></button>
   </td></tr>
@@ -528,7 +520,7 @@ function set_main_chart_div_as_visible() {
     <tr><td class='config_key'>Cpuset path</td><td class='config_val'>/sys/fs/cgroup/cpuset/docker/9d2963d026f19d270dd12745efc575a13cad5f0bf4a99ccafc6cf940804047a5</td></tr>
     <tr><td class='config_key'>Cpus</td><td class='config_val'>0, 1</td></tr>
     <tr><td class='config_key'>Cpu quota perc</td><td class='config_val'>2.0</td></tr>
-    <tr><td class='config_key'>Memory limit bytes</td><td class='config_val'>-1.0B</td></tr>
+    <tr><td class='config_key'>Memory limit bytes</td><td class='config_val'>NO LIMIT</td></tr>
     <tr><td class='config_key'>Num allowed cpus</td><td class='config_val'>2</td></tr>
     <tr><td colspan='2' class='config_sectioncol'>CPU Overview</td></tr>
     <tr><td class='config_key'>Architecture</td><td class='config_val'>x86_64</td></tr>

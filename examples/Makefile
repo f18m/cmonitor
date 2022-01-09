@@ -3,6 +3,7 @@
 # 
 TOPDIR=..
 
+# FIXME: baremetal2.json.gz needs to be re-generated 
 #	baremetal2.json.gz \
 
 
@@ -13,6 +14,7 @@ EXAMPLE_JSON_FILES=\
 	docker-userapp-with-embedded-collector.json.gz \
 	docker-userapp.json.gz \
 	docker-stress-test.json.gz
+
 CMONITOR_COLLECTOR=$(TOPDIR)/collector/bin/glibc/cmonitor_collector
 
 SHELL:=/bin/bash 

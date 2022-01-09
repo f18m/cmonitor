@@ -9,7 +9,7 @@
      ul { margin: 0 0 0 0;padding-left: 20px; }
      button { margin-bottom: 3px; }
      #monitored_system_span { background-color: white; color: red; padding: 4px; }
-     #button_table { width:100%; border-collapse: collapse; }
+     #button_table { width:100%; border-collapse: collapse; margin-bottom: 5px; }
      .button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
      #config_viewer_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto; overflow: auto}
      .config_sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}
@@ -1447,7 +1447,7 @@ function draw_graph46() {
 }
 
 function draw_graph47() {
-  var deflated_data_base64_graph47 = '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\n';
+  var deflated_data_base64_graph47 = 'eNqVmc2KXDcQhV/F9MqBu1Cp/lTZhRg/QCAr48XE0xCTCQkeZxFC3j1H7TGRBtd1GbqHO93fvZRUOlVH6jdv/rl8/PvP6+X7y/3dx+vH979fL8fl4e6X6wM+evX5o3+Py8+P13t89ePdu1+v9y9evnr/+NtP17v77/DZ6w/XedcPDw9/vHvx+u79w18fro+Xt8eb2wNe9tbpoH7w0fnQMV8ijhvpaAc1xn8JG0BE4ob2fgz85dYipeVQG8uDQWtO+6HeyjQ14AyccTlvYSbzHMdf1wU3ZtEcN+Br6MDHSTCBWWxlHHOn43PsDbcMtciD6Xp40+Xpwz0sxwdwL+NMh1Or4wK8Lzh1aY1z3sFLnZcG3r6BZ/CxJJaUxE7WpB2xDZes+Wg5H+C5zmsHr9/AK/hY+VAs5ZwfR3T6Oi/HXFgEmKuwAF4j7+SdegI7YK/CEGtwK9MMepV2lz6YMxoJ3euGhvWW0Uinc5WGUMO1TCOV/imVSJIcPTQfZIdQ1zROWDyBuR9bGs9hPfpa6Zgw4iwMHseWRu4uOrIFQseWxXNY8H0ZdhSWFVYyywaoCNvKML6PMmwY4zp1wYM0g2chX1PI4SMRFzolYK7CyGC3JQ6hdO7mWkP3WNs3+qZbAhMe7r1Mo4O7lOnZwdfEiDYlziakPWux5/S0KlSm0b7HqlsZFpamZlZVr9I8m3eUacU66UsqlXp8wTI90WjdtI5SKUI9oYWetdZzejbutS5oN5csbplte82O6pCkitBUpG9SOKfRsjctnNMGes0lMuvpGpw+citooAd/mYYkAUcVhgvjtTgY0ZeMyScYidwKmlGnRO59itLZyzQSuZW0cxqJlFXwJmTSswlBIkXLNBIpo0wjkbpKwSwaZRMIUfpuqQe5SkJDlL4J/pxGKjfBn9PIZax2xAF3TWiZCVoejZUOF5DBemxe9xwex2Z0XZpbyxYr+sKaGUeN4myuFc6vlWE4P67BjHesJcdjxIiEBSTrsh5Ns6qAjE2fX4WxQdM1DPT01jMYF6Tb9ql7SxwDaGRQo0wjhfZJAnCWcQ7Pa5M1bBfU+4yG3fItENCSDbLDb23t9JTm6RNXBQyYF09pvMa6qrG/kTRuNtBRprGhDKrS0CLHKsaQHjQyWkFbmR6go0pDjtLW5hHYRItltIBeNRboS5bpBoKUZjX69m6jCmOYmx1B7BLJMpFjmmcu09ha7/v8U3pePPkR03mogFtCqWW4Ivl75MBdMnwA5zKOa9m2WNSsm2mGw0VvNoMa2r2kOGw0UxnnucfhOo4Fs+2e4GLMI5tIyFN51HFYaWllXGbv2Q6TqI8xOMNhpjd38hUcO6PtYPMch0ZV25pVUuzZstghUvd9qIqNdrZmoFL3XsR19sqn40q5mdpzGl3Y94ECHprQ9sxZndPTh1GZpmnE9uM+mNM+Mnw6MavjsGKbrTnHce1Byzkram504QyXJ6P3/9Mh68RV6NSph5VxvtmfOj49zTbvfYR5Fjt0OhrX8ZiOqYxDp6Nth6xMytoyfLqz9eHM1jVbMoLVPcq0zk1KnZ4nKRuto7VsznVgDRRpmwcHXobnaeA2f9j6hCbw7G77jETryfmPzcNV2k+0z/FbHVxFgR5vlo4Sr73movVRkwxHMveae4r3abZbHddntp9EJDyLvcNuq5RxxrVaHZd5tr/h3rtn8z49i/UyLu3J/Rfx+UPDNu/aKLMkdlPodmj4FRxZ3ZvXKa7z2EG232TmAX57+/Y/xPwXVQ==\n';
   var deflated_data_binary_graph47 = window.atob(deflated_data_base64_graph47);
   var inflated_data_graph47 = JSON.parse(pako.inflate(deflated_data_binary_graph47, { to: 'string' }));
   var data_graph47 = google.visualization.arrayToDataTable(inflated_data_graph47);
@@ -1456,7 +1456,7 @@ function draw_graph47() {
 
   var options_graph47 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Used memory in MB (from memory cgroup)",
+    title: "Used memory in MB (from memory cgroup), STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -1465,14 +1465,14 @@ function draw_graph47() {
     series: {
      0: {targetAxisIndex:0},
      1: {targetAxisIndex:0},
-     3: {targetAxisIndex:0},
-     2: {targetAxisIndex:1},
+     2: {targetAxisIndex:0},
+     3: {targetAxisIndex:1},
     },
     vAxes: {
-      0: { title: "MB" },
-      1: { title: "Alloc Failures" }
+      0: { title: "Memory (MB)", maxValue: 115343360 },
+      1: { title: "Alloc Failures", maxValue: 115343360 }
     },
-    isStacked:  0
+    isStacked:  1
   };
 
   set_main_chart_div_as_visible();
@@ -1486,39 +1486,14 @@ function draw_graph47() {
 }
 
 function draw_graph48() {
-  var deflated_data_base64_graph48 = 'eNpdjTELgzAUhP9KyGQh2Bfjq8mqQ+lQ6tJJpFgbqGAMJFn8932KU7fj7r67ruONd25YPlzwpn2yNDlL8nZ+sGtNog1+tDGSulvnw8rqNdnIe9HxmMKemBxQQA7icFgm9YnssgCdw9YcnV+m5MNr9PNsR05tpTcEStRozEX8V1hmaKJAJVVxjLyH+N1I0EIh8ahQK6jEHtAnECArrKQuCeh/BXk8Dw==\n';
+  var deflated_data_base64_graph48 = 'eNqNmNFqHDEMRX+l7FMKJliWZNl97l+EUtJ0oYW0Kc2+lNJ/71WS3eRl5hqSZdicyPKdK0szNzd/D6c/v46HD4evt6fj6fuP46Ec7m+/HO/x1cfzV//K4fH0+/j4+O5KxnsQdz8efn4/Pfz+fPdwf3+8e3c189svt4/fQNT3h0/l5um/r1ptUqQVLU2Lj+JezAzwnNfRpdRSt9kBNp7Z2WyHnUWAZg5S63XT2GWteM9dgLlW/GmbjOJRn8m9tSsw5Rg+wznWgQ2OTejDc2sNmJ43q7qHeonqF132yAEy6NoqJYSnqAascSyAGcWsAutLGzYFOnnEXubCNmwC4y7wBoy7AHUyz7mRbaBMZpPNiE91g/qYTQljYJwwASbYWrVMrQxSQPvGfAEhf9BoED/Y/lALM3xhSVTCjMmioQ7kUi3z+XODRTVR9dULVV9HoeqbFCq+GVJiTKAy34qVnxusI7VO4rkWZZp6R/qMyUNtH5ICvYngUqB3Ox8UvfdNDo2oTxJLEC4ag9B4whiUPaez7dXdHvECZROlQqHbDF4Tknb3ESSaZrdhWsHoPplWcHrIJfls0xugyW5beIGyxazs0rLJjAUQjg/qQlg+uA07IGcQZhFS+bA8mElzxy0qoUJiQX41wsD0oSwpmD5I3bc0fVhj24Pk5gv7g/HDBosG2b2tRIP0o5JoMH4MZxCEP5fQ7pJp/qkkmqW2jPEinTGjyJJrcBIyUR0jBJPKMULs7w05lOkEUex+vjkfYoPrRVzo9jCMgGNr4kI8GATNfS6sKBC+NxItr7stRMPzkZKZBRB6OmkJUDbnDHaHkImOzqAOaEUKxXg/WV4wvE5jkANiecHyOplW8LtVWRqANI1vlWkG51vdz+3ptw7CYAcihMlJSgmDhxZh+eTFpSNuj0mWvrfGsoLnrbG0cG2kI1r63dtkEIYpZTlpzqYsJ9x/fx1xN51g6XlXegMxTFmlhWHpeSeN0dLzbkwveN4tCATPu6/kBb9HXECRbRCdnQzGno+V4YRBT48gTKedGg92YIQwkt3cGJTdvFOtPD0fpHN6ej4mywueZ3OBp+eDnICeno85FpLHn0ZlecHzo7K84PlRfWFJeH7USaJZ9vXXcpS2xaGvr+zTc74ka3o+MTIGT+j7zun5MBUEwdE1CRJF6utbTN9eDc8PUllKGEekMQg/5Jzp+SZGjA+5Pd/GiLO8mr+Ob9sQBim3hSUV195JNEWX6iwvDTq79XwVeZndtiEo34M2lv7k+M5MkXY/H7c73bqn3+XNu4hP/wF/Dx9J\n';
   var deflated_data_binary_graph48 = window.atob(deflated_data_base64_graph48);
   var inflated_data_graph48 = JSON.parse(pako.inflate(deflated_data_binary_graph48, { to: 'string' }));
   var data_graph48 = google.visualization.arrayToDataTable(inflated_data_graph48);
-  var options_graph48 = {
-    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
-    chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
-    title: "Top 20 processes for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
-    hAxis: { title:"CPU time" },
-    vAxis: { title:"I/O GB" },
-    sizeAxis: { maxSize: 200 },
-    bubble: { textStyle: {fontSize: 15} }
-  };
-
-  if (g_chart && g_chart.clearChart)
-    g_chart.clearChart();
-  set_main_chart_div_as_visible();
-  g_chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));
-  g_chart.draw(data_graph48, options_graph48);
-  g_current_data = data_graph48;
-  g_current_options = options_graph48;
-  reset_combo_boxes("");
-}
-
-function draw_graph49() {
-  var deflated_data_base64_graph49 = 'eNqNmNFqHDEMRX+l7FMKJliWZNl97l+EUtJ0oYW0Kc2+lNJ/71WS3eRl5hqSZdicyPKdK0szNzd/D6c/v46HD4evt6fj6fuP46Ec7m+/HO/x1cfzV//K4fH0+/j4+O5KxnsQdz8efn4/Pfz+fPdwf3+8e3c189svt4/fQNT3h0/l5um/r1ptUqQVLU2Lj+JezAzwnNfRpdRSt9kBNp7Z2WyHnUWAZg5S63XT2GWteM9dgLlW/GmbjOJRn8m9tSsw5Rg+wznWgQ2OTejDc2sNmJ43q7qHeonqF132yAEy6NoqJYSnqAascSyAGcWsAutLGzYFOnnEXubCNmwC4y7wBoy7AHUyz7mRbaBMZpPNiE91g/qYTQljYJwwASbYWrVMrQxSQPvGfAEhf9BoED/Y/lALM3xhSVTCjMmioQ7kUi3z+XODRTVR9dULVV9HoeqbFCq+GVJiTKAy34qVnxusI7VO4rkWZZp6R/qMyUNtH5ICvYngUqB3Ox8UvfdNDo2oTxJLEC4ag9B4whiUPaez7dXdHvECZROlQqHbDF4Tknb3ESSaZrdhWsHoPplWcHrIJfls0xugyW5beIGyxazs0rLJjAUQjg/qQlg+uA07IGcQZhFS+bA8mElzxy0qoUJiQX41wsD0oSwpmD5I3bc0fVhj24Pk5gv7g/HDBosG2b2tRIP0o5JoMH4MZxCEP5fQ7pJp/qkkmqW2jPEinTGjyJJrcBIyUR0jBJPKMULs7w05lOkEUex+vjkfYoPrRVzo9jCMgGNr4kI8GATNfS6sKBC+NxItr7stRMPzkZKZBRB6OmkJUDbnDHaHkImOzqAOaEUKxXg/WV4wvE5jkANiecHyOplW8LtVWRqANI1vlWkG51vdz+3ptw7CYAcihMlJSgmDhxZh+eTFpSNuj0mWvrfGsoLnrbG0cG2kI1r63dtkEIYpZTlpzqYsJ9x/fx1xN51g6XlXegMxTFmlhWHpeSeN0dLzbkwveN4tCATPu6/kBb9HXECRbRCdnQzGno+V4YRBT48gTKedGg92YIQwkt3cGJTdvFOtPD0fpHN6ej4mywueZ3OBp+eDnICeno85FpLHn0ZlecHzo7K84PlRfWFJeH7USaJZ9vXXcpS2xaGvr+zTc74ka3o+MTIGT+j7zun5MBUEwdE1CRJF6utbTN9eDc8PUllKGEekMQg/5Jzp+SZGjA+5Pd/GiLO8mr+Ob9sQBim3hSUV195JNEWX6iwvDTq79XwVeZndtiEo34M2lv7k+M5MkXY/H7c73bqn3+XNu4hP/wF/Dx9J\n';
-  var deflated_data_binary_graph49 = window.atob(deflated_data_base64_graph49);
-  var inflated_data_graph49 = JSON.parse(pako.inflate(deflated_data_binary_graph49, { to: 'string' }));
-  var data_graph49 = google.visualization.arrayToDataTable(inflated_data_graph49);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
-  date_formatter.format(data_graph49, 0);
+  date_formatter.format(data_graph48, 0);
 
-  var options_graph49 = {
+  var options_graph48 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Top 20 processes for CPU usage (from cgroup stats), STACKED graph",
     focusTarget: "category",
@@ -1534,51 +1509,21 @@ function draw_graph49() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
-  g_chart.draw(data_graph49, options_graph49);
-  g_current_data = data_graph49;
-  g_current_options = options_graph49;
+  g_chart.draw(data_graph48, options_graph48);
+  g_current_data = data_graph48;
+  g_current_options = options_graph48;
   reset_combo_boxes("");
 }
 
-function draw_graph50() {
-  var deflated_data_base64_graph50 = 'eNqNmM1uFDEQhF8F7SlIPtjuP5szbxEhFMJKIAWCyF4Q4t2pTmYWLp6K8qPJ6ktPu6bs7p7b29+ny68f59O70+e7y/ny9dv5VE4Pd5/OD/jo/f7Rn3J6uvw8Pz29uWnjLYj7b4/fv14ef368f3x4ON+/uZn56ae7py8g6tvTh3L7/N83vfZWWi9SuhQbxayoKuCaX2tsAAuCzdJATUppMR/PVKuidkBGsaj8rhWYcAy/wzjmwAbHJkThufUO7CW3MSKOSCtRX9IbIXJEDpD8YUgr0XiGosA6xwKY8mdbgfm+3qNVqIB8hVm8zFesQicw7gHrwLgHsCvmltsY+PuAHGX2tgyoz583MEIYBWOECTDB7lXLlMogAbS7cvQ1B/GDBoP0wZaHfTC3zbfwxcZB+ZgsGPZA23aKa+nuc7p0XeDSC5VfrFD5ZRQqv7ZC1VdFSowJbMxNLndoLDgcpvQFbsjOSUiTIkxZc6yAMXmqHUOtQHKieSuQvO9HxdAlhurjk4RqiBadQSg8oQzKmuNsdfWwRmxQVk6qE6rN2PeFr0XoedQECSZZbJhUcLpNJhWsHm3PvYv7qFPnAtZ2WBo2KMvMvtARay7rzIu0sw5ZmwfHIXUhLB/chg7IGIRmhGx+WB7MXjViLjEUemkkFPQXJQxMH8JygumDbPuepg/tbHVQXI0VjTxrwQ0WDKJbf0Uw6D4qCQbfxzAGQfZtB+GOBxykn0KCaQrLGCvNGTPKtc8YY+0YnIJMUUMHwYQydBDHS5Pcd0YQweJ3S/Xobu51xaJ2Wdu285zLkGiojd0WF82CQVDd5lHDvXFQ3jsJlteu7PmAQ0UnXQsglHRSDyBtthnsEWE6kOEMckCT7bDsCfDN0oLfZSqDDBBLC46XyaSC37W2f8XCxdsKVaBMMPhe63Fmzz91EAb5t0aYbKGEMBhYGssnL7ZKCBFszWGE7ywp2F07ywrXSiqhptetTwahixKWk2RPynKC1+3a2vYYEzNtLGF0U0KfIVoprbuusuQ0z9ROgsHzpkwyeN40CATPm13TmmsOBX2byYbG2hbwfJCW2HKmDCMMynkEYZxWacx1YBphWlZyZVBW8uvg4GsOlZyUTUvPx2RpwfOsJ7D0fJDjz9LzMQczn6XtR2Vpwe6jsrRg91Fp25ZnCLhJgmmW842RPlrHlDBWLGr61si3ul6pZWdJbms5KjIG0/mxczznqCAIzq5JkChtKxQYzX19M8wNrbKM0Im0ziB8k0MmXxEACuYszzcxzVha3a5t2wGEFsqUDfCeLyKbOQkmqFHO0pKgTZvnK8i9aTuAoLvvXujoIHRKnSs4HwFzRdo96ETj6ff231uID38Br0YeYw==\n';
-  var deflated_data_binary_graph50 = window.atob(deflated_data_base64_graph50);
-  var inflated_data_graph50 = JSON.parse(pako.inflate(deflated_data_binary_graph50, { to: 'string' }));
-  var data_graph50 = google.visualization.arrayToDataTable(inflated_data_graph50);
+function draw_graph49() {
+  var deflated_data_base64_graph49 = 'eNqVmd1qJDcQhV9l8dUuCKP6U0m5C4Rc5Q2WJTiOIQZvHNbORQh59xzZ8eDqdEst8Hp7xv1NSaXS0amez5//vnr+64+7q++ufr15vnu+/3p3la4ebn65e8BbP7y99U+6+un+6/0z/vb9w8Pj7Ycfb+4f/vx294Q3np7x/9OHj1Q/4dXt18ff758fv/18+/jwcHf74WPr7/5y8/Qb7sifrr6kzy8f+5EzUyJOkliS1WSWVBU3U9bral7wMuXr3JRzTTnlY7LiVl8nWyLc2d6DLDm3c6wmK3XD4u2c+FqUG+48Zj2Z5z12ONgMSt5TIlR8RuG323uqiKjNqAKqbqg6HWHDWuRVihlUmFe10uxcJtmS5zC96t7KSbgC9j14NF6h5JSXKQXF7ylizVlmmAPTZUwzsLKLnciLCuiwL8hIy2whtaQWE0Mle80zrAGTZcwYmK1jBizOrRk20rnMQGoa0y69F1Rf3icwssgomDA5Juc+tAHjYHyRgag0yauQAAozYuUqr9WFMmMrxyyKZKN91grncUCUSJS+ExB0pUXlu0DTUUJWmseTodksLQxFoS2j/j4eXbs5VT34BOEUK+XyCcdRxVKsFCHkajxSqSlWirCr1XFFUoqFcoZR3LXKOLQyMEalrGTRMMGy+wnHUU2StFUGRiOstzSpZGOmn3cbyOtQDCihKmJZnGBQFRySoPRf6ifFTwmOqoRcKNyJl2E4QkTnVQgeynUV6uYpzsyykYwzmLd+5gzU3SWtQnBONexHraUVOpN47geM77LHAaXbp7YKGSoxLJcRt9zGEOwSUYRas9dNMtyT1NVj42PesUcBtXumkEvj4noql9qNU1hxs6ovujhlISAeN+mFHWw4mKa4S89ABVCcIX5PdkBvIKJ8A6oygqAgYNouM0kHyiu5hGwUomML+sqgVKKKF2IaShZ3DXHxVQg1EpX7DITi0FD+RakojzOIqlDbhaYphJS41tWAKA6Loywtk5wKiBrZtGKV3HQYEMXqUbvOQCiPKFoXaDrKrigt7BkHyjYMqH3RA8MCbzZmLMV26AxTU2wUXLOXfGrH4BANq+1QZBnvGGSs5VUGll+WmP63FpbYW221DRFBwkMmarY3ZRvqvqSX1nEXnSQRLQbQ2NmTZebhSHFBFjt69jz0cYBQHNZ2oekgCUVSeDFgvy4anyAojsczARmWOnYmndVxWhieOjqZE5D0PiE+l4Ht9AmEnxp2GrptJR1DcLTRwlygaT6k4YcWA2Lm0sICtN751zFkgMoqVAG1RQjyoTnOyYm1nO6BpKuJ5rB4Ded9Ge9zyInmsgS9/Mt1kUFeopGkDIUZ1qOm3sLIKtQAlVWoX0TvSFma0av2m5BwPYYN5UX/g13HISsoWaVwrdE+Ui5cio0ptF3RC1KG8dIJhb5LaJWS3lrLMoVajC08HGfxludHjnY1MalH8GFI9F6a96npmms/vuPDXeJaqwxDIgkWDeUpCu15/LbjDAVJMdtMz5jl1PQgJu5buMHgn4LhtZ334aPx9upwt1UIJts3mQFTbQiVrVE+A3V3TasQdXu9eZbPr7kbUd1fl31qknzrsuLRiZ4JiWuPZypOn8YqY0q3Zp4YYjTsgK3LireySqFu4Vv3qWlSoC41b6ZXW/Hx9KR7V1mmWne8+9R0oJCVmqNQC5lYHobU7rkjJIXN5tpp/buYzcF3Yaejtd4iH8U9hPpzyghZhcMZQxXFtgaV/njNVxmcepv0o/9uNmQct9ctxHZiu/azsZ86+/BgZtKPgEDBXpUyyUe/LdYJvARejCkUyOb0uVDT6XHvzvJqSLZtD0mq2nw8PQyDTPep6UAF11ZWQ+J0orKZnjP7ePXEtx3kGUrztoU8RaFSSlw9y/TmF4faUF50pbQj+DAkCmZz/F+o6TpYf1QXZ2n9i8Y3AfzyLz4IRI4=\n';
+  var deflated_data_binary_graph49 = window.atob(deflated_data_base64_graph49);
+  var inflated_data_graph49 = JSON.parse(pako.inflate(deflated_data_binary_graph49, { to: 'string' }));
+  var data_graph49 = google.visualization.arrayToDataTable(inflated_data_graph49);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
-  date_formatter.format(data_graph50, 0);
+  date_formatter.format(data_graph49, 0);
 
-  var options_graph50 = {
-    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 processes for I/O usage (from cgroup stats)",
-    focusTarget: "category",
-    tooltip: { textStyle: { fontSize: 12 } },
-    legend: { textStyle: { fontSize: 12 } },
-    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
-    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "IO Read+Write (Bytes Per Sec)", gridlines: { color: "lightgrey", count: 11 } },
-    isStacked:  0
-  };
-
-  set_main_chart_div_as_visible();
-  if (g_chart && g_chart.clearChart)
-    g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
-  g_chart.draw(data_graph50, options_graph50);
-  g_current_data = data_graph50;
-  g_current_options = options_graph50;
-  reset_combo_boxes("");
-}
-
-function draw_graph51() {
-  var deflated_data_base64_graph51 = 'eNqVmd1qJDcQhV9l8dUuCKP6U0m5C4Rc5Q2WJTiOIQZvHNbORQh59xzZ8eDqdEst8Hp7xv1NSaXS0amez5//vnr+64+7q++ufr15vnu+/3p3la4ebn65e8BbP7y99U+6+un+6/0z/vb9w8Pj7Ycfb+4f/vx294Q3np7x/9OHj1Q/4dXt18ff758fv/18+/jwcHf74WPr7/5y8/Qb7sifrr6kzy8f+5EzUyJOkliS1WSWVBU3U9bral7wMuXr3JRzTTnlY7LiVl8nWyLc2d6DLDm3c6wmK3XD4u2c+FqUG+48Zj2Z5z12ONgMSt5TIlR8RuG323uqiKjNqAKqbqg6HWHDWuRVihlUmFe10uxcJtmS5zC96t7KSbgC9j14NF6h5JSXKQXF7ylizVlmmAPTZUwzsLKLnciLCuiwL8hIy2whtaQWE0Mle80zrAGTZcwYmK1jBizOrRk20rnMQGoa0y69F1Rf3icwssgomDA5Juc+tAHjYHyRgag0yauQAAozYuUqr9WFMmMrxyyKZKN91grncUCUSJS+ExB0pUXlu0DTUUJWmseTodksLQxFoS2j/j4eXbs5VT34BOEUK+XyCcdRxVKsFCHkajxSqSlWirCr1XFFUoqFcoZR3LXKOLQyMEalrGTRMMGy+wnHUU2StFUGRiOstzSpZGOmn3cbyOtQDCihKmJZnGBQFRySoPRf6ifFTwmOqoRcKNyJl2E4QkTnVQgeynUV6uYpzsyykYwzmLd+5gzU3SWtQnBONexHraUVOpN47geM77LHAaXbp7YKGSoxLJcRt9zGEOwSUYRas9dNMtyT1NVj42PesUcBtXumkEvj4noql9qNU1hxs6ovujhlISAeN+mFHWw4mKa4S89ABVCcIX5PdkBvIKJ8A6oygqAgYNouM0kHyiu5hGwUomML+sqgVKKKF2IaShZ3DXHxVQg1EpX7DITi0FD+RakojzOIqlDbhaYphJS41tWAKA6Loywtk5wKiBrZtGKV3HQYEMXqUbvOQCiPKFoXaDrKrigt7BkHyjYMqH3RA8MCbzZmLMV26AxTU2wUXLOXfGrH4BANq+1QZBnvGGSs5VUGll+WmP63FpbYW221DRFBwkMmarY3ZRvqvqSX1nEXnSQRLQbQ2NmTZebhSHFBFjt69jz0cYBQHNZ2oekgCUVSeDFgvy4anyAojsczARmWOnYmndVxWhieOjqZE5D0PiE+l4Ht9AmEnxp2GrptJR1DcLTRwlygaT6k4YcWA2Lm0sICtN751zFkgMoqVAG1RQjyoTnOyYm1nO6BpKuJ5rB4Ded9Ge9zyInmsgS9/Mt1kUFeopGkDIUZ1qOm3sLIKtQAlVWoX0TvSFma0av2m5BwPYYN5UX/g13HISsoWaVwrdE+Ui5cio0ptF3RC1KG8dIJhb5LaJWS3lrLMoVajC08HGfxludHjnY1MalH8GFI9F6a96npmms/vuPDXeJaqwxDIgkWDeUpCu15/LbjDAVJMdtMz5jl1PQgJu5buMHgn4LhtZ334aPx9upwt1UIJts3mQFTbQiVrVE+A3V3TasQdXu9eZbPr7kbUd1fl31qknzrsuLRiZ4JiWuPZypOn8YqY0q3Zp4YYjTsgK3LireySqFu4Vv3qWlSoC41b6ZXW/Hx9KR7V1mmWne8+9R0oJCVmqNQC5lYHobU7rkjJIXN5tpp/buYzcF3Yaejtd4iH8U9hPpzyghZhcMZQxXFtgaV/njNVxmcepv0o/9uNmQct9ctxHZiu/azsZ86+/BgZtKPgEDBXpUyyUe/LdYJvARejCkUyOb0uVDT6XHvzvJqSLZtD0mq2nw8PQyDTPep6UAF11ZWQ+J0orKZnjP7ePXEtx3kGUrztoU8RaFSSlw9y/TmF4faUF50pbQj+DAkCmZz/F+o6TpYf1QXZ2n9i8Y3AfzyLz4IRI4=\n';
-  var deflated_data_binary_graph51 = window.atob(deflated_data_base64_graph51);
-  var inflated_data_graph51 = JSON.parse(pako.inflate(deflated_data_binary_graph51, { to: 'string' }));
-  var data_graph51 = google.visualization.arrayToDataTable(inflated_data_graph51);
-  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
-  date_formatter.format(data_graph51, 0);
-
-  var options_graph51 = {
+  var options_graph49 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Top 20 processes for memory usage (from cgroup stats)",
     focusTarget: "category",
@@ -1594,6 +1539,61 @@ function draw_graph51() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph49, options_graph49);
+  g_current_data = data_graph49;
+  g_current_options = options_graph49;
+  reset_combo_boxes("");
+}
+
+function draw_graph50() {
+  var deflated_data_base64_graph50 = 'eNqNmNtqJDcQhl9lmSsvKIOkOkm5zluYJXidgSx447CemxDy7vnLnkMItP5mZ03TfF1dB/2qUj8+/n04//Xn6fDz4ben8+n87fvpUA4vT19PL7j1y/XWP+Xwdv5xenv79NDGZxDP31//+HZ+/fHr8+vLy+n508PMu1+f3n4HUT8fvpTH96cfeu2ttF6kdCk2illRVcD1WAv+bYMDYFBwlgZu7uC0mKfvtbRjFbXTT9UWeBSL+o4vX16BCcfwN4xjDmxwbCI73LfegX34No4jAgH7CrcS1S54iDB8AA/qhLQSjfsqCqxzLIApxbQC81vkLBQV4JNb9TJ3hKITGF8S1oHxJQG9zItvCMUmCQWqmb1tWtX3+w2MEEbBGGECTLB31TKlMkgA3Vbq6BtBXmCUIahFFCFYjBDIDKPL5AKjEDGZReiiXSXk+mHw2N3ndOm68ZT0QushVmg9ZBRaD22FlkMVLjEmoNlr6twvkbYp2EOm9I2nDE46sWxShOXZHIEwJnfANdQKMk9S3woy32+bydDFKmkFfcsnsddgMjqD0K5CGZRNylmIddlULlD2XJostKdx04uvM9FzMwpiUbJFsXxh6dtk+cLaj3YL4NjFfdSpcwPXtmwkFyib0i3eEct4NVvTR5rnsQ5ZwtBB0LUJIQRfnA7IGIRxhuwMEAKYW6OJufAfRSshjdhDQUQJAymEMMcghSA7Qk8phHYWItKutqvP5JYMeDCLSL/1vRZRhlGJRUgihjEIBbiIK1+7fGsqYwoxqJlmxlhpzphR7tMKccywXbL8GuYQljHDHLKOT1KURhBBBuZ9A4nu5r7BemnWrlqfK61gsgHL3o2LZsEg5N8mnecvMArhnVjMa9dd5QKMqYAMQIAwFpA+gkznqMIqJvgNZ5ADmrvkl1MFfsw3CEGmMsgAMd8gBZksX9CA1va/FuNH8ZZXWw8pHmL5gyq0rn18/18HYRBJa4TJcUwIg5NRY/7kxaWJZjpsUU9NPWhnnkEH2plruFbSRDXXv/XJIExkwnySHHKZT1j/dp+VsR+NiYN0bNEYzYRWEiOZ1lt2ZZldzc23E4sQgilLHIRgGgSCEMzuvs2lbxBAxBXWWC8TCCHIuG15mA0jDOaBCMI47fA4RoJphGk5BSiDcgq4n0x8kQZLIQRpt5ZCiMl8gxDYQGEphCBbpKUQYo5dC9JSEKMy36CDUZlv0MGo+8bA3GIAT2JRcyC4aVX6aB2nkbFFYyS4nhRaXUdtObWSt1ueUBkzULcl43loC4Jgh5sEidLqtabuq0Xp+XWotcrcwjTTOoPwIzuR51ehprFrvXl+HWrGfOt2mwQXEGYx011fEDw/mDZzYlHQ2Jz5JkFHQM9PpdcRcAGhAh73XoTpQ6fUuYVnOdgySRHEvpOTpwraf76GfPkXEU5Kpg==\n';
+  var deflated_data_binary_graph50 = window.atob(deflated_data_base64_graph50);
+  var inflated_data_graph50 = JSON.parse(pako.inflate(deflated_data_binary_graph50, { to: 'string' }));
+  var data_graph50 = google.visualization.arrayToDataTable(inflated_data_graph50);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph50, 0);
+
+  var options_graph50 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Top 20 processes for I/O usage (from cgroup stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "IO Read+Write (GB)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph50, options_graph50);
+  g_current_data = data_graph50;
+  g_current_options = options_graph50;
+  reset_combo_boxes("");
+}
+
+function draw_graph51() {
+  var deflated_data_base64_graph51 = 'eNpdjTELwjAQhf9KyKQQ4qXp2WRtB3EQuziVIjUGLDYNJF38916Lk9vju++96zrexBCG+ckFb9obW8bgKZ4PV3aqKbQpOp8zpYsPMX3Yu+a96Hhe0oatBBQgQfwI2ymzJ1zKAswquhDncYnp7uI0ecdJ1mZtQIkGrT2Kf4XtLC0UqJXUxbbxGPJrLYIRGqmOGo2GSmwH+gjkqworqUzZ919T2Tol\n';
+  var deflated_data_binary_graph51 = window.atob(deflated_data_base64_graph51);
+  var inflated_data_graph51 = JSON.parse(pako.inflate(deflated_data_binary_graph51, { to: 'string' }));
+  var data_graph51 = google.visualization.arrayToDataTable(inflated_data_graph51);
+  var options_graph51 = {
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
+    title: "Top 20 processes for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
+    hAxis: { title:"CPU time" },
+    vAxis: { title:"I/O GB" },
+    sizeAxis: { maxSize: 200 },
+    bubble: { textStyle: {fontSize: 15} }
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  set_main_chart_div_as_visible();
+  g_chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph51, options_graph51);
   g_current_data = data_graph51;
   g_current_options = options_graph51;
@@ -1720,8 +1720,8 @@ function set_main_chart_div_as_visible() {
   <tr>
     <td class="button_table_col">Static Info</td>
     <td class="button_table_col"><b>CGroup</b> stats (Data collected from /docker/2c8cc4b0322b7acd623130e2e0d23172ec6e37e9594b6b921f25ca0f99a488e4)</td>
-    <td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from /docker/2c8cc4b0322b7acd623130e2e0d23172ec6e37e9594b6b921f25ca0f99a488e4)</td>
-    <td class="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
+    <td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from cgroup and /proc)</td>
+    <td class="button_table_col"><b>Baremetal</b> stats (Data collected only from /proc)</td>
   </tr>
   <tr>
   <td class="button_table_col">
@@ -1734,12 +1734,13 @@ function set_main_chart_div_as_visible() {
     </select>
     <button id="btn_draw_graph46" style="color:red"><b>All CPUs</b></button>
     <button id="btn_draw_graph47" style="color:darkorange"><b>Memory</b></button>
-    <button id="btn_draw_graph48" style="color:red"><b>CPU/Memory/Disk Bubbles by Process</b></button>
-    <button id="btn_draw_graph49" style="color:red"><b>CPU by Process</b></button>
+    <button id="btn_draw_graph52" style="color:darkblue"><b>Network (MB/s)</b></button>
+    <button id="btn_draw_graph53" style="color:darkblue"><b>Network (PPS)</b></button>
+      </td><td class="button_table_col">
+    <button id="btn_draw_graph48" style="color:red"><b>CPU by Process</b></button>
+    <button id="btn_draw_graph49" style="color:darkorange"><b>Memory by Process</b></button>
     <button id="btn_draw_graph50" style="color:black"><b>IO by Process</b></button>
-    <button id="btn_draw_graph51" style="color:darkorange"><b>Memory by Process</b></button>
-    <button id="btn_draw_graph52" style="color:darkblue"><b>Network Traffic (MB/s)</b></button>
-    <button id="btn_draw_graph53" style="color:darkblue"><b>Network Traffic (PPS)</b></button>
+    <button id="btn_draw_graph51" style="color:red"><b>CPU/Memory/Disk Bubbles by Process</b></button>
       </td><td class="button_table_col">
     <select id="select_combobox_baremetal_cpus" onchange="call_function_named(this.value)">
       <option value="clear_chart">None</option>
@@ -1817,7 +1818,7 @@ function set_main_chart_div_as_visible() {
     <tr><td class='config_key'>Cpuacct path</td><td class='config_val'>/sys/fs/cgroup/cpu,cpuacct</td></tr>
     <tr><td class='config_key'>Cpuset path</td><td class='config_val'>/sys/fs/cgroup/cpuset</td></tr>
     <tr><td class='config_key'>Cpus</td><td class='config_val'>0, 1</td></tr>
-    <tr><td class='config_key'>Cpu quota perc</td><td class='config_val'>-1.0</td></tr>
+    <tr><td class='config_key'>Cpu quota perc</td><td class='config_val'>NO LIMIT</td></tr>
     <tr><td class='config_key'>Memory limit bytes</td><td class='config_val'>100.0MiB</td></tr>
     <tr><td class='config_key'>Num allowed cpus</td><td class='config_val'>2</td></tr>
     <tr><td colspan='2' class='config_sectioncol'>CPU Overview</td></tr>

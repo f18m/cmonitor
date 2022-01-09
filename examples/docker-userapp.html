@@ -9,7 +9,7 @@
      ul { margin: 0 0 0 0;padding-left: 20px; }
      button { margin-bottom: 3px; }
      #monitored_system_span { background-color: white; color: red; padding: 4px; }
-     #button_table { width:100%; border-collapse: collapse; }
+     #button_table { width:100%; border-collapse: collapse; margin-bottom: 5px; }
      .button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
      #config_viewer_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto; overflow: auto}
      .config_sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}
@@ -187,7 +187,7 @@ function draw_graph4() {
 }
 
 function draw_graph5() {
-  var deflated_data_base64_graph5 = 'eNql201rHEcUheG/YmblQCOq6tbHudmFmKyyCmQlvFCsAYvIxFjKIoT895w2aJFAiPptEHIz9uNrqNvviGZ8e/vn5fmPz9fLt5f7u+fr88On62W7PN79cn30S+9eXvpru/z8dL33b31/9+Hj9f7N23cPT7/+dL27/8avfff4+NuHNz/cPTz+/uX65Bd+fPj08Hx5v91+/RvettLaVre+7b/k1vu2VAzbTaw61LdyU7ay1XLTNdb8Tze2porcUgNuel4gt9SBW543kFuawMnzhNxSApdby4LcSnDuo3heQ24hVz0vkFvINc/ryK0EezbC8xZyK8Gejb5FKcipkH0ZnteQUyHnNz2vIyfklucN5FRAX4Y8jzkVsmfpeYmc6tE9a/ufiFoJU23HWfW0IEx1HGfN0xBTncdZeNoiTIQ5K1WEiTBHpSZhamAnnRTG1MBOOigtCBNhzkkbhKmBnXRM2iJMDRx39TZHQU4BIlSdkxc3suV8vVM04BwU6BQBnJMSHTnFAM5RgU6xgHNWQsgpEjiHBTr1ApzTAp062WvHpTfkhJzz0gM5dbDX+7tlH8ipg/1s7ksXcupgz/w9RkVOA5xfc1+g0wDn3tyX0ZETcu7LGMhpTODclyHkNMi+uC+zIKdJ9sx9mQ05TbIv7sscyGmC8wt/zYWcJjj3cF/Wy/mN9nqlVQ8rtwUprTis3JXVgdIah5WbgpTWOqzckyWgtPKwcktUgdLLU+IDyh1RACUdP2U3RP9ueellv3gNlgbFrokmx9KCuO//8hNYEsUujJJjZaXYvcnGsTIodn1ycKykS9LdohTH4thlyuQ4S6F4ekNP4Cx4w5YnN46TY3lycJwcpyd3jrPQG2PsJZocZ6EBHL4s/3z/PECzFkab+4dp1spoeGqjNGsw2j21U5p1MDo8FdN8eUR/lLpXFa+ie8Wxe1XFcVYa+OFetcpxcuxeteA4G4td3fYfIia22Ra0vmokVrtMKJ2qKFBmVCQdKiwzGpLOVASUGR1JRyoGlBkLSScqBGUG2yHHqRcoE0pnqVcos7Md2j+5RWV2tn11/+ke0+y0gdWXZ3D2QbGT1CfHybHD1BfH2UWx83QGZ0+KHakzOEeh2KkaleMcjWIHawTHOfCN4WyNyXEOvJ77x0DFcQ66JF+fEpzAOemG7W/eZ3BOup7+3s/gnHQ9mxs2O8c5abebG3YG56Q3RnPDzuCc9K5qbtgZnJPeks0NW4Xj5NgNW5XjXLTbbf+o9wmci95VsT/1O4Fz0VsyfLkGx7nojRFu2Bmci94Y4YYtcZyLvt2EG6bCcYquZ7hhCo5TeEncME2OU/ic3TCJ4xQ+ZzfsDM7ES7L/d44TOJOmt+9P8RvHmXQ9u7+yc5zJnr90FywHpZmTUdeL08z/ee7z/m9LF2Tu\n';
+  var deflated_data_base64_graph5 = 'eNqNmk2LY1UURf9Kk1ELb3C/797OxKZ/gOCo6EHZFbDoEqWrHIj4391PcOBA3oKQPJKVEzj7rJv3bvLw8Oft7Y/f7rdvb0+Pb/e351/ut+P28vjT/SVPffj3qb+O24+v96e89P3j55/vT+/ef3h+/fLD/fHpmzz38ev9fNd3Ly+/fn738fH55fev99fbp+PhnwLvW2ntqMc4zgcfYxxbJe9rRzl0lP/l5tFUEbfVALdSryNuawBup95E3NYCnFJPiNsy4Hw0F8Rtgz7PknoNcRtxNfU64jbiWuoNxG2D3GZPvY24bZDbHEcvBXEqJI+Zeg1xKqR/K/UG4oS4nXoTcSrAj6nUY5wKyc2pZ8SpXuXWSl7stRJMtV1jNdU6wVTnNdZSDWGq6xrrqbYJJoJFiyqCiWCRoppgaiDTKMEwNZBphGidYCJYdGiTYGog08jQNsHUQHtr0u8FcepAmhodIKdO7IoQkFMnGkaJPhCnDkKrkQJy6iC2Gi26EKdO8o0YkNMgcxA1IKdB5iByjIY4IS56jI44DTAH5+o4JuI0QL4tfgwhTgPklvs+K+I0Qf9a/ICcJuhzix9zIE6Iix9zIk4TrKYtfkwhTpPkET9WQZwWyS1+rIY4LZJH/FgTcVrkDCO3tRGnBfrc48cuiNMG/evxA3LaoH89fuyBOG3Q5x4/IKdN+hw/thCnDea5xw9VxElgTnv8UEecRPocPyAnkT7HDy3ESeSc+fxoxknk5Dp+yIiTQW4jfrghTga5jfjhiTgZ9HnEDwtxQlz8sBHnAtahsRId41xIHjv1GuKMOKVeR5wR59QbiHMBczDP0V+IcwEezRwWI85kr2C2qMQ4k02F2VOvIc5kW2GO1BuIM9lYmDP1GGeyAzHjB9lbCGfExQ+0uxA/0PZC/GgVcUZc/CB7AuHcLnOrx7nyLoL5elOgnkfXmwInZoJFjeutgxPz9Y5AvtZSDWG+3g84H8f1dsD56A5SiBTXF/kn5g5SiBLXl/gn5g5SiBCjEMwEiw6jEswDpHD+hoQwDxBWPb/mGecBUq05hJwHiL9GiLEQZ8RFibER5wEGqkYKyHmQZSJaQM4TzF6NGLMizhOMVY0asyPOk8xB5JgLcZ4kt/MnUSHOk6zH52kr47zIwp1DyHmB3HI/IOcFcmvxYw3EeQF/W/yAnBeYgxY/IOcF5qXFD8h5gblq8WMXxBlx8WNXxHkDf9v5kzzjvMG89POyiXHeYK56DvdEnDeYgx4/IOcN5qDHjy3EeYN1o8cPFcRZILceP9QRZ5E+xw8txFmkf/FDQpxF+hc/IGeTPp9/CWGcDbwc52V7Q5xNTq5z80CcERc/PBFngzkY8QNy/s//Sz79DRTN+No=\n';
   var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
   var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
   var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
@@ -196,7 +196,7 @@ function draw_graph5() {
 
   var options_graph5 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Used memory in MB (from memory cgroup)",
+    title: "Used memory in MB (from memory cgroup), STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -205,14 +205,14 @@ function draw_graph5() {
     series: {
      0: {targetAxisIndex:0},
      1: {targetAxisIndex:0},
-     3: {targetAxisIndex:0},
-     2: {targetAxisIndex:1},
+     2: {targetAxisIndex:0},
+     3: {targetAxisIndex:1},
     },
     vAxes: {
-      0: { title: "MB" },
-      1: { title: "Alloc Failures" }
+      0: { title: "Memory (MB)", maxValue: 11534336 },
+      1: { title: "Alloc Failures", maxValue: 11534336 }
     },
-    isStacked:  0
+    isStacked:  1
   };
 
   set_main_chart_div_as_visible();
@@ -226,39 +226,14 @@ function draw_graph5() {
 }
 
 function draw_graph6() {
-  var deflated_data_base64_graph6 = 'eNptjs0KwjAQhF+l5KQQa1qT2F715EH0oKdSQmy3WkkMJEWoT2/9pQ1dWFhm9pvdLENro7W8lQij9f4YNLWGbtzMd8F21Q2HiwX5MregjW2DVduAQznOkIWydjMH9g4WYZqEPCa9YpiycMFTElE82A0mEY/TKFlOEWaMc8ppSF6Bp9qIQhkHoqpV9wQJybs948PHNB3jpalE5dpb4eF//UszMkYr+WhFZcE//td/dOTTV9BSKVOI01k0l7LHe84vIR4k5E9zN26O\n';
+  var deflated_data_base64_graph6 = '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\n';
   var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
   var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
-  var options_graph6 = {
-    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
-    chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
-    title: "Top 20 threads for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
-    hAxis: { title:"CPU time" },
-    vAxis: { title:"I/O MB" },
-    sizeAxis: { maxSize: 200 },
-    bubble: { textStyle: {fontSize: 15} }
-  };
-
-  if (g_chart && g_chart.clearChart)
-    g_chart.clearChart();
-  set_main_chart_div_as_visible();
-  g_chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));
-  g_chart.draw(data_graph6, options_graph6);
-  g_current_data = data_graph6;
-  g_current_options = options_graph6;
-  reset_combo_boxes("");
-}
-
-function draw_graph7() {
-  var deflated_data_base64_graph7 = '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\n';
-  var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
-  var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
-  var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
-  date_formatter.format(data_graph7, 0);
+  date_formatter.format(data_graph6, 0);
 
-  var options_graph7 = {
+  var options_graph6 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Top 20 threads for CPU usage (from cgroup stats), STACKED graph",
     focusTarget: "category",
@@ -286,51 +261,21 @@ function draw_graph7() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
-  g_chart.draw(data_graph7, options_graph7);
-  g_current_data = data_graph7;
-  g_current_options = options_graph7;
+  g_chart.draw(data_graph6, options_graph6);
+  g_current_data = data_graph6;
+  g_current_options = options_graph6;
   reset_combo_boxes("");
 }
 
-function draw_graph8() {
-  var deflated_data_base64_graph8 = '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\n';
-  var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
-  var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
-  var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
+function draw_graph7() {
+  var deflated_data_base64_graph7 = 'eNq13N1qI0cQBeBXWXS1C5Ol/+tU7gIhV3kDswjZHm8U5DjYTsAJefec2V1dpSME3QeM3WjsT4WZ6mONa3Rz8/fu9e33dff97v7wur4eH9fdsjsdbtcTH/rx/NA/y+7n4+Pxlcd+OJ2e7t79dDie/nheX/jA83p/fPnuZX3+c31+9z625BH2gQduj0/7u9PTy7p/OJ7Wr4dS8fOhw9PD/uHl7be7b0dqOB85Hf562z88r+efqXE78uv6eNiee3/7ef/6y/35WPqw+7TcfCn1fQopLXEpy/bFl8KFbc8Xw8eCam0JS/1YrbTarllccA1B4NYlIUpcQxK4jfVmiWsoAtdYb5W4hiZwwXohcQ2KvvAleZC45oK+qIH1JolrEjey3k6/wWq6ZnHBNYmbWG+RuOZV4GbWaxLXHAK3LDkEiYsQBW5lvUniIijO38Z6i8SFxDXWWyUuQhO4YL0aF0HRx856XeIizu7jFKjkGBUsYprPRlabFSxinc8mVithEdt8NrNaU7BQsIy1CAULBctQi65gkQR7AiNNwyIJ9gQGWsoKFgqWcZaqgkUS7AkMs2QKFknQDpG7TQ4SF1kQkpFx1nFbK61cs7jgIieBy0ATuchZ4DLScpG4yFXgMtRELrIJXMZahsRFdoHLYBO5KEHgMtpELopi32G4lSRxIXEZbyVLXBTBvrP9NV2qxEUR7A+J+VYgcVEEfczPuUaJiyo4fxPzTeSiCvoiMd9qkbiQuMy3WiUuahO4zLcKiYuq6DfmWwsSF03Rx8y3liQumqLfmG+tSlw0wfmb+dFM4qIJ+iIz3+y/528t0do1iwsuLApc5pvIhWWBy3yzInH5slzgMt86bku54ZrFBRdmApf5ZpC46MzUjLvMt87sywwXndmXcZf51pl9meGiM/sy7jLfOi6al3LN4oKLzkzNuMt868zUzHABm++W7VehcdGZARp3mW+dGaAZLjqzOuMu860zUzPDRWf2ZdxlvnmVuHBBX/BbskPiQuIy39wlrndmasbdxlbWuB4U/WasN0lcl7hgvVniusR11lskrgfBvlO3KGoS14MgNyuXnVkdJBRcs7jgemdWZ9xNjE6N650hoHE3s94kcb0zBjTuFtZbJK53BoHG3cp6Na53JozGXeZbZxZohusSl/nWmQaa4XpU7DvMtxQlrktc5lvKEtfT9D6Oy/ZKoClYTzaf5ao3ZBO+3URw4ev/iz5ZZKD1BnaGRO+N6gyIDLHponfGaEZEBldngGZM9M7ozIjIsOoMt4yJ3hlrGREZUJ2BljHR89yeYSiVMFn0ySKDqMTJope5PbPdozlb9DK3C+N2cWQ66WVuZ0cuOyTjydI1iwuud+Zdxl3GTmkS1yUuI6gznzPD9c58zrjLOBK53pn7GXcZTSLXaxC4jKnOnNIM1zvzROMuI6szTzTD9arYdxhftUlcr9OvY8Wvt+9D4nr1+e6XS+ga11sQuFyKXG9x/is/fi4i11sWuMy3ViSutypwmW8i15vgAkNivolcb4IrF4n5JnK9QeAy3yxIXJe4zDeLEtctCdzt7VM0rptgP8vbvzA1rptgn8xcWpW4boJ9JzPfRK6bYN/JzDeDxHVzgct8Q5C4DkEfZ+YbssR1KPqC+YYmcR2K85f5Bkhch+L8Zb6JXHdFX2xvXyV4fUHX58/ZbUMTrDdJXJ8/Zxe3ecPiReK6T7/vaPu/HeutEte9CVzmm8h1H7kf5NO/Sf8q1Q==\n';
+  var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
+  var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
+  var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
-  date_formatter.format(data_graph8, 0);
+  date_formatter.format(data_graph7, 0);
 
-  var options_graph8 = {
-    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 threads for I/O usage (from cgroup stats)",
-    focusTarget: "category",
-    tooltip: { textStyle: { fontSize: 12 } },
-    legend: { textStyle: { fontSize: 12 } },
-    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
-    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "IO Read+Write (Bytes Per Sec)", gridlines: { color: "lightgrey", count: 11 } },
-    isStacked:  0
-  };
-
-  set_main_chart_div_as_visible();
-  if (g_chart && g_chart.clearChart)
-    g_chart.clearChart();
-  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
-  g_chart.draw(data_graph8, options_graph8);
-  g_current_data = data_graph8;
-  g_current_options = options_graph8;
-  reset_combo_boxes("");
-}
-
-function draw_graph9() {
-  var deflated_data_base64_graph9 = 'eNq13N1qI0cQBeBXWXS1C5Ol/+tU7gIhV3kDswjZHm8U5DjYTsAJefec2V1dpSME3QeM3WjsT4WZ6mONa3Rz8/fu9e33dff97v7wur4eH9fdsjsdbtcTH/rx/NA/y+7n4+Pxlcd+OJ2e7t79dDie/nheX/jA83p/fPnuZX3+c31+9z625BH2gQduj0/7u9PTy7p/OJ7Wr4dS8fOhw9PD/uHl7be7b0dqOB85Hf562z88r+efqXE78uv6eNiee3/7ef/6y/35WPqw+7TcfCn1fQopLXEpy/bFl8KFbc8Xw8eCam0JS/1YrbTarllccA1B4NYlIUpcQxK4jfVmiWsoAtdYb5W4hiZwwXohcQ2KvvAleZC45oK+qIH1JolrEjey3k6/wWq6ZnHBNYmbWG+RuOZV4GbWaxLXHAK3LDkEiYsQBW5lvUniIijO38Z6i8SFxDXWWyUuQhO4YL0aF0HRx856XeIizu7jFKjkGBUsYprPRlabFSxinc8mVithEdt8NrNaU7BQsIy1CAULBctQi65gkQR7AiNNwyIJ9gQGWsoKFgqWcZaqgkUS7AkMs2QKFknQDpG7TQ4SF1kQkpFx1nFbK61cs7jgIieBy0ATuchZ4DLScpG4yFXgMtRELrIJXMZahsRFdoHLYBO5KEHgMtpELopi32G4lSRxIXEZbyVLXBTBvrP9NV2qxEUR7A+J+VYgcVEEfczPuUaJiyo4fxPzTeSiCvoiMd9qkbiQuMy3WiUuahO4zLcKiYuq6DfmWwsSF03Rx8y3liQumqLfmG+tSlw0wfmb+dFM4qIJ+iIz3+y/528t0do1iwsuLApc5pvIhWWBy3yzInH5slzgMt86bku54ZrFBRdmApf5ZpC46MzUjLvMt87sywwXndmXcZf51pl9meGiM/sy7jLfOi6al3LN4oKLzkzNuMt868zUzHABm++W7VehcdGZARp3mW+dGaAZLjqzOuMu860zUzPDRWf2ZdxlvnmVuHBBX/BbskPiQuIy39wlrndmasbdxlbWuB4U/WasN0lcl7hgvVniusR11lskrgfBvlO3KGoS14MgNyuXnVkdJBRcs7jgemdWZ9xNjE6N650hoHE3s94kcb0zBjTuFtZbJK53BoHG3cp6Na53JozGXeZbZxZohusSl/nWmQaa4XpU7DvMtxQlrktc5lvKEtfT9D6Oy/ZKoClYTzaf5ao3ZBO+3URw4ev/iz5ZZKD1BnaGRO+N6gyIDLHponfGaEZEBldngGZM9M7ozIjIsOoMt4yJ3hlrGREZUJ2BljHR89yeYSiVMFn0ySKDqMTJope5PbPdozlb9DK3C+N2cWQ66WVuZ0cuOyTjydI1iwuud+Zdxl3GTmkS1yUuI6gznzPD9c58zrjLOBK53pn7GXcZTSLXaxC4jKnOnNIM1zvzROMuI6szTzTD9arYdxhftUlcr9OvY8Wvt+9D4nr1+e6XS+ga11sQuFyKXG9x/is/fi4i11sWuMy3ViSutypwmW8i15vgAkNivolcb4IrF4n5JnK9QeAy3yxIXJe4zDeLEtctCdzt7VM0rptgP8vbvzA1rptgn8xcWpW4boJ9JzPfRK6bYN/JzDeDxHVzgct8Q5C4DkEfZ+YbssR1KPqC+YYmcR2K85f5Bkhch+L8Zb6JXHdFX2xvXyV4fUHX58/ZbUMTrDdJXJ8/Zxe3ecPiReK6T7/vaPu/HeutEte9CVzmm8h1H7kf5NO/Sf8q1Q==\n';
-  var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
-  var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
-  var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
-  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
-  date_formatter.format(data_graph9, 0);
-
-  var options_graph9 = {
+  var options_graph7 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Top 20 threads for memory usage (from cgroup stats)",
     focusTarget: "category",
@@ -346,6 +291,61 @@ function draw_graph9() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph7, options_graph7);
+  g_current_data = data_graph7;
+  g_current_options = options_graph7;
+  reset_combo_boxes("");
+}
+
+function draw_graph8() {
+  var deflated_data_base64_graph8 = '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\n';
+  var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
+  var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
+  var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph8, 0);
+
+  var options_graph8 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Top 20 threads for I/O usage (from cgroup stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "IO Read+Write (MB)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph8, options_graph8);
+  g_current_data = data_graph8;
+  g_current_options = options_graph8;
+  reset_combo_boxes("");
+}
+
+function draw_graph9() {
+  var deflated_data_base64_graph9 = 'eNptjs0OgjAQhF+F9KRJxYJthSucPBg96ImYpsIiaGuTYkzw6cU/gg2bbLKZ2W92swylRmt5LRBG6Xbv3WoN3biab7x10g27yoJ8mWvQxrbeJUEHnCELRd3MGrB3sAjTyOchGRTDlPkLHpOA4r9dbxLwMA6i5RRhxjj3KaevvGNtRK5MA6KsVfcA8cm7HeODhzQewaUpRdm019yhe/0LMzICK/loRWnBPd3rPzhw4DNoqZTJxfEkblUxwB3nFxAOAw5PmddsRA==\n';
+  var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
+  var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
+  var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
+  var options_graph9 = {
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
+    title: "Top 20 threads for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
+    hAxis: { title:"CPU time" },
+    vAxis: { title:"I/O MB" },
+    sizeAxis: { maxSize: 200 },
+    bubble: { textStyle: {fontSize: 15} }
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  set_main_chart_div_as_visible();
+  g_chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));
   g_chart.draw(data_graph9, options_graph9);
   g_current_data = data_graph9;
   g_current_options = options_graph9;
@@ -467,8 +467,8 @@ function set_main_chart_div_as_visible() {
   <tr>
     <td class="button_table_col">Static Info</td>
     <td class="button_table_col"><b>CGroup</b> stats (Data collected from docker/userapp (Redis docker))</td>
-    <td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from docker/userapp (Redis docker))</td>
-    <td class="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
+    <td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from cgroup and /proc)</td>
+    <td class="button_table_col"><b>Baremetal</b> stats (Data collected only from /proc)</td>
   </tr>
   <tr>
   <td class="button_table_col">
@@ -481,12 +481,13 @@ function set_main_chart_div_as_visible() {
     </select>
     <button id="btn_draw_graph4" style="color:red"><b>All CPUs</b></button>
     <button id="btn_draw_graph5" style="color:darkorange"><b>Memory</b></button>
-    <button id="btn_draw_graph6" style="color:red"><b>CPU/Memory/Disk Bubbles by Thread</b></button>
-    <button id="btn_draw_graph7" style="color:red"><b>CPU by Thread</b></button>
+    <button id="btn_draw_graph10" style="color:darkblue"><b>Network (MB/s)</b></button>
+    <button id="btn_draw_graph11" style="color:darkblue"><b>Network (PPS)</b></button>
+      </td><td class="button_table_col">
+    <button id="btn_draw_graph6" style="color:red"><b>CPU by Thread</b></button>
+    <button id="btn_draw_graph7" style="color:darkorange"><b>Memory by Thread</b></button>
     <button id="btn_draw_graph8" style="color:black"><b>IO by Thread</b></button>
-    <button id="btn_draw_graph9" style="color:darkorange"><b>Memory by Thread</b></button>
-    <button id="btn_draw_graph10" style="color:darkblue"><b>Network Traffic (MB/s)</b></button>
-    <button id="btn_draw_graph11" style="color:darkblue"><b>Network Traffic (PPS)</b></button>
+    <button id="btn_draw_graph9" style="color:red"><b>CPU/Memory/Disk Bubbles by Thread</b></button>
       </td><td class="button_table_col">
     <button id="btn_draw_graph1" style="color:black"><b>Average Load</b></button>
   </td></tr>
