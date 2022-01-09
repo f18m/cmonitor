@@ -479,7 +479,7 @@ class HtmlOutputPage:
         assert isinstance(chart, GoogleChartsGraph)
         self.graphs.append(chart)
 
-    def startHtmlHead(self):
+    def writeHtmlHead(self):
         """Write the head of the HTML webpage and start the JS section"""
         self.file.write(
             """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -558,10 +558,6 @@ function clear_chart() {
 
 """
         )
-        # at this point we will generate all helper JS functions
-
-    def endHtmlHead(self, extra_js=""):
-        """Finish the JS portion and HTML head tag"""
 
         # convert into JS all the charts that belong to this HTML document:
         combo_box_ctrls = set()
@@ -569,6 +565,11 @@ function clear_chart() {
             self.file.write(graph.toGoogleChartJS())
             if len(graph.combobox_label) > 0:
                 combo_box_ctrls.add(graph.combobox_label)
+            if verbose:
+                print("Successfully generated JS code for chart with title [%s]." % graph.graph_title)
+
+        if verbose:
+            print("Generated JS code for a total of %d charts." % len(self.graphs))
 
         # add all event listeners for button clicks:
         self.file.write("function on_load_callback() {\n")
@@ -619,10 +620,7 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
         self.file.write("\nfunction set_main_chart_div_as_visible() {\n")
         self.file.write('    set_hidden("config_viewer_div");\n')
         self.file.write('    set_visible("chart_master_div");\n')
-        self.file.write("}\n\n")
-
-        # if provided, add any extra JS
-        self.file.write(extra_js)
+        self.file.write("}\n")
 
         # close <HEAD> tag
         self.file.write("  </script>\n")
@@ -991,8 +989,6 @@ class CMonitorGraphGenerator:
                 y_axes_titles=[cpu_label, io_label],
             )
         )
-        if verbose:
-            print("Generated bubble chart successfully.")
 
     def __generate_topN_procs_cpu_io_mem_vs_time(self, process_dict, topN_process_pids_list, chart_desc_prefix):
         # now that first pass is done, adjust units for memory
@@ -1126,8 +1122,6 @@ class CMonitorGraphGenerator:
                 stack_state=False,
             )
         )
-        if verbose:
-            print("Generated per-process/per-thread CPU, IO and MEMORY charts successfully.")
 
     def generate_cgroup_topN_procs(self, numProcsToShow=20, thread_filter=""):
         # if process data was not collected, just return:
@@ -1265,7 +1259,7 @@ class CMonitorGraphGenerator:
     #     for fs in self.sample_template["filesystems"].keys():
     #         fsstr = fsstr + "'" + fs + "',"
     #     fsstr = fsstr[:-1]
-    #     startHtmlHead_line_graph(self.output_page, fsstr)
+    #     writeHtmlHead_line_graph(self.output_page, fsstr)
     #     for i, s in enumerate(self.jdata):
     #         self.output_page.write(",['Date(%s)' " % (googledate(s['timestamp']["UTC"])))
     #         for fs in s["filesystems"].keys():
@@ -1797,8 +1791,7 @@ class CMonitorGraphGenerator:
         self.generate_cgroup_network_traffic()
 
         # HTML HEAD -- generate all the JS code to draw all the graphs created so far
-        self.output_page.startHtmlHead()
-        self.output_page.endHtmlHead()
+        self.output_page.writeHtmlHead()
 
         # HTML BODY -- now we start actual HTML body which are just a few tables with buttons
         #              that invoke the JS code produced earlier inside the <HEAD>

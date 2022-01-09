@@ -21,8 +21,8 @@ all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
 		echo "-- TOOL: cmonitor_chart ------------------------------------------------------" ; \
 		../tools/chart/cmonitor_chart.py --input=$$jsonExample --verbose || exit 10; \
-		echo "-- VALIDATING HTML ------------------------------------------------------" ; \
-		tidy -o /dev/null $${jsonExample/.json.gz/.html} || exit 11; \
+		echo "-- VALIDATING $${jsonExample/.json.gz/.html} ------------------------------------------------------" ; \
+		tidy -o /dev/null $${jsonExample/.json.gz/.html} 2>/dev/null && echo "$${jsonExample/.json.gz/.html} is valid HTML" || exit 11; \
 		echo "-- TOOL: cmonitor_statistics -------------------------------------------------" ; \
 		../tools/statistics/cmonitor_statistics.py --input=$$jsonExample || exit 12; \
 	done
