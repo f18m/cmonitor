@@ -11,23 +11,27 @@
      #monitored_system_span { background-color: white; color: red; padding: 4px; }
      #button_table { width:100%; border-collapse: collapse; }
      .button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #config_viewer_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto; overflow: auto}
+     .config_sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}
+     .config_key {font-weight: bold;}
+     .config_val {font-family: monospace;}
      #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
      #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
      #chart_master_inner_p { font-size: x-large; }
-     #bottom_div { float:left; max-width: 40%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
-     #bottom_about_div { float:right; max-width: 15%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
-     #bottom_div h3 { font-size: medium; }
-     #bottom_div li { font-size: smaller; }
-     #bottom_about_div h3 { font-size: medium; }
-     #bottom_about_div li { font-size: smaller; }
-     #bottom_table_val { font-family: monospace; }
+     .bottom_div { float:left; max-width: 40%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     .bottom_div h3 { font-size: medium; }
+     .bottom_div li { font-size: smaller; }
+     .bottom_about_div { float:right; max-width: 15%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     .bottom_about_div h3 { font-size: medium; }
+     .bottom_about_div li { font-size: smaller; }
+     .bottom_table_val { font-family: monospace; }
   </style>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript">
 // Load the Visualization API and the corechart package; version 51 is June 2021 version
 google.charts.load('51', {'packages':['corechart']});
-google.setOnLoadCallback(setup_button_click_handlers);
+google.setOnLoadCallback(on_load_callback);
 
 /* The global chart object: */
 var g_chart = null;
@@ -82,6 +86,7 @@ function draw_graph1() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -111,6 +116,7 @@ function draw_graph2() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -140,6 +146,7 @@ function draw_graph3() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -169,6 +176,7 @@ function draw_graph4() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -198,6 +206,7 @@ function draw_graph5() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -227,6 +236,7 @@ function draw_graph6() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -256,6 +266,7 @@ function draw_graph7() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -285,6 +296,7 @@ function draw_graph8() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -314,6 +326,7 @@ function draw_graph9() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -343,6 +356,7 @@ function draw_graph10() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -372,6 +386,7 @@ function draw_graph11() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -401,6 +416,7 @@ function draw_graph12() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -430,6 +446,7 @@ function draw_graph13() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -459,6 +476,7 @@ function draw_graph14() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -488,6 +506,7 @@ function draw_graph15() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -517,6 +536,7 @@ function draw_graph16() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -546,6 +566,7 @@ function draw_graph17() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -575,6 +596,7 @@ function draw_graph18() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -604,6 +626,7 @@ function draw_graph19() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -633,6 +656,7 @@ function draw_graph20() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -662,6 +686,7 @@ function draw_graph21() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -691,6 +716,7 @@ function draw_graph22() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -720,6 +746,7 @@ function draw_graph23() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -749,6 +776,7 @@ function draw_graph24() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -778,6 +806,7 @@ function draw_graph25() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -807,6 +836,7 @@ function draw_graph26() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -836,6 +866,7 @@ function draw_graph27() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -865,6 +896,7 @@ function draw_graph28() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -894,6 +926,7 @@ function draw_graph29() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -923,6 +956,7 @@ function draw_graph30() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -952,6 +986,7 @@ function draw_graph31() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -981,6 +1016,7 @@ function draw_graph32() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1010,6 +1046,7 @@ function draw_graph33() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1039,6 +1076,7 @@ function draw_graph34() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1068,6 +1106,7 @@ function draw_graph35() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1097,6 +1136,7 @@ function draw_graph36() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1126,6 +1166,7 @@ function draw_graph37() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1155,6 +1196,7 @@ function draw_graph38() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1184,6 +1226,7 @@ function draw_graph39() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1213,6 +1256,7 @@ function draw_graph40() {
     isStacked:  0
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1242,6 +1286,7 @@ function draw_graph41() {
     isStacked:  1
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1271,6 +1316,7 @@ function draw_graph42() {
     isStacked:  0
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1300,6 +1346,7 @@ function draw_graph43() {
     isStacked:  0
   };
 
+  set_main_chart_div_as_visible();
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
@@ -1309,12 +1356,13 @@ function draw_graph43() {
   reset_combo_boxes("");
 }
 
-function setup_button_click_handlers() {
+function on_load_callback() {
   document.getElementById("btn_draw_graph40").addEventListener("click", draw_graph40);
   document.getElementById("btn_draw_graph41").addEventListener("click", draw_graph41);
   document.getElementById("btn_draw_graph42").addEventListener("click", draw_graph42);
   document.getElementById("btn_draw_graph43").addEventListener("click", draw_graph43);
-  document.getElementById("btn_show_config").addEventListener("click", show_config_window);
+  document.getElementById("btn_show_config").addEventListener("click", show_config_details);
+  set_hidden("config_viewer_div");
 }
 
 /* Utility function used to reset combobox controls: */
@@ -1323,107 +1371,31 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
       document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
 }
 
-function show_config_window() {
-    if (g_configWindow) g_configWindow.close();
-    g_configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");
-    g_configWindow.document.write("\
-    <html><head>\
-      <title>Configuration</title>\
-      <style>\
-        table { padding-left: 2ex; }\
-        #sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}\
-        #configkey {font-weight: bold;}\
-        #configval {font-family: monospace;}\
-      </style>\
-    </head><body>\
-      <h2>Monitored System Summary</h2>\
-      <table>\
-<tr><td colspan='2' id='sectioncol'>Server Identity</td></tr>\
-    <tr>\
-    <td id='configkey'>Hostname</td><td id='configval'>docker-collecting-baremetal-stats</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Shorthostname</td><td id='configval'>docker-collecting-baremetal-stats</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Lo ip4</td><td id='configval'>127.0.0.1</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Eth0 ip4</td><td id='configval'>172.17.0.3</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>All ip addresses</td><td id='configval'>127.0.0.1,172.17.0.3</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Serial-number</td><td id='configval'>............</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Model</td><td id='configval'>S2600GZ</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Vendor</td><td id='configval'>Intel Corporation</td>\
-    </tr>\
-<tr><td colspan='2' id='sectioncol'>Operating System Release</td></tr>\
-    <tr>\
-    <td id='configkey'>Name</td><td id='configval'>Alpine Linux</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Version id</td><td id='configval'>.14.3</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Pretty name</td><td id='configval'>Alpine Linux v3.14</td>\
-    </tr>\
-<tr><td colspan='2' id='sectioncol'>Linux Kernel Version</td></tr>\
-    <tr>\
-    <td id='configkey'>Version</td><td id='configval'>Linux version 3.10.0-1160.36.2.el7.x86_64 (mockbuild@kbuilder.bsys.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-44) (GCC) ) #1 SMP Wed Jul 21 11:57:15 UTC 2021</td>\
-    </tr>\
-<tr><td colspan='2' id='sectioncol'>Memory Overview</td></tr>\
-    <tr>\
-    <td id='configkey'>Memtotal</td><td id='configval'>184.2GiB</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Hugepages total</td><td id='configval'>2</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Hugepagesize</td><td id='configval'>1000.0MiB</td>\
-    </tr>\
-      </table>\
-      <h2>Monitoring Summary</h2>\
-      <table>\
-<tr><td colspan='2' id='sectioncol'>Performance Stats Collector Configuration</td></tr>\
-    <tr>\
-    <td id='configkey'>Command</td><td id='configval'>/usr/bin/cmonitor_collector --foreground --sampling-interval=3 --num-samples=180 --collect=cpu,memory,disk,network --output-filename=docker-collecting-baremetal-stats --output-directory /perf</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Version</td><td id='configval'>2.1-0</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Gmt offset seconds</td><td id='configval'>0</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Timezone name</td><td id='configval'>UTC</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Sample interval seconds</td><td id='configval'>3.0</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Sample num</td><td id='configval'>180</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Collecting</td><td id='configval'>cpu,disk,memory,network</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Username</td><td id='configval'>root</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Userid</td><td id='configval'>0</td>\
-    </tr>\
-    <tr>\
-    <td id='configkey'>Pid</td><td id='configval'>1</td>\
-    </tr>\
-      </table>\
-    </body></html>\
-");
+function toggle_visibility(div_name) {
+    var x = document.getElementById(div_name);
+    if (x.style.display === "none")
+       x.style.display = "block";
+    else
+       x.style.display = "none";
+}
+
+function set_visible(div_name) {
+    document.getElementById(div_name).style.display = "block";
+}
+
+function set_hidden(div_name) {
+    document.getElementById(div_name).style.display = "none";
+}
+
+function show_config_details() {
+    toggle_visibility("config_viewer_div");
+    toggle_visibility("chart_master_div");
+}
+
+
+function set_main_chart_div_as_visible() {
+    set_hidden("config_viewer_div");
+    set_visible("chart_master_div");
 }
 
   </script>
@@ -1431,7 +1403,7 @@ function show_config_window() {
 <body>
   <h1>Monitoring data collected from <span id="monitored_system_span">host docker-collecting-baremetal-stats</span></h1>
   <div id="button_div">
-  <table id="button_table">
+  <table id="button_table" summary="buttons to visualize charts">
   <tr>
     <td class="button_table_col"></td><td class="button_table_col"><b>CGroup</b> stats (Data collected from None)</td>
     <td class="button_table_col"></td><td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from None)</td>
@@ -1491,45 +1463,82 @@ N/A      </td><td class="button_table_col">
   </td></tr>
   </table>
   </div>
-  <p></p>
   <div id="chart_master_div"><div id="chart_master_inner_div"><p id="chart_master_inner_p">...click on a button above to show a graph...</p></div></div>
-  <div id='bottom_div'>
+  <div id="config_viewer_div">
+  <h2>Monitored System Details</h2>
+  <table summary='details on monitored system'>
+    <tr><td colspan='2' class='config_sectioncol'>Server Identity</td></tr>
+    <tr><td class='config_key'>Hostname</td><td class='config_val'>docker-collecting-baremetal-stats</td></tr>
+    <tr><td class='config_key'>Shorthostname</td><td class='config_val'>docker-collecting-baremetal-stats</td></tr>
+    <tr><td class='config_key'>Lo ip4</td><td class='config_val'>127.0.0.1</td></tr>
+    <tr><td class='config_key'>Eth0 ip4</td><td class='config_val'>172.17.0.3</td></tr>
+    <tr><td class='config_key'>All ip addresses</td><td class='config_val'>127.0.0.1,172.17.0.3</td></tr>
+    <tr><td class='config_key'>Serial-number</td><td class='config_val'>............</td></tr>
+    <tr><td class='config_key'>Model</td><td class='config_val'>S2600GZ</td></tr>
+    <tr><td class='config_key'>Vendor</td><td class='config_val'>Intel Corporation</td></tr>
+    <tr><td colspan='2' class='config_sectioncol'>Operating System Release</td></tr>
+    <tr><td class='config_key'>Name</td><td class='config_val'>Alpine Linux</td></tr>
+    <tr><td class='config_key'>Version id</td><td class='config_val'>.14.3</td></tr>
+    <tr><td class='config_key'>Pretty name</td><td class='config_val'>Alpine Linux v3.14</td></tr>
+    <tr><td colspan='2' class='config_sectioncol'>Linux Kernel Version</td></tr>
+    <tr><td class='config_key'>Version</td><td class='config_val'>Linux version 3.10.0-1160.36.2.el7.x86_64 (mockbuild@kbuilder.bsys.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-44) (GCC) ) #1 SMP Wed Jul 21 11:57:15 UTC 2021</td></tr>
+    <tr><td colspan='2' class='config_sectioncol'>Memory Overview</td></tr>
+    <tr><td class='config_key'>Memtotal</td><td class='config_val'>184.2GiB</td></tr>
+    <tr><td class='config_key'>Hugepages total</td><td class='config_val'>2</td></tr>
+    <tr><td class='config_key'>Hugepagesize</td><td class='config_val'>1000.0MiB</td></tr>
+  </table>
+  <h2>CMonitor Collector</h2>
+  <table summary='details on cmonitor_collector'>
+    <tr><td colspan='2' class='config_sectioncol'>Performance Stats Collector Configuration</td></tr>
+    <tr><td class='config_key'>Command</td><td class='config_val'>/usr/bin/cmonitor_collector --foreground --sampling-interval=3 --num-samples=180 --collect=cpu,memory,disk,network --output-filename=docker-collecting-baremetal-stats --output-directory /perf</td></tr>
+    <tr><td class='config_key'>Version</td><td class='config_val'>2.1-0</td></tr>
+    <tr><td class='config_key'>Gmt offset seconds</td><td class='config_val'>0</td></tr>
+    <tr><td class='config_key'>Timezone name</td><td class='config_val'>UTC</td></tr>
+    <tr><td class='config_key'>Sample interval seconds</td><td class='config_val'>3.0</td></tr>
+    <tr><td class='config_key'>Sample num</td><td class='config_val'>180</td></tr>
+    <tr><td class='config_key'>Collecting</td><td class='config_val'>cpu,disk,memory,network</td></tr>
+    <tr><td class='config_key'>Username</td><td class='config_val'>root</td></tr>
+    <tr><td class='config_key'>Userid</td><td class='config_val'>0</td></tr>
+    <tr><td class='config_key'>Pid</td><td class='config_val'>1</td></tr>
+  </table>
+  </div>
+  <div class='bottom_div'>
     <h3>Monitoring Summary</h3>
-    <table>
+    <table summary='textbox with summarized info'>
     <tr><td><ul>
-      <li>Collected: <span id='bottom_table_val'>cpu, disk, memory, network</span></li>
-      <li>Started sampling at: <span id='bottom_table_val'>2021-12-02T14:13:52.519 (UTC)</span></li>
-      <li>Samples: <span id='bottom_table_val'>180</span></li>
-      <li>Sampling Interval (s): <span id='bottom_table_val'>3.0</span></li>
+      <li>Collected: <span class='bottom_table_val'>cpu, disk, memory, network</span></li>
+      <li>Started sampling at: <span class='bottom_table_val'>2021-12-02T14:13:52.519 (UTC)</span></li>
+      <li>Samples: <span class='bottom_table_val'>180</span></li>
+      <li>Sampling Interval (s): <span class='bottom_table_val'>3.0</span></li>
       </ul></td><td><ul>
-      <li>Total time sampled (hh:mm:ss): <span id='bottom_table_val'>0:09:00</span></li>
-      <li>Version (cmonitor_collector): <span id='bottom_table_val'>2.1-0</span></li>
-      <li>Version (cmonitor_chart): <span id='bottom_table_val'>2.2-0</span></li>
+      <li>Total time sampled (hh:mm:ss): <span class='bottom_table_val'>0:09:00</span></li>
+      <li>Version (cmonitor_collector): <span class='bottom_table_val'>2.1-0</span></li>
+      <li>Version (cmonitor_chart): <span class='bottom_table_val'>2.2-0</span></li>
     </ul></td></tr>
     </table>
   </div>
-  <div id='bottom_div'>
+  <div class='bottom_div'>
     <h3>Monitored System Summary</h3>
-    <table>
+    <table summary='textbox with summarized info'>
     <tr><td><ul>
-      <li>Hostname: <span id='bottom_table_val'>docker-collecting-baremetal-stats</span></li>
-      <li>OS: <span id='bottom_table_val'>Alpine Linux v3.14</span></li>
-      <li>CPU: <span id='bottom_table_val'>Unknown</span></li>
-      <li>BogoMIPS: <span id='bottom_table_val'>Unknown</span></li>
+      <li>Hostname: <span class='bottom_table_val'>docker-collecting-baremetal-stats</span></li>
+      <li>OS: <span class='bottom_table_val'>Alpine Linux v3.14</span></li>
+      <li>CPU: <span class='bottom_table_val'>Unknown</span></li>
+      <li>BogoMIPS: <span class='bottom_table_val'>Unknown</span></li>
       </ul></td><td><ul>
-      <li>Monitored CPUs: <span id='bottom_table_val'>39</span></li>
-      <li>Monitored Disks: <span id='bottom_table_val'>7</span></li>
-      <li>Monitored Network Devices: <span id='bottom_table_val'>0</span></li>
+      <li>Monitored CPUs: <span class='bottom_table_val'>39</span></li>
+      <li>Monitored Disks: <span class='bottom_table_val'>7</span></li>
+      <li>Monitored Network Devices: <span class='bottom_table_val'>0</span></li>
     </ul></td></tr>
     </table>
   </div>
-  <div id='bottom_about_div'>
+  <div class='bottom_about_div'>
     <h3>About this</h3>
-    <table>
+    <table summary='textbox with summarized info'>
     <tr><td><ul>
-      <li>Zoom: <span id='bottom_table_val'>use left-click and drag</span></li>
-      <li>Reset view: <span id='bottom_table_val'>use right-click</span></li>
-      <li>Generated by <span id='bottom_table_val'><a href="https://github.com/f18m/cmonitor">cmonitor</a></span></li>
+      <li>Zoom: <span class='bottom_table_val'>use left-click and drag</span></li>
+      <li>Reset view: <span class='bottom_table_val'>use right-click</span></li>
+      <li>Generated by <span class='bottom_table_val'><a href="https://github.com/f18m/cmonitor">cmonitor</a></span></li>
     </ul></td></tr>
     </table>
   </div>

@@ -397,6 +397,7 @@ class GoogleChartsGraph:
 
         ret_string += "};\n"  # end of "options_%s" variable
         ret_string += "\n"
+        ret_string += "set_main_chart_div_as_visible();\n"
         ret_string += "if (g_chart && g_chart.clearChart)\n"
         ret_string += "  g_chart.clearChart();\n"
         ret_string += 'g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));\n'
@@ -423,6 +424,7 @@ class GoogleChartsGraph:
         ret_string += "\n"
         ret_string += "if (g_chart && g_chart.clearChart)\n"
         ret_string += "  g_chart.clearChart();\n"
+        ret_string += "set_main_chart_div_as_visible();\n"
         ret_string += 'g_chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));\n'
         ret_string += "g_chart.draw(data_%s, options_%s);\n" % (
             self.js_name,
@@ -499,23 +501,27 @@ class HtmlOutputPage:
      #monitored_system_span { background-color: white; color: red; padding: 4px; }
      #button_table { width:100%; border-collapse: collapse; }
      .button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #config_viewer_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto; overflow: auto}
+     .config_sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}
+     .config_key {font-weight: bold;}
+     .config_val {font-family: monospace;}
      #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
      #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
      #chart_master_inner_p { font-size: x-large; }
-     #bottom_div { float:left; max-width: 40%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
-     #bottom_about_div { float:right; max-width: 15%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
-     #bottom_div h3 { font-size: medium; }
-     #bottom_div li { font-size: smaller; }
-     #bottom_about_div h3 { font-size: medium; }
-     #bottom_about_div li { font-size: smaller; }
-     #bottom_table_val { font-family: monospace; }
+     .bottom_div { float:left; max-width: 40%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     .bottom_div h3 { font-size: medium; }
+     .bottom_div li { font-size: smaller; }
+     .bottom_about_div { float:right; max-width: 15%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     .bottom_about_div h3 { font-size: medium; }
+     .bottom_about_div li { font-size: smaller; }
+     .bottom_table_val { font-family: monospace; }
   </style>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript">
 // Load the Visualization API and the corechart package; version 51 is June 2021 version
 google.charts.load('51', {'packages':['corechart']});
-google.setOnLoadCallback(setup_button_click_handlers);
+google.setOnLoadCallback(on_load_callback);
 
 /* The global chart object: */
 var g_chart = null;
@@ -554,7 +560,7 @@ function clear_chart() {
         )
         # at this point we will generate all helper JS functions
 
-    def endHtmlHead(self, config):
+    def endHtmlHead(self, extra_js=""):
         """Finish the JS portion and HTML head tag"""
 
         # convert into JS all the charts that belong to this HTML document:
@@ -565,15 +571,16 @@ function clear_chart() {
                 combo_box_ctrls.add(graph.combobox_label)
 
         # add all event listeners for button clicks:
-        self.file.write("function setup_button_click_handlers() {\n")
+        self.file.write("function on_load_callback() {\n")
         for num, graph in enumerate(self.graphs, start=1):
             if len(graph.combobox_label) == 0:
                 self.file.write('  document.getElementById("btn_draw_%s").addEventListener("click", draw_%s);\n' % (graph.js_name, graph.js_name))
             else:
                 # this will be selected from a combobox, no need to hook into a button
                 pass
-        self.file.write('  document.getElementById("btn_show_config").addEventListener("click", show_config_window);\n')
-        self.file.write("}\n")  # end of setup_button_click_handlers()
+        self.file.write('  document.getElementById("btn_show_config").addEventListener("click", show_config_details);\n')
+        self.file.write('  set_hidden("config_viewer_div");\n')
+        self.file.write("}\n")  # end of on_load_callback()
 
         # add function to reset all comboboxes
         self.file.write(
@@ -587,24 +594,54 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
             self.file.write('      document.getElementById("select_combobox_%s").value = "clear_chart";\n' % comboname)
         self.file.write("}\n")  # end of reset_combo_boxes()
 
-        self.file.write(config)
+        # add functions to manage visibility of a <DIV>
+        self.file.write("\nfunction toggle_visibility(div_name) {\n")
+        self.file.write("    var x = document.getElementById(div_name);\n")
+        self.file.write('    if (x.style.display === "none")\n')
+        self.file.write('       x.style.display = "block";\n')
+        self.file.write("    else\n")
+        self.file.write('       x.style.display = "none";\n')
+        self.file.write("}\n")
+        self.file.write("\nfunction set_visible(div_name) {\n")
+        self.file.write('    document.getElementById(div_name).style.display = "block";\n')
+        self.file.write("}\n")
+        self.file.write("\nfunction set_hidden(div_name) {\n")
+        self.file.write('    document.getElementById(div_name).style.display = "none";\n')
+        self.file.write("}\n")
+
+        # add function that toggles config details
+        self.file.write("\nfunction show_config_details() {\n")
+        self.file.write('    toggle_visibility("config_viewer_div");\n')
+        self.file.write('    toggle_visibility("chart_master_div");\n')
+        self.file.write("}\n\n")
+
+        # add function that enforces visibility of currently-selected char
+        self.file.write("\nfunction set_main_chart_div_as_visible() {\n")
+        self.file.write('    set_hidden("config_viewer_div");\n')
+        self.file.write('    set_visible("chart_master_div");\n')
+        self.file.write("}\n\n")
+
+        # if provided, add any extra JS
+        self.file.write(extra_js)
+
+        # close <HEAD> tag
         self.file.write("  </script>\n")
         self.file.write("</head>\n")
 
-    def startHtmlBody(self, cgroupName, monitored_system):
+    def startHtmlBody(self, cgroup_name, monitored_system, jheader):
         self.file.write("<body>\n")
         self.file.write('  <h1>Monitoring data collected from <span id="monitored_system_span">' + monitored_system + "</span></h1>\n")
         self.file.write('  <div id="button_div">\n')
-        self.file.write('  <table id="button_table">\n')
+        self.file.write('  <table id="button_table" summary="buttons to visualize charts">\n')
 
         # Table header row
         self.file.write("  <tr>\n")
         self.file.write(
-            '    <td class="button_table_col"></td><td class="button_table_col"><b>CGroup</b> stats (Data collected from %s)</td>\n' % cgroupName
+            '    <td class="button_table_col"></td><td class="button_table_col"><b>CGroup</b> stats (Data collected from %s)</td>\n' % cgroup_name
         )
         self.file.write(
             '    <td class="button_table_col"></td><td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from %s)</td>\n'
-            % cgroupName
+            % cgroup_name
         )
         self.file.write('    <td class="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>\n')
         self.file.write("  </tr>\n")
@@ -672,20 +709,52 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
         self.file.write("  </td></tr>\n")
         self.file.write("  </table>\n")
         self.file.write("  </div>\n")
-        self.file.write("  <p></p>\n")
+        # self.file.write("  <p></p>\n")
 
-        # finally generate the element where the main chart is going to be drawn:
+        # finally generate the MAIN div: i.e. where the selected chart is going to be drawn:
         self.file.write(
             '  <div id="chart_master_div"><div id="chart_master_inner_div"><p id="chart_master_inner_p">...click on a button above to show a graph...</p></div></div>\n'
         )
 
-    def appendHtmlTable(self, name, table_entries, div_id="bottom_div"):
-        self.file.write("  <div id='" + div_id + "'>\n")
+        def configdump(jheader, section, displayName):
+            # newstr = '<h3>' + displayName + '</h3>\n'
+            newstr = "    <tr><td colspan='2' class='config_sectioncol'>" + displayName + "</td></tr>\n"
+            config_dict = jheader[section]
+            for label in config_dict:
+                newstr += "    <tr><td class='config_key'>%s</td><td class='config_val'>%s</td></tr>\n" % (
+                    label.capitalize().replace("_", " "),
+                    str(config_dict[label]),
+                )
+            return newstr
+
+        # immediately after the MAIN div, the element where the configuration info are shown (when toggled):
+        self.file.write('  <div id="config_viewer_div">\n')
+        self.file.write("  <h2>Monitored System Details</h2>\n")
+        self.file.write("  <table summary='details on monitored system'>\n")
+        self.file.write(configdump(jheader, "identity", "Server Identity"))
+        self.file.write(configdump(jheader, "os_release", "Operating System Release"))
+        self.file.write(configdump(jheader, "proc_version", "Linux Kernel Version"))
+        if "cgroup_config" in jheader:  # if cgroups are off, this section will not be present
+            self.file.write(configdump(jheader, "cgroup_config", "Linux Control Group (CGroup) Configuration"))
+        if "lscpu" in jheader:  # Alpine docker has no lscpu utility
+            self.file.write(configdump(jheader, "lscpu", "CPU Overview"))
+        if "proc_meminfo" in jheader:
+            self.file.write(configdump(jheader, "proc_meminfo", "Memory Overview"))
+        # self.file.write(configdump(jheader, "cpuinfo", "CPU Core Details")
+        self.file.write("  </table>\n")
+        self.file.write("  <h2>CMonitor Collector</h2>\n")
+        self.file.write("  <table summary='details on cmonitor_collector'>\n")
+        self.file.write(configdump(jheader, "cmonitor", "Performance Stats Collector Configuration"))
+        self.file.write("  </table>\n")
+        self.file.write("  </div>\n")  # end of 'config_viewer_div'
+
+    def appendHtmlTable(self, name, table_entries, div_class="bottom_div"):
+        self.file.write("  <div class='" + div_class + "'>\n")
         self.file.write("    <h3>" + name + "</h3>\n")
-        self.file.write("    <table>\n")
+        self.file.write("    <table summary='textbox with summarized info'>\n")
         self.file.write("    <tr><td><ul>\n")
         for i, entry in enumerate(table_entries, start=1):
-            self.file.write("      <li>" + entry[0] + " <span id='bottom_table_val'>" + entry[1] + "</span></li>\n")
+            self.file.write("      <li>" + entry[0] + " <span class='bottom_table_val'>" + entry[1] + "</span></li>\n")
             if (i % 4) == 0:
                 self.file.write("      </ul></td><td><ul>\n")
         self.file.write("    </ul></td></tr>\n")
@@ -854,20 +923,6 @@ class CMonitorGraphGenerator:
         a basic rendering of cmonitor_collector configuration and the monitored server.
         """
 
-        # ----- add config box
-        def configdump(section, displayName):
-            # newstr = '<h3>' + displayName + '</h3>\\\n'
-            newstr = "<tr><td colspan='2' id='sectioncol'>" + displayName + "</td></tr>\\\n"
-            config_dict = self.jheader[section]
-            for label in config_dict:
-                newstr += "    <tr>\\\n"
-                newstr += "    <td id='configkey'>%s</td><td id='configval'>%s</td>\\\n" % (
-                    label.capitalize().replace("_", " "),
-                    str(config_dict[label]),
-                )
-                newstr += "    </tr>\\\n"
-            return newstr
-
         def sizeof_fmt(num, suffix="B"):
             for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
                 if abs(num) < 1024.0:
@@ -890,41 +945,7 @@ class CMonitorGraphGenerator:
             self.jheader["proc_meminfo"]["MemTotal"] = sizeof_fmt(int(self.jheader["proc_meminfo"]["MemTotal"]))
             self.jheader["proc_meminfo"]["Hugepagesize"] = sizeof_fmt(int(self.jheader["proc_meminfo"]["Hugepagesize"]))
 
-        config_str = ""
-        config_str += "\nfunction show_config_window() {\n"
-        config_str += "    if (g_configWindow) g_configWindow.close();\n"
-        config_str += '    g_configWindow = window.open("", "MsgWindow", "width=1024, height=800, toolbar=no");\n'
-        config_str += '    g_configWindow.document.write("\\\n'
-        config_str += "    <html><head>\\\n"
-        config_str += "      <title>Configuration</title>\\\n"
-        config_str += "      <style>\\\n"
-        config_str += "        table { padding-left: 2ex; }\\\n"
-        config_str += "        #sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}\\\n"
-        config_str += "        #configkey {font-weight: bold;}\\\n"
-        config_str += "        #configval {font-family: monospace;}\\\n"
-        config_str += "      </style>\\\n"
-        config_str += "    </head><body>\\\n"
-        config_str += "      <h2>Monitored System Summary</h2>\\\n"
-        config_str += "      <table>\\\n"
-        config_str += configdump("identity", "Server Identity")
-        config_str += configdump("os_release", "Operating System Release")
-        config_str += configdump("proc_version", "Linux Kernel Version")
-        if "cgroup_config" in self.jheader:  # if cgroups are off, this section will not be present
-            config_str += configdump("cgroup_config", "Linux Control Group (CGroup) Configuration")
-        if "lscpu" in self.jheader:  # Alpine docker has no lscpu utility
-            config_str += configdump("lscpu", "CPU Overview")
-        if "proc_meminfo" in self.jheader:
-            config_str += configdump("proc_meminfo", "Memory Overview")
-        # config_str += configdump("cpuinfo", "CPU Core Details")
-        config_str += "      </table>\\\n"
-        config_str += "      <h2>Monitoring Summary</h2>\\\n"
-        config_str += "      <table>\\\n"
-        config_str += configdump("cmonitor", "Performance Stats Collector Configuration")
-        config_str += "      </table>\\\n"
-        config_str += "    </body></html>\\\n"
-        config_str += '");\n}\n\n'
-
-        self.output_page.endHtmlHead(config_str)
+        self.output_page.endHtmlHead()
 
     def __generate_topN_procs_bubble_chart(self, process_dict, topN_process_pids_list, max_byte_value_dict, chart_desc_prefix):
         mem_divider, mem_unit = self.__choose_byte_divider(max_byte_value_dict["mem_rss"])
@@ -1746,7 +1767,7 @@ class CMonitorGraphGenerator:
             ("Reset view:", "use right-click"),
             ("Generated by", '<a href="https://github.com/f18m/cmonitor">cmonitor</a>'),
         ]
-        self.output_page.appendHtmlTable("About this", about_this, div_id="bottom_about_div")
+        self.output_page.appendHtmlTable("About this", about_this, div_class="bottom_about_div")
 
 
 # =======================================================================================================
@@ -1841,12 +1862,12 @@ def main_process_file(cfg):
         if "cmonitor_chart_name" in jheader["custom_metadata"]:
             monitored_system = jheader["custom_metadata"]["cmonitor_chart_name"]
 
-    cgroupName = "None"
+    cgroup_name = "None"
     if "cgroup_config" in jheader and "name" in jheader["cgroup_config"]:
-        cgroupName = jheader["cgroup_config"]["name"]
+        cgroup_name = jheader["cgroup_config"]["name"]
     if "custom_metadata" in jheader:
         if "cmonitor_chart_name" in jheader["custom_metadata"]:
-            cgroupName = "docker/" + jheader["custom_metadata"]["cmonitor_chart_name"]
+            cgroup_name = "docker/" + jheader["custom_metadata"]["cmonitor_chart_name"]
 
     sample_template = jdata[0]
     if verbose:
@@ -1876,7 +1897,7 @@ def main_process_file(cfg):
 
     # HTML BODY -- now we start actual HTML body which are just a few tables with buttons
     #              that invoke the JS code produced earlier inside the <HEAD>
-    graph_generator.output_page.startHtmlBody(cgroupName, monitored_system)
+    graph_generator.output_page.startHtmlBody(cgroup_name, monitored_system, jheader)
 
     graph_generator.generate_monitoring_summary()
     graph_generator.generate_monitored_summary()
