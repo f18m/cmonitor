@@ -774,8 +774,7 @@ class CMonitorGraphGenerator:
     extract the most useful information and render them inside an HtmlOutputPage object.
     """
 
-    def __init__(self, output_page, jheader, jdata):
-        self.output_page = output_page  # must be of type HtmlOutputPage
+    def __init__(self, outfile, jheader, jdata):
         self.jheader = jheader  # a dictionary with cmonitor_collector "header" JSON object
         self.jdata = jdata  # a list of dictionaries with cmonitor_collector "samples" objects
 
@@ -819,6 +818,25 @@ class CMonitorGraphGenerator:
                     )
                 )
 
+        # load some basic fields from the JSON
+        self.monitored_system = "Unknown"
+        if "identity" in self.jheader:
+            if "hostname" in self.jheader["identity"]:
+                self.monitored_system = "host " + self.jheader["identity"]["hostname"]
+        if "custom_metadata" in self.jheader:
+            if "cmonitor_chart_name" in self.jheader["custom_metadata"]:
+                self.monitored_system = self.jheader["custom_metadata"]["cmonitor_chart_name"]
+
+        self.cgroup_name = "None"
+        if "cgroup_config" in self.jheader and "name" in self.jheader["cgroup_config"]:
+            self.cgroup_name = self.jheader["cgroup_config"]["name"]
+        if "custom_metadata" in self.jheader:
+            if "cmonitor_chart_name" in self.jheader["custom_metadata"]:
+                self.cgroup_name = "docker/" + self.jheader["custom_metadata"]["cmonitor_chart_name"]
+
+        # finally create the main HTML output page object
+        self.output_page = HtmlOutputPage(outfile, "Monitoring data for " + self.monitored_system)
+
     # =======================================================================================================
     # Private helpers
     # =======================================================================================================
@@ -836,6 +854,35 @@ class CMonitorGraphGenerator:
                 logical_cpus_indexes.append(cpuIdx)
                 # print("%s %s" %(key, cpuIdx))
         return logical_cpus_indexes
+
+    def __make_jheader_nicer(self):
+        """
+        This function just improves self.jheader by adding new sections in that dict and
+        adding measurement units where they are required.
+        This is useful because the
+        """
+
+        def sizeof_fmt(num, suffix="B"):
+            for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+                if abs(num) < 1024.0:
+                    return "%3.1f%s%s" % (num, unit, suffix)
+                num /= 1024.0
+            return "%.1f%s%s" % (num, "Yi", suffix)
+
+        # provide some human-readable config files:
+        if "cgroup_config" in self.jheader:
+            avail_cpus = self.jheader["cgroup_config"]["cpus"].split(",")
+            self.jheader["cgroup_config"]["num_allowed_cpus"] = len(avail_cpus)
+            self.jheader["cgroup_config"]["memory_limit_bytes"] = sizeof_fmt(int(self.jheader["cgroup_config"]["memory_limit_bytes"]))
+            self.jheader["cgroup_config"]["cpus"] = self.jheader["cgroup_config"]["cpus"].replace(",", ", ")
+
+        if "cmonitor" in self.jheader:
+            if self.jheader["cmonitor"]["sample_num"] == 0:
+                self.jheader["cmonitor"]["sample_num"] = "Infinite"
+
+        if "proc_meminfo" in self.jheader:
+            self.jheader["proc_meminfo"]["MemTotal"] = sizeof_fmt(int(self.jheader["proc_meminfo"]["MemTotal"]))
+            self.jheader["proc_meminfo"]["Hugepagesize"] = sizeof_fmt(int(self.jheader["proc_meminfo"]["Hugepagesize"]))
 
     def __choose_byte_divider(self, mem_total_bytes):
         divider = 1
@@ -912,36 +959,6 @@ class CMonitorGraphGenerator:
     # =======================================================================================================
     # Public API
     # =======================================================================================================
-
-    def generate_config_viewer(self):
-        """
-        Creates into output document a snippet of Javascript code to open a new HTML window with
-        a basic rendering of cmonitor_collector configuration and the monitored server.
-        """
-
-        def sizeof_fmt(num, suffix="B"):
-            for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
-                if abs(num) < 1024.0:
-                    return "%3.1f%s%s" % (num, unit, suffix)
-                num /= 1024.0
-            return "%.1f%s%s" % (num, "Yi", suffix)
-
-        # provide some human-readable config files:
-        if "cgroup_config" in self.jheader:
-            avail_cpus = self.jheader["cgroup_config"]["cpus"].split(",")
-            self.jheader["cgroup_config"]["num_allowed_cpus"] = len(avail_cpus)
-            self.jheader["cgroup_config"]["memory_limit_bytes"] = sizeof_fmt(int(self.jheader["cgroup_config"]["memory_limit_bytes"]))
-            self.jheader["cgroup_config"]["cpus"] = self.jheader["cgroup_config"]["cpus"].replace(",", ", ")
-
-        if "cmonitor" in self.jheader:
-            if self.jheader["cmonitor"]["sample_num"] == 0:
-                self.jheader["cmonitor"]["sample_num"] = "Infinite"
-
-        if "proc_meminfo" in self.jheader:
-            self.jheader["proc_meminfo"]["MemTotal"] = sizeof_fmt(int(self.jheader["proc_meminfo"]["MemTotal"]))
-            self.jheader["proc_meminfo"]["Hugepagesize"] = sizeof_fmt(int(self.jheader["proc_meminfo"]["Hugepagesize"]))
-
-        self.output_page.endHtmlHead()
 
     def __generate_topN_procs_bubble_chart(self, process_dict, topN_process_pids_list, max_byte_value_dict, chart_desc_prefix):
         mem_divider, mem_unit = self.__choose_byte_divider(max_byte_value_dict["mem_rss"])
@@ -1765,6 +1782,35 @@ class CMonitorGraphGenerator:
         ]
         self.output_page.appendHtmlTable("About this", about_this, div_class="bottom_about_div")
 
+    def write(self, top_scorer, thread_filter):
+        # baremetal stats:
+        self.generate_baremetal_cpus()
+        self.generate_baremetal_memory()
+        self.generate_baremetal_network_traffic()
+        self.generate_baremetal_disks_io()
+        self.generate_baremetal_avg_load()
+
+        # cgroup stats:
+        self.generate_cgroup_cpus()
+        self.generate_cgroup_memory()
+        self.generate_cgroup_topN_procs(top_scorer, thread_filter)
+        self.generate_cgroup_network_traffic()
+
+        # HTML HEAD -- generate all the JS code to draw all the graphs created so far
+        self.output_page.startHtmlHead()
+        self.output_page.endHtmlHead()
+
+        # HTML BODY -- now we start actual HTML body which are just a few tables with buttons
+        #              that invoke the JS code produced earlier inside the <HEAD>
+        self.__make_jheader_nicer()
+        self.output_page.startHtmlBody(self.cgroup_name, self.monitored_system, self.jheader)
+
+        self.generate_monitoring_summary()
+        self.generate_monitored_summary()
+        self.generate_about_this()
+
+        self.output_page.endHtmlBody()
+
 
 # =======================================================================================================
 # MAIN SCRIPT PREPARE DATA
@@ -1848,58 +1894,12 @@ def main_process_file(cfg):
     entry = load_json_data(infile)
     jheader = entry["header"]
     jdata = entry["samples"]
-
-    # load some basic fields from the JSON
-    monitored_system = "Unknown"
-    if "identity" in jheader:
-        if "hostname" in jheader["identity"]:
-            monitored_system = "host " + jheader["identity"]["hostname"]
-    if "custom_metadata" in jheader:
-        if "cmonitor_chart_name" in jheader["custom_metadata"]:
-            monitored_system = jheader["custom_metadata"]["cmonitor_chart_name"]
-
-    cgroup_name = "None"
-    if "cgroup_config" in jheader and "name" in jheader["cgroup_config"]:
-        cgroup_name = jheader["cgroup_config"]["name"]
-    if "custom_metadata" in jheader:
-        if "cmonitor_chart_name" in jheader["custom_metadata"]:
-            cgroup_name = "docker/" + jheader["custom_metadata"]["cmonitor_chart_name"]
-
-    sample_template = jdata[0]
     if verbose:
         print("Found %d data samples" % len(jdata))
 
     print("Opening output file %s" % outfile)
-    out_doc = HtmlOutputPage(outfile, "Monitoring data for " + monitored_system)
-    graph_generator = CMonitorGraphGenerator(out_doc, jheader, jdata)
-
-    # HTML HEAD -- all of these functions below generate JS code to be put inside the <HEAD>
-    graph_generator.output_page.startHtmlHead()
-
-    # baremetal stats:
-    graph_generator.generate_baremetal_cpus()
-    graph_generator.generate_baremetal_memory()
-    graph_generator.generate_baremetal_network_traffic()
-    graph_generator.generate_baremetal_disks_io()
-    graph_generator.generate_baremetal_avg_load()
-
-    # cgroup stats:
-    graph_generator.generate_cgroup_cpus()
-    graph_generator.generate_cgroup_memory()
-    graph_generator.generate_cgroup_topN_procs(config["top_scorer"], config["thread_filter"])
-    graph_generator.generate_cgroup_network_traffic()
-
-    graph_generator.generate_config_viewer()
-
-    # HTML BODY -- now we start actual HTML body which are just a few tables with buttons
-    #              that invoke the JS code produced earlier inside the <HEAD>
-    graph_generator.output_page.startHtmlBody(cgroup_name, monitored_system, jheader)
-
-    graph_generator.generate_monitoring_summary()
-    graph_generator.generate_monitored_summary()
-    graph_generator.generate_about_this()
-
-    graph_generator.output_page.endHtmlBody()
+    graph_generator = CMonitorGraphGenerator(outfile, jheader, jdata)
+    graph_generator.write(config["top_scorer"], config["thread_filter"])
 
     end_time = time.time()
     print("Completed processing of input JSON file of %d samples in %.3fsec. HTML output file is ready." % (len(jdata), end_time - start_time))
