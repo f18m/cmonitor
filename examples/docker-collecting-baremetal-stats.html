@@ -10,7 +10,7 @@
      button { margin-bottom: 3px; }
      #monitored_system_span { background-color: white; color: red; padding: 4px; }
      #button_table { width:100%; border-collapse: collapse; }
-     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     .button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
      #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
      #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
      #chart_master_inner_p { font-size: x-large; }
@@ -1433,14 +1433,15 @@ function show_config_window() {
   <div id="button_div">
   <table id="button_table">
   <tr>
-    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (Data collected from None)</td>
-    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
+    <td class="button_table_col"></td><td class="button_table_col"><b>CGroup</b> stats (Data collected from None)</td>
+    <td class="button_table_col"></td><td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from None)</td>
+    <td class="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>
   </tr>
   <tr>
-  <td id="button_table_col">
+  <td class="button_table_col">
     <button id="btn_show_config"><b>Configuration</b></button><br/>
-  </td><td id="button_table_col">
-N/A      </td><td id="button_table_col">
+  </td><td class="button_table_col">
+N/A      </td><td class="button_table_col">
     <select id="select_combobox_baremetal_cpus" onchange="call_function_named(this.value)">
       <option value="clear_chart">None</option>
       <option value="draw_graph1">CPU0</option>

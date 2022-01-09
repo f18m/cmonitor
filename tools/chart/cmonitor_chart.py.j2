@@ -498,7 +498,7 @@ class HtmlOutputPage:
      button { margin-bottom: 3px; }
      #monitored_system_span { background-color: white; color: red; padding: 4px; }
      #button_table { width:100%; border-collapse: collapse; }
-     #button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     .button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
      #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
      #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
      #chart_master_inner_p { font-size: x-large; }
@@ -599,15 +599,21 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
 
         # Table header row
         self.file.write("  <tr>\n")
-        self.file.write('    <td id="button_table_col"></td><td id="button_table_col"><b>CGroup</b> (Data collected from %s)</td>\n' % cgroupName)
-        self.file.write('    <td id="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>\n')
+        self.file.write(
+            '    <td class="button_table_col"></td><td class="button_table_col"><b>CGroup</b> stats (Data collected from %s)</td>\n' % cgroupName
+        )
+        self.file.write(
+            '    <td class="button_table_col"></td><td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from %s)</td>\n'
+            % cgroupName
+        )
+        self.file.write('    <td class="button_table_col"><b>Baremetal</b> (Data collected from /proc)</td>\n')
         self.file.write("  </tr>\n")
 
         # Datarow
         self.file.write("  <tr>\n")
-        self.file.write('  <td id="button_table_col">\n')
+        self.file.write('  <td class="button_table_col">\n')
         self.file.write('    <button id="btn_show_config"><b>Configuration</b></button><br/>\n')
-        self.file.write('  </td><td id="button_table_col">\n')
+        self.file.write('  </td><td class="button_table_col">\n')
 
         def write_buttons_for_graph_type(source_data):
             nwritten_controls = 0
@@ -660,7 +666,7 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
                 self.file.write("N/A")
 
         write_buttons_for_graph_type(GRAPH_SOURCE_DATA_CGROUP)
-        self.file.write('      </td><td id="button_table_col">\n')
+        self.file.write('      </td><td class="button_table_col">\n')
         write_buttons_for_graph_type(GRAPH_SOURCE_DATA_BAREMETAL)
 
         self.file.write("  </td></tr>\n")
@@ -1152,9 +1158,6 @@ class CMonitorGraphGenerator:
             return process_dict[d]["cpu"]
 
         topN_process_pids_list = sorted(process_dict, key=sort_key, reverse=True)
-        print("FMON")
-        print(topN_process_pids_list)
-        print(process_dict)
 
         # truncate to first N:
         if numProcsToShow > 0:

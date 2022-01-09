@@ -13,6 +13,7 @@ addons:
     - libgtest-dev
     - libbenchmark-dev
     - libfmt-dev
+    - tidy
 
 install: pip install j2cli
 
