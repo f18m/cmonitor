@@ -104,6 +104,11 @@ function draw_graph2() {
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph2, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph2, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph2, 2);
+
   var options_graph2 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 0 (from CGroup stats), STACKED graph",
@@ -133,6 +138,11 @@ function draw_graph3() {
   var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph3, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph3, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph3, 2);
 
   var options_graph3 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
@@ -164,9 +174,18 @@ function draw_graph4() {
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph4, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph4, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph4, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph4, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph4, 4);
+
   var options_graph4 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "All logical CPUs available in the cgroup",
+    title: "All logical CPUs available inside cgroup (cpu quota = 90.0%)",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -194,9 +213,18 @@ function draw_graph5() {
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph5, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col1_formatter.format(data_graph5, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col2_formatter.format(data_graph5, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col3_formatter.format(data_graph5, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' '});
+  col4_formatter.format(data_graph5, 4);
+
   var options_graph5 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Used memory in MB (from memory cgroup), STACKED graph",
+    title: "Used memory in MB measured inside cgroup (memory limit = 10.5MB), STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -209,8 +237,8 @@ function draw_graph5() {
      3: {targetAxisIndex:1},
     },
     vAxes: {
-      0: { title: "Memory (MB)", maxValue: 11534336 },
-      1: { title: "Alloc Failures", maxValue: 11534336 }
+      0: { title: "Memory (MB)" },
+      1: { title: "Alloc Failures" }
     },
     isStacked:  1
   };
@@ -233,9 +261,24 @@ function draw_graph6() {
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph6, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph6, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph6, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph6, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph6, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph6, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph6, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph6, 7);
+
   var options_graph6 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 threads for CPU usage (from cgroup stats), STACKED graph",
+    title: "CPU usage (cpu quota = 90.0%) of 20 top-CPU-utilizing threads, STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -268,16 +311,31 @@ function draw_graph6() {
 }
 
 function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNq13N1qI0cQBeBXWXS1C5Ol/+tU7gIhV3kDswjZHm8U5DjYTsAJefec2V1dpSME3QeM3WjsT4WZ6mONa3Rz8/fu9e33dff97v7wur4eH9fdsjsdbtcTH/rx/NA/y+7n4+Pxlcd+OJ2e7t79dDie/nheX/jA83p/fPnuZX3+c31+9z625BH2gQduj0/7u9PTy7p/OJ7Wr4dS8fOhw9PD/uHl7be7b0dqOB85Hf562z88r+efqXE78uv6eNiee3/7ef/6y/35WPqw+7TcfCn1fQopLXEpy/bFl8KFbc8Xw8eCam0JS/1YrbTarllccA1B4NYlIUpcQxK4jfVmiWsoAtdYb5W4hiZwwXohcQ2KvvAleZC45oK+qIH1JolrEjey3k6/wWq6ZnHBNYmbWG+RuOZV4GbWaxLXHAK3LDkEiYsQBW5lvUniIijO38Z6i8SFxDXWWyUuQhO4YL0aF0HRx856XeIizu7jFKjkGBUsYprPRlabFSxinc8mVithEdt8NrNaU7BQsIy1CAULBctQi65gkQR7AiNNwyIJ9gQGWsoKFgqWcZaqgkUS7AkMs2QKFknQDpG7TQ4SF1kQkpFx1nFbK61cs7jgIieBy0ATuchZ4DLScpG4yFXgMtRELrIJXMZahsRFdoHLYBO5KEHgMtpELopi32G4lSRxIXEZbyVLXBTBvrP9NV2qxEUR7A+J+VYgcVEEfczPuUaJiyo4fxPzTeSiCvoiMd9qkbiQuMy3WiUuahO4zLcKiYuq6DfmWwsSF03Rx8y3liQumqLfmG+tSlw0wfmb+dFM4qIJ+iIz3+y/528t0do1iwsuLApc5pvIhWWBy3yzInH5slzgMt86bku54ZrFBRdmApf5ZpC46MzUjLvMt87sywwXndmXcZf51pl9meGiM/sy7jLfOi6al3LN4oKLzkzNuMt868zUzHABm++W7VehcdGZARp3mW+dGaAZLjqzOuMu860zUzPDRWf2ZdxlvnmVuHBBX/BbskPiQuIy39wlrndmasbdxlbWuB4U/WasN0lcl7hgvVniusR11lskrgfBvlO3KGoS14MgNyuXnVkdJBRcs7jgemdWZ9xNjE6N650hoHE3s94kcb0zBjTuFtZbJK53BoHG3cp6Na53JozGXeZbZxZohusSl/nWmQaa4XpU7DvMtxQlrktc5lvKEtfT9D6Oy/ZKoClYTzaf5ao3ZBO+3URw4ev/iz5ZZKD1BnaGRO+N6gyIDLHponfGaEZEBldngGZM9M7ozIjIsOoMt4yJ3hlrGREZUJ2BljHR89yeYSiVMFn0ySKDqMTJope5PbPdozlb9DK3C+N2cWQ66WVuZ0cuOyTjydI1iwuud+Zdxl3GTmkS1yUuI6gznzPD9c58zrjLOBK53pn7GXcZTSLXaxC4jKnOnNIM1zvzROMuI6szTzTD9arYdxhftUlcr9OvY8Wvt+9D4nr1+e6XS+ga11sQuFyKXG9x/is/fi4i11sWuMy3ViSutypwmW8i15vgAkNivolcb4IrF4n5JnK9QeAy3yxIXJe4zDeLEtctCdzt7VM0rptgP8vbvzA1rptgn8xcWpW4boJ9JzPfRK6bYN/JzDeDxHVzgct8Q5C4DkEfZ+YbssR1KPqC+YYmcR2K85f5Bkhch+L8Zb6JXHdFX2xvXyV4fUHX58/ZbUMTrDdJXJ8/Zxe3ecPiReK6T7/vaPu/HeutEte9CVzmm8h1H7kf5NO/Sf8q1Q==\n';
+  var deflated_data_base64_graph7 = 'eNqdmt1qI0cQRl9l0dUuTEL/VXdV7gIhV3kDswjZHm8U5DjITsAJefd8nUSXCZzGQhrUPpSgvj4zU8zd3R+Ht/df9sM3h8fT2/52ft4P2+Fyut8v+uq721d/bocfzs/nN619e7m8PHz4/nS+/HrdX/XFdX88v371ul9/268fPuZeIvv4pIX788vx4fLyuh+fzpf9n6XS4rZ0enk6Pr2+//zw74ql28rl9Pv78em63xjLc+Wn/fk0ax/vvxzffny8rZVPh8/b3d8/9WNJpWx5a9v8iK3pYMx6OX3d3Ebf0ma3v/+BhicK2VY8c2h4oVBXpcqh4Y1CQ5WMQ8M7hVyVnEPDcXNjK5E4NII215IqFQ4NDmVVqhwaHCqq1Dg0gsbIqioNDo2gMbK21ZQ45AknwlSpcMgT7lNXpcYh59BQJeOQJ+oIc1VagDzhGIUqBYc8oxiVpH+pOWPGc4FMVp2KGc8GmaI6nPHcIVNVZ2DGMSM1ZMeMY0ZiyIEZLzRv0sIC44XmTVIoFTOOGSmhGGa80LxJCGVgxgvtaVZMa+KQV2qRLCWsQF6xeySFFcgrNpa0UBuHvNIMZYlhBfJKU5Slhuoc8oqzJzmsQN5wYKWHFcgbDqwE0QqHnENSRKsc8kYDO09lzTjkjWavyBHNOeSNxkjv1TKH3GifihyxArnR5hY5whqHnENyhBmH3Oh5sMgR5hxyw4mQI3rikHccIzmiFw55x4mQI7pxyDu+PtarDw55p82tcsRIHPJB+1TliBXIB+1TlSNG45AP2twqR6xAPnBz5YjhHPJBd26VIzxzyJ1uwipHeOWQO26uHLECuePmyhHeOeSO723nL1yA3PEdsRzhwSEPGqMmR0ThkAeNUZMjwjjkQZvb5IhwDjmH5IgIDkWiJ4DWlaQFKBJOxFClwqHgkKtS5VBwKFSpcSgSDazNHd85FImKxXSYgkOBZ65W5JYFKPCk1qoqFQ4FntVaU6XGocDTWjNVWoACz3hNjsADW0HBITmCj2zlCD6zlSNK5lBwSI7A41RBUViM8jZPoB0zAeepeR7BeepkAjPSAxzBTibgMFWXRKrDmYCj1PnZ4CR1fkalOZAY4Eh0MlFpDqQFOBCdTFSaA0mhJcwEZqSEljETjeZgPtjCmWg0O3lefS5A0Wjisg5XoGg0p1lSaJ1DwSFpoQ0ORaN7IksMK1A0bGGpYQUKo3spSw6WORRGd0aWHqxyKAwHVoKwzqEwHKP5RJpzKAyfY+d94wIUHZ+ZdbgCRacx0ntbgaLTGBU5ojcORafeK3LEChSdBrbIEStQdJryIkesQNHp1ihyxEgcCg7JESNzKAb1XplPeC5AMWjK65zDLEAx6NaoOhzGoRg0sFWOWIFi0MBWOWI4h2JQLVc5whOHwmmMqhzhlUPhuLlyhHcOheM+yRHuHArHfZIjVqAI3Nz5xPQCFEEV1uZcs3AoAt8R6xWNQ8EhOSKMQxE0sE2OWIHivx/M/vwXH3GHpw==\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph7, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col1_formatter.format(data_graph7, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' '});
+  col2_formatter.format(data_graph7, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col3_formatter.format(data_graph7, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col4_formatter.format(data_graph7, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col5_formatter.format(data_graph7, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col6_formatter.format(data_graph7, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col7_formatter.format(data_graph7, 7);
+
   var options_graph7 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 threads for memory usage (from cgroup stats)",
+    title: "Memory usage (memory limit = 10.5MB) of 20 top-CPU-utilizing threads",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -298,16 +356,27 @@ function draw_graph7() {
 }
 
 function draw_graph8() {
-  var deflated_data_base64_graph8 = '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\n';
+  var deflated_data_base64_graph8 = 'eNqNmttuY0UQRX8F+WlGMlJfqrt38cxfRCPLSRwI8hCUREgB8e/sBvzCAywlio9yVipW7VonJ2Xf3f1+eP/45XL47vB4fr+8P3+9HI6H6/n+cvW3vr9964/j4fXy+Pz27dvl9dfL6zef6mxZtT4bvn9+OT1cX94up6fn6+XvUy3ydur88nR6evv4+eGfM6PczlzPv32cnl4vt58ZdZ/56fL1fL2+PJzufzi9//h4O9c+H74c7/56Rp9aae1Yj3HcD3kMH6z9+8rt4z/IpYLIcWyqkFxqiJyu2SG5FIhcrjkguTQRKdcUJJdY5/PYskByJer8KK7ZILkgWV2zQ3JBsrlmQHIlSnN011yQXInSHHHspUBShWU0XLNBUoX1c7pmQFKQXK45IKmCPBpyTUqqsDTTNROSqv+fZtuneq0MVG0ErK7YGag6CNhcEYKqk4DdFRcDxUDrU8VAMdDy1GSgGsra6lBQDWVtcVpnoBhobdpgoBrK2tK0xUA11PDquegFkupIr2ptMKnOTLQ4mFRn0lqdHpBUR1FWy4NJdRRmtT5dkFRnuVsgTCrYhFghTCrYhFiiaJAUJK1RdEgq0ITs62sMSCpQ7s0ehSCpQGn6ax8Vkhqon80eYVIDdb7ZoxGQFCTt0RiQ1EBX5GaPhiCpwTKyR7NAUpOlaY9mg6Qmy8gezQFJTXY348+5IKmJOt/t0SqQ1EL97PYIk1qon90erYCkFup8t0eY1GKdt0dLkNRCM9/tkSokJTTJ3R6pQ1JinbdHmJRY5+2RJiQldg+/nwAlJXa7b4+UkFSiNMMeZYOkEqUZ9igHJJWo82GPUpAUJO1RJiSzoCtYTAdKySwso+WaDZIJSblmh2RCMl0zIJkFTcjYgkxIZkHGDR+WhGSy3cdolo6SydYko7tmg2SyRckI1wxIJluVjOGalEy2VRn2iG1LTCYk7RHcl9gjuDCxR61CMiFpj9iGw2Q2kGY97uv3ZGCSFUfdR2TFscFkoBUiq5ANJtlv+M+lK0IwyXZjPwZZbuzH7CgZy0MWFhvMjpKxOmRdscHsKBmLE4WByUBrE5WBGSiZ/aocBDNQhHXfTFAyA6VdfYjJDDQY1eLEhGRC0urEgmQGGrdqeTCZwS4u1geTOdBsVgs0KiRzoKGrVmh0SOZgE2KJxoRkDpbmfiFakMzBruv7BpqSOdmfAB9iMidK018DkzlRms0ezYBkTuR7s0eYzIkmpNkjTOZEs9TsESZzoqlr9mgVSCYk7dGqkMyFfG/7jRKUzIVmqe9/8CiZC01d9+EakMyFJqTbI0zmQhPS7dESJHOhq023RyqQTKE0uz1Sh2SKdd4eaUIyxfppjyRIplg/7REmM1nn9xt5KJmJLI69gGiQzGS3+/7MgGRC0h7lgGQmmpCwR5jMf70z6MuftOZlRA==\n';
   var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
   var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
   var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph8, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col1_formatter.format(data_graph8, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col2_formatter.format(data_graph8, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col3_formatter.format(data_graph8, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col4_formatter.format(data_graph8, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col5_formatter.format(data_graph8, 5);
+
   var options_graph8 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 threads for I/O usage (from cgroup stats)",
+    title: "I/O usage (from cgroup stats) of 20 top-CPU-utilizing threads",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -328,14 +397,14 @@ function draw_graph8() {
 }
 
 function draw_graph9() {
-  var deflated_data_base64_graph9 = 'eNptjs0OgjAQhF+F9KRJxYJthSucPBg96ImYpsIiaGuTYkzw6cU/gg2bbLKZ2W92swylRmt5LRBG6Xbv3WoN3biab7x10g27yoJ8mWvQxrbeJUEHnCELRd3MGrB3sAjTyOchGRTDlPkLHpOA4r9dbxLwMA6i5RRhxjj3KaevvGNtRK5MA6KsVfcA8cm7HeODhzQewaUpRdm019yhe/0LMzICK/loRWnBPd3rPzhw4DNoqZTJxfEkblUxwB3nFxAOAw5PmddsRA==\n';
+  var deflated_data_base64_graph9 = 'eNpdzcEOgjAMBuBXITtpMnEQhnCFkweiBz0RsgzoBN1YMogJPr0QhQA9NX/7tWmKYq0Ub0qEUXy9W12tYGjPx4uVRENzqwzwcZiA0qa3XhHKcIoMlHV7aMG8wSDsBbbvkkVR7FG8WrJ2ju+GTnDaI0yp749H8lqzQuoWmKjl8JXYBBO8iX/Q9cIN5Fow0fZNsXJz+meUbJjkn54JA+t3czoxZ8GeoLiUumD5g3VVOcNNPlF3otkXOV9law==\n';
   var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
   var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
   var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
   var options_graph9 = {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
-    title: "Top 20 threads for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
+    title: "CPU/disk total usage on X/Y axes; memory usage as bubble size of 20 top-CPU-utilizing threads",
     hAxis: { title:"CPU time" },
     vAxis: { title:"I/O MB" },
     sizeAxis: { maxSize: 200 },
@@ -359,6 +428,11 @@ function draw_graph10() {
   var data_graph10 = google.visualization.arrayToDataTable(inflated_data_graph10);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph10, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col1_formatter.format(data_graph10, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col2_formatter.format(data_graph10, 2);
 
   var options_graph10 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
@@ -467,7 +541,7 @@ function set_main_chart_div_as_visible() {
   <tr>
     <td class="button_table_col">Static Info</td>
     <td class="button_table_col"><b>CGroup</b> stats (Data collected from docker/userapp (Redis docker))</td>
-    <td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from cgroup and /proc)</td>
+    <td class="button_table_col"><b>CGroup</b> per-thread stats (Data collected from cgroup and /proc)</td>
     <td class="button_table_col"><b>Baremetal</b> stats (Data collected only from /proc)</td>
   </tr>
   <tr>
@@ -530,8 +604,8 @@ function set_main_chart_div_as_visible() {
     <tr><td class='config_key'>Cpuacct path</td><td class='config_val'>/sys/fs/cgroup/cpu,cpuacct/docker/ace6f6ddbdc7d80cd4e952151154045a7ac435f739c69ad1dc41be0ff083a9b8</td></tr>
     <tr><td class='config_key'>Cpuset path</td><td class='config_val'>/sys/fs/cgroup/cpuset/docker/ace6f6ddbdc7d80cd4e952151154045a7ac435f739c69ad1dc41be0ff083a9b8</td></tr>
     <tr><td class='config_key'>Cpus</td><td class='config_val'>0, 1</td></tr>
-    <tr><td class='config_key'>Cpu quota perc</td><td class='config_val'>0.9</td></tr>
-    <tr><td class='config_key'>Memory limit bytes</td><td class='config_val'>10.0MiB</td></tr>
+    <tr><td class='config_key'>Cpu quota perc</td><td class='config_val'>cpu quota = 90.0%</td></tr>
+    <tr><td class='config_key'>Memory limit bytes</td><td class='config_val'>memory limit = 10.5MB</td></tr>
     <tr><td class='config_key'>Num allowed cpus</td><td class='config_val'>2</td></tr>
     <tr><td colspan='2' class='config_sectioncol'>CPU Overview</td></tr>
     <tr><td class='config_key'>Architecture</td><td class='config_val'>x86_64</td></tr>
@@ -552,9 +626,9 @@ function set_main_chart_div_as_visible() {
     <tr><td class='config_key'>Cpu min mhz</td><td class='config_val'>1200.0000</td></tr>
     <tr><td class='config_key'>Bogomips</td><td class='config_val'>5586.32</td></tr>
     <tr><td colspan='2' class='config_sectioncol'>Memory Overview</td></tr>
-    <tr><td class='config_key'>Memtotal</td><td class='config_val'>184.2GiB</td></tr>
+    <tr><td class='config_key'>Memtotal</td><td class='config_val'>197.8GB</td></tr>
     <tr><td class='config_key'>Hugepages total</td><td class='config_val'>4</td></tr>
-    <tr><td class='config_key'>Hugepagesize</td><td class='config_val'>1000.0MiB</td></tr>
+    <tr><td class='config_key'>Hugepagesize</td><td class='config_val'>1.0GB</td></tr>
   </table>
   <h2>CMonitor Collector</h2>
   <table summary='details on cmonitor_collector'>

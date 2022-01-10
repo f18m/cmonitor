@@ -104,6 +104,11 @@ function draw_graph2() {
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph2, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph2, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph2, 2);
+
   var options_graph2 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Logical CPU 0 (from CGroup stats), STACKED graph",
@@ -133,6 +138,11 @@ function draw_graph3() {
   var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph3, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph3, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph3, 2);
 
   var options_graph3 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
@@ -164,9 +174,18 @@ function draw_graph4() {
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph4, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph4, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph4, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph4, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph4, 4);
+
   var options_graph4 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "All logical CPUs available in the cgroup",
+    title: "All logical CPUs available inside cgroup (cpu quota = 200.0%)",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -194,9 +213,14 @@ function draw_graph5() {
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph5, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
+  col1_formatter.format(data_graph5, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
+  col2_formatter.format(data_graph5, 2);
+
   var options_graph5 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Used memory in kB (from memory cgroup), STACKED graph",
+    title: "Used memory in kB measured inside cgroup (NO LIMIT), STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -224,9 +248,20 @@ function draw_graph6() {
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph6, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph6, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph6, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph6, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph6, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph6, 5);
+
   var options_graph6 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 threads for CPU usage (from cgroup stats), STACKED graph",
+    title: "CPU usage (cpu quota = 200.0%) of 20 top-CPU-utilizing threads, STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -257,16 +292,27 @@ function draw_graph6() {
 }
 
 function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNqtksFKxDAQhl9lyWkXpmWSziQZb4J48g3KHupapNDVxXYPIr67gyLiYUH4hZCEmcyX//D1/VtYX09juAoPwzqu03EMFObhfpy9dPNdeqdwNx2n1XvX8/x82NwO03x+GRcvLKufS/P02BxO5802VuEoeXepo786X1U22YU99Z8fbhOnRJEyRSFR6gpZqT7VcMsciUmk5NZS/bl0sSutdvkiw9/+A8OKgQwjqQwzrCaMIT5UO5hhVUBG9BwKM6xmkJE8R4EZVkHHpPMcBjPMQMfEd0swwwx1zJcJzDBDHcueI8MMM9Sx4jkqzDBDHaukjDpmFGGCMmiY+hBMUAb9Ur/CBGXQLk1UYYLyX93afwBMkM+5\n';
+  var deflated_data_base64_graph7 = 'eNqdkUFLAzEQhf9KyamFqUyyk02eN0E8+Q+WHta6yMK2Fnd7EPG/O1g8eKjgg5CEN/PxDl/XfYTl/TSE2/DcL8MyHoYgYeqfhsmj+5/oU8LjeBgXn91N0+t+9dCP0/ltmD2YF3/n7fFluz+dV+tYTaO1m2uT/GtySRW2CTvpvgvXSVOSKK1EE8vSFEGpTm31RjWKillpL1cTm3KVq2IkhwKCg1hVikNN/+fMF2tDcahGcNH7MsWhtgSXvK9QHCrh3RrvA8UBhHfzG4niAMa7HxjFAYx330FLcQDjvXhfpTiA8V4lK+MdEikqK2E9+yJFZSWcZ/9SVFbCeE5SKSrrX753X6oLhtU=\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph7, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
+  col1_formatter.format(data_graph7, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' '});
+  col2_formatter.format(data_graph7, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
+  col3_formatter.format(data_graph7, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
+  col4_formatter.format(data_graph7, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
+  col5_formatter.format(data_graph7, 5);
+
   var options_graph7 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 threads for memory usage (from cgroup stats)",
+    title: "Memory usage (NO LIMIT) of 20 top-CPU-utilizing threads",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -287,16 +333,23 @@ function draw_graph7() {
 }
 
 function draw_graph8() {
-  var deflated_data_base64_graph8 = 'eNqV00FLw0AQBeC/IntqYSqzm5nNPM/+i9BD1SBClWLiQcT/7qD0oFB4QhKWmW/f5ZFp+ijr+2kuN+XhsM7r0/NcpBwPd/MxR7fn0aeUZX2dl2X38ri7P71dbWqYVuvbcmHjvzY/U4Vty16m79xN09akSpdqYi7DKBgjb+m1nt+LNsT+YTGCtBALpS2icdY0cwfaIoy0NXOdtohO2pa5I20RZBc2ZC5oC5BdWH7RaAuwXeQDoy3AdtEzt9MWYLsYMzdoC7BdhLiyXUAqLV3JJjz/IFq6kj14HmnpSrbgTYKWrn872H8Bhbc1VA==\n';
+  var deflated_data_base64_graph8 = 'eNqN0sFKxEAMBuBXkTntQhYy06TN73nfouxh1UGEVRZbD7L47kZFxMOS0FKG5Jv/8NN5vpT1/dzLbXk4rn19eu6Fyul4108+2v+OPqgs62tflt3L4+7+/HazqSZcZdyWKxv9t/mZMmRbDjR/524at0aVRqpCojRMhMn8Fn89V5WRpBQmhAokxgkFa5ES9qwhoWASqupZmlCwMVTNs6aEgoWtyuBZSCggbFX8i5ZQQNyqv5CEAuJWR88aEwqIW508yxIKiFs1Uo5bBdWEUQ47Vf+fE0Y5bFT9mDDKYZ/ayBJG+a/NwycNQRRI\n';
   var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
   var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
   var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph8, 0);
 
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
+  col1_formatter.format(data_graph8, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
+  col2_formatter.format(data_graph8, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
+  col3_formatter.format(data_graph8, 3);
+
   var options_graph8 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Top 20 threads for I/O usage (from cgroup stats)",
+    title: "I/O usage (from cgroup stats) of 20 top-CPU-utilizing threads",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -317,14 +370,14 @@ function draw_graph8() {
 }
 
 function draw_graph9() {
-  var deflated_data_base64_graph9 = 'eNqLjlZyzs/NTcxLUdJRcg4IVSjJzE0FMj31/RWynYCMkIyi1ESQpG9qbn5RJUgwVidaqbikKLW4WDcvXTe5oFRJx9BCz9DUAAkY6RjoGRjroKpT0DC0MDEwNDHTVNIxMTE307M0ssBlGD79prj0K4F0meiYmgP1miNphmg0sDQBajQ2NDbXMzU2i40FAOiURH8=\n';
+  var deflated_data_base64_graph9 = 'eNqLjlZyzs/NTcxLUdJRcg4IVSjJzE0FMj31/RWynYCMkIyi1ESQpG9qbn5RJUgwVidaqbikKLW4WDcvXTe5oFRJx9BCz9DUAAkY6RjooCpS0DC0MDEwNDHTVNIxMTE3w2UKTo2m2DQq6RjoGZjomJojaYJoMLA0AWowNjQ2j40FAKTWQCc=\n';
   var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
   var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
   var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
   var options_graph9 = {
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
-    title: "Top 20 threads for CPU/disk total usage on X/Y axes; memory usage as bubble size (from cgroup stats)",
+    title: "CPU/disk total usage on X/Y axes; memory usage as bubble size of 20 top-CPU-utilizing threads",
     hAxis: { title:"CPU time" },
     vAxis: { title:"I/O kB" },
     sizeAxis: { maxSize: 200 },
@@ -348,6 +401,11 @@ function draw_graph10() {
   var data_graph10 = google.visualization.arrayToDataTable(inflated_data_graph10);
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph10, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col1_formatter.format(data_graph10, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col2_formatter.format(data_graph10, 2);
 
   var options_graph10 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
@@ -456,7 +514,7 @@ function set_main_chart_div_as_visible() {
   <tr>
     <td class="button_table_col">Static Info</td>
     <td class="button_table_col"><b>CGroup</b> stats (Data collected from docker/stress (Redis docker))</td>
-    <td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from cgroup and /proc)</td>
+    <td class="button_table_col"><b>CGroup</b> per-thread stats (Data collected from cgroup and /proc)</td>
     <td class="button_table_col"><b>Baremetal</b> stats (Data collected only from /proc)</td>
   </tr>
   <tr>
@@ -519,7 +577,7 @@ function set_main_chart_div_as_visible() {
     <tr><td class='config_key'>Cpuacct path</td><td class='config_val'>/sys/fs/cgroup/cpu,cpuacct/docker/9d2963d026f19d270dd12745efc575a13cad5f0bf4a99ccafc6cf940804047a5</td></tr>
     <tr><td class='config_key'>Cpuset path</td><td class='config_val'>/sys/fs/cgroup/cpuset/docker/9d2963d026f19d270dd12745efc575a13cad5f0bf4a99ccafc6cf940804047a5</td></tr>
     <tr><td class='config_key'>Cpus</td><td class='config_val'>0, 1</td></tr>
-    <tr><td class='config_key'>Cpu quota perc</td><td class='config_val'>2.0</td></tr>
+    <tr><td class='config_key'>Cpu quota perc</td><td class='config_val'>cpu quota = 200.0%</td></tr>
     <tr><td class='config_key'>Memory limit bytes</td><td class='config_val'>NO LIMIT</td></tr>
     <tr><td class='config_key'>Num allowed cpus</td><td class='config_val'>2</td></tr>
     <tr><td colspan='2' class='config_sectioncol'>CPU Overview</td></tr>
@@ -541,9 +599,9 @@ function set_main_chart_div_as_visible() {
     <tr><td class='config_key'>Cpu min mhz</td><td class='config_val'>1200.0000</td></tr>
     <tr><td class='config_key'>Bogomips</td><td class='config_val'>5586.32</td></tr>
     <tr><td colspan='2' class='config_sectioncol'>Memory Overview</td></tr>
-    <tr><td class='config_key'>Memtotal</td><td class='config_val'>184.2GiB</td></tr>
+    <tr><td class='config_key'>Memtotal</td><td class='config_val'>197.8GB</td></tr>
     <tr><td class='config_key'>Hugepages total</td><td class='config_val'>4</td></tr>
-    <tr><td class='config_key'>Hugepagesize</td><td class='config_val'>1000.0MiB</td></tr>
+    <tr><td class='config_key'>Hugepagesize</td><td class='config_val'>1.0GB</td></tr>
   </table>
   <h2>CMonitor Collector</h2>
   <table summary='details on cmonitor_collector'>
