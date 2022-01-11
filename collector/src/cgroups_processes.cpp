@@ -477,11 +477,12 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
     for (size_t i = 0; i < all_pids.size(); i++) {
 
         // acquire all possible informations on this PID (or TID)
-        // NOTE: getting the Tgid is expensive (requires opening a dedicated file) so that's done only
-        //       if strictly needed, i.e. if needsToFilterOutThreads==true
+        // NOTE: getting the Tgid is expensive (requires opening a dedicated file) but we want to provide Tgid in output
+        //       since it's the only way to provide to the data consumer a realiable criteria to distinguish between
+        //       secondary threads and main threads
         procsinfo_t procData;
         if (get_process_infos(
-                all_pids[i], m_cgroup_processes_include_threads, &procData, output_opts, needsToFilterOutThreads)) {
+                all_pids[i], m_cgroup_processes_include_threads, &procData, output_opts, true /* output_tgid */)) {
 
             if (needsToFilterOutThreads) {
                 // only the main thread has its PID == TGID...
@@ -508,28 +509,34 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         "The current process DB has %lu entries, the DB storing previous statuses has %lu entries.\n", currDB.size(),
         prevDB.size());
 
+    procsinfo_t empty_infos {};
     for (const auto& current_entry : currDB) {
         pid_t current_pid = current_entry.first;
         const procsinfo_t* pcurrent_status = &current_entry.second;
 
         // find the previous stats for this PID:
+        const procsinfo_t* pprev_status = NULL;
         auto itPrevStatus = prevDB.find(current_pid);
         if (itPrevStatus != prevDB.end()) {
-            const procsinfo_t* pprev_status = &itPrevStatus->second;
-
-            // compute the score
-            uint64_t score = compute_proc_score(pcurrent_status, pprev_status, elapsed_sec);
-            proc_topper_t newEntry = { .current = pcurrent_status, .prev = pprev_status };
-            m_topper_procs.insert(std::make_pair(score, newEntry));
-
-            // of the 40 fields of procsinfo_t we're mostly interested in user and system time:
-            CMonitorLogger::instance()->LogDebug(
-                "pid=%d: %s: utime=%lu, stime=%lu, prev_utime=%lu, prev_stime=%lu, score=%lu", // force newline
-                pcurrent_status->pi_pid, pcurrent_status->pi_comm, // force newline
-                pcurrent_status->pi_utime, pcurrent_status->pi_stime, // force newline
-                pprev_status->pi_utime, pprev_status->pi_stime, score);
-            // CMonitorLogger::instance()->LogDebug("PID=%lu -> score=%lu", current_entry.first, score);
+            pprev_status = &itPrevStatus->second;
+        } else {
+            // even if this process is a "new-born", we must consider it for top-N computation because
+            // nothing prevents it from entering our list of "topper processes"
+            pprev_status = &empty_infos;
         }
+
+        // compute the score
+        uint64_t score = compute_proc_score(pcurrent_status, pprev_status, elapsed_sec);
+        proc_topper_t newEntry = { .current = pcurrent_status, .prev = pprev_status };
+        m_topper_procs.insert(std::make_pair(score, newEntry));
+
+        // of the 40 fields of procsinfo_t we're mostly interested in user and system time:
+        CMonitorLogger::instance()->LogDebug(
+            "pid=%d: %s: utime=%lu, stime=%lu, prev_utime=%lu, prev_stime=%lu, score=%lu", // force newline
+            pcurrent_status->pi_pid, pcurrent_status->pi_comm, // force newline
+            pcurrent_status->pi_utime, pcurrent_status->pi_stime, // force newline
+            pprev_status->pi_utime, pprev_status->pi_stime, score);
+        // CMonitorLogger::instance()->LogDebug("PID=%lu -> score=%lu", current_entry.first, score);
     }
 
     if (m_topper_procs.empty())
@@ -563,15 +570,22 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 
         /*
          * Process fields
+         *
+         * NOTE: "process groups" and "sessions" are feature from 1980s mostly related to shell implementations
+         *       see https://www.gnu.org/software/libc/manual/html_node/Concepts-of-Job-Control.html
+         *           https://en.wikipedia.org/wiki/Process_group
+         *       to avoid confusing the consumer of data, they're left out of the data stream
          */
         m_pOutput->pstring(
             "cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
         m_pOutput->plong("pid", CURRENT(pi_pid));
         m_pOutput->plong("ppid", CURRENT(pi_ppid));
-        m_pOutput->plong("pgrp", CURRENT(pi_pgrp));
+        m_pOutput->plong("tgid", CURRENT(pi_tgid));
+        // m_pOutput->plong("pgrp", CURRENT(pi_pgrp)); // see NOTE above
+        // implementations -- leave it out
         m_pOutput->plong("priority", CURRENT(pi_priority));
         m_pOutput->plong("nice", CURRENT(pi_nice));
-        m_pOutput->plong("session", CURRENT(pi_session));
+        // m_pOutput->plong("session", CURRENT(pi_session)); // see NOTE above
         m_pOutput->plong("tty_nr", CURRENT(pi_tty_nr));
         // m_pOutput->phex("flags", CURRENT(pi_flags));
         m_pOutput->pstring("state", get_state(CURRENT(pi_state)));
