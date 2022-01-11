@@ -70,6 +70,17 @@ debug:
 test_debug:
 	gdb $(OUT) $(ARGS)
 
+diff_expected_vs_results:
+	for kk in $(TEST_KERNELS); do \
+		diff -U3 $$kk/expected-nothreads.json $$kk/result-nothreads.json ; \
+		diff -U3 $$kk/expected-withthreads.json $$kk/result-withthreads.json ; \
+	done
+accept_new_results:
+	for kk in $(TEST_KERNELS); do \
+		cp $$kk/result-nothreads.json $$kk/expected-nothreads.json ; \
+		cp $$kk/result-withthreads.json $$kk/expected-withthreads.json ; \
+	done
+
 $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
 	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBS)
 
