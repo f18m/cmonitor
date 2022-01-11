@@ -1,0 +1,2814 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Monitoring data for host docker-userapp-with-embedded-collector</title>
+  <style>
+     html,body { height:85%; }
+     body { background-color: #eaeaea; }
+     h3 { margin: 0px; }
+     ul { margin: 0 0 0 0;padding-left: 20px; }
+     button { margin-bottom: 3px; }
+     #monitored_system_span { background-color: white; color: red; padding: 4px; }
+     #button_table { width:100%; border-collapse: collapse; margin-bottom: 5px; }
+     .button_table_col { border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     #config_viewer_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto; overflow: auto}
+     .config_sectioncol {font-weight: bold; padding: 1ex; font-size: large;background-color: lightsteelblue;}
+     .config_key {font-weight: bold;}
+     .config_val {font-family: monospace;}
+     #chart_master_div { width:98%; height:85%; border: darkgrey; border-style: solid; border-width: 2px; margin-left: auto; margin-right: auto}
+     #chart_master_inner_div { position: absolute; top: 50%; left: 50%; -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
+     #chart_master_inner_p { font-size: x-large; }
+     .bottom_div { float:left; max-width: 40%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     .bottom_div h3 { font-size: medium; }
+     .bottom_div li { font-size: smaller; }
+     .bottom_about_div { float:right; max-width: 15%; border: darkgrey; border-style: solid; border-width: 2px; padding: 6px; margin: 6px; }
+     .bottom_about_div h3 { font-size: medium; }
+     .bottom_about_div li { font-size: smaller; }
+     .bottom_table_val { font-family: monospace; }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pako@1.0.10/dist/pako.min.js"></script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+// Load the Visualization API and the corechart package; version 51 is June 2021 version
+google.charts.load('51', {'packages':['corechart']});
+google.setOnLoadCallback(on_load_callback);
+
+/* The global chart object: */
+var g_chart = null;
+
+/* Currently selected data & options: */
+var g_current_data = null;
+var g_current_options = null;
+
+/* The global window showing the configuration of all collected data: */
+var g_configWindow = null;
+
+/* Create a trigger for window resize that will redraw current chart */
+var g_window_resize_timer = null;
+window.addEventListener('resize', function(e){
+  if (g_window_resize_timer) 
+    clearTimeout(g_window_resize_timer);
+
+  g_window_resize_timer = setTimeout(function() {
+    if (g_current_data && g_current_options)
+      g_chart.draw(g_current_data, g_current_options);
+  }, 500);
+});
+
+/* Utility function used with combobox controls: */
+function call_function_named(func_name) {
+  eval(func_name + "()");
+}
+
+/* Utility function used to clear main graph: */
+function clear_chart() {
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+}
+
+function draw_graph1() {
+  var deflated_data_base64_graph1 = 'eNqNkUFLxDAQhf/KkpPCEJOZZprx7MFeFBVPpYe6jVDoouwGZBH/u9PudmUPLoUEZiaPj/cmdf1t8v4zmVvTtTnlfpMMmKF9S4OO7ubRD5jXXdrq00O/HhUv+11OGy2qbhj76uZx9dX2Wcv7dtutquenUfXxnucyp3YwDdQT9AodInjweoAQHIjjawPkLTkPzrrpcrTIeGqP9z8IgXinkD+piIBEG0tZymBl0MRg5kmsllAYSCzGErC0wuWRQkSXWN5B8MriYN0hBFsWArLBMWBhEWkmeblIIgijKy6shOKUg7Qtw9JoniGEs/WM/kVzLV+P2gxRGfpNdIjkyUqk0RkGXY9C3RmtaX4BlCmHEw==\n';
+  var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
+  var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
+  var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph1, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph1, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph1, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph1, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph1, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph1, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph1, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph1, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph1, 8);
+
+  var options_graph1 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 0 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph1, options_graph1);
+  g_current_data = data_graph1;
+  g_current_options = options_graph1;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph2() {
+  var deflated_data_base64_graph2 = 'eNqNkE9LAzEQxb9KyUlhiJmZ/BvPHtyLouJp6WHtRljYorQBKeJ3N4kt2oOwkIGXl5dfZtL3nyof3pO6VuOQU562SYGah5c0F+vmZH2Bet6nXTm6mzY18XTY57Qtohvnuu+u7lcfw5SLvB1246p7fKipt9d8kjkNs1pD36AXZIgAAcsCJjAgxl8qMNocy3sPEnWU8Mds9R+DQdA0BjMfw1WJaGftUkp5FblRagc1TKJJBCxqig4oaPFhCQkNOPzpB6WFoxay4FkHW0Beh8CLQAyutuRj6+B3MjZaQlw6GXpwrmJsmeAMU4yIizECLp59EHK5z41LDFQOLJ2R1t9M1ofR\n';
+  var deflated_data_binary_graph2 = window.atob(deflated_data_base64_graph2);
+  var inflated_data_graph2 = JSON.parse(pako.inflate(deflated_data_binary_graph2, { to: 'string' }));
+  var data_graph2 = google.visualization.arrayToDataTable(inflated_data_graph2);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph2, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph2, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph2, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph2, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph2, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph2, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph2, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph2, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph2, 8);
+
+  var options_graph2 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 1 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph2, options_graph2);
+  g_current_data = data_graph2;
+  g_current_options = options_graph2;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph3() {
+  var deflated_data_base64_graph3 = 'eNqNkMFKBDEMhl9l6Ukh1CZp06lnD85FUfE07GF0KgzMouwWZBHf3czoisPiMtDQ9G/4kvxN82HK/i2bS9O1JZd+kw2YoX3Kg0pXB+kTzOMub/Xrpn8eKx72u5I3mtTdML7ri9vVe9sXTa/bbbeq7+/GqteXckhLbgezhmaCnpEjAgTUA0zgIDk5N+Cs+42UbJVkJmn8R2BI6CYCM88YMS5liDL4zxRimQS8t4IePOsVJp20B54CoYOAE0j4uztaigFiZSMFQNHN6KcNYzqJYgh87AwJL90KBUI4JiS/2FudMFQzwuhxpVNQhKQm0Yyy/gIk+IQe\n';
+  var deflated_data_binary_graph3 = window.atob(deflated_data_base64_graph3);
+  var inflated_data_graph3 = JSON.parse(pako.inflate(deflated_data_binary_graph3, { to: 'string' }));
+  var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph3, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph3, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph3, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph3, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph3, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph3, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph3, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph3, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph3, 8);
+
+  var options_graph3 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 2 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph3, options_graph3);
+  g_current_data = data_graph3;
+  g_current_options = options_graph3;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph4() {
+  var deflated_data_base64_graph4 = 'eNqNkEFLBDEMhf/K0pNCqE0y7TSePTgXRcXTsIfqVBiYRdktyCL+dzOrKw4qFBp4ScPHe+n7N1P2L9mcmyGVXMZNNmCm9JAnHV0cR+9g7nd5q19X4+O8cbfflbxR0Q3T3Hdn16vXNBaVl2k7rLrbm3nr+akcZclpMmvoD9ATckSAgPqACRyIC6cGnHXfJWKjhMVI6z8Cg6A7EJh5wWjbWkZQBv9wQcpCELZEDGxFfA0FHXj8dILytSxe2Y0NQY3aSHUcBs9/JRKuDYQBvP99Vmmqz6oJfFwQQtAorY2xAVRntKCsPwCQSoMj\n';
+  var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
+  var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
+  var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph4, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph4, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph4, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph4, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph4, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph4, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph4, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph4, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph4, 8);
+
+  var options_graph4 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 3 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph4, options_graph4);
+  g_current_data = data_graph4;
+  g_current_options = options_graph4;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph5() {
+  var deflated_data_base64_graph5 = 'eNqNkcFqwzAMhl+l+NSCcC0LO/XOPTSXjm3sFHLwFg8CKS2JoYSyd5+ckdKwtQQskH9JH7/loriI2J+CeBKVjyHWhyBANP4jNCxtR+kbxHsXWi7t68/U8dZ3MRw4yasm3fP18+Ls68jpzrfVIn99SV3HrzimMfhGlFAM0KVWWgMC8gHSoMApuxKgpLqGc3Lj7ETiuEcgcKj+IWTZXIJlAk0I1rKWSY0OUFKyOchE9IiDCgwOHOLBGy+ZxblekMDQ39c4mg2wYMwEkFwzwuJ8hgOzuWFoZiB/lDSGK5L072qvqynLH3Qogpo=\n';
+  var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
+  var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
+  var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph5, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph5, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph5, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph5, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph5, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph5, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph5, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph5, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph5, 8);
+
+  var options_graph5 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 4 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph5, options_graph5);
+  g_current_data = data_graph5;
+  g_current_options = options_graph5;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph6() {
+  var deflated_data_base64_graph6 = 'eNqN0E+rwjAMAPCvIj0phNk/a208e3AXxSfvNDxUV2GwoWhBRPzupuMN2UOh0JQkDT9KyvLBwv3s2ZxVLvhQt54Ba9zeN9Ra9K0nsN+rv9DTqj7Eie39GnxLSVE1sS6m69HN1YHSpbtUo+JnE6dOx9CnwbuG7aDs0LHkUoIAQQeUBA7IzYQBz5RSdPMuEDNt3uVffDMUoOCd0Y9Giww7m6Uahgw1MLpfWCtTBcFBi+EvBEYjz9MNBVp93AaaZMOA1p+2gXm6gaDt/23YTOdIKSIOjN0L4bSCDA==\n';
+  var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
+  var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
+  var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph6, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph6, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph6, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph6, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph6, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph6, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph6, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph6, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph6, 8);
+
+  var options_graph6 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 5 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph6, options_graph6);
+  g_current_data = data_graph6;
+  g_current_options = options_graph6;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph7() {
+  var deflated_data_base64_graph7 = 'eNqN0c0KwjAMAOBXkZ4UQk2bta6ePbiLouJpeKiuwmCiuIIM8d3thgr+QaEpSRo+SpvnV+abk2NjVljvfHlwDFhlt64KrcmzdQO2rt05HM3KXTuxamrvDiHJiqqts+G8d7GlD+nUnotetly0U8e9f6be2YptIO/QvkQpQYAIC0gCgkE9YICciMKOXRjDU6Nf5SP+GQRGYGfgmzAaxQo6CPQhCEQuhYolBIIS35dIEhktECj6FgxFAxqU+gEk0S8pDKj04zfaLE250mEGuVbJG7S5AzoygTo=\n';
+  var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
+  var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
+  var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph7, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph7, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph7, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph7, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph7, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph7, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph7, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph7, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph7, 8);
+
+  var options_graph7 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 6 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph7, options_graph7);
+  g_current_data = data_graph7;
+  g_current_options = options_graph7;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph8() {
+  var deflated_data_base64_graph8 = 'eNqN0F8LgjAQAPCvEnsqOGx/3PR67iFfioqexIeVCwSl0EFI9N2bkqBgMNjB3e34cVuavoltn4ZsSK6tsUVlCJBSX03pWtuh9QFyaUztrvbFrZs4t401lUuSvOzqZH1YvHRhXbrTdb5ITsdu6nG3Q2qNLkkGaY8uOeUcGDB3QHCggFStCNCA/kIIAYhBjGrU7OOf4eYZnRi0F6LIV1BOEDNCzH0FRkGyXhAMx0akmLchQM5sgcIbUCDlDBB6f6XbXcYTAREBw0DKEMJATR+TZV9lRYEP\n';
+  var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
+  var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
+  var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph8, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph8, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph8, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph8, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph8, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph8, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph8, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph8, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph8, 8);
+
+  var options_graph8 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 7 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph8, options_graph8);
+  g_current_data = data_graph8;
+  g_current_options = options_graph8;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph9() {
+  var deflated_data_base64_graph9 = 'eNqN0MGKwjAQBuBXkZxcGOJMYmLjeQ/bi6LiqXiINkKhxUUDIuK7OxUUKxUCGZhMwsfPFMVVxMt/EFNR+hhi1QQBovbbUPPo9zm6gVifwpGfZtWu/bG6nGJouMnLur3no/ng7KvI7Z8/loN8uWh/Hfbx2cbga7GB4oEOFSoFBMQHtAIEh/ZHAEp8lXMyc7Yz4vomaHCEHwIhSkWpgmVB92TIVKpACIYegib3bkxscgrSYHpSOJ0MWDCmBxgnr5Kzm6wjaM3rVdKYCVhpjesomzssZoB6\n';
+  var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
+  var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
+  var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph9, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph9, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph9, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph9, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph9, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph9, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph9, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph9, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph9, 8);
+
+  var options_graph9 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 8 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph9, options_graph9);
+  g_current_data = data_graph9;
+  g_current_options = options_graph9;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph10() {
+  var deflated_data_base64_graph10 = 'eNqNkUFLxDAQhf/KkpPCEJNMZ5rx7MFeFBVPZQ/VRih0UXYDsoj/3STdyoIIgSS8mTw+3iR9/6Xi8SOoazUOMcRpFxSoeXgJc2rdrK1vUM+HsE9Xd9NrdjwdDzHskujGOdfd1f3mc5hikrfDftx0jw/Z9f4WVxnDMKst9AV64YxzYMGmBejAgBi+VGC0iKTTgEuqBSG9lGf7PwaCWJMYVjNTMaNGJyCN9h5rKZwoWCiYc52ScE7ifVtLsQbILvMQF7PVJA1Iq6k6ikUgLBBEPEHyaBkivprCQFQozPxL4UyRpn4gAfJ/PoiXx23P2itn+wMq1oWv\n';
+  var deflated_data_binary_graph10 = window.atob(deflated_data_base64_graph10);
+  var inflated_data_graph10 = JSON.parse(pako.inflate(deflated_data_binary_graph10, { to: 'string' }));
+  var data_graph10 = google.visualization.arrayToDataTable(inflated_data_graph10);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph10, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph10, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph10, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph10, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph10, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph10, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph10, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph10, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph10, 8);
+
+  var options_graph10 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 9 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph10, options_graph10);
+  g_current_data = data_graph10;
+  g_current_options = options_graph10;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph11() {
+  var deflated_data_base64_graph11 = 'eNqNkM0KwjAQhF+l5KSw1Pw0sfHswV4UFU+lh2gjFFKUNiBFfHcTpUJphUAWZifLx+zm+RPZ7q7RCpXKalvVGgEy6qyNs9a99QJ0anXjvrbVxU8cu9bq2omsNL7PFrvooSrr5EY1ZZQd9n7qdrW9tFoZVED+gc4ophQIEPeAUcAgsZgjwDH+lZRxKsXAcvWPwEASPCAwxjyDJ0koQzgGm0iR0lACwcDJmLAUJJjAgH8z+PzDTcKvQQRwPs4hk3CCBJ5O3WK8SfEG1OGAvw==\n';
+  var deflated_data_binary_graph11 = window.atob(deflated_data_base64_graph11);
+  var inflated_data_graph11 = JSON.parse(pako.inflate(deflated_data_binary_graph11, { to: 'string' }));
+  var data_graph11 = google.visualization.arrayToDataTable(inflated_data_graph11);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph11, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph11, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph11, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph11, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph11, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph11, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph11, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph11, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph11, 8);
+
+  var options_graph11 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 10 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph11, options_graph11);
+  g_current_data = data_graph11;
+  g_current_options = options_graph11;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph12() {
+  var deflated_data_base64_graph12 = 'eNqN0MEKwjAMANBfkZ4Uwkxa262ePbiLouJp7FBdhcFEcQUZ4r/bCRN0EwoNpGl4pMmyB3PN1bI5K4yzrjxbBqwyB1v50qIrPYHta3vzT6vy2HbsmtrZs0/Somrv6XQ9upvS+XRpbsUo3W7arsvJdamzpmI5ZG90zJFzICB/QHBA0KgmDDDCT2gdJVp9lXz8EwRowgEhjkMF5QXxIxBixEmGEoQgqT9ErChYECBFX9AiGFAg5QAwC94kaZDJwCaT/ifyF7VCf2o=\n';
+  var deflated_data_binary_graph12 = window.atob(deflated_data_base64_graph12);
+  var inflated_data_graph12 = JSON.parse(pako.inflate(deflated_data_binary_graph12, { to: 'string' }));
+  var data_graph12 = google.visualization.arrayToDataTable(inflated_data_graph12);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph12, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph12, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph12, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph12, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph12, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph12, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph12, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph12, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph12, 8);
+
+  var options_graph12 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 11 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph12, options_graph12);
+  g_current_data = data_graph12;
+  g_current_options = options_graph12;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph13() {
+  var deflated_data_base64_graph13 = 'eNqN0U8LwiAUAPCvEp4KHktnur3OHdqlqOg0drBmMHAUS4iIvnu6WvQXBJXn8/HjqXl+IfZ80GRMSmW1rWpNgBi10calJl3qCmR91I07mlVbX7E6H62uXZCVxu+z4bx3UpV14VQ1ZS9bLnzVfme70GplSAF5i/ZjGsfAgLkBPAYKSOWAAI04526l7USMUpTP7WP+Mzggo63RlXrLG0kSakhn8Dej7UKMMFRgFAS734Thq5FIFmxwED+6QB4MSBDiG5AsXEAQ6ceHdM+Zfl+kuAFmwYFd\n';
+  var deflated_data_binary_graph13 = window.atob(deflated_data_base64_graph13);
+  var inflated_data_graph13 = JSON.parse(pako.inflate(deflated_data_binary_graph13, { to: 'string' }));
+  var data_graph13 = google.visualization.arrayToDataTable(inflated_data_graph13);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph13, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph13, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph13, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph13, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph13, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph13, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph13, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph13, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph13, 8);
+
+  var options_graph13 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 12 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph13, options_graph13);
+  g_current_data = data_graph13;
+  g_current_options = options_graph13;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph14() {
+  var deflated_data_base64_graph14 = 'eNqN0M0KwjAMAOBXGT0phNkfu7WePbiLouJp7FBdhUGHshVkiO9up0yYVig0JU3DR0ie35HtrhotUKmstlWtESCjjtq40nIoPQAdWt24r3V16jv2XWt17ZKsNP07m22im6qsS1eqKaNst+27Lmc7pFYrgwrIX+iEYkqBAHEHGAUMEidTBDjGn5AyFjIZlVz8ExhIgj1CmoYKiROYRxA0VCAYOPkSCHa3CBYYcM8MkgUDCXDuAebBiyQSuBgJjLH3IsiPUTwBQ0B/pw==\n';
+  var deflated_data_binary_graph14 = window.atob(deflated_data_base64_graph14);
+  var inflated_data_graph14 = JSON.parse(pako.inflate(deflated_data_binary_graph14, { to: 'string' }));
+  var data_graph14 = google.visualization.arrayToDataTable(inflated_data_graph14);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph14, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph14, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph14, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph14, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph14, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph14, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph14, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph14, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph14, 8);
+
+  var options_graph14 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 13 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph14, options_graph14);
+  g_current_data = data_graph14;
+  g_current_options = options_graph14;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph15() {
+  var deflated_data_base64_graph15 = 'eNqN0M8LgjAUB/B/RXYqeNh+tOk6d8hLUdFJPKxcICiFDkKi/72nZEEZDLbHd2+PD2NpeieuvVqyILlx1hWVJUBKc7QltpZD6wHk0Ngar9bFqZvYt42zFYYkL7tzMtsEN1M4jCtT50Gy23ZTl7MborOmJBmkPTrhlHNgwHCB4EBBUzUlQEMhBFb6SlqHUg2N9/6n4DyjvfIZRyGOIl9BoSBGhJj7CoyCZF8Co1hjb0GAHHmD9v4GpkDKEWCuvAUNMh77BvYjZE88MYAH\n';
+  var deflated_data_binary_graph15 = window.atob(deflated_data_base64_graph15);
+  var inflated_data_graph15 = JSON.parse(pako.inflate(deflated_data_binary_graph15, { to: 'string' }));
+  var data_graph15 = google.visualization.arrayToDataTable(inflated_data_graph15);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph15, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph15, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph15, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph15, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph15, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph15, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph15, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph15, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph15, 8);
+
+  var options_graph15 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 14 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph15, options_graph15);
+  g_current_data = data_graph15;
+  g_current_options = options_graph15;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph16() {
+  var deflated_data_base64_graph16 = 'eNqN0MEKwjAMANBfkZ4Uwkwb262ePbiLouJp7FBdhcGGogUR8d/thAlzEwoNpGl4pMmyJ3OPi2VzVhhnXVlbBqwyB1v50qItvYDtb/bqn1blsenYPW7O1j5Ji6q5p9P16G5K59OluRajdLtpus4n16bOmorlkH3QsUAhgAP3B0gAgkY1YYARfoMjRkLoTs3HP4JAc/whtI6SOA4VlBeoIxDRx0hEqMERJO9PESseLBBIGlqFomBCgZT9IfRMBQsaZDKwzKT/jfwNmJWAIQ==\n';
+  var deflated_data_binary_graph16 = window.atob(deflated_data_base64_graph16);
+  var inflated_data_graph16 = JSON.parse(pako.inflate(deflated_data_binary_graph16, { to: 'string' }));
+  var data_graph16 = google.visualization.arrayToDataTable(inflated_data_graph16);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph16, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph16, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph16, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph16, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph16, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph16, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph16, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph16, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph16, 8);
+
+  var options_graph16 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 15 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph16, options_graph16);
+  g_current_data = data_graph16;
+  g_current_options = options_graph16;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph17() {
+  var deflated_data_base64_graph17 = 'eNqNkEELwjAMhf+K9KQQZtrabvXswV0UFU9jh+oqDDqUrSBD/O92woTphEICLy/hI7wsexDX3gxZkkI748rKECBWn4z11qq3nkCOjan9alOeu4tD2zhTeZEWtpvT+XZy16Xzcq3rYpLud93V9eJ66Yy2JIfsDZ0yZAwoUF/AGSAolDMCGOGnlYoSJQeW738EDoriF4EiRoyGEqQn8JEfEhZKoAiCDgiSxx2DskUwg4MY+ULxYIAEIcaCiFUwQoFIxpL4zTJ/AZ+cf7g=\n';
+  var deflated_data_binary_graph17 = window.atob(deflated_data_base64_graph17);
+  var inflated_data_graph17 = JSON.parse(pako.inflate(deflated_data_binary_graph17, { to: 'string' }));
+  var data_graph17 = google.visualization.arrayToDataTable(inflated_data_graph17);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph17, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph17, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph17, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph17, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph17, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph17, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph17, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph17, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph17, 8);
+
+  var options_graph17 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 16 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph17, options_graph17);
+  g_current_data = data_graph17;
+  g_current_options = options_graph17;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph18() {
+  var deflated_data_base64_graph18 = 'eNqN0MEKwjAMBuBXGT0phJm0tls9e3AXRcXT2KG6CoMNZRZExHe3ExR0EwoNpH/DR0me35m7nS2bsdI466rGMmC12dvaR/N39AC2u9jWPy2rQzexvV2cbXyTlXV3zyar6Goq59uFacso26y7qdPRvVtnTc0KyF/oiCPnQED+gOCAoFGNGWCMn9I6TrX6inz9EwRowgEhSUIF5QXxIxBizEmGEoQgqf+JRFGwIECKvqBFMKBAygFgGrxJ0iDTwT1Me0TxBDIpf38=\n';
+  var deflated_data_binary_graph18 = window.atob(deflated_data_base64_graph18);
+  var inflated_data_graph18 = JSON.parse(pako.inflate(deflated_data_binary_graph18, { to: 'string' }));
+  var data_graph18 = google.visualization.arrayToDataTable(inflated_data_graph18);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph18, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph18, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph18, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph18, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph18, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph18, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph18, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph18, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph18, 8);
+
+  var options_graph18 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 17 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph18, options_graph18);
+  g_current_data = data_graph18;
+  g_current_options = options_graph18;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph19() {
+  var deflated_data_base64_graph19 = 'eNqN0EELwiAUB/CvMjwVPNZTc9POHdqlqOg0drBmMNgoNiFG9N1zwYLKQPDB8+/jh5rnd2L7qyELUmprbNUYAqTWR1O7aDlGDyCHzrTuaF2dhol931nTuCYr62GfzTbRTVfWtSvdllG22w5Tl7MdW2t0TQrIX+iEIWNAgboFnAGCwmRKAGN8F0WMGVMfmat/BAdF8YtQKpZpGiokTuAeQbJQgSII6nkGymCBg/DcQfFgIAEhPMA8CRYUCOn7BvojFE+Rw39T\n';
+  var deflated_data_binary_graph19 = window.atob(deflated_data_base64_graph19);
+  var inflated_data_graph19 = JSON.parse(pako.inflate(deflated_data_binary_graph19, { to: 'string' }));
+  var data_graph19 = google.visualization.arrayToDataTable(inflated_data_graph19);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph19, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph19, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph19, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph19, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph19, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph19, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph19, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph19, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph19, 8);
+
+  var options_graph19 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 18 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph19, options_graph19);
+  g_current_data = data_graph19;
+  g_current_options = options_graph19;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph20() {
+  var deflated_data_base64_graph20 = 'eNqN0MEKwjAMBuBXkZ4Uwkwa262ePbiLouJpeKiuwmBD0YKI+O52goJOodBA+jd8hBbFTfjr0YmxKK13vmqcAFHbratDNHlFdxDrszuFp1m1aydW17N3TWjysm7v+XDeu9jKh3ZqT2UvXy7aqcPev1rvbC02UDzRvkQpgYDCAZaAYFAPBGCC7zImyYz+iEL9ExgM4Q8hTWMFHQT+EJj5aWQy1iAERd0tUk3RAoPirmA4GtCg1A9gFP2VZEBlXwIhJpJGHWLzANarf9M=\n';
+  var deflated_data_binary_graph20 = window.atob(deflated_data_base64_graph20);
+  var inflated_data_graph20 = JSON.parse(pako.inflate(deflated_data_binary_graph20, { to: 'string' }));
+  var data_graph20 = google.visualization.arrayToDataTable(inflated_data_graph20);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph20, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph20, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph20, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph20, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph20, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph20, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph20, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph20, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph20, 8);
+
+  var options_graph20 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 19 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph20, options_graph20);
+  g_current_data = data_graph20;
+  g_current_options = options_graph20;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph21() {
+  var deflated_data_base64_graph21 = 'eNqNkMEKwjAQRH+l5KSw1E1iSuLZg70oKp5KD9FGKKQobUCK+O+mQgU1QiALs5PlMUxR3Inrr4YsSKWdcXVjCBCrj8Z6azlaDyCHzrT+a12fhot93znTeJFXdtjz2Sa56dp5udJtleS77XB1ObtROqMtKaF4QScMGQMK1D/gDBAUZlMCmOJ7lEqlyj4sP/8IHBTFLwJFTBmNJWSewAMZJIslUARBAxlQRhM4iEAGxaMBGQgRAMyji6QKhAzV8Ftk+QQSoX8a\n';
+  var deflated_data_binary_graph21 = window.atob(deflated_data_base64_graph21);
+  var inflated_data_graph21 = JSON.parse(pako.inflate(deflated_data_binary_graph21, { to: 'string' }));
+  var data_graph21 = google.visualization.arrayToDataTable(inflated_data_graph21);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph21, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph21, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph21, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph21, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph21, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph21, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph21, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph21, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph21, 8);
+
+  var options_graph21 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 20 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph21, options_graph21);
+  g_current_data = data_graph21;
+  g_current_options = options_graph21;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph22() {
+  var deflated_data_base64_graph22 = 'eNqN0MEKwjAMANBfkZ4Uwkxa262ePbiLouJp7FBdhcFEcQUZ4r/bCRN0EwoNpGl4pMmyB3PN1bI5K4yzrjxbBqwyB1v50qIrPYHta3vzT6vy2HbsmtrZs0/Somrv6XQ9upvS+XRpbsUo3W7arsvJdamzpmI5ZG90zJFzICB/QHBA0KgmDDDCT2gdJVp9lXz8EwRowgEhjkMF5QXxIxBixEmGEoQgqT9ErChYECBFX9AiGFAg5QAwC94kaZDJwCaT/ifyF7VCf2o=\n';
+  var deflated_data_binary_graph22 = window.atob(deflated_data_base64_graph22);
+  var inflated_data_graph22 = JSON.parse(pako.inflate(deflated_data_binary_graph22, { to: 'string' }));
+  var data_graph22 = google.visualization.arrayToDataTable(inflated_data_graph22);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph22, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph22, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph22, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph22, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph22, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph22, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph22, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph22, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph22, 8);
+
+  var options_graph22 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 21 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph22, options_graph22);
+  g_current_data = data_graph22;
+  g_current_options = options_graph22;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph23() {
+  var deflated_data_base64_graph23 = 'eNqN0FELgjAQAOC/EnsqOOy2uel67iFfioqexIeVCwSl0EFI9N+bgUFqMNjB7XZ83C5Nn8S2d0NWJNfW2KIyBEipz6Z0pXVfegE5NaZ2T9vi0nUc28aayiVJXnb3ZLmbPXRhXbrRdT5LDvuu63a1fWqNLkkG6QedM2QMKFB3gDNAUCgXBDDAbygVxEr+lFz8EzgoihNCFPkK0gl8IFDEgFHhS1AEQYdDxEGMnaCE9DI4CD7+iOLeQ0gQYgIIvXdJFYh4chPhiMjeOyF/8Q==\n';
+  var deflated_data_binary_graph23 = window.atob(deflated_data_base64_graph23);
+  var inflated_data_graph23 = JSON.parse(pako.inflate(deflated_data_binary_graph23, { to: 'string' }));
+  var data_graph23 = google.visualization.arrayToDataTable(inflated_data_graph23);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph23, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph23, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph23, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph23, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph23, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph23, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph23, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph23, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph23, 8);
+
+  var options_graph23 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 22 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph23, options_graph23);
+  g_current_data = data_graph23;
+  g_current_options = options_graph23;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph24() {
+  var deflated_data_base64_graph24 = 'eNqN0MEKwjAMBuBXGT0phJm0tls9e3AXRcXT2KG6CoMNRQsi4rvbCRN0EwoNpH/DR2ieP5i7ny2bsdI466rGMmC12dvaR/MuegLbXe3FPy2rQzuxvV+dbXyTlXV7zyar6GYq59uFuZRRtlm3U6ej61pnTc0KyN/oiCPnQED+gOCAoFGNGWCMn9I6TrX6inz9EwRowgEhSUIF5QUxIKQ8VCAESX0hURQsCJADO2gRDCiQcgCYBn8kaZDpj0CIMadpjyhe1Hl/ag==\n';
+  var deflated_data_binary_graph24 = window.atob(deflated_data_base64_graph24);
+  var inflated_data_graph24 = JSON.parse(pako.inflate(deflated_data_binary_graph24, { to: 'string' }));
+  var data_graph24 = google.visualization.arrayToDataTable(inflated_data_graph24);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph24, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph24, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph24, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph24, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph24, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph24, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph24, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph24, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph24, 8);
+
+  var options_graph24 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 23 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph24, options_graph24);
+  g_current_data = data_graph24;
+  g_current_options = options_graph24;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph25() {
+  var deflated_data_base64_graph25 = 'eNqN0E8LwiAUAPCvEp4KHss/02nnDu1SVHQaO1gzGDiKTYgRffdcsKAyEHzyfD5+PC2KO3L91aAFqrQzrm4MAmT10VhfWo6lB6BDZ1p/ta5PQ8e+75xpfJJXdjjn883kpmvn05Vuq0m+2w5dl7MbU2e0RSUUL3RKMaVAgPgFjAIGhcUMAU7wO5RKpBIfJR//BAaK4ICQZbGC8AILCJLGCgQDJ18CwX6X0QIDHphBsWhAAOcBII3+SKKAy8AjKEl/iPIJwJx/Uw==\n';
+  var deflated_data_binary_graph25 = window.atob(deflated_data_base64_graph25);
+  var inflated_data_graph25 = JSON.parse(pako.inflate(deflated_data_binary_graph25, { to: 'string' }));
+  var data_graph25 = google.visualization.arrayToDataTable(inflated_data_graph25);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph25, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph25, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph25, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph25, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph25, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph25, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph25, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph25, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph25, 8);
+
+  var options_graph25 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 24 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph25, options_graph25);
+  g_current_data = data_graph25;
+  g_current_options = options_graph25;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph26() {
+  var deflated_data_base64_graph26 = 'eNqNkEELwjAMhf+K9KQQZtLaunr24C6KiqfhoboKgw5lK8gQ/7udoKBOKCTw+hI+XpPnN+bbi2UzVhhvfVlZBsyZg3XBmr+sO7BdY+swWpbHbmPbNt5WQWSF697ZeDW4mtIHuTB1Mcg2627rfPIv6a1xbA/5EzrkyDkQUCgQHBA0qhEDTPDdWiepVh9W6H8EAZrwi0CICadYggoE0ZMh5bEEQpD0S5iq6AwkQPZk0CIaoEDKHsAk+pCkQaZ9Z/j9xP4BJmd/MQ==\n';
+  var deflated_data_binary_graph26 = window.atob(deflated_data_base64_graph26);
+  var inflated_data_graph26 = JSON.parse(pako.inflate(deflated_data_binary_graph26, { to: 'string' }));
+  var data_graph26 = google.visualization.arrayToDataTable(inflated_data_graph26);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph26, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph26, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph26, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph26, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph26, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph26, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph26, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph26, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph26, 8);
+
+  var options_graph26 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 25 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph26, options_graph26);
+  g_current_data = data_graph26;
+  g_current_options = options_graph26;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph27() {
+  var deflated_data_base64_graph27 = 'eNqN0EELwiAUB/CvMjwVPNZTc9POHdqlqOg0drBmMNgoNiFG9N1zwYLKQPDB8+/jh5rnd2L7qyELUmprbNUYAqTWR1O7aDlGDyCHzrTuaF2dhol931nTuCYr62GfzTbRTVfWtSvdllG22w5Tl7MdW2t0TQrIX+iEIWNAgboFnAGCwmRKAGN8F0WMGVMfmat/BAdF8YtQKpZpGiokTuAeQbJQgSII6nkGymCBg/DcQfFgIAEhPMA8CRYUCOn7BvojFE+Rw39T\n';
+  var deflated_data_binary_graph27 = window.atob(deflated_data_base64_graph27);
+  var inflated_data_graph27 = JSON.parse(pako.inflate(deflated_data_binary_graph27, { to: 'string' }));
+  var data_graph27 = google.visualization.arrayToDataTable(inflated_data_graph27);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph27, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph27, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph27, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph27, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph27, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph27, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph27, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph27, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph27, 8);
+
+  var options_graph27 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 26 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph27, options_graph27);
+  g_current_data = data_graph27;
+  g_current_options = options_graph27;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph28() {
+  var deflated_data_base64_graph28 = 'eNqNkMEKwjAQRH9FclJY6iZpSuPZg70oKp5KD9FGKKQobUCK+O+m1apohUA2zG6Wx2TS9Epsc9ZkRnJltS1KTYAYtdfGjeb96AZkV+vKPS2LQ7uxbWqrSyeS3LR9Ml2NLqqwTi5UlY+SzbrdOh1tL61WhmSQdtAxQ8aAAnUHOAMEidGEAAacc3djV1IGsYxe7bP+MThIih3jvU4RA0Z9CZEj8C9C6yFmvgSKIOjjH1R+MsLQn8FBDLiQ3BsQgRADgNA7SuddxENB/EaZ3QEr34AD\n';
+  var deflated_data_binary_graph28 = window.atob(deflated_data_base64_graph28);
+  var inflated_data_graph28 = JSON.parse(pako.inflate(deflated_data_binary_graph28, { to: 'string' }));
+  var data_graph28 = google.visualization.arrayToDataTable(inflated_data_graph28);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph28, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph28, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph28, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph28, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph28, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph28, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph28, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph28, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph28, 8);
+
+  var options_graph28 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 27 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph28, options_graph28);
+  g_current_data = data_graph28;
+  g_current_options = options_graph28;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph29() {
+  var deflated_data_base64_graph29 = 'eNqN0MEKwjAMANBfGT0phJm2tFs9e3AXRcXT2KG6CoMOZSvIEP/dTpigm1BoIE3DI2meP4jrboYsSamdcVVtCBCrT8b60mooPYEcW9P4p0117jsOXetM7ZOstP09W2yju66cT9e6KaNsv+u7rhc3pM5oSwrI3+iMIWNAgfoDnAGCQjkngDF+Qqk4VfKr5OOfwEFRnBCSJFSQXuA/AkWMGRWhBEUQdDxEImmwwEHwsaB4MCBBiKktEhVMKBDpxFem4y2KFy1Of4g=\n';
+  var deflated_data_binary_graph29 = window.atob(deflated_data_base64_graph29);
+  var inflated_data_graph29 = JSON.parse(pako.inflate(deflated_data_binary_graph29, { to: 'string' }));
+  var data_graph29 = google.visualization.arrayToDataTable(inflated_data_graph29);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph29, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph29, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph29, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph29, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph29, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph29, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph29, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph29, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph29, 8);
+
+  var options_graph29 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 28 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph29, options_graph29);
+  g_current_data = data_graph29;
+  g_current_options = options_graph29;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph30() {
+  var deflated_data_base64_graph30 = 'eNqNkM0KwjAQhF9FclJY6iYhaePZg70oKp5KD9FGKKQobUCK+O6mSsWfCoFdmMwuH5vJsitx7dmQGSm0M66sDAFi9d5Yb8176wZk15jaj5blodvYto0zlRdpYbt3Ol2NLrp0Xi50XYzSzbrbOh1dL53RluSQPaBjhowBBeoLOAMEhXJCACN8NUWMGFMfnu9/CA6K4hdCqSiJ41CC9AQ+QEhYKIEiCDrwDUyCCRzE8wbO+fsVQslghgQhhsKMg8OkCkQyFAX9IeR3jdSAEg==\n';
+  var deflated_data_binary_graph30 = window.atob(deflated_data_base64_graph30);
+  var inflated_data_graph30 = JSON.parse(pako.inflate(deflated_data_binary_graph30, { to: 'string' }));
+  var data_graph30 = google.visualization.arrayToDataTable(inflated_data_graph30);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph30, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph30, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph30, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph30, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph30, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph30, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph30, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph30, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph30, 8);
+
+  var options_graph30 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 29 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph30, options_graph30);
+  g_current_data = data_graph30;
+  g_current_options = options_graph30;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph31() {
+  var deflated_data_base64_graph31 = 'eNqN0MEKwjAMANBfGT0phJm2tFs9e3AXRcXT2KG6CoMOZSvIEP/dTpigm1BoIE3DI2meP4jrboYsSamdcVVtCBCrT8b60mooPYEcW9P4p0117jsOXetM7ZOstP09W2yju66cT9e6KaNsv+u7rhc3pM5oSwrI3+iMIWNAgfoDnAGCQjkngDF+Qqk4VfKr5OOfwEFRnBCSJFSQXuA/AkWMGRWhBEUQdDxEImmwwEHwsaB4MCBBiKktEhVMKBDpxFem4y2KFy1Of4g=\n';
+  var deflated_data_binary_graph31 = window.atob(deflated_data_base64_graph31);
+  var inflated_data_graph31 = JSON.parse(pako.inflate(deflated_data_binary_graph31, { to: 'string' }));
+  var data_graph31 = google.visualization.arrayToDataTable(inflated_data_graph31);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph31, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph31, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph31, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph31, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph31, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph31, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph31, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph31, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph31, 8);
+
+  var options_graph31 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 30 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph31, options_graph31);
+  g_current_data = data_graph31;
+  g_current_options = options_graph31;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph32() {
+  var deflated_data_base64_graph32 = 'eNqNkUELwjAMhf/K6EkhzLRdS+vZg7soKp7GDtVVGGwoW0GG+N/thAm6CYUEXl/CxyPNsgdx3c2SJSmMs66sLQFSmZOtvLUarCeQY2sbP9qU537j0LXO1l6kRdW/08U2upvSebk2TRGl+12/db24QTprKpJD9obOGDIGFKgv4AwQNMo5AYzx01rHSssvy/c/AgdN8YdAEWNGQwnSE/g4g0h0KIEiCDqRAVUwgYOYyKB5MECCEBOAJPiQVINQE1+hxofMXxKXfxo=\n';
+  var deflated_data_binary_graph32 = window.atob(deflated_data_base64_graph32);
+  var inflated_data_graph32 = JSON.parse(pako.inflate(deflated_data_binary_graph32, { to: 'string' }));
+  var data_graph32 = google.visualization.arrayToDataTable(inflated_data_graph32);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph32, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph32, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph32, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph32, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph32, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph32, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph32, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph32, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph32, 8);
+
+  var options_graph32 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 31 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph32, options_graph32);
+  g_current_data = data_graph32;
+  g_current_options = options_graph32;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph33() {
+  var deflated_data_base64_graph33 = 'eNqNkEELwjAMhf+K9KQQZtqupfXswV0UFU9jh+oqDDaUrSBD/O92gwnTCYUEXl7CxyNp+iSuvVuyIrlx1hWVJUBKc7alt9aD9QJyamztV9vi0l0c28bZyoskL7s5We5mD1M4LzemzmfJYd9d3a5ukM6akmSQ9tA5Q8aAAvUFnAGCRrkggBF+WutIaTmyfP8jcNAUvwgUMWI0lCA9gU9kUCyUQBEEHRE41X0KVMEMDmIihebBAAlCTADi4Ff6zEJNvjL+QWRvk/F/nA==\n';
+  var deflated_data_binary_graph33 = window.atob(deflated_data_base64_graph33);
+  var inflated_data_graph33 = JSON.parse(pako.inflate(deflated_data_binary_graph33, { to: 'string' }));
+  var data_graph33 = google.visualization.arrayToDataTable(inflated_data_graph33);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph33, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph33, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph33, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph33, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph33, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph33, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph33, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph33, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph33, 8);
+
+  var options_graph33 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 32 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph33, options_graph33);
+  g_current_data = data_graph33;
+  g_current_options = options_graph33;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph34() {
+  var deflated_data_base64_graph34 = 'eNqNkEELwjAMhf+K9KQQZtLabvXswV0UFU9jh+oqDCaKK8gQ/7udMEE3oZDA60v4eE2WPZhrrpbNWWGcdeXZMmCVOdjKW4vOegLb1/bmR6vy2G7smtrZsxdpUbXvdLoe3U3pvFyaWzFKt5t263JynXTWVCyH7A0dc+QcCMgXCA4IGtWEAUb4aa2jRKsvy/c/ggBNOECI41CC8gTxQyDEiJMMRRCCpH6IWFEwQYAcDKFEMEKBlP0QehZ8S9Igk4FbJv1v5C+liX+4\n';
+  var deflated_data_binary_graph34 = window.atob(deflated_data_base64_graph34);
+  var inflated_data_graph34 = JSON.parse(pako.inflate(deflated_data_binary_graph34, { to: 'string' }));
+  var data_graph34 = google.visualization.arrayToDataTable(inflated_data_graph34);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph34, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph34, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph34, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph34, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph34, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph34, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph34, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph34, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph34, 8);
+
+  var options_graph34 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 33 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph34, options_graph34);
+  g_current_data = data_graph34;
+  g_current_options = options_graph34;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph35() {
+  var deflated_data_base64_graph35 = 'eNqN0UELwiAUB/CvEp4KHuupc9POHdqlqOg0drBmMNgoNiFG9N1zwYLKQPDB8+/jh2Ke34ntr4YsSKmtsVVjCJBaH03touUYPYAcOtO6o3V1Gib2fWdN45qsrId9Nt9Mbrqyrl3ptpxku+0wdTnbsbVG16SA/IVOGTIGFKhbwBkgKExmBDDCd1HEiDH1kbn6R3BQFL8IpSKZpqFC4gTuESQLFSiCoJ5noAwWOAjPHRQPBhIQwgPESbCgQEjfX9D4hyieDpN/aA==\n';
+  var deflated_data_binary_graph35 = window.atob(deflated_data_base64_graph35);
+  var inflated_data_graph35 = JSON.parse(pako.inflate(deflated_data_binary_graph35, { to: 'string' }));
+  var data_graph35 = google.visualization.arrayToDataTable(inflated_data_graph35);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph35, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph35, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph35, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph35, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph35, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph35, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph35, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph35, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph35, 8);
+
+  var options_graph35 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 34 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph35, options_graph35);
+  g_current_data = data_graph35;
+  g_current_options = options_graph35;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph36() {
+  var deflated_data_base64_graph36 = 'eNqN0UELwiAUB/CvEp4KHuupc9POHdqlqOg0drBmMNgoNiFG9N1zwYLKQPDB8+/jh2Ke34ntr4YsSKmtsVVjCJBaH03touUYPYAcOtO6o3V1Gib2fWdN45qsrId9Nt9Mbrqyrl3ptpxku+0wdTnbsbVG16SA/IVOGTIGFKhbwBkgKExmBDDCd1HEiDH1kbn6R3BQFL8IpSKZpqFC4gTuESQLFSiCoJ5noAwWOAjPHRQPBhIQwgPESbCgQEjfX9D4hyieDpN/aA==\n';
+  var deflated_data_binary_graph36 = window.atob(deflated_data_base64_graph36);
+  var inflated_data_graph36 = JSON.parse(pako.inflate(deflated_data_binary_graph36, { to: 'string' }));
+  var data_graph36 = google.visualization.arrayToDataTable(inflated_data_graph36);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph36, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph36, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph36, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph36, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph36, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph36, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph36, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph36, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph36, 8);
+
+  var options_graph36 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 35 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph36, options_graph36);
+  g_current_data = data_graph36;
+  g_current_options = options_graph36;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph37() {
+  var deflated_data_base64_graph37 = 'eNqNkMEKwjAQRH+l5KSw1E1iSuLZg70oKp5KD9FGKKQobUCK+O+mQgU1QiALs5PlMUxR3Inrr4YsSKWdcXVjCBCrj8Z6azlaDyCHzrT+a12fhot93znTeJFXdtjz2Sa56dp5udJtleS77XB1ObtROqMtKaF4QScMGQMK1D/gDBAUZlMCmOJ7lEqlyj4sP/8IHBTFLwJFTBmNJWSewAMZJIslUARBAxlQRhM4iEAGxaMBGQgRAMyji6QKhAzV8Ftk+QQSoX8a\n';
+  var deflated_data_binary_graph37 = window.atob(deflated_data_base64_graph37);
+  var inflated_data_graph37 = JSON.parse(pako.inflate(deflated_data_binary_graph37, { to: 'string' }));
+  var data_graph37 = google.visualization.arrayToDataTable(inflated_data_graph37);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph37, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph37, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph37, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph37, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph37, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph37, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph37, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph37, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph37, 8);
+
+  var options_graph37 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 36 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph37, options_graph37);
+  g_current_data = data_graph37;
+  g_current_options = options_graph37;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph38() {
+  var deflated_data_base64_graph38 = 'eNqNkEELwjAMhf+K9KQQZtquo/XswV0UFU9jh+oqDDqUrSBD/O92wgS1QiGBl5fw8UhR3Inrr4YsSKWdcXVjCBCrj8Z6azlaDyCHzrR+ta5Pw8W+75xpvMgrO8z5fDO56dp5udJtNcl32+HqcnajdEZbUkLxgk4ZMgYUqC/gDBAUZjMCmOC7lUqkyj4s3/8IHBTFLwJFTBiNJWSewAMZJIslUARBAxlQRhM4iEAGxaMBGQgRAKTRj6QKhAw+Mv1BlE+PKX8v\n';
+  var deflated_data_binary_graph38 = window.atob(deflated_data_base64_graph38);
+  var inflated_data_graph38 = JSON.parse(pako.inflate(deflated_data_binary_graph38, { to: 'string' }));
+  var data_graph38 = google.visualization.arrayToDataTable(inflated_data_graph38);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph38, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph38, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph38, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph38, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph38, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph38, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph38, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph38, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph38, 8);
+
+  var options_graph38 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 37 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph38, options_graph38);
+  g_current_data = data_graph38;
+  g_current_options = options_graph38;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph39() {
+  var deflated_data_base64_graph39 = 'eNqNkEELwjAMhf+K9KQQZtquo/XswV0UFU9jh+oqDDqUrSBD/O92wgS1QiGBl5fw8UhR3Inrr4YsSKWdcXVjCBCrj8Z6azlaDyCHzrR+ta5Pw8W+75xpvMgrO8z5fDO56dp5udJtNcl32+HqcnajdEZbUkLxgk4ZMgYUqC/gDBAUZjMCmOC7lUqkyj4s3/8IHBTFLwJFTBiNJWSewAMZJIslUARBAxlQRhM4iEAGxaMBGQgRAKTRj6QKhAw+Mv1BlE+PKX8v\n';
+  var deflated_data_binary_graph39 = window.atob(deflated_data_base64_graph39);
+  var inflated_data_graph39 = JSON.parse(pako.inflate(deflated_data_binary_graph39, { to: 'string' }));
+  var data_graph39 = google.visualization.arrayToDataTable(inflated_data_graph39);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph39, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph39, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph39, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph39, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph39, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph39, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph39, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph39, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph39, 8);
+
+  var options_graph39 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 38 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph39, options_graph39);
+  g_current_data = data_graph39;
+  g_current_options = options_graph39;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph40() {
+  var deflated_data_base64_graph40 = 'eNqNkMEKwjAQRH+l5KSw1E1iQuLZg70oKp5KD9FGKLQobUCK+O+mhQrVCoEszE6WxzBp+iSuvVuyIrlx1hWVJUBKc7alt9aD9QJyamztv7bFpbs4to2zlRdJXnZ7sthFD1M4LzemzqPksO+ublc3SGdNSTJIe+iMIWNAgfoHnAGCRjkngDF+RutYaTmy/PwjcNAUvwgUMWY0lCA9gU9kUCyUQBEE7Qmc6lEKVMEMDmIihebBAAlCTACWwVX67EJNFfFbZfYGF3x/hw==\n';
+  var deflated_data_binary_graph40 = window.atob(deflated_data_base64_graph40);
+  var inflated_data_graph40 = JSON.parse(pako.inflate(deflated_data_binary_graph40, { to: 'string' }));
+  var data_graph40 = google.visualization.arrayToDataTable(inflated_data_graph40);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph40, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph40, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph40, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph40, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph40, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph40, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph40, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph40, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph40, 8);
+
+  var options_graph40 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 39 (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph40, options_graph40);
+  g_current_data = data_graph40;
+  g_current_options = options_graph40;
+  reset_combo_boxes("baremetal_cpus");
+}
+
+function draw_graph41() {
+  var deflated_data_base64_graph41 = 'eNq9lM1OwzAMx98lJ5Asyx+NV3OFB+DCadoBxA5IIHHYBSHeHbd1t26laEJANMeaG/+afxp7vX4vu7fXbbkqj/e77e7pZVugPN8/bJ8jdDOGPqBc395R6R0PTgang2sGVwdng1sNrh2cZ/qISQ4niJPEieJkccI4aZw4Tp4kT8Z9JU+SJ8mT5EnyJHmSPEmeJk+Tp6PQ5GnyNHmaPE2eJk+9bGDdn+GFkAgwcPxABQic7LKAMioxEJpZzDQxVT2ZCRTdbbaGvsw/xw75Z9uSIgVnCkUUW/T9ho63P39hE6ubb1f8sS3JsZCjIccIxQTqCj2iVVBWQodhYKhikwhVkBDB01Aze3MTWe3ZH+UPzmRJNxNUDt1uKLWCGhIbsCOL+GG0ULG7tsq+n+nov2CkTyTsl4xmulrYnNev7vKcsBydPF0UqlD7DxxXsDZgLRq3s/M+PXnGTvtPy+0XynBRjkGtffl1MKso3i40kwOvu6jyn9V2lhKH2natsaJJ0zlxBkeL+9Qf/7SyBFrs203XdDiaadRorPTpiBJ1l32roaOO+Y/tZrP5BO48eUU=\n';
+  var deflated_data_binary_graph41 = window.atob(deflated_data_base64_graph41);
+  var inflated_data_graph41 = JSON.parse(pako.inflate(deflated_data_binary_graph41, { to: 'string' }));
+  var data_graph41 = google.visualization.arrayToDataTable(inflated_data_graph41);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph41, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph41, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph41, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph41, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph41, 4);
+  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col5_formatter.format(data_graph41, 5);
+  var col6_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col6_formatter.format(data_graph41, 6);
+  var col7_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col7_formatter.format(data_graph41, 7);
+  var col8_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col8_formatter.format(data_graph41, 8);
+  var col9_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col9_formatter.format(data_graph41, 9);
+  var col10_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col10_formatter.format(data_graph41, 10);
+  var col11_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col11_formatter.format(data_graph41, 11);
+  var col12_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col12_formatter.format(data_graph41, 12);
+  var col13_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col13_formatter.format(data_graph41, 13);
+  var col14_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col14_formatter.format(data_graph41, 14);
+  var col15_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col15_formatter.format(data_graph41, 15);
+  var col16_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col16_formatter.format(data_graph41, 16);
+  var col17_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col17_formatter.format(data_graph41, 17);
+  var col18_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col18_formatter.format(data_graph41, 18);
+  var col19_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col19_formatter.format(data_graph41, 19);
+  var col20_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col20_formatter.format(data_graph41, 20);
+  var col21_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col21_formatter.format(data_graph41, 21);
+  var col22_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col22_formatter.format(data_graph41, 22);
+  var col23_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col23_formatter.format(data_graph41, 23);
+  var col24_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col24_formatter.format(data_graph41, 24);
+  var col25_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col25_formatter.format(data_graph41, 25);
+  var col26_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col26_formatter.format(data_graph41, 26);
+  var col27_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col27_formatter.format(data_graph41, 27);
+  var col28_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col28_formatter.format(data_graph41, 28);
+  var col29_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col29_formatter.format(data_graph41, 29);
+  var col30_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col30_formatter.format(data_graph41, 30);
+  var col31_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col31_formatter.format(data_graph41, 31);
+  var col32_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col32_formatter.format(data_graph41, 32);
+  var col33_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col33_formatter.format(data_graph41, 33);
+  var col34_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col34_formatter.format(data_graph41, 34);
+  var col35_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col35_formatter.format(data_graph41, 35);
+  var col36_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col36_formatter.format(data_graph41, 36);
+  var col37_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col37_formatter.format(data_graph41, 37);
+  var col38_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col38_formatter.format(data_graph41, 38);
+  var col39_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col39_formatter.format(data_graph41, 39);
+  var col40_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col40_formatter.format(data_graph41, 40);
+
+  var options_graph41 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "All logical CPUs (from baremetal stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph41, options_graph41);
+  g_current_data = data_graph41;
+  g_current_options = options_graph41;
+  reset_combo_boxes("");
+}
+
+function draw_graph42() {
+  var deflated_data_base64_graph42 = 'eNqNzDEKAjEQheGryFQrvCKTkLCxdfEAglXYIpoBF1cQN42Id3cQLCyEwFT/fLyUnlQfN6ENlVylTlch0JyPMmsavukFOixS9LXNp7OUVTdMy2Uvuay17e4iNCJ9fGeNtWCwHpyFQTRBFfeaPIL7Bx0imxYYFLoWyAaem6CDb1sM8L4JRvj+B45vUgRVDw==\n';
+  var deflated_data_binary_graph42 = window.atob(deflated_data_base64_graph42);
+  var inflated_data_graph42 = JSON.parse(pako.inflate(deflated_data_binary_graph42, { to: 'string' }));
+  var data_graph42 = google.visualization.arrayToDataTable(inflated_data_graph42);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph42, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' GB'});
+  col1_formatter.format(data_graph42, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' GB'});
+  col2_formatter.format(data_graph42, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' GB'});
+  col3_formatter.format(data_graph42, 3);
+
+  var options_graph42 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Memory usage in GB (from baremetal stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "GB", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph42, options_graph42);
+  g_current_data = data_graph42;
+  g_current_options = options_graph42;
+  reset_combo_boxes("");
+}
+
+function draw_graph43() {
+  var deflated_data_base64_graph43 = 'eNqNzM0KAjEMBOB3yUlxlKQlxXr2LcoeVgy4sP4c4kHEd7cqghfZQgaG4SOl3MlvF6MN7Xs3H45GoLHf2Vin7Xd6gMwPvBhO9GnL89WpQ3mTWeAQIJB6iAGMzGlO4BW/8o9FZOFpliqL00wYKg0sQlu+Jag2sAxd/7DuCWdCTfY=\n';
+  var deflated_data_binary_graph43 = window.atob(deflated_data_base64_graph43);
+  var inflated_data_graph43 = JSON.parse(pako.inflate(deflated_data_binary_graph43, { to: 'string' }));
+  var data_graph43 = google.visualization.arrayToDataTable(inflated_data_graph43);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph43, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col1_formatter.format(data_graph43, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col2_formatter.format(data_graph43, 2);
+
+  var options_graph43 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Network Traffic in MB/s (from baremetal stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "MB/s", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph43, options_graph43);
+  g_current_data = data_graph43;
+  g_current_options = options_graph43;
+  reset_combo_boxes("");
+}
+
+function draw_graph44() {
+  var deflated_data_base64_graph44 = 'eNqFzM0KAjEMBOB3yUlxhKQlxXr2LcoeVgy4sP4c4kHEd9+y6tEtBGYYPlLKi/x5N9rTqXfz4WIEGvujjXU6/KY3yPzMm+FKn7a9PZw6lJmsAocAgdRDDGBkTmuqyf9IRBZeJqmSuEyEodIgEdr6kqDaIBm6+5JuAoZaSNI=\n';
+  var deflated_data_binary_graph44 = window.atob(deflated_data_base64_graph44);
+  var inflated_data_graph44 = JSON.parse(pako.inflate(deflated_data_binary_graph44, { to: 'string' }));
+  var data_graph44 = google.visualization.arrayToDataTable(inflated_data_graph44);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph44, 0);
+
+  var options_graph44 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Network Traffic in PPS (from baremetal stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "PPS", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph44, options_graph44);
+  g_current_data = data_graph44;
+  g_current_options = options_graph44;
+  reset_combo_boxes("");
+}
+
+function draw_graph45() {
+  var deflated_data_base64_graph45 = 'eNqtkz1PxDAMhv/KKRNIbmU7sRMzIlYWFobTDUXtcBInIeiCEP+dXu+j6V3DgIiqysnzxn7rpOv1l+s/3zp359qm7/rtrnPgXpuX7nVYejgtfYP7aJvVU9e0q8d7d5g9v2/77jylOaULzHPMF9jPsc9xu6sww+N0jmmO6QLzHGe1N7AeP/KGkRkIaHjAMyAY6q0DrBGq4aUqpjaNM7gOitKgSulaz6zBl3x4MMLMx9+CUnYdsvtD9tE2VD5obejVZDldWSaoGBe1YnVIXjCWbBCC0NEGcQyWD6gs1GLCRgVL/7MlcS1ojFp06UFOzSI/LIyHFy2VaixqrjZMujEqVlcQyS4CD81lnAb/cvxl7b6iZmShXyRmVHRlIOnkilKso0TzfGxqKnnaK1PwpNP1oaAhWfkPI7OaNCLLZvMD5JEF6A==\n';
+  var deflated_data_binary_graph45 = window.atob(deflated_data_base64_graph45);
+  var inflated_data_graph45 = JSON.parse(pako.inflate(deflated_data_binary_graph45, { to: 'string' }));
+  var data_graph45 = google.visualization.arrayToDataTable(inflated_data_graph45);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph45, 0);
+
+  var options_graph45 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Disk I/O (from baremetal stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "MB", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph45, options_graph45);
+  g_current_data = data_graph45;
+  g_current_options = options_graph45;
+  reset_combo_boxes("");
+}
+
+function draw_graph46() {
+  var deflated_data_base64_graph46 = 'eNqVjkEKwjAQRa8is6rwKZnESaw7waU3KF1UGqTQqosgiHh30xRBlEqFWcw83h9+Wd4p3C6eNtTUwYe29wTq6oPvItq90AO0P9fN9npcZNy3pyW9AfkEPJIKZfqQaaU1GBwHRkOhUDYGTB7P3MqwyJRsULCaK9somySvBtHppLtJnxWE//ENZPwvbl7AQiQFzNDe/a7PBWT9bVdPFEVhxQ==\n';
+  var deflated_data_binary_graph46 = window.atob(deflated_data_base64_graph46);
+  var inflated_data_graph46 = JSON.parse(pako.inflate(deflated_data_binary_graph46, { to: 'string' }));
+  var data_graph46 = google.visualization.arrayToDataTable(inflated_data_graph46);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph46, 0);
+
+  var options_graph46 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Average Load  (from baremetal stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Load (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph46, options_graph46);
+  g_current_data = data_graph46;
+  g_current_options = options_graph46;
+  reset_combo_boxes("");
+}
+
+function draw_graph47() {
+  var deflated_data_base64_graph47 = 'eNp9zr0KwkAQBOB32UphOHbvLzlr30CsjhQRrxASEHNNEN/dTcQyga1mPobN+U11fhY60b2vpT7GQqChv5VBo/M/+oCuU3lpdZmnWkbqkNf2YNlaCEQPzoKROB4JTow4D95yDklYHRveRlGR+42lpt12wgiirhET0g5zCMtc9CZ52XERIay/CbsdlhBaZeJNG5e57gt7jU2N\n';
+  var deflated_data_binary_graph47 = window.atob(deflated_data_base64_graph47);
+  var inflated_data_graph47 = JSON.parse(pako.inflate(deflated_data_binary_graph47, { to: 'string' }));
+  var data_graph47 = google.visualization.arrayToDataTable(inflated_data_graph47);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph47, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph47, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph47, 2);
+
+  var options_graph47 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 0 (from CGroup stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph47, options_graph47);
+  g_current_data = data_graph47;
+  g_current_options = options_graph47;
+  reset_combo_boxes("cgroup_cpus");
+}
+
+function draw_graph48() {
+  var deflated_data_base64_graph48 = 'eNp9zb0KwkAQBOB32UphOHbvZ81a+wZiFVJEvEJIQMw1QXx3LwHLBLaa+dhp2w+V+ZXpTI++5PIcM4GG/p6HGl3+0Rd0m/K7Vtd5KnmkDu3aHjx7D4HUQ/BgGOuRwE5CBG+xABNeGZtuM60sVBbYnaJtO2Ekqc5ciH6HBaTlnTbOq+w4RUqLi872Vg2pqUyi02W1+wF+bU2f\n';
+  var deflated_data_binary_graph48 = window.atob(deflated_data_base64_graph48);
+  var inflated_data_graph48 = JSON.parse(pako.inflate(deflated_data_binary_graph48, { to: 'string' }));
+  var data_graph48 = google.visualization.arrayToDataTable(inflated_data_graph48);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph48, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph48, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph48, 2);
+
+  var options_graph48 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Logical CPU 1 (from CGroup stats), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph48, options_graph48);
+  g_current_data = data_graph48;
+  g_current_options = options_graph48;
+  reset_combo_boxes("cgroup_cpus");
+}
+
+function draw_graph49() {
+  var deflated_data_base64_graph49 = 'eNp1jz1PxDAMhv9LJpBegh0nbn3r3cgAEkxVhyIqqNT70CkMCPHfyRUVWCLFsWM9j5N03afLH6fRbdzLkMc87UcHNw/P41xau7X1BXc37ad8+/B+zEMhHt/Ox5zn6fBaDtv7J/pJ7Hp0i3YVKAQwuCxIAMFIrx1uuJTCniWCLntNEBjTKpBfwrRGa6Hl33hrWgj5JlrNYELi1WjYJ4N5iaHKC9LvDRq9RYa2PihXDUVKfz9gksWrv8iQ2pXn6FvlS9LQ998IAGE9\n';
+  var deflated_data_binary_graph49 = window.atob(deflated_data_base64_graph49);
+  var inflated_data_graph49 = JSON.parse(pako.inflate(deflated_data_binary_graph49, { to: 'string' }));
+  var data_graph49 = google.visualization.arrayToDataTable(inflated_data_graph49);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph49, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph49, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col2_formatter.format(data_graph49, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col3_formatter.format(data_graph49, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col4_formatter.format(data_graph49, 4);
+
+  var options_graph49 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "All logical CPUs available inside cgroup (NO LIMIT)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph49, options_graph49);
+  g_current_data = data_graph49;
+  g_current_options = options_graph49;
+  reset_combo_boxes("");
+}
+
+function draw_graph50() {
+  var deflated_data_base64_graph50 = 'eNqNzsEKwjAMBuBXGT1NyKFpbLXexLEHEDyNHeoacFhRtnkQ8d3NBGGXwSCH8OdLSFW91fB6sNqpGAYe2hsrUCmcOUlU/KMPqFPPUUaH0Fw4ZnnR9tcjh7iSrOx43NqndG+yMrTp2XGvaqh+B3KjjQEElAIyoMFrJ2soHWoC8nOSwKNeJJ1IEkniRm2dRZzDKHOcnN2gXtMsJrC0GDuwdjH2YLeTn1Frh7auv3+TXtE=\n';
+  var deflated_data_binary_graph50 = window.atob(deflated_data_base64_graph50);
+  var inflated_data_graph50 = JSON.parse(pako.inflate(deflated_data_binary_graph50, { to: 'string' }));
+  var data_graph50 = google.visualization.arrayToDataTable(inflated_data_graph50);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph50, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col1_formatter.format(data_graph50, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col2_formatter.format(data_graph50, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col3_formatter.format(data_graph50, 3);
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' '});
+  col4_formatter.format(data_graph50, 4);
+
+  var options_graph50 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Used memory in MB measured inside cgroup (memory limit = 104.9MB), STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    series: {
+     0: {targetAxisIndex:0},
+     1: {targetAxisIndex:0},
+     2: {targetAxisIndex:0},
+     3: {targetAxisIndex:1},
+    },
+    vAxes: {
+      0: { title: "Memory (MB)" },
+      1: { title: "Alloc Failures" }
+    },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph50, options_graph50);
+  g_current_data = data_graph50;
+  g_current_options = options_graph50;
+  reset_combo_boxes("");
+}
+
+function draw_graph51() {
+  var deflated_data_base64_graph51 = 'eNqFzsEKwjAQBNBfkT21MEg2S6Lx7F+EIjXmUEiNlFxE/HejoCeNsKfhMbPe36hcL5F2dBpLLNMcCZTGY0w12r+jOyjM+TyVvBxCTimGVed6GuBfptNKazC4HoRhNnBKeoL6LjRUBfYJ1iLyCwkcq1aLraA5wwqGm0Bg2g0Wxvx7lB3M9oOGB5HkUQE=\n';
+  var deflated_data_binary_graph51 = window.atob(deflated_data_base64_graph51);
+  var inflated_data_graph51 = JSON.parse(pako.inflate(deflated_data_binary_graph51, { to: 'string' }));
+  var data_graph51 = google.visualization.arrayToDataTable(inflated_data_graph51);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph51, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
+  col1_formatter.format(data_graph51, 1);
+
+  var options_graph51 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "CPU usage (NO LIMIT) of 20 top-CPU-utilizing processes, STACKED graph",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "CPU (%)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph51, options_graph51);
+  g_current_data = data_graph51;
+  g_current_options = options_graph51;
+  reset_combo_boxes("");
+}
+
+function draw_graph52() {
+  var deflated_data_base64_graph52 = 'eNqNzsEKwjAMBuBXkZwUfiRpTbd6E8STbzB2mNrDoEPRehDx3S2CMMFBIYfw/x8kTfOk9LgEWtOpSyH1QyBQ7A4h5mj7jV6gfT/0KXebGM/H2a7r4/0abtSi+bC5YWMgkDywAq3g2S4IwqtlrZWD9f+tAWfqyqiFFy6jLtOfB9SpyJQWhspYV3mzk9pCbbnOt7Vce2g91sLsRNv2DbtdYrM=\n';
+  var deflated_data_binary_graph52 = window.atob(deflated_data_base64_graph52);
+  var inflated_data_graph52 = JSON.parse(pako.inflate(deflated_data_binary_graph52, { to: 'string' }));
+  var data_graph52 = google.visualization.arrayToDataTable(inflated_data_graph52);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph52, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col1_formatter.format(data_graph52, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' '});
+  col2_formatter.format(data_graph52, 2);
+
+  var options_graph52 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Memory usage (memory limit = 104.9MB) of 20 top-CPU-utilizing processes",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "RSS Memory (MB)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph52, options_graph52);
+  g_current_data = data_graph52;
+  g_current_options = options_graph52;
+  reset_combo_boxes("");
+}
+
+function draw_graph53() {
+  var deflated_data_base64_graph53 = 'eNp9zrEKAjEQBNBfka3uYIrdhI3G2r8Ih5wxxUHOiKQR8d8NB3Ya2Gp4zGwIL6rPe6IjXeea6rImAuX5knKLTt/oDYpruS21PM6x5JzibvAjTQibGQwbA4G0gxXoHp7tSODfwoAbcA34f8DCC/caXAPdCWGodIGF9hscVHtPioceNjB9APJTTsc=\n';
+  var deflated_data_binary_graph53 = window.atob(deflated_data_base64_graph53);
+  var inflated_data_graph53 = JSON.parse(pako.inflate(deflated_data_binary_graph53, { to: 'string' }));
+  var data_graph53 = google.visualization.arrayToDataTable(inflated_data_graph53);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph53, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
+  col1_formatter.format(data_graph53, 1);
+
+  var options_graph53 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "I/O usage (from cgroup stats) of 20 top-CPU-utilizing processes",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "IO Read+Write (kB)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph53, options_graph53);
+  g_current_data = data_graph53;
+  g_current_options = options_graph53;
+  reset_combo_boxes("");
+}
+
+function draw_graph54() {
+  var deflated_data_base64_graph54 = 'eNqLjlZyzs/NTcxLUdJRcg4IVSjJzE0FMj31/RWynYCMgKL85NTiYiDLNzU3v6gSJBqrE62UnJufl1mSXxSfnJ+Tk5qspGOgZ2CsY2psqoMupaBhqamkY2RsbhobCwB6JyIR\n';
+  var deflated_data_binary_graph54 = window.atob(deflated_data_base64_graph54);
+  var inflated_data_graph54 = JSON.parse(pako.inflate(deflated_data_binary_graph54, { to: 'string' }));
+  var data_graph54 = google.visualization.arrayToDataTable(inflated_data_graph54);
+  var options_graph54 = {
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
+    title: "CPU/disk total usage on X/Y axes; memory usage as bubble size of 20 top-CPU-utilizing processes",
+    hAxis: { title:"CPU time" },
+    vAxis: { title:"I/O kB" },
+    sizeAxis: { maxSize: 200 },
+    bubble: { textStyle: {fontSize: 15} }
+  };
+
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  set_main_chart_div_as_visible();
+  g_chart = new google.visualization.BubbleChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph54, options_graph54);
+  g_current_data = data_graph54;
+  g_current_options = options_graph54;
+  reset_combo_boxes("");
+}
+
+function draw_graph55() {
+  var deflated_data_base64_graph55 = 'eNqNzM0KAjEMBOB3yUlxlKQlxXr2LcoeVgy4sP4c4kHEd7cqghfZQgaG4SOl3MlvF6MN7Xs3H45GoLHf2Vin7Xd6gMwPvBhO9GnL89WpQ3mTWeAQIJB6iAGMzGlO4BW/8o9FZOFpliqL00wYKg0sQlu+Jag2sAxd/7DuCWdCTfY=\n';
+  var deflated_data_binary_graph55 = window.atob(deflated_data_base64_graph55);
+  var inflated_data_graph55 = JSON.parse(pako.inflate(deflated_data_binary_graph55, { to: 'string' }));
+  var data_graph55 = google.visualization.arrayToDataTable(inflated_data_graph55);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph55, 0);
+
+  var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col1_formatter.format(data_graph55, 1);
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  col2_formatter.format(data_graph55, 2);
+
+  var options_graph55 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Network Traffic in MB/s (from cgroup stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "MB/s", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph55, options_graph55);
+  g_current_data = data_graph55;
+  g_current_options = options_graph55;
+  reset_combo_boxes("");
+}
+
+function draw_graph56() {
+  var deflated_data_base64_graph56 = 'eNqFzM0KAjEMBOB3yUlxhKQlxXr2LcoeVgy4sP4c4kHEd9+y6tEtBGYYPlLKi/x5N9rTqXfz4WIEGvujjXU6/KY3yPzMm+FKn7a9PZw6lJmsAocAgdRDDGBkTmuqyf9IRBZeJqmSuEyEodIgEdr6kqDaIBm6+5JuAoZaSNI=\n';
+  var deflated_data_binary_graph56 = window.atob(deflated_data_base64_graph56);
+  var inflated_data_graph56 = JSON.parse(pako.inflate(deflated_data_binary_graph56, { to: 'string' }));
+  var data_graph56 = google.visualization.arrayToDataTable(inflated_data_graph56);
+  var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
+  date_formatter.format(data_graph56, 0);
+
+  var options_graph56 = {
+    chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
+    title: "Network Traffic in PPS (from cgroup stats)",
+    focusTarget: "category",
+    tooltip: { textStyle: { fontSize: 12 } },
+    legend: { textStyle: { fontSize: 12 } },
+    explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
+    hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
+    vAxis: { title: "PPS", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  0
+  };
+
+  set_main_chart_div_as_visible();
+  if (g_chart && g_chart.clearChart)
+    g_chart.clearChart();
+  g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  g_chart.draw(data_graph56, options_graph56);
+  g_current_data = data_graph56;
+  g_current_options = options_graph56;
+  reset_combo_boxes("");
+}
+
+function on_load_callback() {
+  document.getElementById("btn_draw_graph41").addEventListener("click", draw_graph41);
+  document.getElementById("btn_draw_graph42").addEventListener("click", draw_graph42);
+  document.getElementById("btn_draw_graph43").addEventListener("click", draw_graph43);
+  document.getElementById("btn_draw_graph44").addEventListener("click", draw_graph44);
+  document.getElementById("btn_draw_graph45").addEventListener("click", draw_graph45);
+  document.getElementById("btn_draw_graph46").addEventListener("click", draw_graph46);
+  document.getElementById("btn_draw_graph49").addEventListener("click", draw_graph49);
+  document.getElementById("btn_draw_graph50").addEventListener("click", draw_graph50);
+  document.getElementById("btn_draw_graph51").addEventListener("click", draw_graph51);
+  document.getElementById("btn_draw_graph52").addEventListener("click", draw_graph52);
+  document.getElementById("btn_draw_graph53").addEventListener("click", draw_graph53);
+  document.getElementById("btn_draw_graph54").addEventListener("click", draw_graph54);
+  document.getElementById("btn_draw_graph55").addEventListener("click", draw_graph55);
+  document.getElementById("btn_draw_graph56").addEventListener("click", draw_graph56);
+  document.getElementById("btn_show_config").addEventListener("click", show_config_details);
+  set_hidden("config_viewer_div");
+}
+
+/* Utility function used to reset combobox controls: */
+function reset_combo_boxes(combobox_to_exclude_from_reset) {
+  if (combobox_to_exclude_from_reset != "baremetal_cpus")
+      document.getElementById("select_combobox_baremetal_cpus").value = "clear_chart";
+  if (combobox_to_exclude_from_reset != "cgroup_cpus")
+      document.getElementById("select_combobox_cgroup_cpus").value = "clear_chart";
+}
+
+function toggle_visibility(div_name) {
+    var x = document.getElementById(div_name);
+    if (x.style.display === "none")
+       x.style.display = "block";
+    else
+       x.style.display = "none";
+}
+
+function set_visible(div_name) {
+    document.getElementById(div_name).style.display = "block";
+}
+
+function set_hidden(div_name) {
+    document.getElementById(div_name).style.display = "none";
+}
+
+function show_config_details() {
+    toggle_visibility("config_viewer_div");
+    toggle_visibility("chart_master_div");
+}
+
+
+function set_main_chart_div_as_visible() {
+    set_hidden("config_viewer_div");
+    set_visible("chart_master_div");
+}
+  </script>
+</head>
+<body>
+  <h1>Monitoring data collected from <span id="monitored_system_span">host docker-userapp-with-embedded-collector</span></h1>
+  <div id="button_div">
+  <table id="button_table" summary="buttons to visualize charts">
+  <tr>
+    <td class="button_table_col">Static Info</td>
+    <td class="button_table_col"><b>CGroup</b> stats (Data collected from /docker/31f5d4f44a706b235a1cd2a56db8ec4de0266407d876a06fdef2a1855f9be616)</td>
+    <td class="button_table_col"><b>CGroup</b> per-process stats (Data collected from cgroup and /proc)</td>
+    <td class="button_table_col"><b>Baremetal</b> stats (Data collected only from /proc)</td>
+  </tr>
+  <tr>
+  <td class="button_table_col">
+    <button id="btn_show_config"><b>Configuration</b></button><br/>
+  </td><td class="button_table_col">
+    <select id="select_combobox_cgroup_cpus" onchange="call_function_named(this.value)">
+      <option value="clear_chart">None</option>
+      <option value="draw_graph47">CPU0</option>
+      <option value="draw_graph48">CPU1</option>
+    </select>
+    <button id="btn_draw_graph49" style="color:red"><b>All CPUs</b></button>
+    <button id="btn_draw_graph50" style="color:darkorange"><b>Memory</b></button>
+    <button id="btn_draw_graph55" style="color:darkblue"><b>Network (MB/s)</b></button>
+    <button id="btn_draw_graph56" style="color:darkblue"><b>Network (PPS)</b></button>
+      </td><td class="button_table_col">
+    <button id="btn_draw_graph51" style="color:red"><b>CPU by Process</b></button>
+    <button id="btn_draw_graph52" style="color:darkorange"><b>Memory by Process</b></button>
+    <button id="btn_draw_graph53" style="color:black"><b>IO by Process</b></button>
+    <button id="btn_draw_graph54" style="color:red"><b>CPU/Memory/Disk Bubbles by Process</b></button>
+      </td><td class="button_table_col">
+    <select id="select_combobox_baremetal_cpus" onchange="call_function_named(this.value)">
+      <option value="clear_chart">None</option>
+      <option value="draw_graph1">CPU0</option>
+      <option value="draw_graph2">CPU1</option>
+      <option value="draw_graph3">CPU2</option>
+      <option value="draw_graph4">CPU3</option>
+      <option value="draw_graph5">CPU4</option>
+      <option value="draw_graph6">CPU5</option>
+      <option value="draw_graph7">CPU6</option>
+      <option value="draw_graph8">CPU7</option>
+      <option value="draw_graph9">CPU8</option>
+      <option value="draw_graph10">CPU9</option>
+      <option value="draw_graph11">CPU10</option>
+      <option value="draw_graph12">CPU11</option>
+      <option value="draw_graph13">CPU12</option>
+      <option value="draw_graph14">CPU13</option>
+      <option value="draw_graph15">CPU14</option>
+      <option value="draw_graph16">CPU15</option>
+      <option value="draw_graph17">CPU16</option>
+      <option value="draw_graph18">CPU17</option>
+      <option value="draw_graph19">CPU18</option>
+      <option value="draw_graph20">CPU19</option>
+      <option value="draw_graph21">CPU20</option>
+      <option value="draw_graph22">CPU21</option>
+      <option value="draw_graph23">CPU22</option>
+      <option value="draw_graph24">CPU23</option>
+      <option value="draw_graph25">CPU24</option>
+      <option value="draw_graph26">CPU25</option>
+      <option value="draw_graph27">CPU26</option>
+      <option value="draw_graph28">CPU27</option>
+      <option value="draw_graph29">CPU28</option>
+      <option value="draw_graph30">CPU29</option>
+      <option value="draw_graph31">CPU30</option>
+      <option value="draw_graph32">CPU31</option>
+      <option value="draw_graph33">CPU32</option>
+      <option value="draw_graph34">CPU33</option>
+      <option value="draw_graph35">CPU34</option>
+      <option value="draw_graph36">CPU35</option>
+      <option value="draw_graph37">CPU36</option>
+      <option value="draw_graph38">CPU37</option>
+      <option value="draw_graph39">CPU38</option>
+      <option value="draw_graph40">CPU39</option>
+    </select>
+    <button id="btn_draw_graph41" style="color:red"><b>All CPUs</b></button>
+    <button id="btn_draw_graph42" style="color:darkorange"><b>Memory</b></button>
+    <button id="btn_draw_graph43" style="color:darkblue"><b>Network (MB/s)</b></button>
+    <button id="btn_draw_graph44" style="color:darkblue"><b>Network (PPS)</b></button>
+    <button id="btn_draw_graph45" style="color:darkgreen"><b>Disk I/O</b></button>
+    <button id="btn_draw_graph46" style="color:black"><b>Average Load</b></button>
+  </td></tr>
+  </table>
+  </div>
+  <div id="chart_master_div"><div id="chart_master_inner_div"><p id="chart_master_inner_p">...click on a button above to show a graph...</p></div></div>
+  <div id="config_viewer_div">
+  <h2>Monitored System Details</h2>
+  <table summary='details on monitored system'>
+    <tr><td colspan='2' class='config_sectioncol'>Server Identity</td></tr>
+    <tr><td class='config_key'>Hostname</td><td class='config_val'>docker-userapp-with-embedded-collector</td></tr>
+    <tr><td class='config_key'>Shorthostname</td><td class='config_val'>docker-userapp-with-embedded-collector</td></tr>
+    <tr><td class='config_key'>Eth0</td><td class='config_val'>172.17.0.2</td></tr>
+    <tr><td class='config_key'>All ip addresses</td><td class='config_val'>172.17.0.2</td></tr>
+    <tr><td class='config_key'>Serial-number</td><td class='config_val'>............</td></tr>
+    <tr><td class='config_key'>Model</td><td class='config_val'>S2600GZ</td></tr>
+    <tr><td class='config_key'>Vendor</td><td class='config_val'>Intel Corporation</td></tr>
+    <tr><td colspan='2' class='config_sectioncol'>Operating System Release</td></tr>
+    <tr><td class='config_key'>Name</td><td class='config_val'>edora</td></tr>
+    <tr><td class='config_key'>Version</td><td class='config_val'>32 (Container Image)</td></tr>
+    <tr><td class='config_key'>Version id</td><td class='config_val'>2</td></tr>
+    <tr><td class='config_key'>Pretty name</td><td class='config_val'>Fedora 32 (Container Image)</td></tr>
+    <tr><td colspan='2' class='config_sectioncol'>Linux Kernel Version</td></tr>
+    <tr><td class='config_key'>Version</td><td class='config_val'>Linux version 3.10.0-1160.36.2.el7.x86_64 (mockbuild@kbuilder.bsys.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-44) (GCC) ) #1 SMP Wed Jul 21 11:57:15 UTC 2021</td></tr>
+    <tr><td colspan='2' class='config_sectioncol'>Linux Control Group (CGroup) Configuration</td></tr>
+    <tr><td class='config_key'>Name</td><td class='config_val'>/docker/31f5d4f44a706b235a1cd2a56db8ec4de0266407d876a06fdef2a1855f9be616</td></tr>
+    <tr><td class='config_key'>Version</td><td class='config_val'>1</td></tr>
+    <tr><td class='config_key'>Memory path</td><td class='config_val'>/sys/fs/cgroup/memory</td></tr>
+    <tr><td class='config_key'>Cpuacct path</td><td class='config_val'>/sys/fs/cgroup/cpu,cpuacct</td></tr>
+    <tr><td class='config_key'>Cpuset path</td><td class='config_val'>/sys/fs/cgroup/cpuset</td></tr>
+    <tr><td class='config_key'>Cpus</td><td class='config_val'>0, 1</td></tr>
+    <tr><td class='config_key'>Cpu quota perc</td><td class='config_val'>NO LIMIT</td></tr>
+    <tr><td class='config_key'>Memory limit bytes</td><td class='config_val'>memory limit = 104.9MB</td></tr>
+    <tr><td class='config_key'>Num allowed cpus</td><td class='config_val'>2</td></tr>
+    <tr><td colspan='2' class='config_sectioncol'>CPU Overview</td></tr>
+    <tr><td class='config_key'>Architecture</td><td class='config_val'>x86_64</td></tr>
+    <tr><td class='config_key'>Byte order</td><td class='config_val'>Little Endian</td></tr>
+    <tr><td class='config_key'>Cpus</td><td class='config_val'>40</td></tr>
+    <tr><td class='config_key'>Online cpu list</td><td class='config_val'>0-39</td></tr>
+    <tr><td class='config_key'>Threads per core</td><td class='config_val'>2</td></tr>
+    <tr><td class='config_key'>Cores per socket</td><td class='config_val'>10</td></tr>
+    <tr><td class='config_key'>Sockets</td><td class='config_val'>2</td></tr>
+    <tr><td class='config_key'>Numa nodes</td><td class='config_val'>2</td></tr>
+    <tr><td class='config_key'>Vendor id</td><td class='config_val'>GenuineIntel</td></tr>
+    <tr><td class='config_key'>Cpu family</td><td class='config_val'>6</td></tr>
+    <tr><td class='config_key'>Model</td><td class='config_val'>62</td></tr>
+    <tr><td class='config_key'>Model name</td><td class='config_val'>Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz</td></tr>
+    <tr><td class='config_key'>Stepping</td><td class='config_val'>4</td></tr>
+    <tr><td class='config_key'>Cpu mhz</td><td class='config_val'>3352.514</td></tr>
+    <tr><td class='config_key'>Cpu max mhz</td><td class='config_val'>3600.0000</td></tr>
+    <tr><td class='config_key'>Cpu min mhz</td><td class='config_val'>1200.0000</td></tr>
+    <tr><td class='config_key'>Bogomips</td><td class='config_val'>5586.32</td></tr>
+    <tr><td colspan='2' class='config_sectioncol'>Memory Overview</td></tr>
+    <tr><td class='config_key'>Memtotal</td><td class='config_val'>197.8GB</td></tr>
+    <tr><td class='config_key'>Hugepages total</td><td class='config_val'>4</td></tr>
+    <tr><td class='config_key'>Hugepagesize</td><td class='config_val'>1.0GB</td></tr>
+  </table>
+  <h2>CMonitor Collector</h2>
+  <table summary='details on cmonitor_collector'>
+    <tr><td colspan='2' class='config_sectioncol'>Performance Stats Collector Configuration</td></tr>
+    <tr><td class='config_key'>Command</td><td class='config_val'>/usr/bin/cmonitor_collector --sampling-interval=3 --output-filename=docker-userapp-with-embedded-collector --output-directory=/perf</td></tr>
+    <tr><td class='config_key'>Version</td><td class='config_val'>2.2-0</td></tr>
+    <tr><td class='config_key'>Gmt offset seconds</td><td class='config_val'>0</td></tr>
+    <tr><td class='config_key'>Timezone name</td><td class='config_val'>UTC</td></tr>
+    <tr><td class='config_key'>Sample interval seconds</td><td class='config_val'>3.0</td></tr>
+    <tr><td class='config_key'>Sample num</td><td class='config_val'>Infinite</td></tr>
+    <tr><td class='config_key'>Collecting</td><td class='config_val'>cpu,disk,memory,network,cgroup_cpu,cgroup_memory,cgroup_blkio,cgroup_network,cgroup_processes</td></tr>
+    <tr><td class='config_key'>Username</td><td class='config_val'>root</td></tr>
+    <tr><td class='config_key'>Userid</td><td class='config_val'>0</td></tr>
+    <tr><td class='config_key'>Pid</td><td class='config_val'>9</td></tr>
+  </table>
+  </div>
+  <div class='bottom_div'>
+    <h3>Monitoring Summary</h3>
+    <table summary='textbox with summarized info'>
+    <tr><td><ul>
+      <li>Collected: <span class='bottom_table_val'>cpu, disk, memory, network, cgroup_cpu, cgroup_memory, cgroup_blkio, cgroup_network, cgroup_processes</span></li>
+      <li>Started sampling at: <span class='bottom_table_val'>2022-01-11T01:31:57.903 (UTC)</span></li>
+      <li>Samples: <span class='bottom_table_val'>8</span></li>
+      <li>Sampling Interval (s): <span class='bottom_table_val'>3.0</span></li>
+      </ul></td><td><ul>
+      <li>Total time sampled (hh:mm:ss): <span class='bottom_table_val'>0:00:24</span></li>
+      <li>Version (cmonitor_collector): <span class='bottom_table_val'>2.2-0</span></li>
+      <li>Version (cmonitor_chart): <span class='bottom_table_val'>2.2-0</span></li>
+    </ul></td></tr>
+    </table>
+  </div>
+  <div class='bottom_div'>
+    <h3>Monitored System Summary</h3>
+    <table summary='textbox with summarized info'>
+    <tr><td><ul>
+      <li>Hostname: <span class='bottom_table_val'>docker-userapp-with-embedded-collector</span></li>
+      <li>OS: <span class='bottom_table_val'>Fedora 32 (Container Image)</span></li>
+      <li>CPU: <span class='bottom_table_val'>Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz</span></li>
+      <li>BogoMIPS: <span class='bottom_table_val'>5586.32</span></li>
+      </ul></td><td><ul>
+      <li>Monitored CPUs: <span class='bottom_table_val'>40</span></li>
+      <li>Monitored Disks: <span class='bottom_table_val'>7</span></li>
+      <li>Monitored Network Devices: <span class='bottom_table_val'>1</span></li>
+    </ul></td></tr>
+    </table>
+  </div>
+  <div class='bottom_about_div'>
+    <h3>About this</h3>
+    <table summary='textbox with summarized info'>
+    <tr><td><ul>
+      <li>Zoom: <span class='bottom_table_val'>use left-click and drag</span></li>
+      <li>Reset view: <span class='bottom_table_val'>use right-click</span></li>
+      <li>Generated by <span class='bottom_table_val'><a href="https://github.com/f18m/cmonitor">cmonitor</a></span></li>
+    </ul></td></tr>
+    </table>
+  </div>
+</body>
+</html>
