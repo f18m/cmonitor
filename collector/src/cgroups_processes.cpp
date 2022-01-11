@@ -107,13 +107,13 @@ bool CMonitorCgroups::get_process_infos(
     memset(pout, 0, sizeof(procsinfo_t));
 
     /* the statistic directory for the process */
-    auto filename = fmt::format("{}/proc/{}", m_proc_prefix, pid);
+    auto pid_dir = fmt::format("{}/proc/{}", m_proc_prefix, pid);
     struct stat statbuf;
-    if (stat(filename.c_str(), &statbuf) != 0) {
+    if (stat(pid_dir.c_str(), &statbuf) != 0) {
         // IMPORTANT: cmonitor_collector first reads all PIDs and then invokes, sequentially, this function;
         //            this means that by the time we get here, a PID may has ceased to exist. So do not generate
         //            any error line for this condition and consider it to be just something that can happen.
-        // CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to stat file %s", filename.c_str());
+        // CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to stat file %s", pid_dir.c_str());
         return false;
     }
 
@@ -161,7 +161,7 @@ bool CMonitorCgroups::get_process_infos(
         stat_file_prefix = fmt::format("{}/proc/{}", m_proc_prefix, pid);
 
     { /* process the statistic file for the process/thread */
-        filename = stat_file_prefix + "/stat";
+        std::string filename = stat_file_prefix + "/stat";
         if ((fp = fopen(filename.c_str(), "r")) == NULL) {
             CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to open file %s", filename.c_str());
             return false;
@@ -272,7 +272,7 @@ bool CMonitorCgroups::get_process_infos(
 
     if (output_opts == PF_ALL) { /* process the statm file for the process/thread */
 
-        filename = stat_file_prefix + "/statm";
+        std::string filename = stat_file_prefix + "/statm";
         if ((fp = fopen(filename.c_str(), "r")) == NULL) {
             CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename.c_str());
             return false;
@@ -296,7 +296,7 @@ bool CMonitorCgroups::get_process_infos(
 
     if (output_tgid) { /* process the status file for the process/thread */
 
-        filename = stat_file_prefix + "/status";
+        std::string filename = stat_file_prefix + "/status";
         if ((fp = fopen(filename.c_str(), "r")) == NULL) {
             CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename.c_str());
             return false;
@@ -318,7 +318,7 @@ bool CMonitorCgroups::get_process_infos(
         pout->io_read_bytes = 0;
         pout->io_write_bytes = 0;
 
-        filename = stat_file_prefix + "/io";
+        std::string filename = stat_file_prefix + "/io";
         if ((fp = fopen(filename.c_str(), "r")) == NULL) {
             CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename.c_str());
             return false;
@@ -412,7 +412,13 @@ void CMonitorCgroups::init_processes(const std::string& cgroup_prefix_for_test)
     // when unit testing, we ask the FastFileReader to actually be not-so-fast and reopen each time the file;
     // that's because during unit testing the actual inode of the statistic file changes on every sample.
     // Of course this does not happen in normal mode
-    bool reopen_each_time = !cgroup_prefix_for_test.empty();
+    // bool reopen_each_time = !cgroup_prefix_for_test.empty();
+
+    /*
+     FIXME FIXME: for some reason we need to reopen the 'tasks' file each time (at least on Centos7 )
+     or otherwise we will read always the same contents over and over:
+    */
+    bool reopen_each_time = true;
 
     switch (m_nCGroupsFound) {
     case CG_VERSION1:
@@ -474,6 +480,7 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
     // get new fresh processes data and update current database:
     currDB.clear();
     bool needsToFilterOutThreads = (m_nCGroupsFound == CG_VERSION1) && !m_cgroup_processes_include_threads;
+    size_t nfailed_sampling = 0, nthreads_discarded = 0;
     for (size_t i = 0; i < all_pids.size(); i++) {
 
         // acquire all possible informations on this PID (or TID)
@@ -489,11 +496,14 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
                 if (procData.pi_pid == procData.pi_tgid)
                     // this is the main thread of current PID... insert it into the database
                     currDB.insert(std::make_pair(all_pids[i], procData));
+                else
+                    nthreads_discarded++;
             } else {
                 // we can simply take into account all PIDs/TIDs collected
                 currDB.insert(std::make_pair(all_pids[i], procData));
             }
-        }
+        } else
+            nfailed_sampling++;
     }
 
     if (output_opts == PF_NONE) {
@@ -506,8 +516,9 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
     // Sort the processes by their "score" by inserting them into an ordered map
     assert(m_topper_procs.empty());
     CMonitorLogger::instance()->LogDebug(
-        "The current process DB has %lu entries, the DB storing previous statuses has %lu entries.\n", currDB.size(),
-        prevDB.size());
+        "The current process DB now has %lu entries (failed to sample %zu processes; %lu threads discarded), "
+        "the DB storing previous statuses has %lu entries.\n",
+        currDB.size(), nfailed_sampling, nthreads_discarded, prevDB.size());
 
     procsinfo_t empty_infos {};
     for (const auto& current_entry : currDB) {
