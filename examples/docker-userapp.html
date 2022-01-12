@@ -185,7 +185,7 @@ function draw_graph4() {
 
   var options_graph4 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "All logical CPUs available inside cgroup (cpu quota = 90.0%)",
+    title: "CPU usage by index of CPU available inside cgroup (cpu quota = 90.0%)",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -311,7 +311,7 @@ function draw_graph6() {
 }
 
 function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNqV2s9qHEcUxeFXMbOyoRLqzz2nqrIzhKzyBsILJZ6FQCZBUgwh5N1zy5BVIPwaxKh79Lmw6tTtrr6ah4e/bm9//n6//XD7/Ph2f3v6cr+V2/PjL/fnfOvHf9/6u9x+fvry9JY/+/j8/Nuv7356fHr+4+X+mm+83D8/vX73en/5en959767asf6cPtUHr79+/e99l5aaa3U0sb5ijk/3Eqr38fSdL6t/8F7LoojR94c71UpVonVON6rU+wceXC8V1A8c2RxvJcpXjny5HhzvHPkxfFeNO5eS+zK8d407t5y5M7x3jTuPIkdHO9N4+5Zg9sc700T7FmDV/DeNO6eNbhx3PlTTlVx2LN0TlUxXmVwqopXxS66QCtdE6OWyakqDXm0coGq0vUw8qRyq0YXxMjrUOdWjcY8Im9R3Ipj5R2KWzW8Jpy3EW7VcNIzr/XcquOkV16QuVXHSe+8tnGrTuc4arli1Wkg0fLCwq0GnePoWVDcatB5i7M8udXA8xa5irjVwPOmcsVq0EUfuYms3Crooo/cQ3ZuFfTqFrmFDG4VOLzcQU5uFTQQnQ0ktxINRFlN/YIVnWNlNcUFK1pNyi9fsKKBKKtpXbDCgai4civTApGLO7cyDm8WB7cyDmQVT25lHMgu3txqskAiX2bDVLND28ocmGoK2l5gc+NQwXZF3pHKaphq0UmIAvsJh2rRSVCBzYRDBZ/4o7hcoFp0bmfZFVNtmsMqu2OqTRfjLluYatMcWi17cqtNk2in5cGtK82inWe6C9iVJneaS3VwbI7P5AXHrjTrlo911Ry74rTzua4ujl1x3Plg1yrH5njlYePYDd82dh4Ojt1o3D1fmzl2o6H0c7g5dqfzfE5649idznM/jZXBsTk+V4Pg2B3f+7MGuzl2x1uFrMG+OHbHcWcNjsqxB447a/AK9sBrI2twDI49aNzjbE/FsQeNe+ThmByb4zwZi2MPvOk8fyarHDvwHvXc3TrHDhr3aW9GcOzAcWcNhjl24ASzBq9gB447azA2xxaOO2tQjWMLP5Pk6xVs0bUReajg2KJrI/JE5tiiccf5g/Li2ByffeDm2KZrI7IG3Ti2cdxZgx4c2zjurMEr2MZrI2vQ5tjGayNr0Itjm8atfMUNmsTGLRrl4RVs3NBRnszg2BP3KM4HJBbHxm0dnaePyrFxF0hZg7gNdPqji5aVsgZx1+g0SDnOGuQ9pqxB3mXKGlyTY+NGk7IGr2DDtpTOC+xLHWvYl9I5go2pYw0bUyp5DD+tcqyxPZ/0MbaGjSmV8xBdsZ2Vzm/+drVjOyudX+e4ge2EnaP8H+S4xnbCvpHKynEXtrPSutilt4rtbLguag7cOZ6NJpffewuOZ6PZtZ4jm+PZaHrfPqz2n/g+/QMRceuh\n';
+  var deflated_data_base64_graph7 = 'eNqNms9qHEcYxF/F7MmBDvSf76vuzi0Q/BLCByWeg2BDzEoJGON3d7Uh5JYqWEYzO79taatqe7tm9PT09fb25fN1++X26fntenv587qV2/359+vOp37796lv5fa4Pr28/vx6Pf65Hu/ed9TcsX4i/OFxndf8er//9ce7D88v978f1+vtY3n68fL3vfZeWmmt1NLGecScfF2WKPV/qD2XpIJjbYPaq0qKZ1czqL26pMCxhkHtFZKaHCsNai9IanGsaVDboDbHWga1l3So1xK7GtTe0qHeOFY3qL2lQzyIHQa1t3SoM/cbBrW31L4z9xa1t3So8+zWDqFUg8mq/ZmlG0xWTa0yDCardnCXdJgq/Ru1TIPJKn0ZrThMVund4EE1oGzSvMFPdDegbNKZEZyYDSgNKjkvG1A27R84lRpQNm3O5OxnQNm1OYsTlgFl1+ZszgsGlF1qFbVYUHapaDR+Ug0oh9QqOrNsQDmkDHFSY0A5tAxBqw0oh5YhiwXlkOkLrlOqAWXI9AWXKd2AMuTMEFylhAFlaNm5SJkGlCEVzbNGMaBMqWgyyN2BUmqVDHI4UMogJx9woJSKJoO8HCi1ollQDSghI5oo6AaU0LLPgjCghFZ0FUwDSmhFd8E2oJxCUZ4os2kmZ1dQK3NoJmcqqBfVGg+Tqg5yHi6raSaXfGtRVHs7TC751rKo6naYVG0rCorD5JIasU1WzeSWQrJKds3klhlhj0zN5JZCNrbIaUC5pZTtlEgDQpVitrNGdyhUqfmp3XUYFAzqaBEGhSrtaVymVxgUqjaI6/S6DApVO8SFeqsGBYNa3G0Ghaanzs3dYVBo0qHObYNBoUlV+9ndBoUu9ToHvRkUutSrn3I6DAoGdT5sYVDo+puLue8wKHT9Dcfc92VQ6Noh5n5Ug8LQDjH3FoWhfWTuxzAoDOnQOGueNCgM6dDg7pgGBYPiwVgGhaEXNOcSdzUohF74nMm8GxRCOnQuy0QYFEI7xNwHDAqhtWfuLQqhHWLuYxsUUjvE3GczKKRem3JrUUjpY3A3w6CQ0sfgQcKgkNKhOLdjlkHBoM7CYxsUIH0M5h7NoADtEHOPYVCAdoi5tyhA+8jcAwYFaB+ZeyyDAqRDya1ut6Sg+21y16Kga3DyYIZBYeoqeG73LYOCLsN5FqPVoKBLczL3ujWfCzpLJjqZe92uzxUdg2LujRLO3Bs1nLlf06Cgm3gy9xYFVdjzbFRjPxBUY8+zpyr7gaAqexbuq5unB4KGzn1kaAiqsp9TvVYNzSp14p9eu4ZmlTqBI4WGpmrY/GUcCRqaql9nWRxpaWhWmczNJlg1NJtOZuVQ3aBmk5rzZ29hULNJ1VvnWDCo2aTuP/414T/hP34H0iGYpQ==\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
@@ -320,21 +320,29 @@ function draw_graph7() {
 
   var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
   col1_formatter.format(data_graph7, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' '});
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
   col2_formatter.format(data_graph7, 2);
-  var col3_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' '});
   col3_formatter.format(data_graph7, 3);
 
   var options_graph7 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Memory usage (memory limit = 10.5MB) of 20 top-CPU-utilizing threads",
+    title: "Memory usage (memory limit = 10.5MB) of 20 top-CPU-utilizing threads, STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "RSS Memory (MB)", gridlines: { color: "lightgrey", count: 11 } },
-    isStacked:  0
+    series: {
+     0: {targetAxisIndex:0},
+     1: {targetAxisIndex:0},
+     2: {targetAxisIndex:1},
+    },
+    vAxes: {
+      0: { title: "Memory (MB)" },
+      1: { title: "Alloc Failures" }
+    },
+    isStacked:  1
   };
 
   set_main_chart_div_as_visible();

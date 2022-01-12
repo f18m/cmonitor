@@ -2308,7 +2308,7 @@ function draw_graph49() {
 
   var options_graph49 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "All logical CPUs available inside cgroup (NO LIMIT)",
+    title: "CPU usage by index of CPU available inside cgroup (NO LIMIT)",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -2410,7 +2410,7 @@ function draw_graph51() {
 }
 
 function draw_graph52() {
-  var deflated_data_base64_graph52 = 'eNqNzsEKwjAMBuBXkZwUfiRpTbd6E8STbzB2mNrDoEPRehDx3S2CMMFBIYfw/x8kTfOk9LgEWtOpSyH1QyBQ7A4h5mj7jV6gfT/0KXebGM/H2a7r4/0abtSi+bC5YWMgkDywAq3g2S4IwqtlrZWD9f+tAWfqyqiFFy6jLtOfB9SpyJQWhspYV3mzk9pCbbnOt7Vce2g91sLsRNv2DbtdYrM=\n';
+  var deflated_data_base64_graph52 = 'eNqNz8EKwjAMBuBXGT1NyCFpTWe9CbKXGENm7WHQWZnzIOK7GwXnxY1B6eHv9ye0qh5quF+C2qpTM4Sh7YICFZtjiBLtv9ETlO/SuR1Sf/ApxuCz3K1Eln14F3YxJp+VTRtvfbiqGqpPN9eoNRCQHDAEXIBDIz0EwjUY9x9qeXdoxUmGesYZcIQL5llxv71smWiKEgLTSAu5zCQ1wGYhtcA8fmieOuDNSAnREtf1C7YaZCw=\n';
   var deflated_data_binary_graph52 = window.atob(deflated_data_base64_graph52);
   var inflated_data_graph52 = JSON.parse(pako.inflate(deflated_data_binary_graph52, { to: 'string' }));
   var data_graph52 = google.visualization.arrayToDataTable(inflated_data_graph52);
@@ -2419,19 +2419,29 @@ function draw_graph52() {
 
   var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
   col1_formatter.format(data_graph52, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' '});
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
   col2_formatter.format(data_graph52, 2);
+  var col3_formatter = new google.visualization.NumberFormat({suffix: ' '});
+  col3_formatter.format(data_graph52, 3);
 
   var options_graph52 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Memory usage (memory limit = 104.9MB) of 20 top-CPU-utilizing processes",
+    title: "Memory usage (memory limit = 104.9MB) of 20 top-CPU-utilizing processes, STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "RSS Memory (MB)", gridlines: { color: "lightgrey", count: 11 } },
-    isStacked:  0
+    series: {
+     0: {targetAxisIndex:0},
+     1: {targetAxisIndex:0},
+     2: {targetAxisIndex:1},
+    },
+    vAxes: {
+      0: { title: "Memory (MB)" },
+      1: { title: "Alloc Failures" }
+    },
+    isStacked:  1
   };
 
   set_main_chart_div_as_visible();

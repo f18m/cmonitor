@@ -185,7 +185,7 @@ function draw_graph4() {
 
   var options_graph4 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "All logical CPUs available inside cgroup (cpu quota = 200.0%)",
+    title: "CPU usage by index of CPU available inside cgroup (cpu quota = 200.0%)",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -292,7 +292,7 @@ function draw_graph6() {
 }
 
 function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNqd1EFLw0AQBeC/UvbUwlR2N7s7+7wJ4sl/EHqINUgg1WLSg4j/3anFgwcLeZcEZvbjHR5M2366+ePYu1v33M39PBx6J27snvrRRve/oy9xj8NhmG13N45v+9VDN4yn936ywTTbf9q+vmz3x9NqHYvXJubNf5vyZ3OZRtWN20n7E7iOPkYJEoJ4CSo5Scq2l62/8f48TKmGy6cJKVxxyCBcllQ85VAi4YrlNZRDSYRTyyuUQ2F6qJYHykGZHiBJA+Wgi3uo53eaGAYty5k9UWUYFMtZlFQ9w1DDctZYWmQYKlGAnZWaGYZKFGBHpVaGAUQBdlIQGAYQBdhBQWIYQBRgFaAwDLhWwO4bFTCCaQ==\n';
+  var deflated_data_base64_graph7 = 'eNqV08FKQ0EMBdBfkVm1kMLMvMwk13X/4tFF1UGEKsX3XEjx3w0WF4JKsskiOdzFhczzJa3v55Fu08NxHevT80iUTse7cbLV/nv1QWlZX8ey7F4ed/fnt5tN7Vmm2rbpj0v/cbluq8g2HWj+yt3UXCsVKoUyFaHGxM3uxKzlOqbC5R+OBj9vxD1HOHr1827pU4Sjs5+LpfcIRw8UqZaOCIcEigSxlAiHeItUGywc0JDu1kZEAhoCt67EmgMaWtx6suwa0FB/g/ai2gIa6m/QHlQ1oAF/g/aeKAEN+Bu05wQHNOBv0DpED2jglwYPn/yzSQw=\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
@@ -301,25 +301,21 @@ function draw_graph7() {
 
   var col1_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
   col1_formatter.format(data_graph7, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' '});
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
   col2_formatter.format(data_graph7, 2);
   var col3_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
   col3_formatter.format(data_graph7, 3);
-  var col4_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
-  col4_formatter.format(data_graph7, 4);
-  var col5_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
-  col5_formatter.format(data_graph7, 5);
 
   var options_graph7 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Memory usage (NO LIMIT) of 20 top-CPU-utilizing threads",
+    title: "Memory usage (NO LIMIT) of 20 top-CPU-utilizing threads, STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "RSS Memory (kB)", gridlines: { color: "lightgrey", count: 11 } },
-    isStacked:  0
+    vAxis: { title: "Memory (kB)", gridlines: { color: "lightgrey", count: 11 } },
+    isStacked:  1
   };
 
   set_main_chart_div_as_visible();

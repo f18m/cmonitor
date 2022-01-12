@@ -332,7 +332,7 @@ class GoogleChartsGraph:
         self.js_name = "graph" + str(g_num_generated_charts)
         g_num_generated_charts += 1
 
-    def genGoogleChartJS_AreaChart(self):
+    def __genGoogleChartJS_AreaChart(self):
         """After the JavaScript line graph data is output, the data is terminated and the graph options set"""
         global g_next_graph_need_stacking
 
@@ -365,8 +365,11 @@ class GoogleChartsGraph:
         # VERTICAL AXIS (OR AXES)
         if len(self.columns_for_2nd_yaxis) > 0:
             # compute indexes of series that use the 2nd Y axis:
-            series_for_2nd_yaxis = [self.data_table.getDataSeriesIndexByName(colname) for colname in self.columns_for_2nd_yaxis]
-            assert -1 not in series_for_2nd_yaxis
+            series_for_2nd_yaxis = []
+            for colname in self.columns_for_2nd_yaxis:
+                idx = self.data_table.getDataSeriesIndexByName(colname)
+                assert idx != -1, f"Column named {colname} is not a column inside the data table!"
+                series_for_2nd_yaxis.append(idx)
             # print("series_for_2nd_yaxis: %s" % ",".join(str(x) for x in series_for_2nd_yaxis))
 
             # compute indexes of series that use 1st Y axis:
@@ -419,7 +422,7 @@ class GoogleChartsGraph:
         ret_string += "g_current_options = options_%s;\n" % (self.js_name)
         return ret_string
 
-    def genGoogleChartJS_BubbleChart(self):
+    def __genGoogleChartJS_BubbleChart(self):
         assert len(self.y_axes_titles) == 2
         ret_string = ""
         ret_string += "var options_%s = {\n" % (self.js_name)
@@ -451,9 +454,9 @@ class GoogleChartsGraph:
         js_code_inner = self.data_table.toGoogleChartTable(self.js_name)
 
         if self.graph_type == GRAPH_TYPE_AREA_CHART:
-            js_code_inner += self.genGoogleChartJS_AreaChart()
+            js_code_inner += self.__genGoogleChartJS_AreaChart()
         else:
-            js_code_inner += self.genGoogleChartJS_BubbleChart()
+            js_code_inner += self.__genGoogleChartJS_BubbleChart()
 
         js_code = "function draw_%s() {\n" % (self.js_name)
         js_code += textwrap.indent(js_code_inner, " " * JS_INDENT_SIZE)
@@ -1031,6 +1034,40 @@ class CMonitorGraphGenerator:
         cgroup_limit_bytes = CMonitorGraphGenerator.sizeof_fmt(self.jheader["cgroup_config"]["memory_limit_bytes"])
         return f"memory limit = {cgroup_limit_bytes}"
 
+    @staticmethod
+    def __get_main_thread_associated_with(sample, tid):
+        json_key = "pid_%s" % tid
+        tgid = sample["cgroup_tasks"][json_key]["tgid"]
+        if tgid == sample["cgroup_tasks"][json_key]["pid"]:
+            # actually current entry is not a secondary thread but a PROCESS, append it:
+            return tid
+        else:
+            json_key_of_main_process = "pid_%s" % tgid
+            if json_key_of_main_process in sample["cgroup_tasks"]:
+                return tgid
+            else:
+                # the main thread / process associated with given THREAD ID is missing:
+                return None
+
+    def __get_main_threads_only(self, tids_list_to_filter):
+        x = set()  # use a Python set to automatically remove duplicates
+        for tid in tids_list_to_filter:
+            json_key = "pid_%s" % tid
+
+            # first of all, find the first JSON sample that contains the current TID
+            n_sample = 0
+            while n_sample < len(self.jdata) and json_key not in self.jdata[n_sample]["cgroup_tasks"]:
+                n_sample += 1
+
+            assert n_sample < len(self.jdata)  # the TID comes from a processing of self.jdata itself... it must be there
+            pid = CMonitorGraphGenerator.__get_main_thread_associated_with(self.jdata[n_sample], tid)
+            if pid is None:
+                print(f"WARNING: the input JSON does not contain collected stats for PID [{pid}] associated with thread ID [{tid}]...")
+            else:
+                x.add(pid)
+
+        return x
+
     def __generate_topN_procs_bubble_chart(self, process_dict, topN_pids_list, max_byte_value_dict, chart_desc_postfix):
         # take advantage of the first pass on all SAMPLES: we already know what is the MAX value for both memory and IO
         mem_divider, mem_unit = self.__choose_byte_divider(max_byte_value_dict["mem_rss"])
@@ -1078,10 +1115,11 @@ class CMonitorGraphGenerator:
 
         chart_data = {}
 
+        ## -- CPU --
         if cpu_quota_perc > 0:
             # it is possible to compute the "idle" time inside this cgroup and it's possible that CPU is throttled...
             # so in such case we add 2 more data series to the chart:
-            chart_data["cpu"] = GoogleChartsTimeSeries(
+            cpu_time_serie = GoogleChartsTimeSeries(
                 ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_pids_list] + ["Idle", "Throttling"],
                 [""] + ["%" for pid in topN_pids_list] + ["%", "%"],
             )
@@ -1093,7 +1131,7 @@ class CMonitorGraphGenerator:
             # results out-of-scale (imagine servers with hundreds of CPUs and cmonitor_collector monitoring just a Redis container!)
             # so we do not place any "idle" column. The "throttling" column does not apply either.
             assert cpu_quota_perc == -1
-            chart_data["cpu"] = GoogleChartsTimeSeries(
+            cpu_time_serie = GoogleChartsTimeSeries(
                 ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_pids_list],
                 [""] + ["%" for pid in topN_pids_list],
             )
@@ -1101,33 +1139,76 @@ class CMonitorGraphGenerator:
             columns_for_2nd_yaxis = []
             y_axes_titles = ["CPU (%)"]
 
-        chart_data["io"] = GoogleChartsTimeSeries(
-            ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_pids_list],
-            [""] + [io_unit for pid in topN_pids_list],
+        # CPU by thread/process:
+        chart_data["cpu"] = GoogleChartsGraph(
+            data=cpu_time_serie,
+            graph_title=f"CPU usage ({self.__cgroup_get_cpu_quota_human_friendly()}) {chart_desc_postfix}",
+            button_label="CPU by Thread" if self.collected_threads else "CPU by Process",
+            graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS,
+            # take any contribute of any thread/process and stack it together: this way it becomes easier to spot
+            # when the cgroup CPU limit was hit and due to which threads/processes
+            stack_state=True,
+            y_axes_titles=y_axes_titles,
+            # throttling should not be stacked to the CPU usage contributions, so move it on 2nd y axis:
+            columns_for_2nd_yaxis=columns_for_2nd_yaxis,
+            # make the 2 axes have the same identical Y scale to make it easier to read it:
+            y_axes_max_value=y_axes_max_value,
         )
 
-        def get_main_threads_only(first_sample, pids_list_to_filter):
-            x = []
-            for pid in topN_pids_list:
-                json_key = "pid_%s" % pid
-                if json_key in first_sample["cgroup_tasks"]:
-                    if first_sample["cgroup_tasks"][json_key]["tgid"] == first_sample["cgroup_tasks"][json_key]["pid"]:
-                        x.append(pid)
-            return x
-
-        topN_pids_list_for_memory = get_main_threads_only(self.jdata[0], topN_pids_list)
+        ## -- MEM --
+        topN_pids_list_for_memory = self.__get_main_threads_only(topN_pids_list)
         if verbose:
             print(
                 f"While generating the per-process memory chart, the following MAIN PIDs were selected: {topN_pids_list_for_memory} from the list of top-CPU scorer processes {topN_pids_list}"
             )
-        chart_data["mem"] = GoogleChartsTimeSeries(
-            ["Timestamp", "Limit", "Alloc Failures"] + [get_nice_process_or_thread_name(pid) for pid in topN_pids_list_for_memory],
-            ["", mem_unit, ""] + [mem_unit for pid in topN_pids_list_for_memory],
+        if mem_limit_bytes > 0:
+            # it is possible to compute the "free" memory inside this cgroup and it's possible to have allocation failures
+            # so in such case we add 2 more data series to the chart:
+            mem_time_serie = GoogleChartsTimeSeries(
+                ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_pids_list_for_memory] + ["Free", "Alloc Failures"],
+                [""] + [mem_unit for pid in topN_pids_list_for_memory] + [mem_unit, ""],
+            )
+            # y_axes_max_value = mem_limit_bytes * 1.1
+            columns_for_2nd_yaxis = ["Alloc Failures"]
+            y_axes_titles = ["Memory (%s)" % mem_unit, "Alloc Failures"]
+        else:
+            # no memory limit... creating the "free" data serie (considering all the system memory as actual limit) likely produces weird
+            # results out-of-scale so we do not place any "idle" column. The "alloc failures" column does not apply either.
+            assert mem_limit_bytes == -1
+            mem_time_serie = GoogleChartsTimeSeries(
+                ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_pids_list_for_memory],
+                [""] + [mem_unit for pid in topN_pids_list_for_memory],
+            )
+            # y_axes_max_value = None  # let Google Charts autocompute the Y axes limits
+            columns_for_2nd_yaxis = []
+            y_axes_titles = ["Memory (%s)" % mem_unit]
+
+        chart_data["mem"] = GoogleChartsGraph(
+            data=mem_time_serie,
+            graph_title=f"Memory usage ({self.__cgroup_get_memory_limit_human_friendly()}) {chart_desc_postfix}",
+            button_label="Memory by Process",
+            graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS,
+            # take any contribute of any thread/process and stack it together: this way it becomes easier to spot
+            # when the cgroup MEMORY limit was hit and due to which threads/processes
+            stack_state=True,
+            y_axes_titles=y_axes_titles,
+            # alloc failures should not be stacked to the memory usage contributions, so move it on 2nd y axis:
+            columns_for_2nd_yaxis=columns_for_2nd_yaxis,
         )
 
-        # max_byte_value_dict = {}
-        # max_byte_value_dict["mem_rss"] = 0
-        # max_byte_value_dict["io_total"] = 0
+        ## -- IO --
+        io_time_serie = GoogleChartsTimeSeries(
+            ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_pids_list],
+            [""] + [io_unit for pid in topN_pids_list],
+        )
+        chart_data["io"] = GoogleChartsGraph(
+            data=io_time_serie,
+            graph_title=f"I/O usage (from cgroup stats) {chart_desc_postfix}",
+            button_label="IO by Thread" if self.collected_threads else "IO by Process",
+            y_axes_titles=["IO Read+Write (%s)" % io_unit],
+            graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS,
+            stack_state=False,
+        )
 
         # now generate a table of CPU/IO/MEMORY usage over time, per process/thread:
         for sample in self.jdata:
@@ -1138,13 +1219,7 @@ class CMonitorGraphGenerator:
                 for key in ["cpu", "io", "mem"]:
                     row[key] = [sample["timestamp"]["UTC"]]
 
-                # Memory graph has
-                # - limit
-                # - alloc failures
-                # as additional columns right after the timestamp
-                row["mem"].append(mem_limit_bytes / mem_divider)
-                row["mem"].append(sample["cgroup_memory_stats"]["failcnt"])
-
+                # append CPU & IO samples
                 tot_cpu_usage_perc = 0
                 for top_process_pid in topN_pids_list:
                     # print(top_process_pid)
@@ -1158,9 +1233,6 @@ class CMonitorGraphGenerator:
                         tot_cpu_usage_perc += cpu
                         row["cpu"].append(cpu)
                         row["io"].append(io)
-                        # keep track of maxs:
-                        # max_byte_value_dict["mem_rss"] = max(mem, max_byte_value_dict["mem_rss"])
-                        # max_byte_value_dict["io_total"] = max(io, max_byte_value_dict["io_total"])
                     else:
                         # probably this process was born later or dead earlier than this timestamp
                         row["cpu"].append(0)
@@ -1168,12 +1240,14 @@ class CMonitorGraphGenerator:
 
                 # for memory chart, only include PROCESSES, never include SECONDARY THREADS since there
                 # is no distinction between memory of whole process and memory of secondary threads
+                tot_mem_usage_bytes = 0
                 for top_process_pid in topN_pids_list_for_memory:
                     # print(top_process_pid)
                     json_key = "pid_%s" % top_process_pid
                     if json_key in sample["cgroup_tasks"]:
                         top_proc_sample = sample["cgroup_tasks"][json_key]
 
+                        tot_mem_usage_bytes += top_proc_sample["mem_rss_bytes"]
                         mem = int(top_proc_sample["mem_rss_bytes"] / mem_divider)
                         row["mem"].append(mem)
                     else:
@@ -1188,51 +1262,23 @@ class CMonitorGraphGenerator:
                     row["cpu"].append(max(cpu_quota_perc - tot_cpu_usage_perc, 0))
                     row["cpu"].append(CMonitorGraphGenerator.cgroup_get_cpu_throttling(sample))
 
+                # Memory graph has
+                # - free mem
+                # - alloc failures
+                # as additional columns right after the timestamp
+                if mem_limit_bytes > 0:
+                    row["mem"].append(max(int((mem_limit_bytes - tot_mem_usage_bytes) / mem_divider), 0))
+                    row["mem"].append(sample["cgroup_memory_stats"]["failcnt"])
+
                 for key in ["cpu", "io", "mem"]:
-                    chart_data[key].addRow(row[key])
+                    chart_data[key].data_table.addRow(row[key])
             except KeyError:  # avoid crashing if a key is not present in the dictionary...
                 # print("Missing cgroup data while parsing sample %d" % i)
                 pass
 
-        # CPU by thread/process:
-        # take any contribute of any thread/process and stack it together: this way it becomes easier to spot
-        # when the cgroup CPU limit was hit and due to which threads/processes
-        self.output_page.appendGoogleChart(
-            GoogleChartsGraph(
-                data=chart_data["cpu"],
-                graph_title=f"CPU usage ({self.__cgroup_get_cpu_quota_human_friendly()}) {chart_desc_postfix}",
-                button_label="CPU by Thread" if self.collected_threads else "CPU by Process",
-                graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS,
-                stack_state=True,
-                y_axes_titles=y_axes_titles,
-                # throttling should not be stacked to the CPU usage contributions, so move it on 2nd y axis:
-                columns_for_2nd_yaxis=columns_for_2nd_yaxis,
-                # make the 2 axes have the same identical Y scale to make it easier to read it:
-                y_axes_max_value=y_axes_max_value,
-            )
-        )
-
-        self.output_page.appendGoogleChart(
-            GoogleChartsGraph(
-                data=chart_data["mem"],
-                graph_title=f"Memory usage ({self.__cgroup_get_memory_limit_human_friendly()}) {chart_desc_postfix}",
-                button_label="Memory by Process",
-                y_axes_titles=["RSS Memory (%s)" % mem_unit],
-                graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS,
-                stack_state=False,
-            )
-        )
-
-        self.output_page.appendGoogleChart(
-            GoogleChartsGraph(
-                data=chart_data["io"],
-                graph_title=f"I/O usage (from cgroup stats) {chart_desc_postfix}",
-                button_label="IO by Thread" if self.collected_threads else "IO by Process",
-                y_axes_titles=["IO Read+Write (%s)" % io_unit],
-                graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_PER_PROCESS,
-                stack_state=False,
-            )
-        )
+        self.output_page.appendGoogleChart(chart_data["cpu"])
+        self.output_page.appendGoogleChart(chart_data["mem"])
+        self.output_page.appendGoogleChart(chart_data["io"])
 
     # =======================================================================================================
     # Public API
@@ -1650,7 +1696,7 @@ class CMonitorGraphGenerator:
         # - Amount of CPU throttling
         # NOTE: when cgroups v2 are used, there's no per-CPU stat just the total CPU usage,
         #       so we change the title of the tab to reflect that
-        graph_title = "All logical CPUs available inside cgroup" if self.cgroup_ver == 1 else "CPU usage measured in the cgroup"
+        graph_title = "CPU usage by index of CPU available inside cgroup" if self.cgroup_ver == 1 else "CPU usage measured in the cgroup"
         graph_title = f"{graph_title} ({self.__cgroup_get_cpu_quota_human_friendly()})"
 
         self.output_page.appendGoogleChart(
@@ -1680,7 +1726,7 @@ class CMonitorGraphGenerator:
         mem_total_bytes = self.sample_template["proc_meminfo"]["MemTotal"]
         divider, unit = self.__choose_byte_divider(mem_total_bytes)
 
-        baremetal_memory_stats = GoogleChartsTimeSeries(["Timestamp", "Used", "Cached (DiskRead)", "Free"], ["", unit, unit, unit]) 
+        baremetal_memory_stats = GoogleChartsTimeSeries(["Timestamp", "Used", "Cached (DiskRead)", "Free"], ["", unit, unit, unit])
 
         for i, s in enumerate(self.jdata):
             if i == 0:
@@ -1743,8 +1789,7 @@ class CMonitorGraphGenerator:
             # it is possible to compute the "free" memory inside this cgroup and it's possible to have allocation failures
             # so in such case we add 2 more data series to the chart:
             cgroup_memory_stats = GoogleChartsTimeSeries(
-                ["Timestamp", "Used", "Cached (DiskRead)", "Free", "Alloc Failures"], 
-                 ["", unit, unit, unit, ""]
+                ["Timestamp", "Used", "Cached (DiskRead)", "Free", "Alloc Failures"], ["", unit, unit, unit, ""]
             )
             # y_axes_max_value = mem_limit_bytes * 1.1
             columns_for_2nd_yaxis = ["Alloc Failures"]
@@ -1943,7 +1988,7 @@ class CMonitorGraphGenerator:
         ]
         self.output_page.appendHtmlTable("About this", about_this, div_class="bottom_about_div")
 
-    def write(self, top_scorer, thread_filter):
+    def generate_html(self, top_scorer, thread_filter):
         # baremetal stats:
         self.generate_baremetal_cpus()
         self.generate_baremetal_memory()
@@ -2165,7 +2210,7 @@ if __name__ == "__main__":
 
     print("Opening output file %s" % config["output_html"])
     graph_generator = CMonitorGraphGenerator(config["output_html"], jheader, jdata)
-    graph_generator.write(config["top_scorer"], config["thread_filter"])
+    graph_generator.generate_html(config["top_scorer"], config["thread_filter"])
 
     end_time = time.time()
     print("Completed processing of input JSON file of %d samples in %.3fsec. HTML output file is ready." % (len(jdata), end_time - start_time))

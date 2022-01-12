@@ -1591,7 +1591,7 @@ function draw_graph42() {
 
   var options_graph42 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "All logical CPUs available inside cgroup (NO LIMIT)",
+    title: "CPU usage by index of CPU available inside cgroup (NO LIMIT)",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -1695,7 +1695,7 @@ function draw_graph44() {
 }
 
 function draw_graph45() {
-  var deflated_data_base64_graph45 = 'eNqFlM9KxEAMh19l6WkXZiXJ/Eu8CeLJN1j2sGqRQlfFrYKI7266IjR7yPRSyPDNL+03k93uu5u+3vruuns6TP00HPsudOPhoR+1dPtf+gnd/XAcJl27GcfXx9XdYRg/3vuTFk6Tvk/bl+fVmgpwybJZVrefx7+FCmXT7cPuvOuagChgQAwQCEKCECsqSCBXFTOFzBJiAAfgSkugpOgCqAlxCdSMDYBrWgKc/ZZIE/ISEIwNgGtdAgjk96T7XRJzrEtwZUNgBpdImiGGIEgNgtnIw4h+VzlENvYwETQI5miJ6ndVNMP4w5ypQTAbgViK31XVDOujIjYIZuujsp/BmmF9MGCDYAFDCPoZerDFGCRAbhAsZInoXo/51IkxSIipQbAYg6SPS+h/kWyJmhsEizFI0b8f8xm6IJI/GObRIcYgZX8y5KgDzhik4k8GJQSswdL48qQZ1mDl2CAErEGO9UzsfwGGnVsU\n';
+  var deflated_data_base64_graph45 = 'eNp91MFKAzEQBuBXKTlVSCEzyWRmvAnSlyg9VF2ksFVpV0HEd3eqCJND0kvZ9Nuf2fyb7nZfYfl8m8JteDos03I8TSGG+fAwzbZ0/7/0HcNlOU+Xy+blefNxWq2xJuFUb4L74W+1kl5Xt+fpmnQ3z6+Pq+3hOL+bCvu4+w1dY0KMEAFiiphiSTEz2H32bdcUSXRghdHZWnLXguVmZ5lgYIWLs0L9GdByyVmFPLDC7Cwk7A+RLbjFBQdYWDwGSl1cLFk9xlQGWMT3ARn6Y1DM4guBgmmARXKDuT9GtWRfCRDhAIv4TqDW/hhsyc0+M8AAizT7zNJPFktu9lkSDLBo8lihn6wxqy8FE8gAi2KDc/d1JkPqS0GAMsCivhS0TxfbAVRqMNMAi/pSMPffZ7Ij2OLSP6+GRX0pSP0DS9n+Y3wpWPsH1rCmppQ6eMBiyU0pLHmANTWlSOb9/gdMtDx5\n';
   var deflated_data_binary_graph45 = window.atob(deflated_data_base64_graph45);
   var inflated_data_graph45 = JSON.parse(pako.inflate(deflated_data_binary_graph45, { to: 'string' }));
   var data_graph45 = google.visualization.arrayToDataTable(inflated_data_graph45);
@@ -1704,23 +1704,32 @@ function draw_graph45() {
 
   var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
   col1_formatter.format(data_graph45, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' '});
+  var col2_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
   col2_formatter.format(data_graph45, 2);
   var col3_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
   col3_formatter.format(data_graph45, 3);
-  var col4_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
+  var col4_formatter = new google.visualization.NumberFormat({suffix: ' '});
   col4_formatter.format(data_graph45, 4);
 
   var options_graph45 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Memory usage (memory limit = 209.7MB) of 20 top-CPU-utilizing threads",
+    title: "Memory usage (memory limit = 209.7MB) of 20 top-CPU-utilizing threads, STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "RSS Memory (MB)", gridlines: { color: "lightgrey", count: 11 } },
-    isStacked:  0
+    series: {
+     0: {targetAxisIndex:0},
+     1: {targetAxisIndex:0},
+     2: {targetAxisIndex:0},
+     3: {targetAxisIndex:1},
+    },
+    vAxes: {
+      0: { title: "Memory (MB)" },
+      1: { title: "Alloc Failures" }
+    },
+    isStacked:  1
   };
 
   set_main_chart_div_as_visible();
