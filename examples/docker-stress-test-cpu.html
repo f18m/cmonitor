@@ -67,7 +67,7 @@ function clear_chart() {
 }
 
 function draw_graph1() {
-  var deflated_data_base64_graph1 = 'eNqtlc9KA0EMh19F5lQhLJM08+fnTfDoGyw9rHSRQqseFkHEdzdMEarUZQZmYC/hy0cISXYcP93y8Ta7O7eflnk5nGZH7jg9zUcLPfyEvsg9vk77+/fnmw2fDi+37iIQ/gb4HNnRWAwb8SLExEyeOFFQQoBl8BDsU1FcvEx+wL+pgTT6kqr+1+NrIT/kFFZciNLJFa2ubTcXonZyJasrdnMhpk6ubHWhmwup10yANHE3F1KXmbCVsLLOI2FQ2RtbElnBkWI9zmZPLTgS6nEhzb4FR+Z6fGt2acGRGxqpZg8tOHJDI+2Y5Wy4DCwFL/wKDvh63E4SuAUHpB63wwJtwYFQj1srEVtw+29cwXffFQB0fw==\n';
+  var deflated_data_base64_graph1 = 'eNqVk8FqwzAMhl9l+NSBKZJsy9Fugx33BqGHjIZRaNcdwmCMvfvkmsEYy+hPjBA/3xcR4YzjR1jeX+dwF/bTMi+H0xxiOE5P89Gjh+/oM4bH87S/f3u+2fDp8HIbfgTld8A92cXx8oaNkEjkyF40Zosai5EbtLXipUireRWv0Rihi6Xr8SFaRuhiej3uT0XoYuY4b6U2UhstZZVn8kOYoMSI4D0lTFDKiOANKSYoVURIPsEwQRlaa/bvZkxQ7mstXbjU/I9RfEQGDWWFDPUZFTSUDTKq9wQaKgIZg/cJNFSw7baLqKCh0rc7NLTzdV0Q/7vFMEET/SHsvgAYFkWl\n';
   var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
   var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
   var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
@@ -97,7 +97,7 @@ function draw_graph1() {
 }
 
 function draw_graph2() {
-  var deflated_data_base64_graph2 = 'eNqN0z1qA0EMBeC7TJWAMKP5k17q3CCkWlw4ZIuADSHexoTcPSI7s90qbnc+HjtPo2n6Dsvtcw5P4f20zMvHZQ4Uzqe3+WyfnsenHwqv1/nLjl5u12W+hCNNf6cPKaZETMwUiYVqIVQ8BgIO2hLFXViptGiQYzxwVFeipTWyQRzYLDKPSFZXopX+l8gOFItsKwTDhWjSocPU8nBPnhJk1BM9CCrCPfEfCMkrrLxbo7VmgWVrsXkQ0rtRdRxboGyB1YMQjEHzvktUNPabpOw5aK9GMvZdtrz+wJDYc9Ayqk77rlheHUPOnoPKuK+TZ6uiuhXoOSCOPOe+tifgeyZsa4JejIruO9sS9GKEi+eAuu2804x1gzYm5zFAx5M2dvwFk+kNiA==\n';
+  var deflated_data_base64_graph2 = 'eNqNlMFqwzAMht/Fpw1EkRRbtnreG4ydQg8d82HQwlhzKWPvPqWxfZsIgSCsj9/yL9nz/BOW+1cNx/BxXuryea0BwuX8Xi+29NKXfiG83eq3pV7vt6VewwnmR/aJkRkIyH4CUUEgKT4HIMTDmsJ/yQxKBqoeFKPLJZ02MHFywAIa285kKx6YVDZFyV6J9uVeYnG5pLqB2d2ZcC2vF4mTjwo2g0Q90GJsBilFnxSMnfQOvgYouzTZNJtJpbjkZJrNpUTJJ4Ww7+6B0c40hkh9Umjqc6lunclEu0uYfFJIet9dTTHNPPouPirUbOLiTR1li8cw+Y5mEOZd/SwWT0PUJ4WbT1Jc89cxkV2O2gPCwyd3RNmuEo9LRz4p03iTHpae/gCUaxVr\n';
   var deflated_data_binary_graph2 = window.atob(deflated_data_base64_graph2);
   var inflated_data_graph2 = JSON.parse(pako.inflate(deflated_data_binary_graph2, { to: 'string' }));
   var data_graph2 = google.visualization.arrayToDataTable(inflated_data_graph2);
@@ -132,7 +132,7 @@ function draw_graph2() {
 }
 
 function draw_graph3() {
-  var deflated_data_base64_graph3 = 'eNqNk7FqAzEMht/FUwsiWD5b9t+5b1A6HRlSekMhgdLcEkrfvbrkdJuVrPbHJ+u3NI6/Yb58T+ElfB7maf46TYHC8fAxHfXo1Y7+KLyfpx+9eruc5+kU9jReb59STImYmCkSVyqZUPAcCNg1CMUuWChLXEFpLghJNxCcHFDUOBjYXBCSVzB5xqpGMSNcEFJvYOXsgE2NeMTYCHWJh2PcsftIUK681o7VBVGHu21rcCpc4yksHocq1jT6HKtvC6d4HOo2Oo4vUW4PRLOAaGsyEO5zgwptwpLLoWUrzEMfzCosd0d24dCqJd36nO5Ka+bLHgdE4/qYLgp460M8EEg2Ws6P6J7AFsr7YV0TFCvsCTUa2GiJhwFrLvU6CPt/hLgN9g==\n';
+  var deflated_data_base64_graph3 = 'eNqNlMFqwzAMht/Fpw1EkWRbinbeG4ydQg8d82HQwlhzKWPvPnWNwy7TTIIR9scv/t9K5vkzLZf3lh7S62Fpy9upJUjHw0s7+tZj3/qC9HxuH370dDkv7ZT2MP+c3jEyAwH5IlAMBKrhfQKz3VQY8E9QwejGGU4hVy07qA5qDcAJrKyClEOumvTOFID+6I1TlJCrZr2zBiChv9dwfN1R6NpRwTUfpag7eY15xLiTgqW3pxKhXuAaUqUak4K6iUZkdmYspwxC2K8oNF/cVR+j2FFxzdyvM4y+umafJNSYFJIhR+KaW0r4Dyq0xRRGr17jkHkFYR7SnLzeYsoxKbzGVGNH1ynZYopBYR35KbB/STwUkpOS8Vfz/TcNORTo\n';
   var deflated_data_binary_graph3 = window.atob(deflated_data_base64_graph3);
   var inflated_data_graph3 = JSON.parse(pako.inflate(deflated_data_binary_graph3, { to: 'string' }));
   var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
@@ -167,7 +167,7 @@ function draw_graph3() {
 }
 
 function draw_graph4() {
-  var deflated_data_base64_graph4 = 'eNqdlEFv2zAMhf+LTysgtKIskXy9rscdOmA7BT2kaNAGSNuh8A7D0P8+2nITZDJ96CFiYuTzk/ieuNn87YY/v3bddfewHXbD/nnXhe6wvd8d7NHNx6P30H3bP++Hq++/X4et/ePH09vrMBz2L4/24+vtz1gLdXdhM2FfUkwpUCAKMZCEkgMKLrqQYryMYfwAl8ppKmCXKyFzPHJpXMi+UtT6Al0hwemcNIIhYwElF2ST7BckSSupKyQ4N4dEP3HJVxRT5P85EOaywoHlyPEHOC5C2cXU5PAJOTu/xDNu7EtEbc/K+RCyUGMFYt1plBUQ0jdgIVntqNqS5WREPlnIlWcfhHAjqMq1p/A4MkFZykypYPFBCBZSSjU6rmAKWWPbmdSvmzGC0NYL6av7TB7Xm2BqQpNoLj4GzQvWp7k/vQdm0yttSPvV2zti0JMR5djPVI1Xj7M5o7pkYNXLPgfEBf/my+RhNmNAzVUa8zlXHwTaqaai9Sq5ebERg9YHmxJ1n8XngNJuNM458wXNCvD5FZxyNq3sU4A2E61MLoiF+u4fQSVs2w==\n';
+  var deflated_data_base64_graph4 = 'eNqFlU1LAzEQhv9LTgpBZ/IxSbzq0YOCnkoPFRddaK3IehDxvzvZ7BZKNrOUJul2Ht7MzNvpZvOrhp/PTt2o193QDf2hU1rtdy/dnh/dzY/+tLrvD/1w/fh9HHYc8fT+dRyGff/xxh9uH56hbKi2ejNiFwaM0aiRF9IuadI+waXSBuAKeOUF85GjUrqKzjTJoBOewPzm+ASubFHAfLInjibQG68Dg8E3waiTO3Fuvijyl1kRrQD6ROcpMkHBlKtiE+RXOFcsueUtAAmcT6kSDPNNQxPEMaezoo45gp32KKEEWN2W0iTdBvkMtmokurWyMkjgqjRTDhgb49poDqEFdBT16CWSIFRkjG4SbZO5hnVXWGy1K1YTQm0ELHYQSsuXwoXfSJqSlUBCW5sdkiveE3zgWdPVmiVLCBJISAuudav1IZYM9QzhFk+7yBLWXTExFlXBCYHPC5ML54Y6CSVjmpYXNCOf7dIQKm2xEknGVWOP4ugFL1Uom55aDUWJI7PUFTRrI9pwpEmV4UNJUyoQk2SX/k7mfm63/+ENdMU=\n';
   var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
   var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
   var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
@@ -191,7 +191,16 @@ function draw_graph4() {
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    series: {
+     0: {targetAxisIndex:0},
+     2: {targetAxisIndex:0},
+     3: {targetAxisIndex:0},
+     1: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, pointsVisible: true, color: 'red', lineDashStyle: [10,2]},
+    },
+    vAxes: {
+      0: { title: "Time (%)" },
+      1: { title: "CPU Throttling (%)", minValue: -1, maxValue: 310 },
+    },
     isStacked:  0
   };
 
@@ -206,7 +215,7 @@ function draw_graph4() {
 }
 
 function draw_graph5() {
-  var deflated_data_base64_graph5 = 'eNqN07Fqw0AQhOFXCVfZsMXdabV7kzZ+AkMq4UKODmJiQ8BqgvG7ewmkSGGYRsXpY4ofdppuaf357uk1LfPa19OlJ0nn+djP8bT7e7pLer/2JX69zR+ffXnZ7E7Xr32fl206yPQLNzXXKkVKkSzFZVTBiG0S8zJIrdmfylHUMilhlZIWmwMpYUpJj00jJcwp2WITpIRzlSDqhZRwolKLj7pyEG4MLLHoHISDgVW0ZQ6iFQYOsVg5iEbl0VgcOYhG5YnjaY2DAJUnTgeFgwCVJw4HykGAyhOBYBwE/uc5PADxIRYV\n';
+  var deflated_data_base64_graph5 = 'eNqN08FKw0AQxvFXkT21MIeZ2eTbjlf7BIKn0EM0CxZbEJqLlL67U8GDB+EjIQybHwv7J5mma1m/Pnt5LMu89vV47kXKaX7tp1za/y7dpLxc+pKvnua39748bPbHy8dzn5dtOcj0Azeu7mJi+YAMIZAxdFsEzU3ctf0rm4SRcIxKyZ3EQMIxQMm8GgnHCEqa5q0shXKVLGetLIVyoe6DgqVQrpXV3DVYCiNjDXkyYymMjDXmrgNLYWQs5K6NpTAyVstZWQp3ju5yriyFk7HuXwxYCudief5bHixF/Rvr8A0lUB1O\n';
   var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
   var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
   var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
@@ -241,7 +250,7 @@ function draw_graph5() {
 }
 
 function draw_graph6() {
-  var deflated_data_base64_graph6 = 'eNqtVbFuGzEM/ZXipgRgDImiRLFzl+7djAxpc0gDuGkQX4ai6L+X5xNreTB9gKvhni2B70i+J952+3uYfr2Ow8fh8WEap+cf4wDD7uHruNOtT7b1B4b99Dbu93cvT3ffXt8/3GAJnDDfDmdOysnJsovM8+7nx938ki/f335O0+755Wm4h+3hXTcYECFCjBAgMmQCynNMDHFDSCCyyXq2CXqOCk6gZNFADSjCBofATQlZjosyeEQZqISFiHWzwUKUuYbjSn5GGaSgEaVDRRx4TS1FU0gtEtuzJVC69wdMl3ikkPEkg8aUqWdyW8KaT1mXj08jha0hxcCIus5GhOIRVc1Hrs+ngrApvVhtBmtP7CyDvmUEiONR6QZmGeoLu6CYaEpppWLniao+iE35yAbWo75JWhq5RMLlWitW/UW8VnqfR9iUXx6NQ/pFfjIIVEObMaz/e+EvBEo1nWsxWDIg5C4DnXwuU9IUbDYgGpjOXWfj0qbzPFL/6UxtxtQVpeicrfkY2MAsi72yDC6PVF5p2OzwqAtr/Q8G0aEr4fqrWEFnsMS1N8jl0fFhPNnAeHrXJr8yHcJC19/EuZRs5g/55Pvm1aFSiw2CggbN+3xy/6I7Ueb7Vlc65vAVuP8LMbzW6g==\n';
+  var deflated_data_base64_graph6 = 'eNqtlbFu3DAMhl+l8JQCzIGiJFLq3KV7t0OGtDHSAJc0yLlDUfTdy7NFRzecZKAnA6YgW59+/pTs/f7PMP1+HYdPw8P9NE5Pz+MAw+H+23jQoc829BeG4/Q2Ho+3L4+3319/fbihlIQwfhwuPAlnT5ZRF+fRLw+H0yJff7z9nKbD08vjcAf7ea0bQiJw4PTGEDIwpKxTHLpdIsh5l3IG3CGgvrDjs5YalJhRMaf5gS3MmJ1Hye+NBEjHL5IEsltA4sp9wcSE781RhDYlZl8w+qpoSDNH1w45VqQI3AIlyMHkJAtFEPsqLw+hzYmZC2i5FUiuW/Btc/SSbeaENkaXNQ5bsKxSTWrrcbpJsNRdMFkwTaES5Qk6JMa18NmCaaJKkxagmZ3TPvqN6XVAjGv1/XxGBEvlOsZoB3njxumRGK3omC2Yxa4mcQd1SuE6dffADq+wE11Ql9eyk4WCkvp0+AAdEru16mLBkuNKVVdUVFGhfBQFQ50fdCay46sYzCpBLkjozWQ3F1nmE7QA1q0nvjJCYocl2setnvZQTGSoYMFUUY2StslJ+37rlgkdFFN1wEswVKjr5dv/iZPTxP//41IOk2zNrmk56ceZth730CGxx3U3yplRi4i7fym14o4=\n';
   var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
   var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
@@ -272,11 +281,11 @@ function draw_graph6() {
      1: {targetAxisIndex:0},
      2: {targetAxisIndex:0},
      3: {targetAxisIndex:0},
-     4: {targetAxisIndex:1},
+     4: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, pointsVisible: true, color: 'red', lineDashStyle: [10,2]},
     },
     vAxes: {
-      0: { title: "CPU (%)", maxValue: 220 },
-      1: { title: "CPU Throttling (%)", maxValue: 220 }
+      0: { title: "CPU (%)" },
+      1: { title: "CPU Throttling (%)", minValue: -1, maxValue: 310 },
     },
     isStacked:  1
   };
@@ -292,7 +301,7 @@ function draw_graph6() {
 }
 
 function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNqV08FKQ0EMBdBfkVm1kMLMvMwk13X/4tFF1UGEKsX3XEjx3w0WF4JKsskiOdzFhczzJa3v55Fu08NxHevT80iUTse7cbLV/nv1QWlZX8ey7F4ed/fnt5tN7Vmm2rbpj0v/cbluq8g2HWj+yt3UXCsVKoUyFaHGxM3uxKzlOqbC5R+OBj9vxD1HOHr1827pU4Sjs5+LpfcIRw8UqZaOCIcEigSxlAiHeItUGywc0JDu1kZEAhoCt67EmgMaWtx6suwa0FB/g/ai2gIa6m/QHlQ1oAF/g/aeKAEN+Bu05wQHNOBv0DpED2jglwYPn/yzSQw=\n';
+  var deflated_data_base64_graph7 = 'eNqVk8FKBDEMhl9FetqFLCRpmzaefYthD6sWEVZZnPEg4rubXRE8qMxPSwjJ10A/2ml6T8vbaaTrdH9YxvL4NBKl4+F2HKN08136oDQvL2Oed88PVxvtvUkt2/Sjurs7vX51lP/u1G3a03SZu1FWJSGJYFScjLrHwSxFqJReL+Efujqvxxu5IHT1vB7v5AWhq9t6PFZD6OqAReHYDPHGgEiJnDPEGwMuzwkbxBsDOiXHfId4E8RniSsLxJsgPmvMLxBvgvi0mN8g3gTx2SJniDdVgO+RZ4g3RXyen5xBvCngU+P/qkO85V987j8BxdlRPQ==\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
@@ -329,7 +338,7 @@ function draw_graph7() {
 }
 
 function draw_graph8() {
-  var deflated_data_base64_graph8 = 'eNqN0kFLAzEQBeC/Ijm1MIUkm8zkee6/WHqoGkSoUrrrQaT/3UER8aAvLAR25uMdHjPP72F9O/dwGx6Oa1+fnnuQcDre9ZOP9t+jq4RlvfRl2b087u7PrzebrNGmXLfhj43+2nxNs9k2HGT+zN3kmLMkSUmiJJNapFTf+59//yhUUFWlaBxQ0EyVetY0oKCFKvMsHVBQ3kTzLAwoGG8CUiwNKBhpovlTrHAEU4aSJxlHMDCUpbTIEVpiaPKkzBEarcDPvVWO0GgFfuytcQTQCvzUkTgCaAV+6CgcAbQCLwHKEfBTweEDBKcRYg==\n';
+  var deflated_data_base64_graph8 = 'eNqNk8FKBDEMhl9FelohC0naphPPvsWwh1WLCKsszngQ8d3NKCIetD8pJSRfA/1K5/ktra/nnq7S3XHt68NjT5ROx5t+itL1d+md0rI+92XZP93vb88vFzudpqZcL9MfnfKr81WVGtUDzZ9zd8qqJCSxGRUno8njEG/xD1Sdh1QjFwCqnofURF4AqLoNqYgGQNXHGoRjMYIZj01I5JwRzHgsY0vYEMx47ENyTHMEMwGElLiFIJgJIKTGtIJgJoAQi2kNwUwAIS1yRjBTHWNT5BnBTAEh2+sbgpmOhWj8BXUEs/wj5PABX3MYow==\n';
   var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
   var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
   var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
@@ -366,7 +375,7 @@ function draw_graph8() {
 }
 
 function draw_graph9() {
-  var deflated_data_base64_graph9 = 'eNqLjlZyzs/NTcxLUdJRcg4IVSjJzE0FMj31/RWynYCMkIyi1ESQpG9qbn5RJUgwVidaqbikKLW4WDcvXTe5oFRJx9BCz9BUx0AHVVxBw8jMwNzYyFRTScfExMIQh0YTnBrNsGlU0jHQMzDRMTVH0gTRYGRuDtRgbGhiGBsLABDUPbA=\n';
+  var deflated_data_base64_graph9 = 'eNqLjlZyzs/NTcxLUdJRcg4IVSjJzE0FMj31/RWynYCMkIyi1ESQpG9qbn5RJUgwVidaqbikKLW4WDcvXTe5oFRJx9BCz8ASGVjoGOigKlLQMLKwMDcyMNVU0jExsTDFYQpOfSbY9CnpGOgZmOiYmiNpgmgwNAVpMDY0MYyNBQCzPUB6\n';
   var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
   var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
   var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
@@ -391,7 +400,7 @@ function draw_graph9() {
 }
 
 function draw_graph10() {
-  var deflated_data_base64_graph10 = 'eNqN07FqAzEQhOF32SohmyDJe1pN6rzF4cLBAhsc24VcmJB3zybGkCbcFCcO8THFD5rnTxnXc5dX2W5GH/uPLiqHzXs/xNXb/epLpY9detof5fb3fLoMWev8Sx5KKkWz5qxJs+tkigmPoukl/Xz/ukmtJsqhFsLV2FtRDtUI57FXKYfqhGuxB8rBmS5Q80w5+GKXFoe5MQxel1mONWcYHMusqLXEMLS8zFaxVhiGRgSxWJsYhkYEiUfRGsMAIkg8CWSGAUSQeBAwhgFEkEiCyjDgb5D1N/7/Bb0=\n';
+  var deflated_data_base64_graph10 = 'eNqN08FqAkEMBuB3yanFtCSZnazx7FssHiwOKFjtYXoQ8d3NKkIvhZ+dXX6Gj8D87EzTlfrlp9GKdtve+uG7EdNx+9WOubV+bd2YWt/L4nCiZ/o4/3ba8PQgbyZmrKz5cR6CnWvIO7F8yvz+60YOhViNArglxwCxGg64fEaI1QjAqeQSDLogvWhmKRh0QaqZgzgGXZB2tOTEwKArVM+Q51EMukL11Jw4YNAVqsdz4ohBV6ieMbNg0M0QuMxcMOgG1TP/F45BN6QeyztjgUEvf+vZ3AE5UQ0T\n';
   var deflated_data_binary_graph10 = window.atob(deflated_data_base64_graph10);
   var inflated_data_graph10 = JSON.parse(pako.inflate(deflated_data_binary_graph10, { to: 'string' }));
   var data_graph10 = google.visualization.arrayToDataTable(inflated_data_graph10);
@@ -426,7 +435,7 @@ function draw_graph10() {
 }
 
 function draw_graph11() {
-  var deflated_data_base64_graph11 = 'eNqF0rtqAzEQheF3mSohY5DkWY2Oa7/F4sIhghh8SSEXIfjdPcS49J5m0YqPAz9onv9k/P502cjXfvRxOHVROe4/+zGuts+rm0of3+njcJbHaXW5Dtnp/E/eSipFs+asSbPrZIoJ7xJ/6aWZ1GqiBrUQU2NnTQ2qEeOxU6lBdWJa7IAaOGuHmmdq4IvtLT7mxgi8LpMcK84IHMukqLXECFpeJutYKYygkWiLlYkRNBIdj7g1RgASHU8YmRGARMcDhjECkOjIRmUEeEbv7jO58GI=\n';
+  var deflated_data_base64_graph11 = 'eNqF0s1KBEEMBOB3yUkxQpKertl49i2GPazY4ML6c+g9iPjuZpU9SjHDUDQfobt6tu1L5ufHkAd5Pswxj69DVE6Hp3Gqpcfr0rfKmC92d3yTv3T/fp6y1+2X3IRFqKvXB7qkQnvaraip/WtWTaekZyNmp7lQ0hPE1LNS0jOJcavXOIKxs3tlaxzB2PEvwcARjDXgrSYlR3BawVJ7d47gtIJekxaO4LQC1KSVIzitYK1sHCGCoV3lxhGCVnC5Y3CEYBVE/eORHKFdK9j/ADof97g=\n';
   var deflated_data_binary_graph11 = window.atob(deflated_data_base64_graph11);
   var inflated_data_graph11 = JSON.parse(pako.inflate(deflated_data_binary_graph11, { to: 'string' }));
   var data_graph11 = google.visualization.arrayToDataTable(inflated_data_graph11);
@@ -567,11 +576,11 @@ function set_main_chart_div_as_visible() {
     <tr><td colspan='2' class='config_sectioncol'>Linux Kernel Version</td></tr>
     <tr><td class='config_key'>Version</td><td class='config_val'>Linux version 3.10.0-1160.36.2.el7.x86_64 (mockbuild@kbuilder.bsys.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-44) (GCC) ) #1 SMP Wed Jul 21 11:57:15 UTC 2021</td></tr>
     <tr><td colspan='2' class='config_sectioncol'>Linux Control Group (CGroup) Configuration</td></tr>
-    <tr><td class='config_key'>Name</td><td class='config_val'>docker/d0347ffe950069eb392ca984180cd691cba0c6edb7152838bc921406c867baaf</td></tr>
+    <tr><td class='config_key'>Name</td><td class='config_val'>docker/500bb219d066c6c5471b1deb0f578e084dfbdac0eaeff5a6b1bde075e5bc5542</td></tr>
     <tr><td class='config_key'>Version</td><td class='config_val'>1</td></tr>
-    <tr><td class='config_key'>Memory path</td><td class='config_val'>/sys/fs/cgroup/memory/docker/d0347ffe950069eb392ca984180cd691cba0c6edb7152838bc921406c867baaf</td></tr>
-    <tr><td class='config_key'>Cpuacct path</td><td class='config_val'>/sys/fs/cgroup/cpu,cpuacct/docker/d0347ffe950069eb392ca984180cd691cba0c6edb7152838bc921406c867baaf</td></tr>
-    <tr><td class='config_key'>Cpuset path</td><td class='config_val'>/sys/fs/cgroup/cpuset/docker/d0347ffe950069eb392ca984180cd691cba0c6edb7152838bc921406c867baaf</td></tr>
+    <tr><td class='config_key'>Memory path</td><td class='config_val'>/sys/fs/cgroup/memory/docker/500bb219d066c6c5471b1deb0f578e084dfbdac0eaeff5a6b1bde075e5bc5542</td></tr>
+    <tr><td class='config_key'>Cpuacct path</td><td class='config_val'>/sys/fs/cgroup/cpu,cpuacct/docker/500bb219d066c6c5471b1deb0f578e084dfbdac0eaeff5a6b1bde075e5bc5542</td></tr>
+    <tr><td class='config_key'>Cpuset path</td><td class='config_val'>/sys/fs/cgroup/cpuset/docker/500bb219d066c6c5471b1deb0f578e084dfbdac0eaeff5a6b1bde075e5bc5542</td></tr>
     <tr><td class='config_key'>Cpus</td><td class='config_val'>0, 1</td></tr>
     <tr><td class='config_key'>Cpu quota perc</td><td class='config_val'>cpu quota = 200.0%</td></tr>
     <tr><td class='config_key'>Memory limit bytes</td><td class='config_val'>NO LIMIT</td></tr>
@@ -590,7 +599,7 @@ function set_main_chart_div_as_visible() {
     <tr><td class='config_key'>Model</td><td class='config_val'>62</td></tr>
     <tr><td class='config_key'>Model name</td><td class='config_val'>Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz</td></tr>
     <tr><td class='config_key'>Stepping</td><td class='config_val'>4</td></tr>
-    <tr><td class='config_key'>Cpu mhz</td><td class='config_val'>3469.750</td></tr>
+    <tr><td class='config_key'>Cpu mhz</td><td class='config_val'>3367.211</td></tr>
     <tr><td class='config_key'>Cpu max mhz</td><td class='config_val'>3600.0000</td></tr>
     <tr><td class='config_key'>Cpu min mhz</td><td class='config_val'>1200.0000</td></tr>
     <tr><td class='config_key'>Bogomips</td><td class='config_val'>5586.32</td></tr>
@@ -602,7 +611,7 @@ function set_main_chart_div_as_visible() {
   <h2>CMonitor Collector</h2>
   <table summary='details on cmonitor_collector'>
     <tr><td colspan='2' class='config_sectioncol'>Performance Stats Collector Configuration</td></tr>
-    <tr><td class='config_key'>Command</td><td class='config_val'>../collector/bin/glibc/cmonitor_collector --sampling-interval=0.5 --num-samples=30 --collect=cgroup_cpu,cgroup_memory,cgroup_threads,cgroup_network --foreground --output-filename=docker-stress-test-cpu.json --cgroup-name=docker/d0347ffe950069eb392ca984180</td></tr>
+    <tr><td class='config_key'>Command</td><td class='config_val'>../collector/bin/glibc/cmonitor_collector --sampling-interval=0.5 --num-samples=30 --collect=cgroup_cpu,cgroup_memory,cgroup_threads,cgroup_network --foreground --output-filename=docker-stress-test-cpu.json --cgroup-name=docker/500bb219d066c6c5471b1deb0f5</td></tr>
     <tr><td class='config_key'>Version</td><td class='config_val'>2.2-0</td></tr>
     <tr><td class='config_key'>Gmt offset seconds</td><td class='config_val'>3600</td></tr>
     <tr><td class='config_key'>Timezone name</td><td class='config_val'>CET</td></tr>
@@ -611,7 +620,7 @@ function set_main_chart_div_as_visible() {
     <tr><td class='config_key'>Collecting</td><td class='config_val'>cgroup_cpu,cgroup_memory,cgroup_network,cgroup_threads</td></tr>
     <tr><td class='config_key'>Username</td><td class='config_val'>root</td></tr>
     <tr><td class='config_key'>Userid</td><td class='config_val'>0</td></tr>
-    <tr><td class='config_key'>Pid</td><td class='config_val'>2607331</td></tr>
+    <tr><td class='config_key'>Pid</td><td class='config_val'>2887625</td></tr>
   </table>
   </div>
   <div class='bottom_div'>
@@ -619,7 +628,7 @@ function set_main_chart_div_as_visible() {
     <table summary='textbox with summarized info'>
     <tr><td><ul>
       <li>Collected: <span class='bottom_table_val'>cgroup_cpu, cgroup_memory, cgroup_network, cgroup_threads</span></li>
-      <li>Started sampling at: <span class='bottom_table_val'>2022-01-11T00:17:54.457 (UTC)</span></li>
+      <li>Started sampling at: <span class='bottom_table_val'>2022-01-12T16:49:06.089 (UTC)</span></li>
       <li>Samples: <span class='bottom_table_val'>30</span></li>
       <li>Sampling Interval (s): <span class='bottom_table_val'>0.5</span></li>
       </ul></td><td><ul>

@@ -114,6 +114,14 @@ class GoogleChartsTimeSeries(object):
         assert len(self.column_names) >= 2
         return len(self.column_names) - 1
 
+    def getMaxValueDataSerie(self, column_index):
+        # WARNING: this looks very inefficient!
+        assert column_index >= 0 and column_index <= len(self.column_names) - 1
+        ret = 0
+        for r in self.rows:
+            ret = max(ret, r[1 + column_index])
+        return ret
+
     def getDataSeriesIndexByName(self, column_name):
         assert column_name != self.column_names[0]  # the first column is not a "data serie", it's the timestamp column!
         try:
@@ -297,6 +305,10 @@ class GoogleChartsGraph:
     """
     This is a simple object that can generate a JavaScript snippet (to be embedded in HTML output page)
     that will render at runtime a GoogleChart drawing inside a JavaScript-enabled browser of course.
+
+    It supports Google AreaChart (see https://developers.google.com/chart/interactive/docs/gallery/areachart)
+    with 1 or 2 Y axes. The data series that are placed on the 2nd Y axis are higlighted automatically by
+    using a tick RED line.
     """
 
     def __init__(
@@ -310,8 +322,8 @@ class GoogleChartsGraph:
         graph_title="",
         stack_state=False,
         y_axes_titles=[],
-        columns_for_2nd_yaxis=[],
-        y_axes_max_value=None,
+        y_axes_max_value=[None],
+        columns_for_2nd_yaxis=None,
     ):
         self.data_table = data  # of type GoogleChartsGenericTable or GoogleChartsTimeSeries
         self.button_label = button_label
@@ -336,15 +348,38 @@ class GoogleChartsGraph:
         """After the JavaScript line graph data is output, the data is terminated and the graph options set"""
         global g_next_graph_need_stacking
 
-        def __internalWriteAxis(series_indexes, target_axis_index):
+        def __internalWriteSeries(series_indexes, target_axis_index):
             ret = ""
             for i, idx in enumerate(series_indexes, start=0):
-                ret += "   %d: {targetAxisIndex:%d}" % (idx, target_axis_index)
+                if target_axis_index == 0:
+                    ret += "   %d: {targetAxisIndex:%d}" % (idx, target_axis_index)
+                else:
+                    # IMPORTANT: the data series that go on the 2nd Y axis (typically just one) are drawn with a RED thick line
+                    #            to underline their importance; area opacity is removed to avoid clutter with data series on the first Y axis
+                    ret += "   %d: {targetAxisIndex:%d, lineWidth: 5, areaOpacity: 0, pointsVisible: true, color: 'red', lineDashStyle: [10,2]}" % (
+                        idx,
+                        target_axis_index,
+                    )
                 # print("i=%d, idx=%d, target_axis_index=%d" % (i,idx,target_axis_index))
                 if i < len(series_indexes):
                     ret += ",\n"
                 else:
                     ret += "\n"
+            return ret
+
+        def __internalWriteVAxis(v_axis_idx, max_value, title, data_series_indexes):
+            ret = ""
+            if max_value is None:
+                # let Google Chart automatically determine min/max on this axis
+                ret += '    %d: { title: "%s" },\n' % (v_axis_idx, title)
+            elif max_value == 0:
+                # autocompute the best MAX
+                actual_max = 0
+                for idx in data_series_indexes:
+                    actual_max = max(actual_max, self.data_table.getMaxValueDataSerie(idx))
+                ret += '    %d: { title: "%s", minValue: -1, maxValue: %d },\n' % (v_axis_idx, title, actual_max * 5 + 10)
+            else:
+                ret += '    %d: { title: "%s", minValue: -1, maxValue: %d },\n' % (v_axis_idx, title, max_value)
             return ret
 
         ret_string = ""
@@ -363,7 +398,7 @@ class GoogleChartsGraph:
         ret_string += '  hAxis: { format: "%s", gridlines: { color: "lightgrey", count: 30 } },\n' % X_AXIS_DATEFORMAT
 
         # VERTICAL AXIS (OR AXES)
-        if len(self.columns_for_2nd_yaxis) > 0:
+        if self.columns_for_2nd_yaxis:
             # compute indexes of series that use the 2nd Y axis:
             series_for_2nd_yaxis = []
             for colname in self.columns_for_2nd_yaxis:
@@ -379,22 +414,19 @@ class GoogleChartsGraph:
 
             # assign data series to the 2 Y axes:
             ret_string += "  series: {\n"
-            ret_string += __internalWriteAxis(series_for_1st_yaxis, 0)
-            ret_string += __internalWriteAxis(series_for_2nd_yaxis, 1)
+            ret_string += __internalWriteSeries(series_for_1st_yaxis, 0)
+            ret_string += __internalWriteSeries(series_for_2nd_yaxis, 1)
             ret_string += "  },\n"
 
-            # allocate 2 Y axes:
+            # check data
             assert len(self.y_axes_titles) == 2
-            if self.y_axes_max_value is None:
-                ret_string += "  vAxes: {\n"
-                ret_string += '    0: { title: "%s" },\n' % str(self.y_axes_titles[0])
-                ret_string += '    1: { title: "%s" }\n' % str(self.y_axes_titles[1])
-                ret_string += "  },\n"
-            else:
-                ret_string += "  vAxes: {\n"
-                ret_string += '    0: { title: "%s", maxValue: %d },\n' % (str(self.y_axes_titles[0]), self.y_axes_max_value)
-                ret_string += '    1: { title: "%s", maxValue: %d }\n' % (str(self.y_axes_titles[1]), self.y_axes_max_value)
-                ret_string += "  },\n"
+            assert len(self.y_axes_max_value) == 2, f"Got {self.y_axes_max_value}, but columns_for_2nd_yaxis={self.columns_for_2nd_yaxis}"
+
+            # allocate 2 Y axes:
+            ret_string += "  vAxes: {\n"
+            ret_string += __internalWriteVAxis(0, self.y_axes_max_value[0], self.y_axes_titles[0], series_for_1st_yaxis)
+            ret_string += __internalWriteVAxis(1, self.y_axes_max_value[1], self.y_axes_titles[1], series_for_2nd_yaxis)
+            ret_string += "  },\n"
         else:
             # single vertical axis:
             assert len(self.y_axes_titles) == 1
@@ -1123,7 +1155,7 @@ class CMonitorGraphGenerator:
                 ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_pids_list] + ["Idle", "Throttling"],
                 [""] + ["%" for pid in topN_pids_list] + ["%", "%"],
             )
-            y_axes_max_value = cpu_quota_perc * 1.1
+            y_axes_max_value = [None, 0]
             columns_for_2nd_yaxis = ["Throttling"]
             y_axes_titles = ["CPU (%)", "CPU Throttling (%)"]
         else:
@@ -1135,8 +1167,8 @@ class CMonitorGraphGenerator:
                 ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_pids_list],
                 [""] + ["%" for pid in topN_pids_list],
             )
-            y_axes_max_value = None  # let Google Charts autocompute the Y axes limits
-            columns_for_2nd_yaxis = []
+            y_axes_max_value = [None]  # let Google Charts autocompute the Y axes limits
+            columns_for_2nd_yaxis = None
             y_axes_titles = ["CPU (%)"]
 
         # CPU by thread/process:
@@ -1168,7 +1200,7 @@ class CMonitorGraphGenerator:
                 ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_pids_list_for_memory] + ["Free", "Alloc Failures"],
                 [""] + [mem_unit for pid in topN_pids_list_for_memory] + [mem_unit, ""],
             )
-            # y_axes_max_value = mem_limit_bytes * 1.1
+            y_axes_max_value = [None, 0]
             columns_for_2nd_yaxis = ["Alloc Failures"]
             y_axes_titles = ["Memory (%s)" % mem_unit, "Alloc Failures"]
         else:
@@ -1179,8 +1211,8 @@ class CMonitorGraphGenerator:
                 ["Timestamp"] + [get_nice_process_or_thread_name(pid) for pid in topN_pids_list_for_memory],
                 [""] + [mem_unit for pid in topN_pids_list_for_memory],
             )
-            # y_axes_max_value = None  # let Google Charts autocompute the Y axes limits
-            columns_for_2nd_yaxis = []
+            y_axes_max_value = [None]  # let Google Charts autocompute the Y axes limits
+            columns_for_2nd_yaxis = None
             y_axes_titles = ["Memory (%s)" % mem_unit]
 
         chart_data["mem"] = GoogleChartsGraph(
@@ -1192,6 +1224,7 @@ class CMonitorGraphGenerator:
             # when the cgroup MEMORY limit was hit and due to which threads/processes
             stack_state=True,
             y_axes_titles=y_axes_titles,
+            y_axes_max_value=y_axes_max_value,
             # alloc failures should not be stacked to the memory usage contributions, so move it on 2nd y axis:
             columns_for_2nd_yaxis=columns_for_2nd_yaxis,
         )
@@ -1211,6 +1244,7 @@ class CMonitorGraphGenerator:
         )
 
         # now generate a table of CPU/IO/MEMORY usage over time, per process/thread:
+        # max_failcnt = 0
         for sample in self.jdata:
             try:
                 row = {}
@@ -1268,7 +1302,12 @@ class CMonitorGraphGenerator:
                 # as additional columns right after the timestamp
                 if mem_limit_bytes > 0:
                     row["mem"].append(max(int((mem_limit_bytes - tot_mem_usage_bytes) / mem_divider), 0))
-                    row["mem"].append(sample["cgroup_memory_stats"]["failcnt"])
+                    if self.cgroup_ver == 1:
+                        failcnt = sample["cgroup_memory_stats"]["events.failcnt"]
+                    else:
+                        failcnt = sample["cgroup_memory_stats"]["events.oom_kill"]
+                    row["mem"].append(failcnt)
+                    # max_failcnt = max(failcnt, max_failcnt)
 
                 for key in ["cpu", "io", "mem"]:
                     chart_data[key].data_table.addRow(row[key])
@@ -1648,6 +1687,7 @@ class CMonitorGraphGenerator:
 
         cpu_quota_perc = self.__cgroup_get_cpu_quota_percentage()
         n_invalid_samples = 0
+        # max_cpu_throttling = 0
         for i, s in enumerate(self.jdata):
             if i == 0:
                 continue  # skip first sample
@@ -1655,7 +1695,9 @@ class CMonitorGraphGenerator:
             try:
                 ts = s["timestamp"]["UTC"]
 
-                all_cpus_row = [ts, cpu_quota_perc, CMonitorGraphGenerator.cgroup_get_cpu_throttling(s)]
+                throttling = CMonitorGraphGenerator.cgroup_get_cpu_throttling(s)
+                # max_cpu_throttling = max(max_cpu_throttling, throttling)
+                all_cpus_row = [ts, cpu_quota_perc, throttling]
                 for c in self.cgroup_logical_cpus_indexes:
                     # get data:
                     cpu_stats = s["cgroup_cpuacct_stats"]["cpu" + str(c)]
@@ -1704,9 +1746,12 @@ class CMonitorGraphGenerator:
                 data=all_cpus_table,  # Data
                 graph_title=graph_title,
                 button_label="All CPUs" if self.cgroup_ver == 1 else "CPU",
-                y_axes_titles=["Time (%)"],
+                y_axes_titles=["Time (%)", "CPU Throttling (%)"],
                 graph_source=GRAPH_SOURCE_DATA_IS_CGROUP_TOTALS,
                 stack_state=False,
+                # give evidence to CPU throttling by moving it on 2nd y axis:
+                columns_for_2nd_yaxis=["Throttling"],
+                y_axes_max_value=[None, 0],
             )
         )
 
@@ -1791,7 +1836,7 @@ class CMonitorGraphGenerator:
             cgroup_memory_stats = GoogleChartsTimeSeries(
                 ["Timestamp", "Used", "Cached (DiskRead)", "Free", "Alloc Failures"], ["", unit, unit, unit, ""]
             )
-            # y_axes_max_value = mem_limit_bytes * 1.1
+            y_axes_max_value = [None, 0]
             columns_for_2nd_yaxis = ["Alloc Failures"]
             y_axes_titles = ["Memory (%s)" % unit, "Alloc Failures"]
         else:
@@ -1799,11 +1844,12 @@ class CMonitorGraphGenerator:
             # results out-of-scale so we do not place any "idle" column. The "alloc failures" column does not apply either.
             assert mem_limit_bytes == -1
             cgroup_memory_stats = GoogleChartsTimeSeries(["Timestamp", "Used", "Cached (DiskRead)"], ["", unit, unit])
-            # y_axes_max_value = None  # let Google Charts autocompute the Y axes limits
-            columns_for_2nd_yaxis = []
+            y_axes_max_value = [None]  # use default GoogleChart logic
+            columns_for_2nd_yaxis = None
             y_axes_titles = ["Memory (%s)" % unit]
 
         n_invalid_samples = 0
+        # max_mfail = 0
         for i, s in enumerate(self.jdata):
             if i == 0:
                 continue  # skip first sample
@@ -1815,7 +1861,7 @@ class CMonitorGraphGenerator:
                 if self.cgroup_ver == 1:
                     mu = s["cgroup_memory_stats"]["stat.rss"]
                     mc = s["cgroup_memory_stats"]["stat.cache"]
-                    mfail = s["cgroup_memory_stats"]["failcnt"]
+                    mfail = s["cgroup_memory_stats"]["events.failcnt"]
                 else:
                     # cgroups v2
                     mu = s["cgroup_memory_stats"]["stat.anon"]
@@ -1823,6 +1869,7 @@ class CMonitorGraphGenerator:
                     mfail = s["cgroup_memory_stats"]["events.oom_kill"]
 
                 mfree = mem_limit_bytes - mu - mc
+                # max_mfail = max(max_mfail, mfail)
 
                 if mem_limit_bytes > 0:
                     cgroup_memory_stats.addRow(
@@ -1851,6 +1898,10 @@ class CMonitorGraphGenerator:
         self.__print_data_loading_stats("cgroup memory", n_invalid_samples)
 
         # Produce the javascript:
+        # NOTE: on 2nd axis we try to keep the plotted line below the ones that belong to the first axis (to avoid cluttering)
+        #       and we also add some offset to deal with the case where "max_mfail is zero"
+        # if mem_limit_bytes > 0:
+        #    y_axes_max_value = [None, max_mfail * 5 + 10]
         self.output_page.appendGoogleChart(
             GoogleChartsGraph(
                 data=cgroup_memory_stats,  # Data
@@ -1860,6 +1911,7 @@ class CMonitorGraphGenerator:
                 stack_state=True,
                 y_axes_titles=y_axes_titles,
                 columns_for_2nd_yaxis=columns_for_2nd_yaxis,
+                y_axes_max_value=y_axes_max_value,
             )
         )
 

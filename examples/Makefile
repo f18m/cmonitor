@@ -191,7 +191,6 @@ regen_docker_stress_test_mem:
 		--detach \
 		--interactive \
 		--tty \
-		--rm \
 		--memory=$(STRESS_TEST_DOCKER_MEMORY) \
 		--name stress \
 		alexeiled/stress-ng \
@@ -208,6 +207,8 @@ regen_docker_stress_test_mem:
 		--score-threshold=0 \
 		--custom-metadata="cmonitor_chart_name:stress (Redis docker)"
 	docker stop stress
+	docker logs stress
+	docker rm stress
 	gzip -f docker-stress-test-mem.json
 
 
