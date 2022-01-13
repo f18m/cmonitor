@@ -14,21 +14,20 @@
     "samples": [
     {
         "cgroup_memory_stats": {
+            "stat.active_anon": 8267718656,
+            "stat.active_file": 23442071552,
             "stat.cache": 48044187648,
-            "stat.rss": 9645748224,
-            "stat.rss_huge": 0,
+            "stat.inactive_anon": 1610219520,
+            "stat.inactive_file": 24369836032,
             "stat.mapped_file": 93372416,
-            "stat.swap": 285999104,
-            "stat.pgpgin": 0,
-            "stat.pgpgout": 0,
             "stat.pgfault": 0,
             "stat.pgmajfault": 0,
-            "stat.inactive_anon": 1610219520,
-            "stat.active_anon": 8267718656,
-            "stat.inactive_file": 24369836032,
-            "stat.active_file": 23442071552,
-            "stat.unevictable": 0,
-            "failcnt": 0
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.rss": 9645748224,
+            "stat.rss_huge": 0,
+            "stat.swap": 285999104,
+            "stat.unevictable": 0
         }
     },
     {
@@ -164,21 +163,21 @@
             }
         },
         "cgroup_memory_stats": {
+            "stat.active_anon": 8270000128,
+            "stat.active_file": 23442280448,
             "stat.cache": 48044933120,
-            "stat.rss": 9648078848,
-            "stat.rss_huge": 0,
+            "stat.inactive_anon": 1610219520,
+            "stat.inactive_file": 24370372608,
             "stat.mapped_file": 93372416,
-            "stat.swap": 285999104,
-            "stat.pgpgin": 0,
-            "stat.pgpgout": 0,
             "stat.pgfault": 0,
             "stat.pgmajfault": 0,
-            "stat.inactive_anon": 1610219520,
-            "stat.active_anon": 8270000128,
-            "stat.inactive_file": 24370372608,
-            "stat.active_file": 23442280448,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.rss": 9648078848,
+            "stat.rss_huge": 0,
+            "stat.swap": 285999104,
             "stat.unevictable": 0,
-            "failcnt": 0
+            "events.failcnt": 0
         },
         "cgroup_tasks": {
             "pid_775367": {
@@ -531,21 +530,21 @@
             }
         },
         "cgroup_memory_stats": {
+            "stat.active_anon": 8267407360,
+            "stat.active_file": 23442411520,
             "stat.cache": 48045613056,
-            "stat.rss": 9645580288,
-            "stat.rss_huge": 0,
+            "stat.inactive_anon": 1610219520,
+            "stat.inactive_file": 24370921472,
             "stat.mapped_file": 93372416,
-            "stat.swap": 285999104,
-            "stat.pgpgin": 0,
-            "stat.pgpgout": 0,
             "stat.pgfault": 0,
             "stat.pgmajfault": 0,
-            "stat.inactive_anon": 1610219520,
-            "stat.active_anon": 8267407360,
-            "stat.inactive_file": 24370921472,
-            "stat.active_file": 23442411520,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.rss": 9645580288,
+            "stat.rss_huge": 0,
+            "stat.swap": 285999104,
             "stat.unevictable": 0,
-            "failcnt": 0
+            "events.failcnt": 0
         },
         "cgroup_tasks": {
             "pid_775367": {
@@ -898,21 +897,21 @@
             }
         },
         "cgroup_memory_stats": {
+            "stat.active_anon": 8267853824,
+            "stat.active_file": 23443111936,
             "stat.cache": 48046862336,
-            "stat.rss": 9645985792,
-            "stat.rss_huge": 0,
+            "stat.inactive_anon": 1610219520,
+            "stat.inactive_file": 24371474432,
             "stat.mapped_file": 93372416,
-            "stat.swap": 285999104,
-            "stat.pgpgin": 0,
-            "stat.pgpgout": 0,
             "stat.pgfault": 0,
             "stat.pgmajfault": 0,
-            "stat.inactive_anon": 1610219520,
-            "stat.active_anon": 8267853824,
-            "stat.inactive_file": 24371474432,
-            "stat.active_file": 23443111936,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.rss": 9645985792,
+            "stat.rss_huge": 0,
+            "stat.swap": 285999104,
             "stat.unevictable": 0,
-            "failcnt": 0
+            "events.failcnt": 0
         },
         "cgroup_tasks": {
             "pid_775367": {

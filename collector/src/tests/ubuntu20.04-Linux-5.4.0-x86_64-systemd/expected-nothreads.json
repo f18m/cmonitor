@@ -14,23 +14,22 @@
     "samples": [
     {
         "cgroup_memory_stats": {
+            "stat.active_anon": 5550080,
+            "stat.active_file": 17031168,
             "stat.cache": 24600576,
+            "stat.dirty": 540672,
+            "stat.inactive_anon": 0,
+            "stat.inactive_file": 7569408,
+            "stat.mapped_file": 1216512,
+            "stat.pgfault": 161238,
+            "stat.pgmajfault": 132,
+            "stat.pgpgin": 75240,
+            "stat.pgpgout": 67896,
             "stat.rss": 5619712,
             "stat.rss_huge": 0,
             "stat.shmem": 0,
-            "stat.mapped_file": 1216512,
-            "stat.dirty": 540672,
-            "stat.writeback": 0,
-            "stat.pgpgin": 75240,
-            "stat.pgpgout": 67896,
-            "stat.pgfault": 161238,
-            "stat.pgmajfault": 132,
-            "stat.inactive_anon": 0,
-            "stat.active_anon": 5550080,
-            "stat.inactive_file": 7569408,
-            "stat.active_file": 17031168,
             "stat.unevictable": 0,
-            "failcnt": 0
+            "stat.writeback": 0
         }
     },
     {
@@ -62,23 +61,23 @@
             }
         },
         "cgroup_memory_stats": {
+            "stat.active_anon": 5414912,
+            "stat.active_file": 17031168,
             "stat.cache": 24600576,
+            "stat.dirty": 270336,
+            "stat.inactive_anon": 0,
+            "stat.inactive_file": 7299072,
+            "stat.mapped_file": 1216512,
+            "stat.pgfault": 173976,
+            "stat.pgmajfault": 132,
+            "stat.pgpgin": 80553,
+            "stat.pgpgout": 73212,
             "stat.rss": 5410816,
             "stat.rss_huge": 0,
             "stat.shmem": 0,
-            "stat.mapped_file": 1216512,
-            "stat.dirty": 270336,
-            "stat.writeback": 0,
-            "stat.pgpgin": 80553,
-            "stat.pgpgout": 73212,
-            "stat.pgfault": 173976,
-            "stat.pgmajfault": 132,
-            "stat.inactive_anon": 0,
-            "stat.active_anon": 5414912,
-            "stat.inactive_file": 7299072,
-            "stat.active_file": 17031168,
             "stat.unevictable": 0,
-            "failcnt": 0
+            "stat.writeback": 0,
+            "events.failcnt": 0
         },
         "cgroup_tasks": {
             "pid_1460": {
@@ -357,23 +356,23 @@
             }
         },
         "cgroup_memory_stats": {
+            "stat.active_anon": 5550080,
+            "stat.active_file": 17031168,
             "stat.cache": 24600576,
+            "stat.dirty": 270336,
+            "stat.inactive_anon": 0,
+            "stat.inactive_file": 7299072,
+            "stat.mapped_file": 1216512,
+            "stat.pgfault": 186780,
+            "stat.pgmajfault": 132,
+            "stat.pgpgin": 85965,
+            "stat.pgpgout": 78597,
             "stat.rss": 5414912,
             "stat.rss_huge": 0,
             "stat.shmem": 0,
-            "stat.mapped_file": 1216512,
-            "stat.dirty": 270336,
-            "stat.writeback": 0,
-            "stat.pgpgin": 85965,
-            "stat.pgpgout": 78597,
-            "stat.pgfault": 186780,
-            "stat.pgmajfault": 132,
-            "stat.inactive_anon": 0,
-            "stat.active_anon": 5550080,
-            "stat.inactive_file": 7299072,
-            "stat.active_file": 17031168,
             "stat.unevictable": 0,
-            "failcnt": 0
+            "stat.writeback": 0,
+            "events.failcnt": 0
         },
         "cgroup_tasks": {
             "pid_1460": {
@@ -652,23 +651,23 @@
             }
         },
         "cgroup_memory_stats": {
+            "stat.active_anon": 5414912,
+            "stat.active_file": 17031168,
             "stat.cache": 24735744,
+            "stat.dirty": 270336,
+            "stat.inactive_anon": 0,
+            "stat.inactive_file": 7434240,
+            "stat.mapped_file": 1216512,
+            "stat.pgfault": 199617,
+            "stat.pgmajfault": 132,
+            "stat.pgpgin": 91410,
+            "stat.pgpgout": 84071,
             "stat.rss": 5337088,
             "stat.rss_huge": 0,
             "stat.shmem": 0,
-            "stat.mapped_file": 1216512,
-            "stat.dirty": 270336,
-            "stat.writeback": 0,
-            "stat.pgpgin": 91410,
-            "stat.pgpgout": 84071,
-            "stat.pgfault": 199617,
-            "stat.pgmajfault": 132,
-            "stat.inactive_anon": 0,
-            "stat.active_anon": 5414912,
-            "stat.inactive_file": 7434240,
-            "stat.active_file": 17031168,
             "stat.unevictable": 0,
-            "failcnt": 0
+            "stat.writeback": 0,
+            "events.failcnt": 0
         },
         "cgroup_tasks": {
             "pid_1460": {

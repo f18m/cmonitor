@@ -14,21 +14,20 @@
     "samples": [
     {
         "cgroup_memory_stats": {
+            "stat.active_anon": 2330624,
+            "stat.active_file": 0,
             "stat.cache": 0,
-            "stat.rss": 2330624,
-            "stat.rss_huge": 0,
+            "stat.inactive_anon": 0,
+            "stat.inactive_file": 0,
             "stat.mapped_file": 0,
-            "stat.swap": 0,
-            "stat.pgpgin": 0,
-            "stat.pgpgout": 0,
             "stat.pgfault": 0,
             "stat.pgmajfault": 0,
-            "stat.inactive_anon": 0,
-            "stat.active_anon": 2330624,
-            "stat.inactive_file": 0,
-            "stat.active_file": 0,
-            "stat.unevictable": 0,
-            "failcnt": 0
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.rss": 2330624,
+            "stat.rss_huge": 0,
+            "stat.swap": 0,
+            "stat.unevictable": 0
         }
     },
     {
@@ -50,21 +49,21 @@
             }
         },
         "cgroup_memory_stats": {
+            "stat.active_anon": 2330624,
+            "stat.active_file": 0,
             "stat.cache": 0,
-            "stat.rss": 2330624,
-            "stat.rss_huge": 0,
+            "stat.inactive_anon": 0,
+            "stat.inactive_file": 0,
             "stat.mapped_file": 0,
-            "stat.swap": 0,
-            "stat.pgpgin": 0,
-            "stat.pgpgout": 0,
             "stat.pgfault": 0,
             "stat.pgmajfault": 0,
-            "stat.inactive_anon": 0,
-            "stat.active_anon": 2330624,
-            "stat.inactive_file": 0,
-            "stat.active_file": 0,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.rss": 2330624,
+            "stat.rss_huge": 0,
+            "stat.swap": 0,
             "stat.unevictable": 0,
-            "failcnt": 0
+            "events.failcnt": 0
         },
         "cgroup_tasks": {
             "pid_1232906": {
@@ -129,21 +128,21 @@
             }
         },
         "cgroup_memory_stats": {
+            "stat.active_anon": 2543616,
+            "stat.active_file": 0,
             "stat.cache": 0,
-            "stat.rss": 2543616,
-            "stat.rss_huge": 0,
+            "stat.inactive_anon": 0,
+            "stat.inactive_file": 0,
             "stat.mapped_file": 0,
-            "stat.swap": 0,
-            "stat.pgpgin": 0,
-            "stat.pgpgout": 0,
             "stat.pgfault": 0,
             "stat.pgmajfault": 0,
-            "stat.inactive_anon": 0,
-            "stat.active_anon": 2543616,
-            "stat.inactive_file": 0,
-            "stat.active_file": 0,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.rss": 2543616,
+            "stat.rss_huge": 0,
+            "stat.swap": 0,
             "stat.unevictable": 0,
-            "failcnt": 0
+            "events.failcnt": 0
         },
         "cgroup_tasks": {
             "pid_1232906": {
@@ -208,21 +207,21 @@
             }
         },
         "cgroup_memory_stats": {
+            "stat.active_anon": 2543616,
+            "stat.active_file": 0,
             "stat.cache": 0,
-            "stat.rss": 2543616,
-            "stat.rss_huge": 0,
+            "stat.inactive_anon": 0,
+            "stat.inactive_file": 0,
             "stat.mapped_file": 0,
-            "stat.swap": 0,
-            "stat.pgpgin": 0,
-            "stat.pgpgout": 0,
             "stat.pgfault": 0,
             "stat.pgmajfault": 0,
-            "stat.inactive_anon": 0,
-            "stat.active_anon": 2543616,
-            "stat.inactive_file": 0,
-            "stat.active_file": 0,
+            "stat.pgpgin": 0,
+            "stat.pgpgout": 0,
+            "stat.rss": 2543616,
+            "stat.rss_huge": 0,
+            "stat.swap": 0,
             "stat.unevictable": 0,
-            "failcnt": 0
+            "events.failcnt": 0
         },
         "cgroup_tasks": {
             "pid_1232906": {
