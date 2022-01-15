@@ -66,14 +66,42 @@ function clear_chart() {
     g_chart.clearChart();
 }
 
+/* Utility function used to put SI measurement unit on byte values appearing inside tooltips */
+function prettyPrinter(num) {
+     if (num >= 1000000000) {
+        return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'G';
+     }
+     if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+     }
+     if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+     }
+     return num;
+}
+
+/* Utility function to use the 'ready' event to modify the chart once it has been drawn */
+function fix_vaxis_ticks() {
+    var chart_div = document.getElementById("chart_master_div");
+    var axisLabels = chart_div.getElementsByTagName('text');
+    for (var i = 0; i < axisLabels.length; i++) {
+        if (axisLabels[i].getAttribute('text-anchor') === 'end') {
+            // what happens with GoogleCharts is that the best vAxis format we can choose is "short"
+            // which formats large numbers with "k", "M" and... "B" unit (for "billions"). 
+            // However we prefer the "G" unit for billions, so we hack the generated HTML:
+            axisLabels[i].innerHTML = axisLabels[i].innerHTML.replace("B", "G")
+        }
+    }
+}
+
 function draw_graph1() {
   var deflated_data_base64_graph1 = 'eNqVk8FqwzAMhl9l+NSBKZJsy9Fugx33BqGHjIZRaNcdwmCMvfvkmsEYy+hPjBA/3xcR4YzjR1jeX+dwF/bTMi+H0xxiOE5P89Gjh+/oM4bH87S/f3u+2fDp8HIbfgTld8A92cXx8oaNkEjkyF40Zosai5EbtLXipUireRWv0Rihi6Xr8SFaRuhiej3uT0XoYuY4b6U2UhstZZVn8kOYoMSI4D0lTFDKiOANKSYoVURIPsEwQRlaa/bvZkxQ7mstXbjU/I9RfEQGDWWFDPUZFTSUDTKq9wQaKgIZg/cJNFSw7baLqKCh0rc7NLTzdV0Q/7vFMEET/SHsvgAYFkWl\n';
   var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
   var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
   var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
+
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph1, 0);
-
   var options_graph1 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Average Load  (from baremetal stats)",
@@ -82,7 +110,7 @@ function draw_graph1() {
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "Load (%)", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "Load (%)", format: "short", gridlines: { color: "lightgrey", count: 11 } },
     isStacked:  0
   };
 
@@ -90,6 +118,7 @@ function draw_graph1() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  google.visualization.events.addListener(g_chart, 'ready', fix_vaxis_ticks);
   g_chart.draw(data_graph1, options_graph1);
   g_current_data = data_graph1;
   g_current_options = options_graph1;
@@ -101,13 +130,17 @@ function draw_graph2() {
   var deflated_data_binary_graph2 = window.atob(deflated_data_base64_graph2);
   var inflated_data_graph2 = JSON.parse(pako.inflate(deflated_data_binary_graph2, { to: 'string' }));
   var data_graph2 = google.visualization.arrayToDataTable(inflated_data_graph2);
+
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph2, 0);
 
-  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col1_formatter.format(data_graph2, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col2_formatter.format(data_graph2, 2);
+  var column_unit = ['','%','%']
+  for (var c=1; c < data_graph2.getNumberOfColumns(); c++) {
+      for (var r=0; r < data_graph2.getNumberOfRows(); r++) {
+          var v = data_graph2.getValue(r, c);
+          data_graph2.setFormattedValue(r, c, prettyPrinter(v) + column_unit[c]);
+      }
+  }
 
   var options_graph2 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
@@ -117,7 +150,7 @@ function draw_graph2() {
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "CPU (%)", format: "short", gridlines: { color: "lightgrey", count: 11 } },
     isStacked:  1
   };
 
@@ -125,6 +158,7 @@ function draw_graph2() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  google.visualization.events.addListener(g_chart, 'ready', fix_vaxis_ticks);
   g_chart.draw(data_graph2, options_graph2);
   g_current_data = data_graph2;
   g_current_options = options_graph2;
@@ -136,13 +170,17 @@ function draw_graph3() {
   var deflated_data_binary_graph3 = window.atob(deflated_data_base64_graph3);
   var inflated_data_graph3 = JSON.parse(pako.inflate(deflated_data_binary_graph3, { to: 'string' }));
   var data_graph3 = google.visualization.arrayToDataTable(inflated_data_graph3);
+
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph3, 0);
 
-  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col1_formatter.format(data_graph3, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col2_formatter.format(data_graph3, 2);
+  var column_unit = ['','%','%']
+  for (var c=1; c < data_graph3.getNumberOfColumns(); c++) {
+      for (var r=0; r < data_graph3.getNumberOfRows(); r++) {
+          var v = data_graph3.getValue(r, c);
+          data_graph3.setFormattedValue(r, c, prettyPrinter(v) + column_unit[c]);
+      }
+  }
 
   var options_graph3 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
@@ -152,7 +190,7 @@ function draw_graph3() {
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "Time (%)", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "CPU (%)", format: "short", gridlines: { color: "lightgrey", count: 11 } },
     isStacked:  1
   };
 
@@ -160,6 +198,7 @@ function draw_graph3() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  google.visualization.events.addListener(g_chart, 'ready', fix_vaxis_ticks);
   g_chart.draw(data_graph3, options_graph3);
   g_current_data = data_graph3;
   g_current_options = options_graph3;
@@ -171,17 +210,17 @@ function draw_graph4() {
   var deflated_data_binary_graph4 = window.atob(deflated_data_base64_graph4);
   var inflated_data_graph4 = JSON.parse(pako.inflate(deflated_data_binary_graph4, { to: 'string' }));
   var data_graph4 = google.visualization.arrayToDataTable(inflated_data_graph4);
+
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph4, 0);
 
-  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col1_formatter.format(data_graph4, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col2_formatter.format(data_graph4, 2);
-  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col3_formatter.format(data_graph4, 3);
-  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col4_formatter.format(data_graph4, 4);
+  var column_unit = ['','%','%','%','%']
+  for (var c=1; c < data_graph4.getNumberOfColumns(); c++) {
+      for (var r=0; r < data_graph4.getNumberOfRows(); r++) {
+          var v = data_graph4.getValue(r, c);
+          data_graph4.setFormattedValue(r, c, prettyPrinter(v) + column_unit[c]);
+      }
+  }
 
   var options_graph4 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
@@ -198,8 +237,8 @@ function draw_graph4() {
      1: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, pointsVisible: true, color: 'red', lineDashStyle: [10,2]},
     },
     vAxes: {
-      0: { title: "Time (%)" },
-      1: { title: "CPU Throttling (%)", minValue: -1, maxValue: 310 },
+      0: { title: "CPU (%)", format: "short" },
+      1: { title: "CPU Throttling (%)", format: "short", minValue: -1, maxValue: 310 },
     },
     isStacked:  0
   };
@@ -208,6 +247,7 @@ function draw_graph4() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  google.visualization.events.addListener(g_chart, 'ready', fix_vaxis_ticks);
   g_chart.draw(data_graph4, options_graph4);
   g_current_data = data_graph4;
   g_current_options = options_graph4;
@@ -215,27 +255,31 @@ function draw_graph4() {
 }
 
 function draw_graph5() {
-  var deflated_data_base64_graph5 = 'eNqN08FKw0AQxvFXkT21MIeZ2eTbjlf7BIKn0EM0CxZbEJqLlL67U8GDB+EjIQybHwv7J5mma1m/Pnt5LMu89vV47kXKaX7tp1za/y7dpLxc+pKvnua39748bPbHy8dzn5dtOcj0Azeu7mJi+YAMIZAxdFsEzU3ctf0rm4SRcIxKyZ3EQMIxQMm8GgnHCEqa5q0shXKVLGetLIVyoe6DgqVQrpXV3DVYCiNjDXkyYymMjDXmrgNLYWQs5K6NpTAyVstZWQp3ju5yriyFk7HuXwxYCudief5bHixF/Rvr8A0lUB1O\n';
+  var deflated_data_base64_graph5 = 'eNqVk8FKQzEQRX9FsmphFjOT5KZxa79AcPXo4ukLWGxB6NtI6b87Fdzp4pIQhuQehhySabqm9etzpMe0zOtYj+eRJJ3m13GKrf3v1k3Sy2UscfQ0v72P5WGzP14+nse8bNNBpp/gxtVdTCwWSOkCqV23SdDcaoa4a2ul/Jtv0o2K156J/E56oeK1g8jHaFS89k7kTWMqB0AZnxa1Zg6AMkrvhYIDoIxVy9GhcwCM0lri3sYBMEprjQ6FA2CUVkSHxgEwSmuLWjkA7gywizpzAJzSen9/4AA4o9XjT3vnAOS/tB6+AcNYQTc=\n';
   var deflated_data_binary_graph5 = window.atob(deflated_data_base64_graph5);
   var inflated_data_graph5 = JSON.parse(pako.inflate(deflated_data_binary_graph5, { to: 'string' }));
   var data_graph5 = google.visualization.arrayToDataTable(inflated_data_graph5);
+
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph5, 0);
 
-  var col1_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
-  col1_formatter.format(data_graph5, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
-  col2_formatter.format(data_graph5, 2);
+  var column_unit = ['','B','B']
+  for (var c=1; c < data_graph5.getNumberOfColumns(); c++) {
+      for (var r=0; r < data_graph5.getNumberOfRows(); r++) {
+          var v = data_graph5.getValue(r, c);
+          data_graph5.setFormattedValue(r, c, prettyPrinter(v) + column_unit[c]);
+      }
+  }
 
   var options_graph5 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Used memory in kB measured inside cgroup (NO LIMIT), STACKED graph",
+    title: "Used memory in Bytes measured inside cgroup (NO LIMIT), STACKED graph",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "Memory (kB)", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "Memory (B)", format: "short", gridlines: { color: "lightgrey", count: 11 } },
     isStacked:  1
   };
 
@@ -243,6 +287,7 @@ function draw_graph5() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  google.visualization.events.addListener(g_chart, 'ready', fix_vaxis_ticks);
   g_chart.draw(data_graph5, options_graph5);
   g_current_data = data_graph5;
   g_current_options = options_graph5;
@@ -254,19 +299,17 @@ function draw_graph6() {
   var deflated_data_binary_graph6 = window.atob(deflated_data_base64_graph6);
   var inflated_data_graph6 = JSON.parse(pako.inflate(deflated_data_binary_graph6, { to: 'string' }));
   var data_graph6 = google.visualization.arrayToDataTable(inflated_data_graph6);
+
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph6, 0);
 
-  var col1_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col1_formatter.format(data_graph6, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col2_formatter.format(data_graph6, 2);
-  var col3_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col3_formatter.format(data_graph6, 3);
-  var col4_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col4_formatter.format(data_graph6, 4);
-  var col5_formatter = new google.visualization.NumberFormat({suffix: ' %'});
-  col5_formatter.format(data_graph6, 5);
+  var column_unit = ['','%','%','%','%','%']
+  for (var c=1; c < data_graph6.getNumberOfColumns(); c++) {
+      for (var r=0; r < data_graph6.getNumberOfRows(); r++) {
+          var v = data_graph6.getValue(r, c);
+          data_graph6.setFormattedValue(r, c, prettyPrinter(v) + column_unit[c]);
+      }
+  }
 
   var options_graph6 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
@@ -284,8 +327,8 @@ function draw_graph6() {
      4: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, pointsVisible: true, color: 'red', lineDashStyle: [10,2]},
     },
     vAxes: {
-      0: { title: "CPU (%)" },
-      1: { title: "CPU Throttling (%)", minValue: -1, maxValue: 310 },
+      0: { title: "CPU (%)", format: "short" },
+      1: { title: "CPU Throttling (%)", format: "short", minValue: -1, maxValue: 310 },
     },
     isStacked:  1
   };
@@ -294,6 +337,7 @@ function draw_graph6() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  google.visualization.events.addListener(g_chart, 'ready', fix_vaxis_ticks);
   g_chart.draw(data_graph6, options_graph6);
   g_current_data = data_graph6;
   g_current_options = options_graph6;
@@ -301,19 +345,21 @@ function draw_graph6() {
 }
 
 function draw_graph7() {
-  var deflated_data_base64_graph7 = 'eNqVk8FKBDEMhl9FetqFLCRpmzaefYthD6sWEVZZnPEg4rubXRE8qMxPSwjJ10A/2ml6T8vbaaTrdH9YxvL4NBKl4+F2HKN08136oDQvL2Oed88PVxvtvUkt2/Sjurs7vX51lP/u1G3a03SZu1FWJSGJYFScjLrHwSxFqJReL+Efujqvxxu5IHT1vB7v5AWhq9t6PFZD6OqAReHYDPHGgEiJnDPEGwMuzwkbxBsDOiXHfId4E8RniSsLxJsgPmvMLxBvgvi0mN8g3gTx2SJniDdVgO+RZ4g3RXyen5xBvCngU+P/qkO85V987j8BxdlRPQ==\n';
+  var deflated_data_base64_graph7 = 'eNqd0sFqwzAMBuBXGT61oIIk27LV894i9NBtZgy6UZbsUEbfvepGYZf18BOTCDmfBfkzTd9pOR1H2qaX/TKWt/eRKB32T+MQrcdb60xpXj7HPG8+Xh9W2nuTWtbpT3fzfPz63VH+f6eu046mn3NXyqokJHEzKk5G3QNmKWJZqZReRfn2vMOqM+AauUCsegZcJy8Qq26Ai6tBrDoSgnAsxqAxkoNEzRmDxkgU14INg8ZIGpJjomPQBIqjxPcRDJpAcdSYWDBoAsVhMbFh0ASKo0XNGDRVBPaoMwZNoTiu/7lh0BSJI14RdQxavhfH7gLyToXb\n';
   var deflated_data_binary_graph7 = window.atob(deflated_data_base64_graph7);
   var inflated_data_graph7 = JSON.parse(pako.inflate(deflated_data_binary_graph7, { to: 'string' }));
   var data_graph7 = google.visualization.arrayToDataTable(inflated_data_graph7);
+
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph7, 0);
 
-  var col1_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
-  col1_formatter.format(data_graph7, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
-  col2_formatter.format(data_graph7, 2);
-  var col3_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
-  col3_formatter.format(data_graph7, 3);
+  var column_unit = ['','B','B','B']
+  for (var c=1; c < data_graph7.getNumberOfColumns(); c++) {
+      for (var r=0; r < data_graph7.getNumberOfRows(); r++) {
+          var v = data_graph7.getValue(r, c);
+          data_graph7.setFormattedValue(r, c, prettyPrinter(v) + column_unit[c]);
+      }
+  }
 
   var options_graph7 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
@@ -323,7 +369,7 @@ function draw_graph7() {
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "Memory (kB)", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "Memory (B)", format: "short", gridlines: { color: "lightgrey", count: 11 } },
     isStacked:  1
   };
 
@@ -331,6 +377,7 @@ function draw_graph7() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  google.visualization.events.addListener(g_chart, 'ready', fix_vaxis_ticks);
   g_chart.draw(data_graph7, options_graph7);
   g_current_data = data_graph7;
   g_current_options = options_graph7;
@@ -342,15 +389,17 @@ function draw_graph8() {
   var deflated_data_binary_graph8 = window.atob(deflated_data_base64_graph8);
   var inflated_data_graph8 = JSON.parse(pako.inflate(deflated_data_binary_graph8, { to: 'string' }));
   var data_graph8 = google.visualization.arrayToDataTable(inflated_data_graph8);
+
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph8, 0);
 
-  var col1_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
-  col1_formatter.format(data_graph8, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
-  col2_formatter.format(data_graph8, 2);
-  var col3_formatter = new google.visualization.NumberFormat({suffix: ' kB'});
-  col3_formatter.format(data_graph8, 3);
+  var column_unit = ['','B','B','B']
+  for (var c=1; c < data_graph8.getNumberOfColumns(); c++) {
+      for (var r=0; r < data_graph8.getNumberOfRows(); r++) {
+          var v = data_graph8.getValue(r, c);
+          data_graph8.setFormattedValue(r, c, prettyPrinter(v) + column_unit[c]);
+      }
+  }
 
   var options_graph8 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
@@ -360,7 +409,7 @@ function draw_graph8() {
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "IO Read+Write (kB)", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "IO Read+Write (B)", format: "short", gridlines: { color: "lightgrey", count: 11 } },
     isStacked:  0
   };
 
@@ -368,6 +417,7 @@ function draw_graph8() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  google.visualization.events.addListener(g_chart, 'ready', fix_vaxis_ticks);
   g_chart.draw(data_graph8, options_graph8);
   g_current_data = data_graph8;
   g_current_options = options_graph8;
@@ -375,7 +425,7 @@ function draw_graph8() {
 }
 
 function draw_graph9() {
-  var deflated_data_base64_graph9 = 'eNqLjlZyzs/NTcxLUdJRcg4IVSjJzE0FMj31/RWynYCMkIyi1ESQpG9qbn5RJUgwVidaqbikKLW4WDcvXTe5oFRJx9BCz8ASGVjoGOigKlLQMLKwMDcyMNVU0jExsTDFYQpOfSbY9CnpGOgZmOiYmiNpgmgwNAVpMDY0MYyNBQCzPUB6\n';
+  var deflated_data_base64_graph9 = 'eNqLjlZyzs/NTcxLUdJRcg4IVSjJzE0FMj31/RU0nDSBrJCMotREkKxvam5+USVYNFYnWqm4pCi1uFg3L103uaBUScfQQs/AEhlY6BhZ6qCqUtAwsrAwNzIwBZprYmJhamhkgMMk3HpNcOhV0jHQMzDRMTU3MDZD0grRZmgK0mZsaGJoZmwUGwsAAv9DFg==\n';
   var deflated_data_binary_graph9 = window.atob(deflated_data_base64_graph9);
   var inflated_data_graph9 = JSON.parse(pako.inflate(deflated_data_binary_graph9, { to: 'string' }));
   var data_graph9 = google.visualization.arrayToDataTable(inflated_data_graph9);
@@ -384,7 +434,7 @@ function draw_graph9() {
     chartArea: { left: "5%", width: "85%", top: "10%", height: "80%" },
     title: "CPU/disk total usage on X/Y axes; memory usage as bubble size of 20 top-CPU-utilizing threads",
     hAxis: { title:"CPU time" },
-    vAxis: { title:"I/O kB" },
+    vAxis: { title:"I/O (B)", format:"short" },
     sizeAxis: { maxSize: 200 },
     bubble: { textStyle: {fontSize: 15} }
   };
@@ -396,7 +446,6 @@ function draw_graph9() {
   g_chart.draw(data_graph9, options_graph9);
   g_current_data = data_graph9;
   g_current_options = options_graph9;
-  reset_combo_boxes("");
 }
 
 function draw_graph10() {
@@ -404,13 +453,17 @@ function draw_graph10() {
   var deflated_data_binary_graph10 = window.atob(deflated_data_base64_graph10);
   var inflated_data_graph10 = JSON.parse(pako.inflate(deflated_data_binary_graph10, { to: 'string' }));
   var data_graph10 = google.visualization.arrayToDataTable(inflated_data_graph10);
+
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph10, 0);
 
-  var col1_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
-  col1_formatter.format(data_graph10, 1);
-  var col2_formatter = new google.visualization.NumberFormat({suffix: ' MB'});
-  col2_formatter.format(data_graph10, 2);
+  var column_unit = ['MB','MB','MB']
+  for (var c=1; c < data_graph10.getNumberOfColumns(); c++) {
+      for (var r=0; r < data_graph10.getNumberOfRows(); r++) {
+          var v = data_graph10.getValue(r, c);
+          data_graph10.setFormattedValue(r, c, prettyPrinter(v) + column_unit[c]);
+      }
+  }
 
   var options_graph10 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
@@ -420,7 +473,7 @@ function draw_graph10() {
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "MB/s", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "MB/s", format: "short", gridlines: { color: "lightgrey", count: 11 } },
     isStacked:  0
   };
 
@@ -428,6 +481,7 @@ function draw_graph10() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  google.visualization.events.addListener(g_chart, 'ready', fix_vaxis_ticks);
   g_chart.draw(data_graph10, options_graph10);
   g_current_data = data_graph10;
   g_current_options = options_graph10;
@@ -439,9 +493,9 @@ function draw_graph11() {
   var deflated_data_binary_graph11 = window.atob(deflated_data_base64_graph11);
   var inflated_data_graph11 = JSON.parse(pako.inflate(deflated_data_binary_graph11, { to: 'string' }));
   var data_graph11 = google.visualization.arrayToDataTable(inflated_data_graph11);
+
   var date_formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss.SSS z'});
   date_formatter.format(data_graph11, 0);
-
   var options_graph11 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
     title: "Network Traffic in PPS (from cgroup stats)",
@@ -450,7 +504,7 @@ function draw_graph11() {
     legend: { textStyle: { fontSize: 12 } },
     explorer: { actions: ["dragToZoom", "rightClickToReset"], keepInBounds: true, maxZoomIn: 20.0 },
     hAxis: { format: "HH:mm:ss", gridlines: { color: "lightgrey", count: 30 } },
-    vAxis: { title: "PPS", gridlines: { color: "lightgrey", count: 11 } },
+    vAxis: { title: "PPS", format: "short", gridlines: { color: "lightgrey", count: 11 } },
     isStacked:  0
   };
 
@@ -458,6 +512,7 @@ function draw_graph11() {
   if (g_chart && g_chart.clearChart)
     g_chart.clearChart();
   g_chart = new google.visualization.AreaChart(document.getElementById("chart_master_div"));
+  google.visualization.events.addListener(g_chart, 'ready', fix_vaxis_ticks);
   g_chart.draw(data_graph11, options_graph11);
   g_current_data = data_graph11;
   g_current_options = options_graph11;
