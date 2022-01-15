@@ -3,6 +3,7 @@
 # 
 TOPDIR=..
 
+# FIXME: baremetal2.json.gz needs to be re-generated 
 #	baremetal2.json.gz \
 
 
@@ -12,7 +13,9 @@ EXAMPLE_JSON_FILES=\
 	docker-userapp-with-embedded-collector.json.gz \
 	docker-userapp-with-embedded-collector.json.gz \
 	docker-userapp.json.gz \
-	docker-stress-test.json.gz
+	docker-stress-test-cpu.json.gz \
+	docker-stress-test-mem.json.gz
+
 CMONITOR_COLLECTOR=$(TOPDIR)/collector/bin/glibc/cmonitor_collector
 
 SHELL:=/bin/bash 
@@ -21,8 +24,10 @@ all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
 		echo "-- TOOL: cmonitor_chart ------------------------------------------------------" ; \
 		../tools/chart/cmonitor_chart.py --input=$$jsonExample --verbose || exit 10; \
+		echo "-- VALIDATING $${jsonExample/.json.gz/.html} ------------------------------------------------------" ; \
+		tidy -o /dev/null $${jsonExample/.json.gz/.html} 2>/dev/null && echo "$${jsonExample/.json.gz/.html} is valid HTML" || exit 11; \
 		echo "-- TOOL: cmonitor_statistics -------------------------------------------------" ; \
-		../tools/statistics/cmonitor_statistics.py --input=$$jsonExample || exit 11; \
+		../tools/statistics/cmonitor_statistics.py --input=$$jsonExample || exit 12; \
 	done
 
 clean:
@@ -42,9 +47,11 @@ regen_baremetal1:
 	@-pkill example-load.sh # if any
 	./example-load.sh &
 	@echo "Regenerating example JSON... this will take about 10minutes (60 samples every 10secs)."
+	# IMPORTANT: the sampling interval has to be small enough to let cmonitor_collector detect the PIDs of the transient "stress"
+	#            instances produced at random by the example-load.sh script
 	@$(CMONITOR_COLLECTOR) \
-		--sampling-interval=10 \
-		--num-samples=60 \
+		--sampling-interval=1 \
+		--num-samples=600 \
 		--output-pretty \
 		--output-filename baremetal1 \
 		--foreground \
@@ -149,7 +156,7 @@ else
 STRESS_TEST_CGROUP_NAME=machine.slice/libpod-$$(docker ps --no-trunc -aqf name=stress).scope/container/
 endif
 
-regen_docker_stress_test:
+regen_docker_stress_test_cpu:
 	-docker stop stress >/dev/null 2>&1
 	docker run \
 		--detach \
@@ -168,12 +175,41 @@ regen_docker_stress_test:
 		--num-samples=30 \
 		--collect=cgroup_cpu,cgroup_memory,cgroup_threads,cgroup_network \
 		--foreground \
-		--output-filename=docker-stress-test.json \
+		--output-filename=docker-stress-test-cpu.json \
 		--cgroup-name=$(STRESS_TEST_CGROUP_NAME) \
 		--score-threshold=0 \
 		--custom-metadata="cmonitor_chart_name:stress (Redis docker)"
 	docker stop stress
-	gzip -f docker-stress-test.json
+	gzip -f docker-stress-test-cpu.json
+
+
+STRESS_TEST_DOCKER_MEMORY:=200M
+
+regen_docker_stress_test_mem:
+	-docker stop stress >/dev/null 2>&1
+	docker run \
+		--detach \
+		--interactive \
+		--tty \
+		--memory=$(STRESS_TEST_DOCKER_MEMORY) \
+		--name stress \
+		alexeiled/stress-ng \
+		--vm 1 --vm-bytes $(STRESS_TEST_DOCKER_MEMORY) --metrics-brief
+	sleep 3
+	@echo "Now running cmonitor_collector on the baremetal to monitor for 15secs the 'stress' docker:"
+	$(CMONITOR_COLLECTOR) \
+		--sampling-interval=0.5 \
+		--num-samples=30 \
+		--collect=cgroup_cpu,cgroup_memory,cgroup_threads,cgroup_network \
+		--foreground \
+		--output-filename=docker-stress-test-mem.json \
+		--cgroup-name=$(STRESS_TEST_CGROUP_NAME) \
+		--score-threshold=0 \
+		--custom-metadata="cmonitor_chart_name:stress (Redis docker)"
+	docker stop stress
+	docker logs stress
+	docker rm stress
+	gzip -f docker-stress-test-mem.json
 
 
 #

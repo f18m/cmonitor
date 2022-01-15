@@ -107,13 +107,13 @@ bool CMonitorCgroups::get_process_infos(
     memset(pout, 0, sizeof(procsinfo_t));
 
     /* the statistic directory for the process */
-    auto filename = fmt::format("{}/proc/{}", m_proc_prefix, pid);
+    auto pid_dir = fmt::format("{}/proc/{}", m_proc_prefix, pid);
     struct stat statbuf;
-    if (stat(filename.c_str(), &statbuf) != 0) {
+    if (stat(pid_dir.c_str(), &statbuf) != 0) {
         // IMPORTANT: cmonitor_collector first reads all PIDs and then invokes, sequentially, this function;
         //            this means that by the time we get here, a PID may has ceased to exist. So do not generate
         //            any error line for this condition and consider it to be just something that can happen.
-        // CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to stat file %s", filename.c_str());
+        // CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to stat file %s", pid_dir.c_str());
         return false;
     }
 
@@ -161,7 +161,7 @@ bool CMonitorCgroups::get_process_infos(
         stat_file_prefix = fmt::format("{}/proc/{}", m_proc_prefix, pid);
 
     { /* process the statistic file for the process/thread */
-        filename = stat_file_prefix + "/stat";
+        std::string filename = stat_file_prefix + "/stat";
         if ((fp = fopen(filename.c_str(), "r")) == NULL) {
             CMonitorLogger::instance()->LogErrorWithErrno("ERROR: failed to open file %s", filename.c_str());
             return false;
@@ -272,7 +272,7 @@ bool CMonitorCgroups::get_process_infos(
 
     if (output_opts == PF_ALL) { /* process the statm file for the process/thread */
 
-        filename = stat_file_prefix + "/statm";
+        std::string filename = stat_file_prefix + "/statm";
         if ((fp = fopen(filename.c_str(), "r")) == NULL) {
             CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename.c_str());
             return false;
@@ -296,7 +296,7 @@ bool CMonitorCgroups::get_process_infos(
 
     if (output_tgid) { /* process the status file for the process/thread */
 
-        filename = stat_file_prefix + "/status";
+        std::string filename = stat_file_prefix + "/status";
         if ((fp = fopen(filename.c_str(), "r")) == NULL) {
             CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename.c_str());
             return false;
@@ -318,7 +318,7 @@ bool CMonitorCgroups::get_process_infos(
         pout->io_read_bytes = 0;
         pout->io_write_bytes = 0;
 
-        filename = stat_file_prefix + "/io";
+        std::string filename = stat_file_prefix + "/io";
         if ((fp = fopen(filename.c_str(), "r")) == NULL) {
             CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename.c_str());
             return false;
@@ -412,7 +412,13 @@ void CMonitorCgroups::init_processes(const std::string& cgroup_prefix_for_test)
     // when unit testing, we ask the FastFileReader to actually be not-so-fast and reopen each time the file;
     // that's because during unit testing the actual inode of the statistic file changes on every sample.
     // Of course this does not happen in normal mode
-    bool reopen_each_time = !cgroup_prefix_for_test.empty();
+    // bool reopen_each_time = !cgroup_prefix_for_test.empty();
+
+    /*
+     FIXME FIXME: for some reason we need to reopen the 'tasks' file each time (at least on Centos7 )
+     or otherwise we will read always the same contents over and over:
+    */
+    bool reopen_each_time = true;
 
     switch (m_nCGroupsFound) {
     case CG_VERSION1:
@@ -474,25 +480,30 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
     // get new fresh processes data and update current database:
     currDB.clear();
     bool needsToFilterOutThreads = (m_nCGroupsFound == CG_VERSION1) && !m_cgroup_processes_include_threads;
+    size_t nfailed_sampling = 0, nthreads_discarded = 0;
     for (size_t i = 0; i < all_pids.size(); i++) {
 
         // acquire all possible informations on this PID (or TID)
-        // NOTE: getting the Tgid is expensive (requires opening a dedicated file) so that's done only
-        //       if strictly needed, i.e. if needsToFilterOutThreads==true
+        // NOTE: getting the Tgid is expensive (requires opening a dedicated file) but we want to provide Tgid in output
+        //       since it's the only way to provide to the data consumer a realiable criteria to distinguish between
+        //       secondary threads and main threads
         procsinfo_t procData;
         if (get_process_infos(
-                all_pids[i], m_cgroup_processes_include_threads, &procData, output_opts, needsToFilterOutThreads)) {
+                all_pids[i], m_cgroup_processes_include_threads, &procData, output_opts, true /* output_tgid */)) {
 
             if (needsToFilterOutThreads) {
                 // only the main thread has its PID == TGID...
                 if (procData.pi_pid == procData.pi_tgid)
                     // this is the main thread of current PID... insert it into the database
                     currDB.insert(std::make_pair(all_pids[i], procData));
+                else
+                    nthreads_discarded++;
             } else {
                 // we can simply take into account all PIDs/TIDs collected
                 currDB.insert(std::make_pair(all_pids[i], procData));
             }
-        }
+        } else
+            nfailed_sampling++;
     }
 
     if (output_opts == PF_NONE) {
@@ -505,31 +516,38 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
     // Sort the processes by their "score" by inserting them into an ordered map
     assert(m_topper_procs.empty());
     CMonitorLogger::instance()->LogDebug(
-        "The current process DB has %lu entries, the DB storing previous statuses has %lu entries.\n", currDB.size(),
-        prevDB.size());
+        "The current process DB now has %lu entries (failed to sample %zu processes; %lu threads discarded), "
+        "the DB storing previous statuses has %lu entries.\n",
+        currDB.size(), nfailed_sampling, nthreads_discarded, prevDB.size());
 
+    procsinfo_t empty_infos {};
     for (const auto& current_entry : currDB) {
         pid_t current_pid = current_entry.first;
         const procsinfo_t* pcurrent_status = &current_entry.second;
 
         // find the previous stats for this PID:
+        const procsinfo_t* pprev_status = NULL;
         auto itPrevStatus = prevDB.find(current_pid);
         if (itPrevStatus != prevDB.end()) {
-            const procsinfo_t* pprev_status = &itPrevStatus->second;
-
-            // compute the score
-            uint64_t score = compute_proc_score(pcurrent_status, pprev_status, elapsed_sec);
-            proc_topper_t newEntry = { .current = pcurrent_status, .prev = pprev_status };
-            m_topper_procs.insert(std::make_pair(score, newEntry));
-
-            // of the 40 fields of procsinfo_t we're mostly interested in user and system time:
-            CMonitorLogger::instance()->LogDebug(
-                "pid=%d: %s: utime=%lu, stime=%lu, prev_utime=%lu, prev_stime=%lu, score=%lu", // force newline
-                pcurrent_status->pi_pid, pcurrent_status->pi_comm, // force newline
-                pcurrent_status->pi_utime, pcurrent_status->pi_stime, // force newline
-                pprev_status->pi_utime, pprev_status->pi_stime, score);
-            // CMonitorLogger::instance()->LogDebug("PID=%lu -> score=%lu", current_entry.first, score);
+            pprev_status = &itPrevStatus->second;
+        } else {
+            // even if this process is a "new-born", we must consider it for top-N computation because
+            // nothing prevents it from entering our list of "topper processes"
+            pprev_status = &empty_infos;
         }
+
+        // compute the score
+        uint64_t score = compute_proc_score(pcurrent_status, pprev_status, elapsed_sec);
+        proc_topper_t newEntry = { .current = pcurrent_status, .prev = pprev_status };
+        m_topper_procs.insert(std::make_pair(score, newEntry));
+
+        // of the 40 fields of procsinfo_t we're mostly interested in user and system time:
+        CMonitorLogger::instance()->LogDebug(
+            "pid=%d: %s: utime=%lu, stime=%lu, prev_utime=%lu, prev_stime=%lu, score=%lu", // force newline
+            pcurrent_status->pi_pid, pcurrent_status->pi_comm, // force newline
+            pcurrent_status->pi_utime, pcurrent_status->pi_stime, // force newline
+            pprev_status->pi_utime, pprev_status->pi_stime, score);
+        // CMonitorLogger::instance()->LogDebug("PID=%lu -> score=%lu", current_entry.first, score);
     }
 
     if (m_topper_procs.empty())
@@ -563,15 +581,22 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 
         /*
          * Process fields
+         *
+         * NOTE: "process groups" and "sessions" are feature from 1980s mostly related to shell implementations
+         *       see https://www.gnu.org/software/libc/manual/html_node/Concepts-of-Job-Control.html
+         *           https://en.wikipedia.org/wiki/Process_group
+         *       to avoid confusing the consumer of data, they're left out of the data stream
          */
         m_pOutput->pstring(
             "cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
         m_pOutput->plong("pid", CURRENT(pi_pid));
         m_pOutput->plong("ppid", CURRENT(pi_ppid));
-        m_pOutput->plong("pgrp", CURRENT(pi_pgrp));
+        m_pOutput->plong("tgid", CURRENT(pi_tgid));
+        // m_pOutput->plong("pgrp", CURRENT(pi_pgrp)); // see NOTE above
+        // implementations -- leave it out
         m_pOutput->plong("priority", CURRENT(pi_priority));
         m_pOutput->plong("nice", CURRENT(pi_nice));
-        m_pOutput->plong("session", CURRENT(pi_session));
+        // m_pOutput->plong("session", CURRENT(pi_session)); // see NOTE above
         m_pOutput->plong("tty_nr", CURRENT(pi_tty_nr));
         // m_pOutput->phex("flags", CURRENT(pi_flags));
         m_pOutput->pstring("state", get_state(CURRENT(pi_state)));

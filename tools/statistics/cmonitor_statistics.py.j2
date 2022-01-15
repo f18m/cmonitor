@@ -111,10 +111,12 @@ class CmonitorStatistics:
                 print(
                     f"WARNING: The JSON file provided does not contain the 'stat.rss' measurement for sample #{sample_index}. Skipping this sample."
                 )
-            if "failcnt" in stats:
-                self.memory_failcnt.insert_stat(stats["failcnt"])
+            if "events.failcnt" in stats:
+                self.memory_failcnt.insert_stat(stats["events.failcnt"])
             else:
-                print(f"WARNING: The JSON file provided does not contain the 'failcnt' measurement for sample #{sample_index}. Skipping this sample.")
+                print(
+                    f"WARNING: The JSON file provided does not contain the 'events.failcnt' measurement for sample #{sample_index}. Skipping this sample."
+                )
 
         def dump_memory_stats(self) -> None:
             return self.memory.dump_json()
@@ -204,8 +206,13 @@ class CmonitorStatistics:
         if "samples" not in json_data:
             print("Unexpected JSON format. Aborting.")
             sys.exit(1)
+        if len(json_data["samples"]) <= 2:
+            print("This tool requires at least 3 samples in the input JSON file. Aborting.")
+            sys.exit(1)
 
-        first_sample = json_data["samples"][0]
+        # skip sample 0 because it contains less statistics due to the differential logic that requires some
+        # initialization sample for most of the stats
+        first_sample = json_data["samples"][1]
         do_cpu_stats = True
         if "cgroup_cpuacct_stats" not in first_sample:
             do_cpu_stats = False
@@ -225,7 +232,7 @@ class CmonitorStatistics:
                 "WARNING: The JSON file provided does not contain measurements for the 'memory' cgroup. Please use '--collect=cgroup_memory' when launching cmonitor_collector."
             )
 
-        for sample in json_data["samples"]:
+        for sample in json_data["samples"][1:]:
             try:
                 nsample = sample["timestamp"]["sample_index"]
             except KeyError:

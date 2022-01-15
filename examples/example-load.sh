@@ -16,7 +16,7 @@ fi
 
 sleep1_sec=$(( $RANDOM % 4 + 1 ))
 sleep2_sec=$(( $RANDOM % 8 + 1 ))
-sleep3_sec=$(( $RANDOM % 3 + 1 ))
+sleep3_sec=$(( $RANDOM % 12 + 1 ))
 
 enable_cpu_stress=true
 enable_memory_stress=true

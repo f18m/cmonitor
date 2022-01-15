@@ -67,6 +67,13 @@ typedef struct {
 
 typedef std::map<std::string /* controller type */, std::string /* path */> cgroup_paths_map_t;
 
+typedef std::map<std::string /* KPI name */, uint64_t /* value */> key_value_map_t;
+
+typedef struct {
+    uint64_t v1_failcnt;
+    key_value_map_t v2_events;
+} memory_events_t;
+
 //------------------------------------------------------------------------------
 // The CMonitorCgroups object
 //------------------------------------------------------------------------------
@@ -82,6 +89,7 @@ public:
         memset(&m_cpuacct_prev_values[0], 0, MAX_LOGICAL_CPU * sizeof(cpuacct_utilisation_t));
         memset(&m_cpuacct_prev_values_for_total_cpu, 0, sizeof(cpuacct_utilisation_t));
         memset(&m_cpuacct_prev_values_for_throttling, 0, sizeof(cpuacct_throttling_t));
+        m_memory_prev_values.v1_failcnt = 0;
     }
 
     ~CMonitorCgroups() { }
@@ -113,7 +121,8 @@ private:
     bool get_cgroup_paths_for_this_pid(cgroup_paths_map_t& cgroup_pathsOUT);
     bool are_cgroups_v2_enabled(std::string& cgroup_pathOUT);
     bool get_cgroup_v1_abs_path_prefix_for_this_pid(const std::string& cgroup_type, std::string& cgroup_pathOUT);
-    bool detect_cgroup_ver_and_paths_from_myself(const std::string& cgroup_prefix_for_test, uint64_t my_own_pid_for_test);
+    bool detect_cgroup_ver_and_paths_from_myself(
+        const std::string& cgroup_prefix_for_test, uint64_t my_own_pid_for_test);
     bool detect_my_own_cgroup();
     bool detect_user_provided_cgroup();
     bool search_my_pid_in_cgroups(); // sets m_cgroup_processes_path
@@ -141,8 +150,8 @@ private:
     bool read_cpuset_cpus(std::string kernelPath, std::set<uint64_t>& cpus);
 
     // memory controller
-    size_t sample_flat_keyed_file(
-        FastFileReader& reader, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix);
+    size_t sample_flat_keyed_file(FastFileReader& reader, const std::set<std::string>& allowedStatsNames,
+        const std::string& label_prefix, key_value_map_t& out);
 
 private:
     // main switch that indicates if init() was successful or not
@@ -202,6 +211,7 @@ private:
     FastFileReader m_cgroup_memory_v1v2_stat;
     FastFileReader m_cgroup_memory_v1_failcnt;
     FastFileReader m_cgroup_memory_v2_events;
+    memory_events_t m_memory_prev_values;
 
     //------------------------------------------------------------------------------
     // cgroup network

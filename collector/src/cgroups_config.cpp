@@ -796,6 +796,8 @@ void CMonitorCgroups::output_config()
     if (m_cgroup_cpuacct_quota_us == UINT64_MAX)
         m_pOutput->pdouble("cpu_quota_perc", -1.0f);
     else if (m_cgroup_cpuacct_period_us)
+        // FIXME we should add 100* to actually get a percentage, e.g. if we start a docker with --cpu-limit=2 we
+        //       should see "200" as "cpu_quota_perc" not just "2". Or we rename to "cpu_quota" only
         m_pOutput->pdouble("cpu_quota_perc", (double)m_cgroup_cpuacct_quota_us / (double)m_cgroup_cpuacct_period_us);
     else
         m_pOutput->pdouble("cpu_quota_perc", 0.0);

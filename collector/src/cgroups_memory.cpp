@@ -45,8 +45,8 @@ bool read_integer(FastFileReader& reader, uint64_t& value)
     return (sscanf(reader.get_next_line(), "%lu", &value) == 1);
 }
 
-size_t CMonitorCgroups::sample_flat_keyed_file(
-    FastFileReader& reader, const std::set<std::string>& allowedStatsNames, const std::string& label_prefix)
+size_t CMonitorCgroups::sample_flat_keyed_file(FastFileReader& reader, const std::set<std::string>& allowedStatsNames,
+    const std::string& label_prefix, key_value_map_t& out)
 {
     size_t nread = 0, ndiscarded = 0;
     if (!reader.open_or_rewind()) {
@@ -81,7 +81,7 @@ size_t CMonitorCgroups::sample_flat_keyed_file(
             // apply KPI filter
             if (allowedStatsNames.empty() /* all stats must be put in output */
                 || allowedStatsNames.find(label) != allowedStatsNames.end()) {
-                m_pOutput->plong(label.c_str(), value);
+                out[label] = value;
                 nread++;
             } else
                 ndiscarded++;
@@ -151,6 +151,9 @@ void CMonitorCgroups::sample_memory(
     if (m_nCGroupsFound == CG_NONE)
         return;
 
+    bool print = (m_num_memory_samples_collected > 0);
+    m_num_memory_samples_collected++;
+
     DEBUGLOG_FUNCTION_START();
 
     // See
@@ -168,17 +171,38 @@ void CMonitorCgroups::sample_memory(
     // dump main memory statistics file
     const std::set<std::string>& allowedStatsNames
         = (m_nCGroupsFound == CG_VERSION1) ? allowedStatsNames_v1 : allowedStatsNames_v2;
-    sample_flat_keyed_file(m_cgroup_memory_v1v2_stat, allowedStatsNames, "stat.");
+    key_value_map_t statsValues;
+
+    sample_flat_keyed_file(m_cgroup_memory_v1v2_stat, allowedStatsNames, "stat.", statsValues);
+    for (auto entry : statsValues)
+        m_pOutput->plong(entry.first.c_str(), entry.second);
 
     switch (m_nCGroupsFound) {
     case CG_VERSION1:
-        if (read_integer(m_cgroup_memory_v1_failcnt, value))
-            m_pOutput->plong("failcnt", value);
+        if (read_integer(m_cgroup_memory_v1_failcnt, value)) {
+            if (print)
+                m_pOutput->plong("events.failcnt", value - m_memory_prev_values.v1_failcnt);
+
+            // save new values for next sample:
+            m_memory_prev_values.v1_failcnt = value;
+        }
         break;
 
-    case CG_VERSION2:
-        sample_flat_keyed_file(m_cgroup_memory_v2_events, allowedStatsNames, "events.");
-        break;
+    case CG_VERSION2: {
+        key_value_map_t newEventsValues;
+        if (sample_flat_keyed_file(m_cgroup_memory_v2_events, allowedStatsNames, "events.", newEventsValues)) {
+            if (print) {
+                for (auto entry : newEventsValues) {
+                    auto prevValue = m_memory_prev_values.v2_events.find(entry.first);
+                    if (prevValue != m_memory_prev_values.v2_events.end())
+                        m_pOutput->plong(entry.first.c_str(), entry.second - prevValue->second);
+                }
+
+                // save new values for next sample:
+                m_memory_prev_values.v2_events = newEventsValues;
+            }
+        }
+    } break;
 
     case CG_NONE:
         break;

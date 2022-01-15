@@ -28,7 +28,7 @@
 
 CMonitorLogger* CMonitorLogger::ms_pInstance = nullptr;
 
-#define MAX_LOG_LINE_LEN 1024
+#define MAX_LOG_LINE_LEN 4096
 
 //------------------------------------------------------------------------------
 // Logger functions
