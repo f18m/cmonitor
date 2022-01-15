@@ -95,7 +95,7 @@ function fix_vaxis_ticks() {
 }
 
 function draw_graph1() {
-  var deflated_data_base64_graph1 = 'eNql0s1Kw0AUBeBXkVlVOMjcSe6fO8Glb1C6iDRIoVUXQRDx3Z02CNVFy+QO5BIO58swQ9brrzR9vo/pPm2HaZx2hzEh7YfncV+jx9/oG+npbdg+fLzcrOiwe71NZwH/D2hONlifvrAquRQQqI4OJOgVwlXkO1au0+sjypf6LNICDKJtfRZvAY7WPis1AM5QbeuzWgsgqLf12ZpOUGDdqa+l9/N1xIWvc7Y+4DuYhDibBnwP8xBnp4BneBfi7BzwApcQZ7eAV/h8+Tb/qseh+c+iS1oyLecGyl2ES+6Xc6+7S4RLtoVckevmHtBCtFjXVypX9eYHAFJ9BA==\n';
+  var deflated_data_base64_graph1 = 'eNql0s1KxDAUhuFbkaxG+Cg5Sc+fO8Gld1BmUZkiAzPqoggi3rupIjguxkmaRSiH92lC6TC8h/ntZQo3YTfO07w/TgHhMD5MhzK6+xl9INw/j7vb18erDR33T9fh14D/Duh7ssXw9YZNiimBQGXLIEGvEC4i5S4iS9mSdvFcziIVvUG0Kmfxit5RmbPS5T1HqFblrFbRE9Srcraa2ydYXnLr/GQJsl6A2fpmnWGyArNps+5hvgKzU7NmeF6B2blZC1xWYHZr1gpfPnjm5a+0JS/byerPYYnUrA0U8wotsW/WXs6WFVqitWlFLEd7OxaiVlweKf2Ht58KKXRz\n';
   var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
   var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
   var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
@@ -104,7 +104,7 @@ function draw_graph1() {
   date_formatter.format(data_graph1, 0);
   var options_graph1 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Average Load  (from baremetal stats)",
+    title: "Average Load (from baremetal stats)",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -1792,7 +1792,7 @@ function draw_graph42() {
      39: {targetAxisIndex:0},
      40: {targetAxisIndex:0},
      41: {targetAxisIndex:0},
-     1: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, pointsVisible: true, color: 'red', lineDashStyle: [10,2]},
+     1: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, color: 'red', lineDashStyle: [10,2]},
     },
     vAxes: {
       0: { title: "CPU (%)", format: "short" },
@@ -1841,7 +1841,7 @@ function draw_graph43() {
      0: {targetAxisIndex:0},
      1: {targetAxisIndex:0},
      2: {targetAxisIndex:0},
-     3: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, pointsVisible: true, color: 'red', lineDashStyle: [10,2]},
+     3: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, color: 'red', lineDashStyle: [10,2]},
     },
     vAxes: {
       0: { title: "Memory (B)", format: "short" },
@@ -1948,7 +1948,7 @@ function draw_graph45() {
      18: {targetAxisIndex:0},
      19: {targetAxisIndex:0},
      20: {targetAxisIndex:0},
-     21: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, pointsVisible: true, color: 'red', lineDashStyle: [10,2]},
+     21: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, color: 'red', lineDashStyle: [10,2]},
     },
     vAxes: {
       0: { title: "Memory (B)", format: "short" },

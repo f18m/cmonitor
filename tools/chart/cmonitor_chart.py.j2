@@ -373,7 +373,7 @@ class GoogleChartsGraph:
                 else:
                     # IMPORTANT: the data series that go on the 2nd Y axis (typically just one) are drawn with a RED thick line
                     #            to underline their importance; area opacity is removed to avoid clutter with data series on the first Y axis
-                    ret += "   %d: {targetAxisIndex:%d, lineWidth: 5, areaOpacity: 0, pointsVisible: true, color: 'red', lineDashStyle: [10,2]}" % (
+                    ret += "   %d: {targetAxisIndex:%d, lineWidth: 5, areaOpacity: 0, color: 'red', lineDashStyle: [10,2]}" % (
                         idx,
                         target_axis_index,
                     )
@@ -1905,6 +1905,8 @@ class CMonitorGraphGenerator:
         #
 
         num_baremetal_cpus = len(self.baremetal_logical_cpus_indexes)
+        if num_baremetal_cpus == 0:
+            num_baremetal_cpus = 1
         load_avg_stats = GoogleChartsTimeSeries(["Timestamp", "LoadAvg (1min)", "LoadAvg (5min)", "LoadAvg (15min)"])
         for i, s in enumerate(self.jdata):
             if i == 0:

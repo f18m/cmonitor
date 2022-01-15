@@ -95,7 +95,7 @@ function fix_vaxis_ticks() {
 }
 
 function draw_graph1() {
-  var deflated_data_base64_graph1 = 'eNqVk8FqwzAMhl9l+NSBKZJsy9Fugx33BqGHjIZRaNcdwmCMvfvkmsEYy+hPjBA/3xcR4YzjR1jeX+dwF/bTMi+H0xxiOE5P89Gjh+/oM4bH87S/f3u+2fDp8HIbfgTld8A92cXx8oaNkEjkyF40Zosai5EbtLXipUireRWv0Rihi6Xr8SFaRuhiej3uT0XoYuY4b6U2UhstZZVn8kOYoMSI4D0lTFDKiOANKSYoVURIPsEwQRlaa/bvZkxQ7mstXbjU/I9RfEQGDWWFDPUZFTSUDTKq9wQaKgIZg/cJNFSw7baLqKCh0rc7NLTzdV0Q/7vFMEET/SHsvgAYFkWl\n';
+  var deflated_data_base64_graph1 = 'eNqV0sFKBDEMBuBXkZ5WCEuStunEm+DRNxj2MLKDLOy6HgZBxHc3VQRRHPanUMLfr4GGjuNbWl6f53ST9tMyL4fTnCgdp4f5GNHdd/RO6f487W9fHq82cjo8XacfQf0dyFeyo/Gzw0ZZlYQkNqPiZFSd40YetkwqsYlt+V/eyAXR1fPlfCAviK5ul/NYDdHVPXjtUkvnbYVLnDND3lgAHzVnyBsXwEfBBnnjBvgc/R3yJsg8SzxZIG/S52m5+9b9sOZr9C+QNzHAW/RvkDdxwLeoGfKmCvgh6gx5U2Se/csZ5E37PFv/Cpm79xWvca4Oecv81+8+AFOFPd0=\n';
   var deflated_data_binary_graph1 = window.atob(deflated_data_base64_graph1);
   var inflated_data_graph1 = JSON.parse(pako.inflate(deflated_data_binary_graph1, { to: 'string' }));
   var data_graph1 = google.visualization.arrayToDataTable(inflated_data_graph1);
@@ -104,7 +104,7 @@ function draw_graph1() {
   date_formatter.format(data_graph1, 0);
   var options_graph1 = {
     chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"},
-    title: "Average Load  (from baremetal stats)",
+    title: "Average Load (from baremetal stats)",
     focusTarget: "category",
     tooltip: { textStyle: { fontSize: 12 } },
     legend: { textStyle: { fontSize: 12 } },
@@ -234,7 +234,7 @@ function draw_graph4() {
      0: {targetAxisIndex:0},
      2: {targetAxisIndex:0},
      3: {targetAxisIndex:0},
-     1: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, pointsVisible: true, color: 'red', lineDashStyle: [10,2]},
+     1: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, color: 'red', lineDashStyle: [10,2]},
     },
     vAxes: {
       0: { title: "CPU (%)", format: "short" },
@@ -324,7 +324,7 @@ function draw_graph6() {
      1: {targetAxisIndex:0},
      2: {targetAxisIndex:0},
      3: {targetAxisIndex:0},
-     4: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, pointsVisible: true, color: 'red', lineDashStyle: [10,2]},
+     4: {targetAxisIndex:1, lineWidth: 5, areaOpacity: 0, color: 'red', lineDashStyle: [10,2]},
     },
     vAxes: {
       0: { title: "CPU (%)", format: "short" },
