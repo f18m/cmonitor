@@ -171,9 +171,11 @@ Alternatively to native packages, you can use `cmonitor_collector` utility as a 
 
 ```
 docker run -d \
+    --rm \
     --name=cmonitor-baremetal-collector \
-    --volume /etc/os-release:/etc/os-release \
-    --volume $(pwd):/perf \
+    --volume=/sys:/sys:ro \
+    --volume /etc/os-release:/etc/os-release:ro \
+    --volume $(pwd):/perf:rw \
     f18m/cmonitor \
     --sampling-interval=1  ...
 ```
@@ -226,9 +228,11 @@ cmonitor_collector --sampling-interval=3 --output-directory=/home
 
 ```
 docker run -d \
+    --rm \
     --name=cmonitor-baremetal-collector \
-    --volume /etc/os-release:/etc/os-release \
-    --volume /home:/perf \
+    --volume=/sys:/sys:ro \
+    --volume /etc/os-release:/etc/os-release:ro \
+    --volume /home:/perf:rw \
     f18m/cmonitor \
     --sampling-interval=1  ...
 ```

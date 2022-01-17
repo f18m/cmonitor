@@ -81,12 +81,16 @@ regen_baremetal1:
 
 regen_docker_collecting_baremetal_stats:
 	docker run \
+		--rm \
 		--name=cmonitor-baremetal-collector \
-		--volume /etc/os-release:/etc/os-release \
-		--volume=$(DOCKER_EXAMPLE_FOLDER):/perf \
+		--hostname="$(shell hostname -f)" \
+		--volume=/etc/hosts:/etc/hosts:ro \
+		--volume=/sys:/sys:ro \
+		--volume /etc/os-release:/etc/os-release:ro \
+		--volume=$(DOCKER_EXAMPLE_FOLDER):/perf:rw \
 		f18m/cmonitor:$(DOCKER_TAG) \
 		--sampling-interval=1 \
-		--num-samples=180 \
+		--num-samples=3 \
 		--collect=cpu,memory,disk,network \
 		--output-filename=docker-collecting-baremetal-stats
 	@gzip -f docker-collecting-baremetal-stats.json
