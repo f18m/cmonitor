@@ -804,7 +804,7 @@ int CMonitorCollectorApp::run_main_loop()
             do_sampling_sleep();
         }
 #endif
-        CMonitorLogger::instance()->LogDebug("Starting sample %u/%lu", loop, m_cfg.m_nSamples);
+        CMonitorLogger::instance()->LogDebug("*** Starting sample %u/%lu ***", loop, m_cfg.m_nSamples);
 
         // get timestamp for the new sample
         previous_time = current_time;
@@ -830,6 +830,7 @@ int CMonitorCollectorApp::run_main_loop()
         // cgroup stats:
         m_cgroups_collector.sample_cpuacct(elapsed);
         m_cgroups_collector.sample_memory(charted_stats_from_cgroup_memory_v1, charted_stats_from_cgroup_memory_v2);
+        m_cgroups_collector.sample_process_list();
         m_cgroups_collector.sample_network_interfaces(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
         m_cgroups_collector.sample_processes(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
 

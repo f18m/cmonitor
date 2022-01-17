@@ -44,37 +44,6 @@
 
 void CMonitorCgroups::init_network(const std::string& cgroup_prefix_for_test)
 {
-    // when unit testing, we ask the FastFileReader to actually be not-so-fast and reopen each time the file;
-    // that's because during unit testing the actual inode of the statistic file changes on every sample.
-    // Of course this does not happen in normal mode
-    bool reopen_each_time = !cgroup_prefix_for_test.empty();
-
-    switch (m_nCGroupsFound) {
-    case CG_VERSION1:
-        // in cgroups v1 all TIDs are available in the cgroup file named "tasks"
-        // of course here we're assuming that the "tasks" under the cpuacct cgroup are the ones
-        // the user is interested to monitor... in theory the "tasks" under other controllers like "memory"
-        // might be different; in practice with Docker/LXC/Kube that does not happen
-        m_cgroup_network_reader_pids.set_file(m_cgroup_processes_path + "/tasks", reopen_each_time);
-        break;
-
-    case CG_VERSION2:
-        m_cgroup_network_reader_pids.set_file(m_cgroup_processes_path + "/cgroup.procs", reopen_each_time);
-        break;
-
-    case CG_NONE:
-        assert(0);
-        return;
-    }
-
-    if (!m_cgroup_network_reader_pids.open_or_rewind()) {
-        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_NETWORK_INTERFACES;
-        CMonitorLogger::instance()->LogError("Could not read the cgroup with list of pids from file '%s'. Disabling "
-                                             "monitoring of network interfaces of cgroup.\n",
-            m_cgroup_network_reader_pids.get_file().c_str());
-        return;
-    }
-
     CMonitorLogger::instance()->LogDebug("Successfully initialized cgroup network monitoring.\n");
 }
 
@@ -93,22 +62,17 @@ void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields
 
     m_num_network_samples_collected++;
 
-    // collect all PIDs for current cgroup
-    std::vector<pid_t> all_pids;
-    if (!collect_pids(m_cgroup_network_reader_pids, all_pids))
-        return;
-
     // now take the first PID and assume its network namespace is the one the user is interested about;
     // we will monitor that network namespace (and only that) for the entire lifetime of its cgroup;
     // in theory each PID inside a cgroup can have its own network namespace (and PIDs can enter/leave cgroups at any
     // time) but in practice with typical container technologies like Docker, LXC and Kubernetes, all processes inside a
     // cgroup share the same, fixed network namespace; so that this assumption should be OK.
-    if (all_pids.empty()) {
+    if (m_cgroup_all_pids.empty()) {
         CMonitorLogger::instance()->LogError("ERROR: could not find any PID in cgroup");
         return;
     }
 
-    pid_t first_pid = all_pids[0];
+    pid_t first_pid = m_cgroup_all_pids[0];
 
     /*
         IMPORTANT: there are at least two methods to monitor network statistics of a particular network namespace:

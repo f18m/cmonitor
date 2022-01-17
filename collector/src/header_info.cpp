@@ -102,15 +102,6 @@ void CMonitorHeaderInfo::header_identity()
         }
     }
 
-    /* POWER and AMD and may be others */
-    if (access("/proc/device-tree", R_OK) == 0) {
-        file_read_one_stat("/proc/device-tree/compatible", "compatible");
-        file_read_one_stat("/proc/device-tree/model", "model");
-        file_read_one_stat("/proc/device-tree/part-number", "part-number");
-        file_read_one_stat("/proc/device-tree/serial-number", "serial-number");
-        file_read_one_stat("/proc/device-tree/system-id", "system-id");
-        file_read_one_stat("/proc/device-tree/vendor", "vendor");
-    }
     /*x86_64 and AMD64 */
     if (access("/sys/devices/virtual/dmi/id/", R_OK) == 0) {
         file_read_one_stat("/sys/devices/virtual/dmi/id/product_serial", "serial-number");
@@ -225,7 +216,6 @@ void CMonitorHeaderInfo::header_proc_cpuinfo()
     FILE* fp = 0;
     char buf[1024 + 1];
     char string[1024 + 1];
-    double value;
     int int_val;
     int processor;
 
@@ -247,10 +237,10 @@ void CMonitorHeaderInfo::header_proc_cpuinfo()
                 // NOTE: these values are in kHz
                 if (read_integer(
                         fmt::format("/sys/devices/system/cpu/cpu{}/cpufreq/scaling_min_freq", processor), value))
-                    m_pOutput->pdouble("scaling_min_freq_mhz", value / (1000));
+                    m_pOutput->plong("scaling_min_freq_mhz", value / (1000));
                 if (read_integer(
                         fmt::format("/sys/devices/system/cpu/cpu{}/cpufreq/scaling_max_freq", processor), value))
-                    m_pOutput->pdouble("scaling_max_freq_mhz", value / (1000));
+                    m_pOutput->plong("scaling_max_freq_mhz", value / (1000));
 
                 // close the section
                 m_pOutput->psubsection_end();
@@ -277,10 +267,10 @@ void CMonitorHeaderInfo::header_proc_cpuinfo()
             */
         }
         if (!strncmp("cache size", buf, strlen("cache size"))) {
-            sscanf(&buf[13], "%lf", &value);
+            sscanf(&buf[13], "%d", &int_val);
             // the cache size appears to be expressed always in KB
             // this looks like to be the L3 cache on most systems I tested
-            m_pOutput->pdouble("cache_size_kb", value);
+            m_pOutput->plong("cache_size_kb", int_val);
         }
         if (!strncmp("physical id", buf, strlen("physical id"))) {
             sscanf(&buf[14], "%d", &int_val);
@@ -323,22 +313,14 @@ void CMonitorHeaderInfo::header_proc_cpuinfo()
 
 void CMonitorHeaderInfo::header_sys_devices_numa_nodes()
 {
-    FILE* fp = 0;
-    char buf[1024 + 1];
-
     DEBUGLOG_FUNCTION_START();
 
+    // try to read up to 8 NUMA nodes;
     m_pOutput->psection_start("numa_nodes");
     for (unsigned int i = 0; i < 8; i++) {
-        if ((fp = fopen(fmt::format("/sys/devices/system/node/node{}/cpulist", i).c_str(), "r")) == NULL)
-            continue;
-
-        fgets(buf, 1024, fp);
-        fclose(fp);
-        if (buf[strlen(buf) - 1] == '\n') /* remove last char = newline */
-            buf[strlen(buf) - 1] = 0;
-
-        m_pOutput->pstring(fmt::format("node{}", i).c_str(), buf);
+        std::string fn = fmt::format("/sys/devices/system/node/node{}/cpulist", i);
+        std::string stat_name = fmt::format("node{}", i);
+        file_read_one_stat(fn.c_str(), stat_name.c_str());
     }
     m_pOutput->psection_end();
 }

@@ -455,6 +455,27 @@ void CMonitorCgroups::init_processes(const std::string& cgroup_prefix_for_test)
     CMonitorLogger::instance()->LogDebug("Successfully initialized cgroup processes monitoring.\n");
 }
 
+void CMonitorCgroups::sample_process_list()
+{
+    if (m_nCGroupsFound == CG_NONE)
+        return;
+
+    // this function is shared between
+    // * cgroup process stats
+    // * cgroup network stats
+    // processors; so it must execute if any of the 2 stat collector is enabled
+    if ((m_pCfg->m_nCollectFlags & PK_CGROUP_PROCESSES) == 0 && // fn
+        (m_pCfg->m_nCollectFlags & PK_CGROUP_THREADS) == 0 && // fn
+        (m_pCfg->m_nCollectFlags & PK_CGROUP_NETWORK_INTERFACES) == 0)
+        return;
+
+    DEBUGLOG_FUNCTION_START();
+
+    // collect all PIDs for current cgroup
+    m_cgroup_all_pids.clear();
+    !collect_pids(m_cgroup_processes_reader_pids, m_cgroup_all_pids);
+}
+
 void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_opts)
 {
     if (m_nCGroupsFound == CG_NONE)
@@ -474,35 +495,30 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
     std::map<pid_t, procsinfo_t>& currDB = m_pid_databases[m_pid_database_current_index];
     std::map<pid_t, procsinfo_t>& prevDB = m_pid_databases[!m_pid_database_current_index];
 
-    // collect all PIDs for current cgroup
-    std::vector<pid_t> all_pids;
-    if (!collect_pids(m_cgroup_processes_reader_pids, all_pids))
-        return;
-
     // get new fresh processes data and update current database:
     currDB.clear();
     bool needsToFilterOutThreads = (m_nCGroupsFound == CG_VERSION1) && !m_cgroup_processes_include_threads;
     size_t nfailed_sampling = 0, nthreads_discarded = 0;
-    for (size_t i = 0; i < all_pids.size(); i++) {
+    for (size_t i = 0; i < m_cgroup_all_pids.size(); i++) {
 
         // acquire all possible informations on this PID (or TID)
         // NOTE: getting the Tgid is expensive (requires opening a dedicated file) but we want to provide Tgid in output
         //       since it's the only way to provide to the data consumer a realiable criteria to distinguish between
         //       secondary threads and main threads
         procsinfo_t procData;
-        if (get_process_infos(
-                all_pids[i], m_cgroup_processes_include_threads, &procData, output_opts, true /* output_tgid */)) {
+        if (get_process_infos(m_cgroup_all_pids[i], m_cgroup_processes_include_threads, &procData, output_opts,
+                true /* output_tgid */)) {
 
             if (needsToFilterOutThreads) {
                 // only the main thread has its PID == TGID...
                 if (procData.pi_pid == procData.pi_tgid)
                     // this is the main thread of current PID... insert it into the database
-                    currDB.insert(std::make_pair(all_pids[i], procData));
+                    currDB.insert(std::make_pair(m_cgroup_all_pids[i], procData));
                 else
                     nthreads_discarded++;
             } else {
                 // we can simply take into account all PIDs/TIDs collected
-                currDB.insert(std::make_pair(all_pids[i], procData));
+                currDB.insert(std::make_pair(m_cgroup_all_pids[i], procData));
             }
         } else
             nfailed_sampling++;
@@ -522,21 +538,19 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         "the DB storing previous statuses has %lu entries.\n",
         currDB.size(), nfailed_sampling, nthreads_discarded, prevDB.size());
 
-    procsinfo_t empty_infos {};
     for (const auto& current_entry : currDB) {
         pid_t current_pid = current_entry.first;
         const procsinfo_t* pcurrent_status = &current_entry.second;
 
         // find the previous stats for this PID:
-        const procsinfo_t* pprev_status = NULL;
         auto itPrevStatus = prevDB.find(current_pid);
-        if (itPrevStatus != prevDB.end()) {
-            pprev_status = &itPrevStatus->second;
-        } else {
-            // even if this process is a "new-born", we must consider it for top-N computation because
-            // nothing prevents it from entering our list of "topper processes"
-            pprev_status = &empty_infos;
-        }
+        if (itPrevStatus == prevDB.end())
+            // this process apparently is a new-born (we have no records for it in previous sample!); we cannot
+            // consider it yet for "topper" computations since we are unable to compute CPU utilization
+            // (we need at least 2 samples)
+            continue;
+
+        const procsinfo_t* pprev_status = &itPrevStatus->second;
 
         // compute the score
         uint64_t score = compute_proc_score(pcurrent_status, pprev_status, elapsed_sec);
@@ -552,13 +566,17 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         // CMonitorLogger::instance()->LogDebug("PID=%lu -> score=%lu", current_entry.first, score);
     }
 
-    if (m_topper_procs.empty())
+    if (m_topper_procs.empty()) {
+        // just produce an empty section to have all samples structured in the same way, then return
+        m_pOutput->psection_start("cgroup_tasks");
+        m_pOutput->psection_end();
         return;
+    }
 
     CMonitorLogger::instance()->LogDebug(
         "Tracking %zu/%zu processes/threads (include_threads=%d); min/max score found: %lu/%lu", // force
                                                                                                  // newline
-        currDB.size(), all_pids.size(), m_cgroup_processes_include_threads, m_topper_procs.begin()->first,
+        currDB.size(), m_cgroup_all_pids.size(), m_cgroup_processes_include_threads, m_topper_procs.begin()->first,
         m_topper_procs.rbegin()->first);
 
     // Now output all data for each process, starting from the minimal score PROCESS_SCORE_IGNORE_THRESHOLD
@@ -594,37 +612,40 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         m_pOutput->plong("pid", CURRENT(pi_pid));
         m_pOutput->plong("ppid", CURRENT(pi_ppid));
         m_pOutput->plong("tgid", CURRENT(pi_tgid));
-        // m_pOutput->plong("pgrp", CURRENT(pi_pgrp)); // see NOTE above
-        // implementations -- leave it out
         m_pOutput->plong("priority", CURRENT(pi_priority));
         m_pOutput->plong("nice", CURRENT(pi_nice));
-        // m_pOutput->plong("session", CURRENT(pi_session)); // see NOTE above
-        m_pOutput->plong("tty_nr", CURRENT(pi_tty_nr));
-        // m_pOutput->phex("flags", CURRENT(pi_flags));
         m_pOutput->pstring("state", get_state(CURRENT(pi_state)));
-        m_pOutput->plong("threads", CURRENT(pi_num_threads));
-        m_pOutput->pdouble("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks);
         m_pOutput->plong("uid", CURRENT(uid));
-        if (strlen(CURRENT(username)) > 0)
-            m_pOutput->pstring("username", CURRENT(username));
+        if (output_opts == PF_ALL) {
+            // seldomly used fields:
+            m_pOutput->plong("tty_nr", CURRENT(pi_tty_nr));
+            m_pOutput->plong("threads", CURRENT(pi_num_threads));
+            m_pOutput->plong("pgrp", CURRENT(pi_pgrp)); // see NOTE above
+            m_pOutput->plong("session", CURRENT(pi_session)); // see NOTE above
+            if (strlen(CURRENT(username)) > 0)
+                m_pOutput->pstring("username", CURRENT(username));
+            m_pOutput->pdouble("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks);
+        }
 
         /*
          * CPU fields
          * NOTE: all CPU fields specify amount of time, measured in units of USER_HZ
                  (1/100ths of a second on most architectures); this means that if the
-                 _delta_ CPU value reported is 60 in USR/SYSTEM mode, then that mode took 60% of the CPU!
+                 _delta_ CPU value reported is 60 in USR/SYSTEM mode it indicates the process
+                 used for 60% of the last 10ms of CPU!
                  IOW there is no need to do any math to produce a percentage, just taking
                  the delta of the absolute, monotonic-increasing value and divide by the elapsed time
         */
-        m_pOutput->pdouble("cpu_tot", (double)(DELTA(pi_utime) + DELTA(pi_stime)) / elapsed_sec);
-        m_pOutput->pdouble("cpu_usr", (double)DELTA(pi_utime) / elapsed_sec);
-        m_pOutput->pdouble("cpu_sys", (double)DELTA(pi_stime) / elapsed_sec);
+        m_pOutput->plong("cpu_last", CURRENT(pi_last_cpu));
+        m_pOutput->pdouble(
+            "cpu_usr", std::min(100.0, (double)DELTA(pi_utime) / elapsed_sec)); // percentage between 0-100
+        m_pOutput->pdouble(
+            "cpu_sys", std::min(100.0, (double)DELTA(pi_stime) / elapsed_sec)); // percentage between 0-100
 
         // provide also the total, monotonically-increasing CPU time:
         // this is used by chart script to produce the "top of the topper" chart
         m_pOutput->pdouble("cpu_usr_total_secs", (double)CURRENT(pi_utime) / ticks);
         m_pOutput->pdouble("cpu_sys_total_secs", (double)CURRENT(pi_stime) / ticks);
-        m_pOutput->plong("cpu_last", CURRENT(pi_last_cpu));
 
         /*
          * Memory fields
@@ -635,12 +656,12 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
             m_pOutput->plong("mem_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
             m_pOutput->plong("mem_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
             m_pOutput->plong("mem_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("mem_rss_limit_bytes", CURRENT(pi_rsslimit));
         }
         m_pOutput->pdouble("mem_minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec);
         m_pOutput->pdouble("mem_major_fault", COUNTDELTA(pi_majflt) / elapsed_sec);
         m_pOutput->plong("mem_virtual_bytes", CURRENT(pi_vsize));
         m_pOutput->plong("mem_rss_bytes", CURRENT(pi_rss) * PAGESIZE_BYTES);
-        m_pOutput->plong("mem_rss_limit", CURRENT(pi_rsslimit));
 
         /*
          * Signal fields
@@ -673,8 +694,10 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         m_pOutput->pdouble("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
         m_pOutput->plong("io_rchar", DELTA(io_rchar) / elapsed_sec);
         m_pOutput->plong("io_wchar", DELTA(io_wchar) / elapsed_sec);
-        m_pOutput->plong("io_read_bytes", DELTA(io_read_bytes) / elapsed_sec);
-        m_pOutput->plong("io_write_bytes", DELTA(io_write_bytes) / elapsed_sec);
+        if (output_opts == PF_ALL) {
+            m_pOutput->plong("io_read_bytes", DELTA(io_read_bytes) / elapsed_sec);
+            m_pOutput->plong("io_write_bytes", DELTA(io_write_bytes) / elapsed_sec);
+        }
 
         // provide also the total, monotonically-increasing I/O time:
         // this is used by chart script to produce the "top of the topper" chart

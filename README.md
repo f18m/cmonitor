@@ -325,7 +325,7 @@ CGROUP_NAME=system.slice/docker-${DOCKER_ID}.scope    # when 'systemd' driver is
 cmonitor_collector \
    --num-samples=until-cgroup-alive \
    --cgroup-name=${CGROUP_NAME} \
-   --collect=cgroup_threads,cgroup_cpu,cgroup_memory --score-threshold=0 \
+   --collect=cgroup_threads,cgroup_cpu,cgroup_memory,cgroup_network --score-threshold=0 \
    --custom-metadata=cmonitor_chart_name:userapp \
    --sampling-interval=3 \
    --output-filename=docker-userapp.json
@@ -333,8 +333,22 @@ cmonitor_collector \
 
 Alternatively the Redis Docker container (or any other one) can be monitored from `cmonitor_collector` running as a Docker itself:
 
-FIXME TODO
-
+```
+docker run -d \
+    --rm \
+    --name=cmonitor-collector \
+    --hostname="$(hostname -f)" \
+    --volume=/sys:/sys:ro \
+    --volume=/etc/os-release:/etc/os-release:ro \
+    --volume=/home:/perf:rw \
+    f18m/cmonitor:latest \
+   --num-samples=until-cgroup-alive \
+   --cgroup-name=${CGROUP_NAME} \
+   --collect=cgroup_threads,cgroup_cpu,cgroup_memory,cgroup_network --score-threshold=0 \
+   --custom-metadata=cmonitor_chart_name:userapp \
+   --sampling-interval=3 \
+   --output-filename=docker-userapp.json
+```
 
 
 Example results:

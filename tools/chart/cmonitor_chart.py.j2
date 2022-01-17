@@ -1244,7 +1244,6 @@ class CMonitorGraphGenerator:
         )
 
         # now generate a table of CPU/IO/MEMORY usage over time, per process/thread:
-        # max_failcnt = 0
         for sample in self.jdata:
             try:
                 row = {}
@@ -1261,7 +1260,7 @@ class CMonitorGraphGenerator:
                     if json_key in sample["cgroup_tasks"]:
                         top_proc_sample = sample["cgroup_tasks"][json_key]
 
-                        cpu = top_proc_sample["cpu_tot"]
+                        cpu = top_proc_sample["cpu_usr"] + top_proc_sample["cpu_sys"]
                         io = int((top_proc_sample["io_rchar"] + top_proc_sample["io_wchar"]))
 
                         tot_cpu_usage_perc += cpu
@@ -1307,7 +1306,6 @@ class CMonitorGraphGenerator:
                     else:
                         failcnt = sample["cgroup_memory_stats"]["events.oom_kill"]
                     row["mem"].append(failcnt)
-                    # max_failcnt = max(failcnt, max_failcnt)
 
                 for key in ["cpu", "io", "mem"]:
                     chart_data[key].data_table.addRow(row[key])

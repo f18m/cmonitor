@@ -107,6 +107,8 @@ public:
     void sample_cpuacct(double elapsed_sec);
     void sample_memory(
         const std::set<std::string>& allowedStatsNames_v1, const std::set<std::string>& allowedStatsNames_v2);
+
+    void sample_process_list(); // call before sample_network_interfaces() and sample_processes()
     void sample_network_interfaces(double elapsed_sec, OutputFields output_opts);
     void sample_processes(double elapsed_sec, OutputFields output_opts);
 
@@ -213,16 +215,20 @@ private:
     memory_events_t m_memory_prev_values;
 
     //------------------------------------------------------------------------------
+    // shared variables between cgroup network/process tracker
+    //------------------------------------------------------------------------------
+    FastFileReader m_cgroup_processes_reader_pids;
+    std::vector<pid_t> m_cgroup_all_pids; // this is the continuosly-updated list of PIDs/TIDs inside cgroup
+
+    //------------------------------------------------------------------------------
     // cgroup network
     //------------------------------------------------------------------------------
-    FastFileReader m_cgroup_network_reader_pids;
     // previous values for network interfaces inside cgroup
     netinfo_map_t m_previous_netinfo;
 
     //------------------------------------------------------------------------------
     // cgroup processes tracking
     //------------------------------------------------------------------------------
-    FastFileReader m_cgroup_processes_reader_pids;
     bool m_cgroup_processes_include_threads = false;
     std::map<pid_t, procsinfo_t> m_pid_databases[2];
     unsigned int m_pid_database_current_index = 0; // will be alternatively 0 and 1

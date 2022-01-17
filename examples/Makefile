@@ -79,7 +79,6 @@ regen_baremetal1:
 #   - collector/bin/glibc/cmonitor_collector --sampling-interval=10 --num-samples=1440 --output-filename baremetal2
 #
 
-# FIXME 180 instead of 3
 regen_docker_collecting_baremetal_stats:
 	docker run \
 		--rm \
@@ -90,7 +89,7 @@ regen_docker_collecting_baremetal_stats:
 		--volume=$(DOCKER_EXAMPLE_FOLDER):/perf:rw \
 		f18m/cmonitor:$(DOCKER_TAG) \
 		--sampling-interval=1 \
-		--num-samples=3 \
+		--num-samples=180 \
 		--collect=cpu,memory,disk,network \
 		--output-filename=docker-collecting-baremetal-stats
 	@gzip -f docker-collecting-baremetal-stats.json

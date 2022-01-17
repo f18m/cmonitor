@@ -858,14 +858,10 @@ void CMonitorCgroups::get_list_monitored_files(std::set<std::string>& list)
     }
 
     //------------------------------------------------------------------------------
-    // cgroup network
+    // cgroup network / processes tracking
     //------------------------------------------------------------------------------
-    if (m_pCfg->m_nCollectFlags & PK_CGROUP_NETWORK_INTERFACES)
-        list.insert(m_cgroup_network_reader_pids.get_file());
-
-    //------------------------------------------------------------------------------
-    // cgroup processes tracking
-    //------------------------------------------------------------------------------
-    if (m_pCfg->m_nCollectFlags & PK_CGROUP_PROCESSES)
+    if ((m_pCfg->m_nCollectFlags & PK_CGROUP_PROCESSES) || // fn
+        (m_pCfg->m_nCollectFlags & PK_CGROUP_THREADS) || // fn
+        (m_pCfg->m_nCollectFlags & PK_CGROUP_NETWORK_INTERFACES))
         list.insert(m_cgroup_processes_reader_pids.get_file());
 }
