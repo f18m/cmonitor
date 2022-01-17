@@ -742,17 +742,16 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
     // HEADER GENERATION:
     // write stuff that is present only in the very first sample (never changes):
     m_output.pheader_start();
-    m_header_info_generator.header_identity();
     m_header_info_generator.header_cmonitor_info(
         argc, argv, m_cfg.m_nSamplingIntervalMsec, m_cfg.m_nSamples, m_cfg.m_nCollectFlags);
+    m_header_info_generator.header_identity();
     m_header_info_generator.header_etc_os_release();
-    m_header_info_generator.header_version();
+    m_header_info_generator.header_proc_version();
+    m_header_info_generator.header_proc_meminfo();
+    m_header_info_generator.header_proc_cpuinfo();
+    m_header_info_generator.header_sys_devices_numa_nodes();
     if (bCollectCGroupInfo)
         m_cgroups_collector.output_config(); // needs to run _BEFORE_ lscpu() and proc_cpuinfo()
-    m_header_info_generator.header_lscpu();
-    m_header_info_generator
-        .header_cpuinfo(); // ?!? this file contains basically the same info contained in lscpu output ?!?
-    m_header_info_generator.header_meminfo();
     m_header_info_generator.header_lshw();
     m_header_info_generator.header_custom_metadata();
     m_output.push_header();

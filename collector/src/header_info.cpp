@@ -220,7 +220,7 @@ void CMonitorHeaderInfo::header_etc_os_release()
     fclose(fp);
 }
 
-void CMonitorHeaderInfo::header_cpuinfo()
+void CMonitorHeaderInfo::header_proc_cpuinfo()
 {
     FILE* fp = 0;
     char buf[1024 + 1];
@@ -228,9 +228,6 @@ void CMonitorHeaderInfo::header_cpuinfo()
     double value;
     int int_val;
     int processor;
-    long power_timebase = 0;
-    // long power_nominal_mhz = 0;
-    int ispower = 0;
 
     DEBUGLOG_FUNCTION_START();
     if ((fp = fopen("/proc/cpuinfo", "r")) == NULL) {
@@ -245,8 +242,19 @@ void CMonitorHeaderInfo::header_cpuinfo()
 
         if (!strncmp("processor", buf, strlen("processor"))) {
             // end previous section
-            if (processor != -1)
+            if (processor != -1) {
+                uint64_t value;
+                // NOTE: these values are in kHz
+                if (read_integer(
+                        fmt::format("/sys/devices/system/cpu/cpu{}/cpufreq/scaling_min_freq", processor), value))
+                    m_pOutput->pdouble("scaling_min_freq_mhz", value / (1000));
+                if (read_integer(
+                        fmt::format("/sys/devices/system/cpu/cpu{}/cpufreq/scaling_max_freq", processor), value))
+                    m_pOutput->pdouble("scaling_max_freq_mhz", value / (1000));
+
+                // close the section
                 m_pOutput->psubsection_end();
+            }
 
             // start new section
             sscanf(&buf[12], "%d", &int_val);
@@ -256,22 +264,23 @@ void CMonitorHeaderInfo::header_cpuinfo()
             // processor++;
         }
 
-        if (!strncmp("clock", buf, strlen("clock"))) { /* POWER ONLY */
-            sscanf(&buf[9], "%lf", &value);
-            m_pOutput->pdouble("mhz_clock", value);
-            // power_nominal_mhz = value; /* save for sys_device_system_cpu() */
-            ispower = 1;
-        }
         if (!strncmp("vendor_id", buf, strlen("vendor_id"))) {
             m_pOutput->pstring("vendor_id", &buf[12]);
         }
         if (!strncmp("cpu MHz", buf, strlen("cpu MHz"))) {
-            sscanf(&buf[11], "%lf", &value);
-            m_pOutput->pdouble("cpu_mhz", value);
+
+            /*
+                The problem with "cpu MHz" is that it represents the CURRENT clock... this does change continuosly
+                and is not a good KPI to place in the static header section!
+                sscanf(&buf[11], "%lf", &value);
+                m_pOutput->pdouble("cpu_mhz", value);
+            */
         }
         if (!strncmp("cache size", buf, strlen("cache size"))) {
             sscanf(&buf[13], "%lf", &value);
-            m_pOutput->pdouble("cache_size", value);
+            // the cache size appears to be expressed always in KB
+            // this looks like to be the L3 cache on most systems I tested
+            m_pOutput->pdouble("cache_size_kb", value);
         }
         if (!strncmp("physical id", buf, strlen("physical id"))) {
             sscanf(&buf[14], "%d", &int_val);
@@ -289,46 +298,52 @@ void CMonitorHeaderInfo::header_cpuinfo()
             sscanf(&buf[12], "%d", &int_val);
             m_pOutput->plong("cpu_cores", int_val);
         }
+        if (!strncmp("bogomips", buf, strlen("bogomips"))) {
+            sscanf(&buf[11], "%d", &int_val);
+            m_pOutput->plong("bogomips", int_val);
+        }
         if (!strncmp("model name", buf, strlen("model name"))) {
             m_pOutput->pstring("model_name", &buf[13]);
         }
-        if (!strncmp("timebase", buf, strlen("timebase"))) { /* POWER only */
-            ispower = 1;
-            break;
-        }
     }
-    if (processor != -1)
+    if (processor != -1) {
+        uint64_t value;
+        // NOTE: these values are in kHz
+        if (read_integer(fmt::format("/sys/devices/system/cpu/cpu{}/cpufreq/scaling_min_freq", processor), value))
+            m_pOutput->pdouble("scaling_min_freq_mhz", value / (1000));
+        if (read_integer(fmt::format("/sys/devices/system/cpu/cpu{}/cpufreq/scaling_max_freq", processor), value))
+            m_pOutput->pdouble("scaling_max_freq_mhz", value / (1000));
+
         m_pOutput->psubsection_end();
-    m_pOutput->psection_end();
-    if (ispower) {
-        m_pOutput->psection_start("cpuinfo_power");
-        if (!strncmp("timebase", buf, strlen("timebase"))) { /* POWER only */
-            m_pOutput->pstring("timebase", &buf[11]);
-            power_timebase = atol(&buf[11]);
-            m_pOutput->plong("power_timebase", power_timebase);
-        }
-        while (fgets(buf, 1024, fp) != NULL) {
-            buf[strlen(buf) - 1] = 0; /* remove newline */
-            if (!strncmp("platform", buf, strlen("platform"))) { /* POWER only */
-                m_pOutput->pstring("platform", &buf[11]);
-            }
-            if (!strncmp("model", buf, strlen("model"))) {
-                m_pOutput->pstring("model", &buf[9]);
-            }
-            if (!strncmp("machine", buf, strlen("machine"))) {
-                m_pOutput->pstring("machine", &buf[11]);
-            }
-            if (!strncmp("firmware", buf, strlen("firmware"))) {
-                m_pOutput->pstring("firmware", &buf[11]);
-            }
-        }
-        m_pOutput->psection_end();
     }
+    m_pOutput->psection_end();
 
     fclose(fp);
 }
 
-void CMonitorHeaderInfo::header_meminfo()
+void CMonitorHeaderInfo::header_sys_devices_numa_nodes()
+{
+    FILE* fp = 0;
+    char buf[1024 + 1];
+
+    DEBUGLOG_FUNCTION_START();
+
+    m_pOutput->psection_start("numa_nodes");
+    for (unsigned int i = 0; i < 8; i++) {
+        if ((fp = fopen(fmt::format("/sys/devices/system/node/node{}/cpulist", i).c_str(), "r")) == NULL)
+            continue;
+
+        fgets(buf, 1024, fp);
+        fclose(fp);
+        if (buf[strlen(buf) - 1] == '\n') /* remove last char = newline */
+            buf[strlen(buf) - 1] = 0;
+
+        m_pOutput->pstring(fmt::format("node{}", i).c_str(), buf);
+    }
+    m_pOutput->psection_end();
+}
+
+void CMonitorHeaderInfo::header_proc_meminfo()
 {
     std::set<std::string> static_memory_stats; // that never change at runtime
     static_memory_stats.insert("MemTotal");
@@ -337,7 +352,7 @@ void CMonitorHeaderInfo::header_meminfo()
     CMonitorSystem::output_meminfo_stats(m_pOutput, static_memory_stats);
 }
 
-void CMonitorHeaderInfo::header_version()
+void CMonitorHeaderInfo::header_proc_version()
 {
     FILE* fp = 0;
     char buf[1024 + 1];
@@ -360,89 +375,6 @@ void CMonitorHeaderInfo::header_version()
     }
 
     fclose(fp);
-}
-
-void CMonitorHeaderInfo::header_lscpu()
-{
-    FILE* pop = 0;
-    int data_col = 21;
-    int len = 0;
-    char buf[1024 + 1];
-
-    DEBUGLOG_FUNCTION_START();
-    if (!file_or_dir_exists("/usr/bin/lscpu"))
-        return;
-    if ((pop = popen("/usr/bin/lscpu", "r")) == NULL)
-        return;
-
-    buf[0] = 0;
-    m_pOutput->psection_start("lscpu");
-    while (fgets(buf, 1024, pop) != NULL) {
-        buf[strlen(buf) - 1] = 0; /* remove newline */
-        // LogDebug("DEBUG: lscpu line is |%s|\n", buf);
-        if (!strncmp("Architecture:", buf, strlen("Architecture:"))) {
-            len = strlen(buf);
-            for (data_col = 14; data_col < len; data_col++) {
-                if (isalnum(buf[data_col]))
-                    break;
-            }
-            m_pOutput->pstring("architecture", &buf[data_col]);
-        }
-        if (!strncmp("Byte Order:", buf, strlen("Byte Order:"))) {
-            m_pOutput->pstring("byte_order", &buf[data_col]);
-        }
-        if (!strncmp("CPU(s):", buf, strlen("CPU(s):"))) {
-            m_pOutput->pstring("cpus", &buf[data_col]);
-        }
-        if (!strncmp("On-line CPU(s) list:", buf, strlen("On-line CPU(s) list:"))) {
-            m_pOutput->pstring("online_cpu_list", &buf[data_col]);
-        }
-        if (!strncmp("Off-line CPU(s) list:", buf, strlen("Off-line CPU(s) list:"))) {
-            m_pOutput->pstring("online_cpu_list", &buf[data_col]);
-        }
-        if (!strncmp("Model:", buf, strlen("Model:"))) {
-            m_pOutput->pstring("model", &buf[data_col]);
-        }
-        if (!strncmp("Model name:", buf, strlen("Model name:"))) {
-            m_pOutput->pstring("model_name", &buf[data_col]);
-        }
-        if (!strncmp("Thread(s) per core:", buf, strlen("Thread(s) per core:"))) {
-            m_pOutput->pstring("threads_per_core", &buf[data_col]);
-        }
-        if (!strncmp("Core(s) per socket:", buf, strlen("Core(s) per socket:"))) {
-            m_pOutput->pstring("cores_per_socket", &buf[data_col]);
-        }
-        if (!strncmp("Socket(s):", buf, strlen("Socket(s):"))) {
-            m_pOutput->pstring("sockets", &buf[data_col]);
-        }
-        if (!strncmp("NUMA node(s):", buf, strlen("NUMA node(s):"))) {
-            m_pOutput->pstring("numa_nodes", &buf[data_col]);
-        }
-        if (!strncmp("CPU MHz:", buf, strlen("CPU MHz:"))) {
-            m_pOutput->pstring("cpu_mhz", &buf[data_col]);
-        }
-        if (!strncmp("CPU max MHz:", buf, strlen("CPU max MHz:"))) {
-            m_pOutput->pstring("cpu_max_mhz", &buf[data_col]);
-        }
-        if (!strncmp("CPU min MHz:", buf, strlen("CPU min MHz:"))) {
-            m_pOutput->pstring("cpu_min_mhz", &buf[data_col]);
-        }
-        /* Intel only */
-        if (!strncmp("BogoMIPS:", buf, strlen("BogoMIPS:"))) {
-            m_pOutput->pstring("bogomips", &buf[data_col]);
-        }
-        if (!strncmp("Vendor ID:", buf, strlen("Vendor ID:"))) {
-            m_pOutput->pstring("vendor_id", &buf[data_col]);
-        }
-        if (!strncmp("CPU family:", buf, strlen("CPU family:"))) {
-            m_pOutput->pstring("cpu_family", &buf[data_col]);
-        }
-        if (!strncmp("Stepping:", buf, strlen("Stepping:"))) {
-            m_pOutput->pstring("stepping", &buf[data_col]);
-        }
-    }
-    m_pOutput->psection_end();
-    pclose(pop);
 }
 
 void CMonitorHeaderInfo::header_lshw()

@@ -79,6 +79,7 @@ regen_baremetal1:
 #   - collector/bin/glibc/cmonitor_collector --sampling-interval=10 --num-samples=1440 --output-filename baremetal2
 #
 
+# FIXME 180 instead of 3
 regen_docker_collecting_baremetal_stats:
 	docker run \
 		--rm \

@@ -50,11 +50,11 @@ public:
     void header_cmonitor_info(
         int argc, char** argv, long sampling_interval_msec, long num_samples, unsigned int collect_flags);
     void header_etc_os_release();
-    void header_cpuinfo();
-    void header_version();
-    void header_lscpu();
+    void header_proc_cpuinfo();
+    void header_proc_version();
+    void header_proc_meminfo();
+    void header_sys_devices_numa_nodes();
     void header_lshw();
-    void header_meminfo();
     void header_custom_metadata();
 
 private:
