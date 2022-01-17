@@ -2,19 +2,25 @@
 # Makefile to regenerate example data
 # 
 TOPDIR=..
+DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f .)
+THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/..)
+include $(ROOT_DIR)/Constants.mk
 
-# FIXME: baremetal2.json.gz needs to be re-generated 
-#	baremetal2.json.gz \
-
-
-EXAMPLE_JSON_FILES=\
+BAREMETAL_MONITORING_EXAMPLE_JSON_FILES=\
 	baremetal1.json.gz \
 	docker-collecting-baremetal-stats.json.gz \
-	docker-userapp-with-embedded-collector.json.gz \
-	docker-userapp-with-embedded-collector.json.gz \
+
+# FIXME: baremetal2.json.gz needs to be re-generated 
+#	baremetal2.json.gz
+
+
+DOCKER_MONITORING_EXAMPLE_JSON_FILES=\
 	docker-userapp.json.gz \
 	docker-stress-test-cpu.json.gz \
 	docker-stress-test-mem.json.gz
+
+EXAMPLE_JSON_FILES=$(BAREMETAL_MONITORING_EXAMPLE_JSON_FILES) $(DOCKER_MONITORING_EXAMPLE_JSON_FILES)
 
 CMONITOR_COLLECTOR=$(TOPDIR)/collector/bin/glibc/cmonitor_collector
 
@@ -36,6 +42,10 @@ clean:
 distclean: clean
 	rm -f *.html
 
+
+# ------------------------------------------------------------------------------------------------------------------------------
+# BAREMETAL MONITORING
+# ------------------------------------------------------------------------------------------------------------------------------
 
 #
 # baremetal1 example:
@@ -69,19 +79,23 @@ regen_baremetal1:
 #   - collector/bin/glibc/cmonitor_collector --sampling-interval=10 --num-samples=1440 --output-filename baremetal2
 #
 
-
-
-#
-# docker_collecting_baremetal_stats: 
-#  dockerized cmonitor monitoring the baremetal
-#
-
 regen_docker_collecting_baremetal_stats:
-	make -C docker-collecting-baremetal-stats
-	
+	docker run \
+		--name=cmonitor-baremetal-collector \
+		--volume /etc/os-release:/etc/os-release \
+		--volume=$(DOCKER_EXAMPLE_FOLDER):/perf \
+		f18m/cmonitor:$(DOCKER_TAG) \
+		--sampling-interval=1 \
+		--num-samples=180 \
+		--collect=cpu,memory,disk,network \
+		--output-filename=docker-collecting-baremetal-stats
+	@gzip -f docker-collecting-baremetal-stats.json
 
 
-#
+# ------------------------------------------------------------------------------------------------------------------------------
+# DOCKER MONITORING
+# ------------------------------------------------------------------------------------------------------------------------------
+
 # docker_userapp:
 #  monitoring of a docker container from the baremetal
 #
@@ -96,7 +110,6 @@ regen_docker_collecting_baremetal_stats:
 DOCKER_EXAMPLE_CPUS:=0,1
 DOCKER_EXAMPLE_CPU_QUOTA:=0.9
 DOCKER_EXAMPLE_MEMORY_LIMIT:=10m
-DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f .)
 
 ifeq ($(PODMAN),)
 # by default assume Moby Docker is in use; provide PODMAN=1 to instead assume podman implementation is in use
@@ -210,15 +223,6 @@ regen_docker_stress_test_mem:
 	docker logs stress
 	docker rm stress
 	gzip -f docker-stress-test-mem.json
-
-
-#
-# docker_userapp_with_embedded_collector:
-#  dockerized cmonitor embedded inside a docker container
-#
-
-regen_docker_userapp_with_embedded_collector:
-	make -C docker-userapp-with-embedded-collector
 	
 
 # docker helper:
@@ -227,9 +231,9 @@ attach_running_docker:
 	docker exec -i -t cmonitor-example /bin/bash
 
 
-#
+# ------------------------------------------------------------------------------------------------------------------------------
 # INFLUXDB & GRAFANA example:
-#
+# ------------------------------------------------------------------------------------------------------------------------------
 
 reset_influxdb:
 	# assuming you started in another console or in background the "influxd" daemon:
