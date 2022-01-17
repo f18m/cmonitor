@@ -262,6 +262,8 @@ bool CMonitorSystem::read_meminfo_stats(FastFileReader& reader, const std::set<s
         return nread;
     }
 
+    pOutput->psection_start("proc_meminfo");
+
     std::string label;
     uint64_t value = 0;
     const char* pline = reader.get_next_line();
@@ -269,35 +271,39 @@ bool CMonitorSystem::read_meminfo_stats(FastFileReader& reader, const std::set<s
 
         std::string line(pline);
         bool is_kb = false;
-        for (size_t i = 0; i < line.size(); i++) {
-            if (line[i] == '\n') {
-                if (i > 3 && line[i - 2] == 'k' && line[i - 1] == 'B')
-                    is_kb = true;
-                line.resize(i - 3);
-                break;
-            }
+        if (line.size() > 3 && line[line.size() - 2] == 'k' && line[line.size() - 1] == 'B') {
+            is_kb = true;
+            line.resize(line.size() - 3);
         }
+        // CMonitorLogger::instance()->LogDebug("read_meminfo_stats: [%s] is_kb=%d", line.c_str(), is_kb);
 
-        if (split_label_value(line, ' ', label, value)) {
-            // remove final colon
-            if (label.back() == ':')
-                label.pop_back();
+        std::string value_str;
+        if (split_string_on_first_separator(line, ':', label, value_str)) {
 
-            // adjust kB -> bytes if needed
-            if (is_kb)
-                value *= 1000;
+            // skip all the spaces after the colon
+            unsigned int i = 0;
+            for (; i < value_str.size() && isspace(value_str[i]); i++)
+                ;
 
-            // apply KPI filter
-            if (allowedStatsNames.empty() /* all stats must be put in output */
-                || allowedStatsNames.find(label) != allowedStatsNames.end()) {
-                pOutput->plong(label.c_str(), value);
-                nread++;
-            } else
-                ndiscarded++;
+            if (string2int(&value_str[i], value)) {
+                // adjust kB -> bytes if needed
+                if (is_kb)
+                    value *= 1000;
+
+                // apply KPI filter
+                if (allowedStatsNames.empty() /* all stats must be put in output */
+                    || allowedStatsNames.find(label) != allowedStatsNames.end()) {
+                    pOutput->plong(label.c_str(), value);
+                    nread++;
+                } else
+                    ndiscarded++;
+            }
         }
 
         pline = reader.get_next_line();
     }
+
+    pOutput->psection_end();
 
     CMonitorLogger::instance()->LogDebug(
         "From %s read=%zu discarded=%zu kpis", reader.get_file().c_str(), nread, ndiscarded);
@@ -891,8 +897,7 @@ void CMonitorSystem::get_list_monitored_files(std::set<std::string>& list)
     list.insert(m_loadavg.get_file());
     if (m_pCfg->m_nCollectFlags & PK_BAREMETAL_CPU)
         list.insert(m_cpu_stat.get_file());
-    if (m_pCfg->m_nCollectFlags & PK_BAREMETAL_MEMORY)
-    {
+    if (m_pCfg->m_nCollectFlags & PK_BAREMETAL_MEMORY) {
         list.insert(m_meminfo.get_file());
         list.insert(m_vmstat.get_file());
     }
