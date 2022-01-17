@@ -5,9 +5,6 @@ FROM alpine:3.15
 RUN apk add libstdc++ libc6-compat fmt-dev
 COPY cmonitor_collector /usr/bin/
 
-ARG SAMPLING_INTERVAL_SEC=60
-ENV SAMPLING_INTERVAL_SEC=${SAMPLING_INTERVAL_SEC}
-
 # finally run the cmonitor collector 
 #  - in foreground since Docker does not like daemons
 #  - put resulting files in /perf folder which is actually a volume shared with the host (see README.md for the docker run command)

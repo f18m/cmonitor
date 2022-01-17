@@ -835,7 +835,7 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
                 cpudict[field_name] = set()
                 for cpu_name in jheader["cpuinfo"].keys():
                     cpudict[field_name].add(jheader["cpuinfo"][cpu_name][field_name])
-            for field_name in ["cpu_mhz", "bogomips"]:
+            for field_name in ["scaling_min_freq_mhz", "scaling_max_freq_mhz", "bogomips", "cache_size_kb"]:
                 cpudict[field_name] = set()
                 for cpu_name in jheader["cpuinfo"].keys():
                     cpudict[field_name].add(int(jheader["cpuinfo"][cpu_name][field_name]))
@@ -845,7 +845,6 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
                 # join by comma each set() inside the dict:
                 cpudict[field_name] = ",".join(the_list)
 
-            print(cpudict)
             jheader["cpu_summary"] = cpudict
             self.file.write(configdump(jheader, "cpu_summary", "CPU Overview"))
         if "numa_nodes" in jheader:
@@ -866,7 +865,6 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
         self.file.write("    <table summary='textbox with summarized info'>\n")
         self.file.write("    <tr><td><ul>\n")
         for i, entry in enumerate(table_entries, start=1):
-            print(entry[0])
             self.file.write("      <li>" + entry[0] + " <span class='bottom_table_val'>" + entry[1] + "</span></li>\n")
             if (i % 4) == 0:
                 self.file.write("      </ul></td><td><ul>\n")
