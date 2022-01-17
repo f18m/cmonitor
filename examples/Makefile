@@ -84,9 +84,8 @@ regen_docker_collecting_baremetal_stats:
 		--rm \
 		--name=cmonitor-baremetal-collector \
 		--hostname="$(shell hostname -f)" \
-		--volume=/etc/hosts:/etc/hosts:ro \
 		--volume=/sys:/sys:ro \
-		--volume /etc/os-release:/etc/os-release:ro \
+		--volume=/etc/os-release:/etc/os-release:ro \
 		--volume=$(DOCKER_EXAMPLE_FOLDER):/perf:rw \
 		f18m/cmonitor:$(DOCKER_TAG) \
 		--sampling-interval=1 \

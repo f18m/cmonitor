@@ -173,16 +173,21 @@ Alternatively to native packages, you can use `cmonitor_collector` utility as a 
 docker run -d \
     --rm \
     --name=cmonitor-baremetal-collector \
+    --hostname="$(hostname -f)" \
     --volume=/sys:/sys:ro \
-    --volume /etc/os-release:/etc/os-release:ro \
-    --volume $(pwd):/perf:rw \
-    f18m/cmonitor \
+    --volume=/etc/os-release:/etc/os-release:ro \
+    --volume=$(pwd):/perf:rw \
+    f18m/cmonitor:latest \
     --sampling-interval=1  ...
 ```
 
 which runs the Docker image for this project from [Docker Hub](https://hub.docker.com/r/f18m/cmonitor).
 Note that the Dockerfile entrypoint is `cmonitor_collector` and thus any [supported CLI option](#reference-manual) can be provided
-at the end of the "docker run" command.
+at the end of the `docker run` command.
+The volume mount of `/etc/os-release` and the `--hostname` option are required to allow `cmonitor_collector` to correctly identify the real host
+being monitored (otherwise `cmonitor_collector` reports the randomly-generated hash by Docker for the hostname).
+The volume mount of `/sys` exposes all the cgroups of baremetal into the `cmonitor_collector` docker and thus enables the collector
+utility to access the stats of all other running containers; this is required by similar tools as well like [cAdvisor](https://github.com/google/cadvisor).
 
 
 ## How to build from sources
@@ -230,10 +235,11 @@ cmonitor_collector --sampling-interval=3 --output-directory=/home
 docker run -d \
     --rm \
     --name=cmonitor-baremetal-collector \
+    --hostname="$(hostname -f)" \
     --volume=/sys:/sys:ro \
-    --volume /etc/os-release:/etc/os-release:ro \
-    --volume /home:/perf:rw \
-    f18m/cmonitor \
+    --volume=/etc/os-release:/etc/os-release:ro \
+    --volume=/home:/perf:rw \
+    f18m/cmonitor:latest \
     --sampling-interval=1  ...
 ```
 
