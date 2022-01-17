@@ -33,21 +33,13 @@
 // CMonitorCgroups - internal helpers
 // ----------------------------------------------------------------------------------
 
-bool read_integer(FastFileReader& reader, uint64_t& value)
-{
-    if (!reader.open_or_rewind()) {
-        CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", reader.get_file().c_str());
-        return false; // file does not exist or not readable
-    }
-
-    // read a single integer from the file
-    value = 0;
-    return (sscanf(reader.get_next_line(), "%lu", &value) == 1);
-}
-
 size_t CMonitorCgroups::sample_flat_keyed_file(FastFileReader& reader, const std::set<std::string>& allowedStatsNames,
     const std::string& label_prefix, key_value_map_t& out)
 {
+    /*
+        NOTE: this is a specialized variant of FastFileReader::read_numeric_stats()
+    */
+
     size_t nread = 0, ndiscarded = 0;
     if (!reader.open_or_rewind()) {
         CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", reader.get_file().c_str());
@@ -150,6 +142,8 @@ void CMonitorCgroups::sample_memory(
 
     if (m_nCGroupsFound == CG_NONE)
         return;
+    if ((m_pCfg->m_nCollectFlags & PK_CGROUP_MEMORY) == 0)
+        return;
 
     bool print = (m_num_memory_samples_collected > 0);
     m_num_memory_samples_collected++;
@@ -165,7 +159,7 @@ void CMonitorCgroups::sample_memory(
 
     if (m_nCGroupsFound == CG_VERSION2)
         // list as first value the main "current" KPI
-        if (read_integer(m_cgroup_memory_v2_current, value))
+        if (m_cgroup_memory_v2_current.read_integer(value))
             m_pOutput->plong("stat.current", value);
 
     // dump main memory statistics file
@@ -179,7 +173,7 @@ void CMonitorCgroups::sample_memory(
 
     switch (m_nCGroupsFound) {
     case CG_VERSION1:
-        if (read_integer(m_cgroup_memory_v1_failcnt, value)) {
+        if (m_cgroup_memory_v1_failcnt.read_integer(value)) {
             if (print)
                 m_pOutput->plong("events.failcnt", value - m_memory_prev_values.v1_failcnt);
 

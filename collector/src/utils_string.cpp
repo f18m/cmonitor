@@ -171,6 +171,7 @@ template <typename T> std::string stl_container2string(const T& par, const std::
 
 template std::string stl_container2string(const std::set<uint64_t>& par, const std::string& delim);
 template std::string stl_container2string(const std::vector<int>& par, const std::string& delim);
+template std::string stl_container2string(const std::set<std::string>& par, const std::string& delim);
 
 std::vector<std::string> split_string_in_array(const std::string& str, char splitter)
 {

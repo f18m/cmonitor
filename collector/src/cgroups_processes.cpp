@@ -459,6 +459,8 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 {
     if (m_nCGroupsFound == CG_NONE)
         return;
+    if ((m_pCfg->m_nCollectFlags & PK_CGROUP_PROCESSES) == 0 && (m_pCfg->m_nCollectFlags & PK_CGROUP_THREADS) == 0)
+        return;
 
     DEBUGLOG_FUNCTION_START();
 

@@ -35,6 +35,8 @@ class CMonitorOutputFrontend;
 
 //------------------------------------------------------------------------------
 // File utilities
+// NOTE: these are not based on FastFileReader and should be used only
+//       during slow, configuration & initialization code paths if possible
 //------------------------------------------------------------------------------
 bool file_or_dir_exists(const char* filename);
 bool search_integer(std::string filePath, uint64_t valueToSearch);
@@ -43,5 +45,3 @@ bool read_cgroupv2_integer_or_max(std::string filePath, uint64_t& value);
 bool read_two_integers(std::string filePath, uint64_t& value1, uint64_t& value2);
 bool read_integers_with_range_validation(
     const std::string& filename, uint64_t lower_limit, uint64_t upper_limit, std::set<uint64_t>& cpus);
-void proc_read_numeric_stats_from(
-    CMonitorOutputFrontend* pOutput, const char* statname, const std::set<std::string>& allowedStatsNames);

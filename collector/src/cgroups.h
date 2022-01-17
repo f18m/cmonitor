@@ -67,8 +67,6 @@ typedef struct {
 
 typedef std::map<std::string /* controller type */, std::string /* path */> cgroup_paths_map_t;
 
-typedef std::map<std::string /* KPI name */, uint64_t /* value */> key_value_map_t;
-
 typedef struct {
     uint64_t v1_failcnt;
     key_value_map_t v2_events;
@@ -100,6 +98,7 @@ public:
         const std::string& cgroup_prefix_for_test = "", // force newline
         const std::string& proc_prefix_for_test = "", // force newline
         uint64_t my_own_pid_for_test = UINT64_MAX);
+    void get_list_monitored_files(std::set<std::string>& list);
 
     // one-shot configuration info
     void output_config();

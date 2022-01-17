@@ -30,6 +30,10 @@
 #include <stdarg.h> /* va_list, va_start, va_arg, va_end */
 #include <sys/types.h>
 
+// ----------------------------------------------------------------------------------
+// CMonitorHeaderInfo
+// ----------------------------------------------------------------------------------
+
 void CMonitorHeaderInfo::file_read_one_stat(const char* file, const char* name)
 {
     FILE* fp;
@@ -190,6 +194,8 @@ void CMonitorHeaderInfo::header_etc_os_release()
         return;
     }
 
+    // since 2012 systemd has pushed for introduction of a standardized file where OS-level info is provided;
+    // see http://0pointer.de/blog/projects/os-release
     m_pOutput->psection_start("os_release");
     while (fgets(buf, 1024, fp) != NULL) {
         buf[strlen(buf) - 1] = 0; /* remove newline */
@@ -328,7 +334,7 @@ void CMonitorHeaderInfo::header_meminfo()
     static_memory_stats.insert("MemTotal");
     static_memory_stats.insert("HugePages_Total");
     static_memory_stats.insert("Hugepagesize");
-    proc_read_numeric_stats_from(m_pOutput, "meminfo", static_memory_stats);
+    CMonitorSystem::output_meminfo_stats(m_pOutput, static_memory_stats);
 }
 
 void CMonitorHeaderInfo::header_version()

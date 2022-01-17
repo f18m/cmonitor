@@ -136,67 +136,6 @@ bool read_integers_with_range_validation(
     return true;
 }
 
-/*
-Reads files in one of the 3 formats supported below:
-
-name number
-name: number
-name: number kB
-
-*/
-void proc_read_numeric_stats_from(
-    CMonitorOutputFrontend* pOutput, const char* statname, const std::set<std::string>& allowedStatsNames)
-{
-    FILE* fp = 0;
-    char line[1024];
-    char label[512];
-    char number[512];
-    int i;
-    int len;
-
-    DEBUGLOG_FUNCTION_START();
-    std::string filename = fmt::format("/proc/{}", statname);
-    if ((fp = fopen(filename.c_str(), "r")) == NULL) {
-        CMonitorLogger::instance()->LogErrorWithErrno("Failed to open performance file %s", filename.c_str());
-        return;
-    }
-
-    pOutput->psection_start(fmt::format("proc_{}", statname).c_str());
-    while (fgets(line, 1000, fp) != NULL) {
-        len = strlen(line);
-        bool is_kb = false;
-        for (i = 0; i < len; i++) {
-
-            // escape characters that we don't like in JSON output:
-            if (line[i] == '(')
-                line[i] = '_';
-            if (line[i] == ')')
-                line[i] = ' ';
-            if (line[i] == ':')
-                line[i] = ' ';
-            if (line[i] == '\n') {
-                line[i] = 0;
-                if (i > 3 && line[i - 2] == 'k' && line[i - 1] == 'B')
-                    is_kb = true;
-            }
-        }
-        sscanf(line, "%s %s", label, number);
-        // CMonitorLogger::instance()->LogDebug("read_data_numer(%s) |%s| |%s|=%lld\n", statname, label, numstr,
-        // atoll(numstr));
-
-        if (allowedStatsNames.empty() /* all stats must be put in output */
-            || allowedStatsNames.find(label) != allowedStatsNames.end()) {
-            long long num = atoll(number);
-            if (is_kb)
-                num *= 1000;
-
-            pOutput->plong(label, num);
-        }
-    }
-    pOutput->psection_end();
-    (void)fclose(fp);
-}
-
 bool search_integer(std::string filePath, uint64_t valueToSearch)
 {
     FILE* stream = fopen(filePath.c_str(), "r");

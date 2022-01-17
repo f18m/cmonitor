@@ -82,6 +82,8 @@ void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields
 {
     if (m_nCGroupsFound == CG_NONE)
         return;
+    if ((m_pCfg->m_nCollectFlags & PK_CGROUP_NETWORK_INTERFACES) == 0)
+        return;
 
     DEBUGLOG_FUNCTION_START();
 

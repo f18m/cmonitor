@@ -20,6 +20,7 @@
  */
 
 #include "fast_file_reader.h"
+#include "utils_string.h"
 #include <fcntl.h> // open()
 #include <unistd.h> // read()
 
@@ -56,8 +57,7 @@ bool FastFileReader::open_or_rewind()
 
 void FastFileReader::close()
 {
-    if (m_fd != -1)
-    {
+    if (m_fd != -1) {
         ::close(m_fd);
         m_fd = -1;
         // next call to open_or_rewind() will reopen it
@@ -103,4 +103,49 @@ const char* FastFileReader::get_next_line()
     // successfully identified the start/end of the next line to process:
     *m_end_next_line_to_process = '\0'; // replace the newline with NUL terminator
     return m_start_next_line_to_process;
+}
+
+bool FastFileReader::read_integer(uint64_t& value)
+{
+    if (!open_or_rewind()) {
+        // CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", reader.get_file().c_str());
+        return false; // file does not exist or not readable
+    }
+
+    // read a single integer from the file
+    value = 0;
+    return string2int(get_next_line(), value);
+}
+
+bool FastFileReader::read_numeric_stats(
+    const std::set<std::string>& allowedStatsNames, key_value_map_t& out, numeric_parser_stats_t& out_stats)
+{
+    if (!open_or_rewind()) {
+        // CMonitorLogger::instance()->LogDebug("Cannot open file [%s]", reader.get_file().c_str());
+        return false;
+    }
+
+    std::string label;
+    uint64_t value = 0;
+    const char* pline = get_next_line();
+    while (pline) {
+
+        std::string line(pline);
+        if (line.back() == '\n')
+            line.pop_back();
+
+        if (split_label_value(line, ' ', label, value)) {
+            // apply KPI filter
+            if (allowedStatsNames.empty() /* all stats must be put in output */
+                || allowedStatsNames.find(label) != allowedStatsNames.end()) {
+                out[label] = value;
+                out_stats.num_read++;
+            } else
+                out_stats.num_discarded++;
+        }
+
+        pline = get_next_line();
+    }
+
+    return true;
 }
