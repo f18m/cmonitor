@@ -37,10 +37,8 @@ Table of contents of this README:
     - [Step 2: plot stats collected as JSON](#step-2-plot-stats-collected-as-json)
     - [Usage scenarios and HTML result examples](#usage-scenarios-and-html-result-examples)
       - [Monitoring the baremetal server (no containers)](#monitoring-the-baremetal-server-no-containers)
-      - [Monitoring the baremetal server from a Docker container](#monitoring-the-baremetal-server-from-a-docker-container)
-      - [Monitoring a Docker container launching cmonitor_collector on the baremetal](#monitoring-a-docker-container-launching-cmonitor_collector-on-the-baremetal)
-      - [Monitoring a Docker container that embeds cmonitor_collector](#monitoring-a-docker-container-that-embeds-cmonitor_collector)
-      - [Monitoring a Kubernetes POD launching cmonitor_collector on the worker node](#monitoring-a-kubernetes-pod-launching-cmonitor_collector-on-the-worker-node)
+      - [Monitoring your Docker container](#monitoring-your-docker-container)
+      - [Monitoring your Kubernetes POD](#monitoring-your-kubernetes-pod)
     - [Connecting with InfluxDB and Grafana](#connecting-with-influxdb-and-grafana)
     - [Reference Manual](#reference-manual)
   - [Project History](#project-history)
@@ -147,6 +145,7 @@ yum install -y cmonitor-collector cmonitor-tools
 Note that the RPM `cmonitor-collector` has no dependencies from Python and has very small set of dependencies (GNU libc and few others)
 so can be installed easily everywhere. The RPM `cmonitor-tools` instead requires Python3.
 
+
 ### Debian package (for Debian, Ubuntu, etc)
 
 You can get started with cmonitor by installing it as a Debian package.
@@ -168,14 +167,20 @@ release in my PPA.
 
 ### Docker
 
-If you want to simply use a out-of-the-box Docker container to monitor your baremetal performances you can run:
+Alternatively to native packages, you can use `cmonitor_collector` utility as a Docker:
 
 ```
-docker pull f18m/cmonitor
+docker run -d \
+    --name=cmonitor-baremetal-collector \
+    --volume /etc/os-release:/etc/os-release \
+    --volume $(pwd):/perf \
+    f18m/cmonitor \
+    --sampling-interval=1  ...
 ```
 
-which downloads the Docker image for this project from [Docker Hub](https://hub.docker.com/r/f18m/cmonitor).
-See below for examples on how to run the Docker image.
+which runs the Docker image for this project from [Docker Hub](https://hub.docker.com/r/f18m/cmonitor).
+Note that the Dockerfile entrypoint is `cmonitor_collector` and thus any [supported CLI option](#reference-manual) can be provided
+at the end of the "docker run" command.
 
 
 ## How to build from sources
@@ -210,20 +215,35 @@ sudo make install DESTDIR=/usr/local BINDIR=bin   # to install in /usr/local/bin
 
 ### Step 1: collect stats
 
-The RPM installs a single utility, `cmonitor_collector` inside your container; launch it like that:
+The RPM/Debian packages "cmonitor-collector" install a single utility, named `cmonitor_collector`.
+It can be launched as simply as:
 
 ```
 cmonitor_collector --sampling-interval=3 --output-directory=/home
 ```
 
+(on baremetal) or as a Docker:
+
+```
+docker run -d \
+    --name=cmonitor-baremetal-collector \
+    --volume /etc/os-release:/etc/os-release \
+    --volume /home:/perf \
+    f18m/cmonitor \
+    --sampling-interval=1  ...
+```
+
 to produce in the `/home` folder a JSON with CPU/memory/disk/network stats for the container
 sampling all supported performance statistics every 3 seconds.
-Whenever you want you can either:
+
+Once the JSON is produced, next steps are either:
 
 - inject that JSON inside InfluxDB (mostly useful for **persistent** containers that you want to monitor in real-time);
   see section "Connecting with InfluxDB and Grafana" below;
 - or use the `cmonitor_chart` utility to convert that JSON into a self-contained HTML file (mostly useful for **ephemeral** containers);
   see below for practical examples.
+
+See [supported CLI option](#reference-manual) section for complete list of accepted options.
 
 
 
@@ -245,43 +265,34 @@ Note that to save space/bandwidth you can also gzip the JSON file and pass it gz
 
 #### Monitoring the baremetal server (no containers)
 
-In this case you can simply install cmonitor as RPM or APT package following instructions in [How to install](#section-id-65)
-and then launch the cmonitor collector as any other Linux daemon.
+If you want to monitor the performances of an entire server (or worker node in Kubernetes terminology), you can either:
+a) install `cmonitor_collector` as RPM or APT package following instructions or
+b) use `cmonitor_collector` as a Docker;
+See [How to install](#how-to-install) for more information.
+
 Example results:
 
 1) [baremetal1](https://f18m.github.io/cmonitor/examples/baremetal1.html): 
-   example of graph generated with the performance stats collected from a physical (baremetal) server; 
-   note that despite the absence of any kind of container, the `cmonitor_collector` utility (like just any other software in modern Linux distributions) was running inside the default "user.slice" cgroup and collected both the stats of that cgroup and all baremetal stats (which in this case mostly coincide since the "user.slice" cgroup contains almost all running processes of the server);
+   example of graph generated with the performance stats collected from a physical (baremetal) server by running `cmonitor_collector` installed as RPM; 
+   note that despite the absence of any kind of container, the `cmonitor_collector` utility (like just any other software in 
+   modern Linux distributions) was running inside the default "user.slice" cgroup and collected both the stats of that cgroup 
+   and all baremetal stats (which in this case mostly coincide since the "user.slice" cgroup contains almost all running processes of the server);
    
 2) [baremetal2](https://f18m.github.io/cmonitor/examples/baremetal2.html): 
-   This is a longer example of collected statistics (results in a larger file, may take some time to download) generated with 9 hours of performance stats collected from a physical server running Centos7 and with 56 CPUs (!!); 
-   the `cmonitor_collector` utility was running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
+   This is a longer example of collected statistics (results in a larger file, may take some time to download) generated
+   with 9 hours of performance stats collected from a physical server running Centos7 and with 56 CPUs (!!); 
+   the `cmonitor_collector` utility was installed as RPM and running inside the default "user.slice" cgroup so both "CGroup" and "Baremetal"
    graphs are present;
 
-
-#### Monitoring the baremetal server from a Docker container
-
-In this case you can install cmonitor Docker using the official DockerHub image, see [Docker](#section-id-88); the Docker container
-will collect all performance stats of the baremetal. Just run it
-
-```
-docker run -d \
-    --name=cmonitor-baremetal-collector
-    -v /root:/perf \
-    f18m/cmonitor
-```
-    
-Example results:
-
-1) [docker_collecting_baremetal_stats](https://f18m.github.io/cmonitor/examples/docker-collecting-baremetal-stats.html): 
-   example of graph generated with the performance stats collected from a physical server from inside a Docker container;
+3) [docker_collecting_baremetal_stats](https://f18m.github.io/cmonitor/examples/docker-collecting-baremetal-stats.html): 
+   example of graph generated with the performance stats collected from a physical server from `cmonitor_collector` Docker container;
    in this case cgroup stat collection was explicitely disabled so that only baremetal performance graphs are present;
-   
-      
-   
-#### Monitoring a Docker container launching cmonitor_collector on the baremetal
+   see [Docker installation](#docker) information as reference how the docker was started.
 
-In this case you can simply install cmonitor as RPM or APT package following instructions in [How to install](#section-id-65)
+
+#### Monitoring your Docker container
+
+In this case you can simply install cmonitor as RPM or APT package following instructions in [How to install](#how-to-install)
 and then launch the `cmonitor_collector` utility as any other Linux daemon, specifying the name of the cgroup associated with
 the docker container to monitor.
 Finding out the cgroup associated with a Docker container can require some detailed information about your OS / runtime configuration;
@@ -310,42 +321,23 @@ cmonitor_collector \
    --output-filename docker-userapp.json
 ```
 
+Alternatively a Docker container can be monitored from `cmonitor_collector` running as a Docker itself:
+
+FIXME TODO
+
+
+
 Example results:
 
 1)[docker_userapp](https://f18m.github.io/cmonitor/examples/docker-userapp.html): example of the chart generated by monitoring
    from the baremetal a simple Redis docker simulating a simple application, doing some CPU and I/O. In this example the 
    `--collect=cgroup_threads` is further used to show Redis CPU usage by-thread.
-   
-   
-#### Monitoring a Docker container that embeds cmonitor_collector
-
-If you can easily modify the Dockerfile of your container, you can embed cmonitor so that it runs inside your container and
-monitor your dockerized-application.
-Example of the *Dockerfile* modified for this purpose:
-
-```
-...
-COPY cmonitor_collector /usr/bin/   # first you need to grabthe cmonitor binary for your Docker base image
-CMD /usr/bin/cmonitor_collector \
-      --sampling-interval=3 \
-      --output-filename=mycontainer.json \
-      --output-directory /perf ; \
-    myapplication
-...
-```
-
-Example results:
-
-1) [docker_userapp_with_embedded_collector](https://f18m.github.io/cmonitor/examples/docker-userapp-with-embedded-collector.html): 
-   example of graph generated with the performance stats collected from inside a Docker container using Ubuntu as base image; this is a practical example
-   where the Docker container is actually deploying something that simulates your target application, together with an embedded
-   `cmonitor_collector` instance that monitors the performance of the Docker container itself;
-   in this case both cgroup stats and baremetal performance graphs are present.
 
 
-#### Monitoring a Kubernetes POD launching cmonitor_collector on the worker node
 
-In this case you can simply install cmonitor as RPM or APT package following instructions in [How to install](#section-id-65)
+#### Monitoring your Kubernetes POD
+
+In this case you can simply install cmonitor as RPM or APT package following instructions in [How to install](#how-to-install)
 on all the worker nodes where Kubernetes might be scheduling the POD you want to monitor.
 Then, you can launch the `cmonitor_collector` utility as any other Linux daemon, specifying the name of the cgroup associated
 with the Kubernetes POD (or more precisely, associated with one of the containers inside the Kubernetes POD, in case it contains
