@@ -735,8 +735,9 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
     }
 
     // debug info
-    CMonitorLogger::instance()->LogDebug(
-        "List of monitored files: %s", stl_container2string(monitoredFiles, ", ").c_str());
+    monitoredFiles.erase(""); // remove empty string in case it was added by mistake
+    CMonitorLogger::instance()->LogDebug("List of continuosly-open monitored files (%zu): %s", monitoredFiles.size(),
+        stl_container2string(monitoredFiles, ", ").c_str());
 
     // HEADER GENERATION:
     // write stuff that is present only in the very first sample (never changes):
