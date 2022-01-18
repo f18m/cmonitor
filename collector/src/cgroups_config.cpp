@@ -816,3 +816,52 @@ bool CMonitorCgroups::cgroup_still_exists()
         file_or_dir_exists(m_cgroup_cpuacct_kernel_path.c_str()) && // force newline
         file_or_dir_exists(m_cgroup_cpuset_kernel_path.c_str());
 }
+
+void CMonitorCgroups::get_list_monitored_files(std::set<std::string>& list)
+{
+    //------------------------------------------------------------------------------
+    // cpuacct controller
+    //------------------------------------------------------------------------------
+    if (m_pCfg->m_nCollectFlags & PK_CGROUP_CPU_ACCT) {
+        switch (m_nCGroupsFound) {
+        case CG_NONE:
+            return;
+        case CG_VERSION1:
+            list.insert(m_cgroup_cpuacct_v1_reader_sys_stat.get_file());
+            list.insert(m_cgroup_cpuacct_v1_reader_user_stat.get_file());
+            list.insert(m_cgroup_cpuacct_v1_reader_combined_stat.get_file());
+            list.insert(m_cgroup_cpuacct_v1_reader_total_cpu_stat.get_file());
+            break;
+        case CG_VERSION2:
+            list.insert(m_cgroup_cpuacct_v2_reader_total_cpu_stat.get_file());
+            break;
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    // memory controller
+    //------------------------------------------------------------------------------
+    if (m_pCfg->m_nCollectFlags & PK_CGROUP_MEMORY) {
+        switch (m_nCGroupsFound) {
+        case CG_NONE:
+            return;
+        case CG_VERSION1:
+            list.insert(m_cgroup_memory_v1v2_stat.get_file());
+            list.insert(m_cgroup_memory_v1_failcnt.get_file());
+            break;
+        case CG_VERSION2:
+            list.insert(m_cgroup_memory_v1v2_stat.get_file());
+            list.insert(m_cgroup_memory_v2_current.get_file());
+            list.insert(m_cgroup_memory_v2_events.get_file());
+            break;
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    // cgroup network / processes tracking
+    //------------------------------------------------------------------------------
+    if ((m_pCfg->m_nCollectFlags & PK_CGROUP_PROCESSES) || // fn
+        (m_pCfg->m_nCollectFlags & PK_CGROUP_THREADS) || // fn
+        (m_pCfg->m_nCollectFlags & PK_CGROUP_NETWORK_INTERFACES))
+        list.insert(m_cgroup_processes_reader_pids.get_file());
+}

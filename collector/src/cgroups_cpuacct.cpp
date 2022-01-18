@@ -358,6 +358,8 @@ void CMonitorCgroups::sample_cpuacct(double elapsed_sec)
 {
     if (m_nCGroupsFound == CG_NONE)
         return;
+    if ((m_pCfg->m_nCollectFlags & PK_CGROUP_CPU_ACCT) == 0)
+        return;
 
     DEBUGLOG_FUNCTION_START();
 

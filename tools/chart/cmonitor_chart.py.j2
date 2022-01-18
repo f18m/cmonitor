@@ -820,6 +820,29 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
                 )
             return newstr
 
+        def aggregate_cpuinfo(jheader):
+            cpudict = {}
+
+            # first take the unique strings about the CPU vendor/model
+            for field_name in ["vendor_id", "model_name"]:
+                cpudict[field_name] = set()
+                for cpu_name in jheader["cpuinfo"].keys():
+                    cpudict[field_name].add(jheader["cpuinfo"][cpu_name][field_name])
+
+            # secondly take the unique values of min/max frequency, MIPS, cache size
+            for field_name in ["scaling_min_freq_mhz", "scaling_max_freq_mhz", "bogomips", "cache_size_kb"]:
+                cpudict[field_name] = set()
+                for cpu_name in jheader["cpuinfo"].keys():
+                    cpudict[field_name].add(int(jheader["cpuinfo"][cpu_name][field_name]))
+
+            # now convert each dictionary entry from a set() to a simple string:
+            for field_name in cpudict.keys():
+                the_list = [str(v) for v in cpudict[field_name]]
+                # join by comma each set() inside the dict:
+                cpudict[field_name] = ",".join(the_list)
+
+            return cpudict
+
         # immediately after the MAIN div, the element where the configuration info are shown (when toggled):
         self.file.write('  <div id="config_viewer_div">\n')
         self.file.write("  <h2>Monitored System Details</h2>\n")
@@ -829,8 +852,11 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
         self.file.write(configdump(jheader, "proc_version", "Linux Kernel Version"))
         if "cgroup_config" in jheader:  # if cgroups are off, this section will not be present
             self.file.write(configdump(jheader, "cgroup_config", "Linux Control Group (CGroup) Configuration"))
-        if "lscpu" in jheader:  # Alpine docker has no lscpu utility
-            self.file.write(configdump(jheader, "lscpu", "CPU Overview"))
+        if "cpuinfo" in jheader:
+            jheader["cpu_summary"] = aggregate_cpuinfo(jheader)
+            self.file.write(configdump(jheader, "cpu_summary", "CPU Overview"))
+        if "numa_nodes" in jheader:
+            self.file.write(configdump(jheader, "numa_nodes", "NUMA Overview"))
         if "proc_meminfo" in jheader:
             self.file.write(configdump(jheader, "proc_meminfo", "Memory Overview"))
         # self.file.write(configdump(jheader, "cpuinfo", "CPU Core Details")
@@ -1226,7 +1252,6 @@ class CMonitorGraphGenerator:
         )
 
         # now generate a table of CPU/IO/MEMORY usage over time, per process/thread:
-        # max_failcnt = 0
         for sample in self.jdata:
             try:
                 row = {}
@@ -1243,7 +1268,7 @@ class CMonitorGraphGenerator:
                     if json_key in sample["cgroup_tasks"]:
                         top_proc_sample = sample["cgroup_tasks"][json_key]
 
-                        cpu = top_proc_sample["cpu_tot"]
+                        cpu = top_proc_sample["cpu_usr"] + top_proc_sample["cpu_sys"]
                         io = int((top_proc_sample["io_rchar"] + top_proc_sample["io_wchar"]))
 
                         tot_cpu_usage_perc += cpu
@@ -1289,7 +1314,6 @@ class CMonitorGraphGenerator:
                     else:
                         failcnt = sample["cgroup_memory_stats"]["events.oom_kill"]
                     row["mem"].append(failcnt)
-                    # max_failcnt = max(failcnt, max_failcnt)
 
                 for key in ["cpu", "io", "mem"]:
                     chart_data[key].data_table.addRow(row[key])
@@ -1984,9 +2008,10 @@ class CMonitorGraphGenerator:
 
         cpu_model = "Unknown"
         bogomips = "Unknown"
-        if "lscpu" in self.jheader:
-            cpu_model = self.jheader["lscpu"]["model_name"]
-            bogomips = self.jheader["lscpu"]["bogomips"]
+        if "cpuinfo" in self.jheader:
+            first_cpu = list(self.jheader["cpuinfo"].keys())[0]
+            cpu_model = self.jheader["cpuinfo"][first_cpu]["model_name"]
+            bogomips = str(self.jheader["cpuinfo"][first_cpu]["bogomips"])
 
         monitored_summary = [
             ("Hostname:", self.jheader["identity"]["hostname"]),

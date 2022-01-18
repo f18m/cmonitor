@@ -141,6 +141,8 @@ void run_cmonitor_on_tarball_samples( // fn
         actual_output.psample_start();
         t.sample_cpuacct(elapsed_sec);
         t.sample_memory(allowedStats, allowedStats);
+
+        t.sample_process_list();
         t.sample_processes(elapsed_sec, cfg.m_nOutputFields);
         t.sample_network_interfaces(elapsed_sec, cfg.m_nOutputFields);
 

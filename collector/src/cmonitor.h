@@ -113,7 +113,7 @@ typedef struct procsinfo_s {
     unsigned long pi_start_time;
     unsigned long pi_vsize; // Virtual memory size in bytes.
     long pi_rss; /* - 3 */
-    unsigned long pi_rsslimit;
+    unsigned long pi_rsslimit; // Current soft limit in bytes on the rss of the process; see RLIMIT_RSS
     unsigned long pi_start_code;
     unsigned long pi_end_code;
     unsigned long pi_start_stack;
@@ -131,7 +131,7 @@ typedef struct procsinfo_s {
     int pi_last_cpu;
     unsigned long pi_realtime_priority;
     unsigned long pi_sched_policy;
-    unsigned long long pi_delayacct_blkio_ticks;
+    unsigned long long pi_delayacct_blkio_ticks; // Aggregated block I/O delays
     /* Process stats for memory */
     unsigned long statm_size; /* total program size, measured in pages */
     unsigned long statm_resident; /* resident set size, measured in pages */

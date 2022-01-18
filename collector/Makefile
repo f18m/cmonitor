@@ -108,11 +108,18 @@ endif
 
 cmonitor_musl: # build cmonitor inside a Docker from Alpine distro, to build a cmonitor_collector musl-linked
 	@# use a Docker to compile inside an Alpine environment:
-	@# NOTE: by default debug symbols are embededed in the binary (to support COPR builds) but
+	docker build \
+		--tag f18m/cmonitor_builder:latest \
+		-f docker/Dockerfile.builder \
+		docker/
+	@# NOTE: by default debug symbols are embedded in the binary (to support COPR builds) but
 	#        for docker builds, we strip them away to reduce docker size:
-	docker run --rm -it -v "${ROOT_DIR}":"/opt/src" -e "MUSL_BUILD=1" -e "DISABLE_BENCHMARKS_BUILD=1" \
-		radupopescu/musl-builder \
-		sh -c "cd /opt/src/collector && apk add gtest-dev fmt-dev && gcc --version && make clean && make -j && make strip"
+	docker run \
+		--rm -it \
+		-v "${ROOT_DIR}":"/opt/src" \
+		-e "MUSL_BUILD=1" -e "DISABLE_BENCHMARKS_BUILD=1" \
+		f18m/cmonitor_builder:latest \
+		sh -c "cd /opt/src/collector && gcc --version && make clean && make -j && make strip"
 
 docker_image: cmonitor_musl
 	@cp -fv bin/musl/cmonitor_collector docker
@@ -120,6 +127,7 @@ docker_image: cmonitor_musl
 		--tag f18m/cmonitor:$(DOCKER_TAG) \
 		--build-arg sampling_interval=3 \
 		--build-arg num_samples=0 \
+		-f docker/Dockerfile \
 		docker
 
 docker_run:
@@ -127,7 +135,8 @@ docker_run:
 	@docker run -it \
 		--rm \
 		--name=cmonitor-baremetal-collector \
-		-v /root:/perf \
+		--volume /etc/os-release:/etc/os-release \
+		--volume /root:/perf \
 		f18m/cmonitor:$(DOCKER_TAG)
 
 docker_push:

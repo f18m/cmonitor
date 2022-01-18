@@ -125,20 +125,22 @@ public:
 
     void init();
     void set_monitored_cpus(const std::set<uint64_t>& cpus) { m_monitored_cpus = cpus; }
+    void get_list_monitored_files(std::set<std::string>& list);
 
     //------------------------------------------------------------------------------
     // Functions to collect /proc stats (baremetal), invoked by main app
     //------------------------------------------------------------------------------
 
-    void sample_cpu_stat(double elapsed, OutputFields output_opts);
-    void sample_diskstats(double elapsed, OutputFields output_opts);
-    void sample_net_dev(double elapsed, OutputFields output_opts);
     void sample_loadavg();
-    void sample_filesystems();
     void sample_uptime();
+    void sample_cpu_stat(double elapsed, OutputFields output_opts);
+    void sample_memory(const std::set<std::string>& allowedStatsNames);
+    void sample_net_dev(double elapsed, OutputFields output_opts);
+    void sample_diskstats(double elapsed, OutputFields output_opts);
+    void sample_filesystems();
 
     //------------------------------------------------------------------------------
-    // Utility shared with CMonitorCgroups
+    // Utilities shared with CMonitorCgroups
     //------------------------------------------------------------------------------
 
     static unsigned int get_all_cpus(std::set<uint64_t>& cpu_indexes, const std::string& stat_file = "/proc/stat");
@@ -146,8 +148,19 @@ public:
     static bool get_net_dev_list(netdevices_map_t& out_map, bool include_only_interfaces_up);
     static bool read_net_dev_stats(
         const std::string& filename, const std::set<std::string>& net_iface_whitelist, netinfo_map_t& out_infos);
-    static bool output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, double elapsed_sec,
+    static bool output_net_dev_stats(CMonitorOutputFrontend* pOutput, double elapsed_sec,
         const netinfo_map_t& new_stats, const netinfo_map_t& prev_stats, OutputFields output_opts);
+
+    //------------------------------------------------------------------------------
+    // Utilities shared with CMonitorHeaderInfo
+    //------------------------------------------------------------------------------
+
+    static bool output_meminfo_stats(CMonitorOutputFrontend* pOutput, const std::set<std::string>& allowedStatsNames)
+    {
+        FastFileReader tmp_reader("/proc/meminfo");
+        numeric_parser_stats_t dummy;
+        return read_meminfo_stats(tmp_reader, allowedStatsNames, pOutput, dummy);
+    }
 
 private:
     bool is_monitored_cpu(int cpu)
@@ -162,6 +175,9 @@ private:
     // total_cpu,
     //    int max_cpu_count); // utility of proc_stat()
 
+    static bool read_meminfo_stats(FastFileReader& reader, const std::set<std::string>& allowedStatsNames,
+        CMonitorOutputFrontend* pOutput, numeric_parser_stats_t& out_stats);
+
 private:
     std::set<uint64_t> m_monitored_cpus;
 
@@ -171,6 +187,10 @@ private:
     long long m_cpu_stat_old_processes = 0;
     cpu_specs_t m_cpu_stat_prev_values[MAX_LOGICAL_CPU] = {};
     int m_cpu_count = 0;
+
+    // memory stats
+    FastFileReader m_meminfo;
+    FastFileReader m_vmstat;
 
     // disk stats
     FastFileReader m_disk_stat;
