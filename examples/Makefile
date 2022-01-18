@@ -50,6 +50,7 @@ COMMON_CMONITOR_DOCKER_OPTIONS=\
 # ------------------------------------------------------------------------------------------------------------------------------
 
 all:
+	@echo "Now using cmonitor tools on the gzipped example JSON files"
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
 		echo "-- TOOL: cmonitor_chart ------------------------------------------------------" ; \
 		../tools/chart/cmonitor_chart.py --input=$$jsonExample --verbose || exit 10; \
@@ -58,6 +59,16 @@ all:
 		echo "-- TOOL: cmonitor_statistics -------------------------------------------------" ; \
 		../tools/statistics/cmonitor_statistics.py --input=$$jsonExample || exit 12; \
 	done
+
+regen_all_example_jsons:
+	# baremetal monitoring:
+	$(MAKE) regen_baremetal1                              # takes about 10mins to run
+	$(MAKE) regen_docker_collecting_baremetal_stats       # takes about 3mins to run
+	# docker monitoring:
+	$(MAKE) regen_docker_userapp                          # takes about 3mins to run
+	$(MAKE) regen_docker_stress_test_cpu                  # takes about 15secs to run
+	$(MAKE) regen_docker_stress_test_mem                  # takes about 15secs to run
+	$(MAKE) regen_docker_collecting_docker_stats          # takes about 3mins to run
 
 clean:
 	rm -f *.err docker-*/example-load.sh
