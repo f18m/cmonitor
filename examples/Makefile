@@ -188,7 +188,8 @@ regen_docker_userapp:
 		--output-filename=docker-userapp.json \
 		--cgroup-name=$(CGROUP_NAME) \
 		--score-threshold=0 \
-		--custom-metadata="cmonitor_chart_name:userapp (Redis docker)"
+		--custom-metadata="cmonitor_chart_name:userapp (Redis docker)" \
+		--custom-metadata="some_other_useful_data:that can contain spaces as well"
 	pkill example_load_re
 	docker stop userapp
 	gzip -f docker-userapp.json
