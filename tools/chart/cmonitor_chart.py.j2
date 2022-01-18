@@ -722,7 +722,7 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
 
     def startHtmlBody(self, cgroup_name, monitored_system, jheader, collected_threads):
         self.file.write("<body>\n")
-        self.file.write('  <h1>Monitoring data collected from <span id="monitored_system_span">' + monitored_system + "</span></h1>\n")
+        self.file.write('  <h1>Data collected from <span id="monitored_system_span">' + monitored_system + "</span></h1>\n")
         self.file.write('  <div id="button_div">\n')
         self.file.write('  <table id="button_table" summary="buttons to visualize charts">\n')
 
@@ -864,6 +864,9 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
         self.file.write("  <h2>CMonitor Collector</h2>\n")
         self.file.write("  <table summary='details on cmonitor_collector'>\n")
         self.file.write(configdump(jheader, "cmonitor", "Performance Stats Collector Configuration"))
+        if "custom_metadata" in jheader:
+            if len(jheader["custom_metadata"]) > 0:
+                self.file.write(configdump(jheader, "custom_metadata", "Custom Metadata"))
         self.file.write("  </table>\n")
         self.file.write("  </div>\n")  # end of 'config_viewer_div'
 
@@ -874,7 +877,7 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
         self.file.write("    <tr><td><ul>\n")
         for i, entry in enumerate(table_entries, start=1):
             self.file.write("      <li>" + entry[0] + " <span class='bottom_table_val'>" + entry[1] + "</span></li>\n")
-            if (i % 4) == 0:
+            if (i % 4) == 0 and i < len(table_entries):
                 self.file.write("      </ul></td><td><ul>\n")
         self.file.write("    </ul></td></tr>\n")
         self.file.write("    </table>\n")
@@ -948,7 +951,7 @@ class CMonitorGraphGenerator:
         self.monitored_system = "Unknown"
         if "identity" in self.jheader:
             if "hostname" in self.jheader["identity"]:
-                self.monitored_system = "host " + self.jheader["identity"]["hostname"]
+                self.monitored_system = self.jheader["identity"]["hostname"]
         if "custom_metadata" in self.jheader:
             if "cmonitor_chart_name" in self.jheader["custom_metadata"]:
                 self.monitored_system = self.jheader["custom_metadata"]["cmonitor_chart_name"]
@@ -967,7 +970,7 @@ class CMonitorGraphGenerator:
             self.cgroup_ver = int(self.jheader["cgroup_config"]["version"])
 
         # finally create the main HTML output page object
-        self.output_page = HtmlOutputPage(outfile, "Monitoring data for " + self.monitored_system)
+        self.output_page = HtmlOutputPage(outfile, self.monitored_system)
 
     # =======================================================================================================
     # Private helpers
@@ -2005,6 +2008,10 @@ class CMonitorGraphGenerator:
         all_netdevices = []
         if "network_interfaces" in self.sample_template:
             all_netdevices = self.sample_template["network_interfaces"].keys()
+        all_numanodes = []
+        if "numa_nodes" in jheader:
+            all_numanodes = list(jheader["numa_nodes"].keys())
+            all_numanodes = [v.replace("node", "") for v in all_numanodes]
 
         cpu_model = "Unknown"
         bogomips = "Unknown"
@@ -2021,6 +2028,7 @@ class CMonitorGraphGenerator:
             ("Monitored CPUs:", str(len(logical_cpus_indexes))),
             ("Monitored Disks:", str(len(all_disks))),
             ("Monitored Network Devices:", str(len(all_netdevices))),
+            ("Monitored NUMA Nodes:", ",".join(all_numanodes)),
         ]
         return monitored_summary
 
@@ -2163,10 +2171,10 @@ def usage():
     print("Main options:")
     print("  -h, --help                 (this help)")
     print("  -v, --verbose              Be verbose.")
-    print("  -o, --output=<file.html>   The name of the output HTML file.")
+    print("  -o, --output=<file.html>   The name of the output HTML file. Defaults to the name of the JSON with .html extension.")
     print("  -u, --utc                  Plot data using UTC timestamps instead of local timezone.")
     print("  -t, --top-scorer=N         Plot the N most-CPU-hungry processes/threads. Default is 20. Zero means plot all.")
-    print("  -f, --filter=<tname>       Plot only the threads filtered by the selected substring . Default is None.")
+    print("  -f, --filter=<tname>       Plot only the threads whose name contains the <tname> string. By default no filtering is done.")
     print("      --version              Print version and exit.")
     sys.exit(0)
 
@@ -2229,6 +2237,7 @@ def parse_command_line():
         print("Please provide --input option (it is a required option)")
         sys.exit(os.EX_USAGE)
 
+    # default value for output file
     if output_html == "":
         if input_json[-8:] == ".json.gz":
             output_html = input_json[:-8] + ".html"
