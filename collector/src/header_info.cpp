@@ -116,17 +116,14 @@ void CMonitorHeaderInfo::header_cmonitor_info(
 {
     m_pOutput->psection_start("cmonitor");
 
-    // rebuild the string used to start this app:
-    std::string command;
-    for (int i = 0; i < argc; i++) {
-        command += argv[i];
-        if (i != argc - 1)
-            command += " ";
-    }
-
     // -------------------------------------------------
     // the full set of arguments provided by commandline & version
-    m_pOutput->pstring("command", command.c_str());
+    // IMPORTANT: since CMonitorOutputFrontend imposes a limit on the max length of a string that can be generated
+    //            in output, we avoid to produce a single very long string with the full cmonitor_collector collector
+    //            and instead output each argument in a separate JSON key
+    m_pOutput->pstring("command", argv[0]);
+    for (int i = 1; i < argc; i++)
+        m_pOutput->pstring(fmt::format("arg{}", i).c_str(), argv[i]);
     m_pOutput->pstring("version", VERSION_STRING);
 
     // -------------------------------------------------

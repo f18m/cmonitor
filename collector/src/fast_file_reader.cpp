@@ -21,6 +21,7 @@
 
 #include "fast_file_reader.h"
 #include "utils_string.h"
+#include <assert.h>
 #include <fcntl.h> // open()
 #include <unistd.h> // read()
 
@@ -42,7 +43,7 @@ bool FastFileReader::open_or_rewind()
         if (ret == -1)
             return false;
     } else {
-        if (m_fd != -1 && m_reopen_each_time)
+        if (m_fd != -1)
             ::close(m_fd);
 
         // On error, -1 is returned and errno is set to indicate the error.
@@ -66,6 +67,7 @@ void FastFileReader::close()
 
 bool FastFileReader::read_whole_file()
 {
+    assert(m_fd != -1);
     ssize_t nread = read(m_fd, m_buff, FAST_FILE_READER_MAX_FILE_SIZE);
     if (nread <= 0 || nread >= (ssize_t)FAST_FILE_READER_MAX_FILE_SIZE)
         return false; // we expect a non-zero value less than the "m_buff" size

@@ -5,26 +5,49 @@ TOPDIR=..
 DOCKER_EXAMPLE_FOLDER:=$(shell readlink -f .)
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/..)
+SHELL:=/bin/bash 
 include $(ROOT_DIR)/Constants.mk
+
+
+# ------------------------------------------------------------------------------------------------------------------------------
+# List of examples JSONs
+# ------------------------------------------------------------------------------------------------------------------------------
 
 BAREMETAL_MONITORING_EXAMPLE_JSON_FILES=\
 	baremetal1.json.gz \
-	docker-collecting-baremetal-stats.json.gz \
+	docker-collecting-baremetal-stats.json.gz
 
 # FIXME: baremetal2.json.gz needs to be re-generated 
 #	baremetal2.json.gz
 
-
 DOCKER_MONITORING_EXAMPLE_JSON_FILES=\
 	docker-userapp.json.gz \
 	docker-stress-test-cpu.json.gz \
-	docker-stress-test-mem.json.gz
+	docker-stress-test-mem.json.gz \
+	docker-collecting-docker-stats.json.gz
 
 EXAMPLE_JSON_FILES=$(BAREMETAL_MONITORING_EXAMPLE_JSON_FILES) $(DOCKER_MONITORING_EXAMPLE_JSON_FILES)
 
+
+# ------------------------------------------------------------------------------------------------------------------------------
+# Constants to launch cmonitor_collector from baremetal or as a Docker
+# ------------------------------------------------------------------------------------------------------------------------------
+
 CMONITOR_COLLECTOR=$(TOPDIR)/collector/bin/glibc/cmonitor_collector
 
-SHELL:=/bin/bash 
+COMMON_CMONITOR_DOCKER_OPTIONS=\
+	--rm \
+	--name=cmonitor-baremetal-collector \
+	--network=host \
+	--pid=host \
+	--volume=/sys:/sys:ro \
+	--volume=/etc/os-release:/etc/os-release:ro \
+	--volume=$(DOCKER_EXAMPLE_FOLDER):/perf:rw
+
+
+# ------------------------------------------------------------------------------------------------------------------------------
+# Targets
+# ------------------------------------------------------------------------------------------------------------------------------
 
 all:
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
@@ -81,12 +104,7 @@ regen_baremetal1:
 
 regen_docker_collecting_baremetal_stats:
 	docker run \
-		--rm \
-		--name=cmonitor-baremetal-collector \
-		--hostname="$(shell hostname -f)" \
-		--volume=/sys:/sys:ro \
-		--volume=/etc/os-release:/etc/os-release:ro \
-		--volume=$(DOCKER_EXAMPLE_FOLDER):/perf:rw \
+		$(COMMON_CMONITOR_DOCKER_OPTIONS) \
 		f18m/cmonitor:$(DOCKER_TAG) \
 		--sampling-interval=1 \
 		--num-samples=180 \
@@ -126,9 +144,8 @@ else
 CGROUP_NAME=machine.slice/libpod-$$(docker ps --no-trunc -aqf name=userapp).scope/container/
 endif
 
-regen_docker_userapp:
+__run_redis_docker_as_userapp:
 	-docker stop userapp >/dev/null 2>&1
-	-pkill example_load_re >/dev/null 2>&1
 	docker run \
 		--detach \
 		--interactive \
@@ -141,6 +158,10 @@ regen_docker_userapp:
 		-P \
 		--name userapp \
 		redis:latest
+
+regen_docker_userapp:
+	-pkill example_load_re >/dev/null 2>&1
+	$(MAKE) __run_redis_docker_as_userapp
 	sleep 3
 	for i in $$(seq 1 3); do \
 		echo "Spawning instance $i of the simple Redis load application" ; \
@@ -226,12 +247,20 @@ regen_docker_stress_test_mem:
 	docker logs stress
 	docker rm stress
 	gzip -f docker-stress-test-mem.json
-	
 
-# docker helper:
 
-attach_running_docker:
-	docker exec -i -t cmonitor-example /bin/bash
+regen_docker_collecting_docker_stats:
+	$(MAKE) __run_redis_docker_as_userapp
+	docker run \
+		$(COMMON_CMONITOR_DOCKER_OPTIONS) \
+		f18m/cmonitor:$(DOCKER_TAG) \
+		--sampling-interval=1 \
+		--num-samples=180 \
+		--collect=cgroup_threads,cgroup_cpu,cgroup_memory,cgroup_network --score-threshold=0 \
+		--custom-metadata="cmonitor_chart_name:userapp" \
+		--cgroup-name=$(CGROUP_NAME) \
+		--output-filename=docker-collecting-docker-stats
+	@gzip -f docker-collecting-docker-stats.json
 
 
 # ------------------------------------------------------------------------------------------------------------------------------

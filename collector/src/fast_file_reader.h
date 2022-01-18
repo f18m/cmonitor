@@ -131,7 +131,7 @@ private:
 private:
     std::string m_filepath;
     bool m_reopen_each_time;
-    int m_fd;
+    int m_fd; // if -1 indicates invalid file descriptor
 
     // the cache buffer is static because cmonitor_collector is mono-thread so we don't
     // need FastFileReader to be reentrant (since FastFileReader won't be used by signal

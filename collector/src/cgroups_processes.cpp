@@ -415,8 +415,8 @@ void CMonitorCgroups::init_processes(const std::string& cgroup_prefix_for_test)
     // bool reopen_each_time = !cgroup_prefix_for_test.empty();
 
     /*
-     FIXME FIXME: for some reason we need to reopen the 'tasks' file each time (at least on Centos7 )
-     or otherwise we will read always the same contents over and over:
+     FIXME FIXME: for some reason we need to reopen the 'tasks' file each time (at least on Centos7!)
+                  or otherwise we will read always the same contents over and over:
     */
     bool reopen_each_time = true;
 
@@ -446,8 +446,9 @@ void CMonitorCgroups::init_processes(const std::string& cgroup_prefix_for_test)
     if (!m_cgroup_processes_reader_pids.open_or_rewind()) {
         m_pCfg->m_nCollectFlags &= ~PK_CGROUP_PROCESSES;
         m_pCfg->m_nCollectFlags &= ~PK_CGROUP_THREADS;
+        m_pCfg->m_nCollectFlags &= ~PK_CGROUP_NETWORK_INTERFACES;
         CMonitorLogger::instance()->LogError("Could not read the cgroup with list of pids from file '%s'. Disabling "
-                                             "monitoring of processes/threads inside cgroup.\n",
+                                             "monitoring of processes/threads/network-interfaces inside cgroup.\n",
             m_cgroup_processes_reader_pids.get_file().c_str());
         return;
     }
