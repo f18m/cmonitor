@@ -12,7 +12,7 @@ tools/common-code/__pycache__/
 tools/statistics/__pycache__/
 
 # autogen from jinja2 templates
-tools/chart/cmonitor_version.py
+tools/common-code/cmonitor_version.py
 
 # ides
 .cproject

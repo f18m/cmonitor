@@ -44,6 +44,12 @@ COMMON_CMONITOR_DOCKER_OPTIONS=\
 	--volume=/etc/os-release:/etc/os-release:ro \
 	--volume=$(DOCKER_EXAMPLE_FOLDER):/perf:rw
 
+# ------------------------------------------------------------------------------------------------------------------------------
+# Python tools constants
+# ------------------------------------------------------------------------------------------------------------------------------
+
+PYTHON_COMMON_CODE=$(ROOT_DIR)/tools/common-code
+PYTHON_TOOLS_DIR=../tools
 
 # ------------------------------------------------------------------------------------------------------------------------------
 # Targets
@@ -51,13 +57,14 @@ COMMON_CMONITOR_DOCKER_OPTIONS=\
 
 all:
 	@echo "Now using cmonitor tools on the gzipped example JSON files"
+	export PYTHONPATH=$(PYTHON_COMMON_CODE) ; \
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
 		echo "-- TOOL: cmonitor_chart ------------------------------------------------------" ; \
-		../tools/chart/cmonitor_chart.py --input=$$jsonExample --verbose || exit 10; \
+		$(PYTHON_TOOLS_DIR)/chart/cmonitor_chart.py --input=$$jsonExample --verbose || exit 10; \
 		echo "-- VALIDATING $${jsonExample/.json.gz/.html} ------------------------------------------------------" ; \
 		tidy -o /dev/null $${jsonExample/.json.gz/.html} 2>/dev/null && echo "$${jsonExample/.json.gz/.html} is valid HTML" || exit 11; \
 		echo "-- TOOL: cmonitor_statistics -------------------------------------------------" ; \
-		../tools/statistics/cmonitor_statistics.py --input=$$jsonExample || exit 12; \
+		$(PYTHON_TOOLS_DIR)/statistics/cmonitor_statistics.py --input=$$jsonExample || exit 12; \
 	done
 
 regen_all_example_jsons:
