@@ -14,12 +14,7 @@ import sys
 import gzip
 from statistics import mean, median, mode, StatisticsError
 from cmonitor_loader import CmonitorCollectorJsonLoader
-
-# =======================================================================================================
-# CONSTANTS
-# =======================================================================================================
-
-VERSION_STRING = "__RPM_VERSION__-__RPM_RELEASE__"
+from cmonitor_version import VERSION_STRING
 
 # =======================================================================================================
 # GLOBALs

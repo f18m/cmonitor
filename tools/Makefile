@@ -11,6 +11,7 @@ include $(ROOT_DIR)/Constants.mk
 
 TOOLS = \
 	chart/cmonitor_chart.py \
+	filter/cmonitor_filter.py \
 	statistics/cmonitor_statistics.py
 
 #
@@ -31,17 +32,13 @@ install: $(TOOLS)
 
 # TOOLS
 
-chart/cmonitor_chart.py: chart/cmonitor_chart.py.j2
-	cp chart/cmonitor_chart.py.j2 chart/cmonitor_chart.py
-	sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' chart/cmonitor_chart.py
-	sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' chart/cmonitor_chart.py
-	chmod a+x chart/cmonitor_chart.py
+common-code/cmonitor_version.py: common-code/cmonitor_version.py.j2
+	cp common-code/cmonitor_version.py.j2 common-code/cmonitor_version.py
+	sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' common-code/cmonitor_version.py
+	sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' common-code/cmonitor_version.py
 
-statistics/cmonitor_statistics.py: statistics/cmonitor_statistics.py.j2
-	cp statistics/cmonitor_statistics.py.j2 statistics/cmonitor_statistics.py
-	sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' statistics/cmonitor_statistics.py
-	sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' statistics/cmonitor_statistics.py
-	chmod a+x statistics/cmonitor_statistics.py
+$(TOOLS): common-code/cmonitor_version.py
+
 
 # TESTS
 
