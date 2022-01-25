@@ -13,15 +13,42 @@ TOOLS = \
 	chart/cmonitor_chart.py \
 	filter/cmonitor_filter.py \
 	statistics/cmonitor_statistics.py
+SYMLINKS = \
+	chart/cmonitor_chart \
+	filter/cmonitor_filter \
+	statistics/cmonitor_statistics
+COMMON_CODE = \
+	common-code/cmonitor_loader.py \
+	common-code/cmonitor_version.py
 
 #
 # BUILD TARGETS
 #
 
-all: $(TOOLS)
+all: $(TOOLS) 
+
+#$(SYMLINKS)
 
 clean:
-	rm -f $(TOOLS)
+	rm -f $(SYMLINKS)
+
+install: $(TOOLS)
+ifndef BINDIR
+	@echo "*** ERROR: please call this makefile supplying explicitly the BINDIR variable"
+	@exit 1
+endif
+ifndef PYTHON3_SITELIB
+	@echo "*** ERROR: please call this makefile supplying explicitly the PYTHON3_SITELIB variable"
+	@exit 1
+endif
+	@mkdir -p $(DESTDIR)/$(BINDIR)/
+	@for tool in $(SYMLINKS); do \
+		cp -fv $${tool}.py             $(DESTDIR)/$(BINDIR)/$$(basename $$tool) ; \
+		chmod a+x $(DESTDIR)/$(BINDIR)/$$(basename $$tool) ; \
+	done
+	@mkdir -p $(DESTDIR)/$(PYTHON3_SITELIB)/
+	cp -fv $(COMMON_CODE) $(DESTDIR)/$(PYTHON3_SITELIB)/
+
 
 # TOOLS
 
@@ -31,7 +58,9 @@ common-code/cmonitor_version.py: common-code/cmonitor_version.py.j2
 	sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' common-code/cmonitor_version.py
 
 $(TOOLS): common-code/cmonitor_version.py
-	ln -sf $@ $< 
+
+#$(SYMLINKS): common-code/cmonitor_version.py
+#	@ln -sfv $(shell readlink -f $@.py) $@
 
 
 
@@ -49,6 +78,8 @@ srpm_tarball:
 	cp -arf $(ROOT_DIR)/ $(RPM_TARBALL_DIR)/ && \
 		cd $(RPM_TARBALL_DIR) && \
 		rm -rf cmonitor/examples && \
+		rm -rf cmonitor/collector/bin && \
+		rm -rf cmonitor/collector/src/tests && \
 		mv cmonitor cmonitor-tools-$(CMONITOR_VERSION) && \
 		sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec && \
 		sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec && \
