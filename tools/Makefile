@@ -28,13 +28,6 @@ all: $(TOOLS) $(SYMLINKS)
 clean:
 	rm -f $(TOOLS)
 
-#install: $(TOOLS)
-#	@mkdir -p $(DESTDIR)/$(BINDIR)/
-#	@cp -fv chart/cmonitor_chart.py             $(DESTDIR)/$(BINDIR)/cmonitor_chart
-#	@cp -fv statistics/cmonitor_statistics.py   $(DESTDIR)/$(BINDIR)/cmonitor_statistics
-#	chmod a+x $(DESTDIR)/$(BINDIR)/cmonitor_chart
-#	chmod a+x $(DESTDIR)/$(BINDIR)/cmonitor_statistics
-
 # TOOLS
 
 common-code/cmonitor_version.py: common-code/cmonitor_version.py.j2
@@ -46,6 +39,7 @@ $(TOOLS): common-code/cmonitor_version.py
 
 $(SYMLINKS): common-code/cmonitor_version.py
 	@ln -sfv $(shell readlink -f $@.py) $@
+
 
 #
 # RPM TARGETS
@@ -65,15 +59,6 @@ ifndef outdir
 endif
 	# now build the SRPM and copy it to the $(outdir) provided by COPR
 	# IMPORTANT: use the spec file that has been edited by the "srpm_tarball" to replace __RPM_VERSION__ 
-#	rpmbuild -bs $(RPM_TARBALL_DIR)/cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec \
-	  --define "_topdir $(RPM_TMP_DIR)" \
-	  --define "_sourcedir $(RPM_TMP_DIR)" \
-	  --define "_builddir $(RPM_TMP_DIR)" \
-	  --define "_rpmdir $(RPM_TMP_DIR)" && \
-		mkdir -p $(outdir)/ && \
-		rm -f $(outdir)/cmonitor-tools-*.src.rpm && \
-		cp -fv $(RPM_TMP_DIR)/SRPMS/cmonitor-tools-*.src.rpm $(outdir)/
-	@echo FMON $(THIS_DIR)
 	cd $(THIS_DIR) && \
 		python3 setup.py bdist_rpm && \
 		cp -fv dist/cmonitor-tools-*.src.rpm $(outdir)/
