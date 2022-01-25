@@ -1,6 +1,0 @@
-build/
-cmonitor_tools.egg-info/
-dist/
-chart/cmonitor_chart
-filter/cmonitor_filter
-statistics/cmonitor_statistics
