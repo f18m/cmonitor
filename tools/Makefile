@@ -60,6 +60,7 @@ endif
 	# now build the SRPM and copy it to the $(outdir) provided by COPR
 	# IMPORTANT: use the spec file that has been edited by the "srpm_tarball" to replace __RPM_VERSION__ 
 	cd $(THIS_DIR) && \
+		yum install python3-setuptools && \
 		python3 setup.py bdist_rpm && \
 		cp -fv dist/cmonitor-tools-*.src.rpm $(outdir)/
 
