@@ -19,7 +19,7 @@ class CmonitorCollectorJsonLoader:
         self.this_tool_version = ""
         self.validated_json = None
 
-    def load(self, infile, this_tool_version):
+    def load(self, infile, this_tool_version, min_num_samples=2):
         """
         This function is able to read both JSON files produced by cmonitor_collector and
         compressed JSON.GZ files.
@@ -31,6 +31,7 @@ class CmonitorCollectorJsonLoader:
 
         self.input_file = infile
         self.this_tool_version = this_tool_version
+        self.validated_json = None  # set only at the end, if successful
 
         # read the raw .json as text
         try:
@@ -52,7 +53,7 @@ class CmonitorCollectorJsonLoader:
             print("Error while opening input JSON file '%s': %s" % (infile, err))
             sys.exit(1)
 
-        # Convert the text to json and extract the stats
+        # Convert the text to json and extract the samples
         try:
             entry = json.loads(text)  # convert text to JSON
         except json.decoder.JSONDecodeError as e:
@@ -86,6 +87,10 @@ class CmonitorCollectorJsonLoader:
                 )
         except KeyError:
             pass
+
+        if len(jdata) < min_num_samples:
+            print(f"Not enough data samples available; at least {min_num_samples} required. Aborting.")
+            sys.exit(11)
 
         self.validated_json = entry
         return entry

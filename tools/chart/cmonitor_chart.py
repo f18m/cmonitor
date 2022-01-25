@@ -2194,7 +2194,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # load the JSON
-    entry = CmonitorCollectorJsonLoader().load(config["input_json"], this_tool_version=VERSION_STRING)
+    entry = CmonitorCollectorJsonLoader().load(config["input_json"], this_tool_version=VERSION_STRING, min_num_samples=2)
     jheader = entry["header"]
     jdata = entry["samples"]
     if verbose:
