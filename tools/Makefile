@@ -23,12 +23,12 @@ all: $(TOOLS)
 clean:
 	rm -f $(TOOLS)
 
-install: $(TOOLS)
-	@mkdir -p $(DESTDIR)/$(BINDIR)/
-	@cp -fv chart/cmonitor_chart.py             $(DESTDIR)/$(BINDIR)/cmonitor_chart
-	@cp -fv statistics/cmonitor_statistics.py   $(DESTDIR)/$(BINDIR)/cmonitor_statistics
-	chmod a+x $(DESTDIR)/$(BINDIR)/cmonitor_chart
-	chmod a+x $(DESTDIR)/$(BINDIR)/cmonitor_statistics
+#install: $(TOOLS)
+#	@mkdir -p $(DESTDIR)/$(BINDIR)/
+#	@cp -fv chart/cmonitor_chart.py             $(DESTDIR)/$(BINDIR)/cmonitor_chart
+#	@cp -fv statistics/cmonitor_statistics.py   $(DESTDIR)/$(BINDIR)/cmonitor_statistics
+#	chmod a+x $(DESTDIR)/$(BINDIR)/cmonitor_chart
+#	chmod a+x $(DESTDIR)/$(BINDIR)/cmonitor_statistics
 
 # TOOLS
 
@@ -38,20 +38,7 @@ common-code/cmonitor_version.py: common-code/cmonitor_version.py.j2
 	sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' common-code/cmonitor_version.py
 
 $(TOOLS): common-code/cmonitor_version.py
-
-
-# TESTS
-
-TEST_KERNELS = \
-	centos7-Linux-3.10.0-x86_64 \
-	fedora35-Linux-5.14.17-x86_64 \
-	ubuntu20.04-Linux-5.4.0-x86_64
-
-test: chart/cmonitor_chart.py statistics/cmonitor_statistics.py 
-	for kk in $(TEST_KERNELS); do \
-		statistics/cmonitor_statistics.py --input=$(ROOT_DIR)/collector/src/tests/$$kk/expected-withthreads.json --output=tests/result-withthreads.json ; \
-	done
-
+	ln -sf $@ $< 
 
 
 #
