@@ -14,11 +14,16 @@ TOOLS = \
 	filter/cmonitor_filter.py \
 	statistics/cmonitor_statistics.py
 
+SYMLINKS = \
+	chart/cmonitor_chart \
+	filter/cmonitor_filter \
+	statistics/cmonitor_statistics
+
 #
 # BUILD TARGETS
 #
 
-all: $(TOOLS)
+all: $(TOOLS) $(SYMLINKS)
 
 clean:
 	rm -f $(TOOLS)
@@ -38,27 +43,14 @@ common-code/cmonitor_version.py: common-code/cmonitor_version.py.j2
 	sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' common-code/cmonitor_version.py
 
 $(TOOLS): common-code/cmonitor_version.py
-	ln -sf $@ $< 
 
+$(SYMLINKS): common-code/cmonitor_version.py
+	@ln -sfv $(shell readlink -f $@.py) $@
 
 #
 # RPM TARGETS
 #
 
-srpm_tarball:
-	$(MAKE) clean # make sure we don't include any build result in the source RPM!
-	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
-	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
-	# prepare the tarball with
-	#  a) the whole project inside a versioned folder
-	#  b) the spec file with the version inside it replaced
-	cp -arf $(ROOT_DIR)/ $(RPM_TARBALL_DIR)/ && \
-		cd $(RPM_TARBALL_DIR) && \
-		rm -rf cmonitor/examples && \
-		mv cmonitor cmonitor-tools-$(CMONITOR_VERSION) && \
-		sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec && \
-		sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec && \
-		tar cvzf $(RPM_TMP_DIR)/cmonitor-tools-$(CMONITOR_VERSION).tar.gz cmonitor-tools-$(CMONITOR_VERSION)/*
 #
 # This target is used by Fedora COPR to automatically produce RPMs for lots of distros.
 # COPR will invoke this target like that:
@@ -66,14 +58,14 @@ srpm_tarball:
 # See https://docs.pagure.org/copr.copr/user_documentation.html#make-srpm.
 # E.g.:
 #   make -f /home/francesco/work/cmonitor/.copr/Makefile srpm outdir=/tmp/cmonitor-rpm
-srpm: srpm_tarball
+srpm: $(SYMLINKS)
 ifndef outdir
 	@echo "*** ERROR: please call this makefile supplying explicitly the outdir variable"
 	@exit 1
 endif
 	# now build the SRPM and copy it to the $(outdir) provided by COPR
 	# IMPORTANT: use the spec file that has been edited by the "srpm_tarball" to replace __RPM_VERSION__ 
-	rpmbuild -bs $(RPM_TARBALL_DIR)/cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec \
+#	rpmbuild -bs $(RPM_TARBALL_DIR)/cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec \
 	  --define "_topdir $(RPM_TMP_DIR)" \
 	  --define "_sourcedir $(RPM_TMP_DIR)" \
 	  --define "_builddir $(RPM_TMP_DIR)" \
@@ -81,6 +73,11 @@ endif
 		mkdir -p $(outdir)/ && \
 		rm -f $(outdir)/cmonitor-tools-*.src.rpm && \
 		cp -fv $(RPM_TMP_DIR)/SRPMS/cmonitor-tools-*.src.rpm $(outdir)/
+	@echo FMON $(THIS_DIR)
+	cd $(THIS_DIR) && \
+		python3 setup.py bdist_rpm && \
+		cp -fv dist/cmonitor-tools-*.src.rpm $(outdir)/
+
 
 #
 # This is useful to produce a binary RPM:
