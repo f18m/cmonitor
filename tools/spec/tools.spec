@@ -11,7 +11,8 @@ URL:            https://github.com/f18m/cmonitor
 Source0:        cmonitor-tools-__RPM_VERSION__.tar.gz
 
 # these are the requirements that we need on COPR builds:
-BuildRequires:  gcc-c++, make
+# IMPORTANT: python3-devel provide macros like %{python3_sitelib}
+BuildRequires:  gcc-c++, make, python3-devel
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
 # of debug info files apparently:
