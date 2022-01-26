@@ -14,7 +14,7 @@ import sys
 import gzip
 from statistics import mean, median, mode, StatisticsError
 from cmonitor_loader import CmonitorCollectorJsonLoader
-from cmonitor_version import VERSION_STRING
+from cmonitor_version import CmonitorToolVersion
 
 # =======================================================================================================
 # GLOBALs
@@ -131,7 +131,7 @@ class CmonitorStatistics:
 
     def process(self, input_json: str, output_file: str) -> None:
         global verbose
-        json_data = CmonitorCollectorJsonLoader().load(input_json, this_tool_version=VERSION_STRING, be_verbose=verbose)
+        json_data = CmonitorCollectorJsonLoader().load(input_json, this_tool_version=CmonitorToolVersion().get(), be_verbose=verbose)
         if "samples" not in json_data:
             print("Unexpected JSON format. Aborting.")
             sys.exit(1)
@@ -220,7 +220,7 @@ def parse_command_line():
     parser.add_argument("-V", "--version", help="Print version and exit", action="store_true", default=False)
     # NOTE: we use nargs='?' to make it possible to invoke this tool with just --version
     parser.add_argument("input", nargs="?", help="The JSON file to analyze. If '-' the JSON is read from stdin.", default=None)
-    
+
     if "COLUMNS" not in os.environ:
         os.environ["COLUMNS"] = "120"  # avoid too many line wraps
     args = parser.parse_args()
@@ -229,7 +229,7 @@ def parse_command_line():
     verbose = args.verbose
 
     if args.version:
-        print("{}".format(VERSION_STRING))
+        CmonitorToolVersion().print()
         sys.exit(0)
 
     if args.input is None:

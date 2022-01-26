@@ -20,7 +20,7 @@ import getopt
 import os
 import time
 from cmonitor_loader import CmonitorCollectorJsonLoader
-from cmonitor_version import VERSION_STRING
+from cmonitor_version import CmonitorToolVersion
 
 # =======================================================================================================
 # CONSTANTS
@@ -1992,7 +1992,7 @@ class CMonitorGraphGenerator:
                 str(datetime.timedelta(seconds=self.jheader["cmonitor"]["sample_interval_seconds"] * len(self.jdata))),
             ),
             ("Version (cmonitor_collector):", self.jheader["cmonitor"]["version"]),
-            ("Version (cmonitor_chart):", VERSION_STRING),
+            ("Version (cmonitor_chart):", CmonitorToolVersion().get()),
         ]
         self.output_page.appendHtmlTable("Monitoring Summary", monitoring_summary)
 
@@ -2119,7 +2119,7 @@ def parse_command_line():
     g_datetime = "UTC"
 
     if args.version:
-        print("{}".format(VERSION_STRING))
+        CmonitorToolVersion().print()
         sys.exit(0)
 
     if args.input is None:
@@ -2167,7 +2167,9 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # load the JSON
-    entry = CmonitorCollectorJsonLoader().load(config["input_json"], this_tool_version=VERSION_STRING, min_num_samples=2, be_verbose=verbose)
+    entry = CmonitorCollectorJsonLoader().load(
+        config["input_json"], this_tool_version=CmonitorToolVersion().get(), min_num_samples=2, be_verbose=verbose
+    )
     jheader = entry["header"]
     jdata = entry["samples"]
     if verbose:

@@ -19,7 +19,7 @@ import datetime
 import dateutil.parser as datetime_parser
 
 from cmonitor_loader import CmonitorCollectorJsonLoader
-from cmonitor_version import VERSION_STRING
+from cmonitor_version import CmonitorToolVersion
 
 # =======================================================================================================
 # GLOBALs
@@ -35,7 +35,7 @@ class CmonitorFilter:
         global verbose
         self.input_file = input_file
         self.output_file = output_file
-        self.json_data = CmonitorCollectorJsonLoader().load(self.input_file, this_tool_version=VERSION_STRING, be_verbose=verbose)
+        self.json_data = CmonitorCollectorJsonLoader().load(self.input_file, this_tool_version=CmonitorToolVersion().get(), be_verbose=verbose)
 
     def __write_output_file(self):
         global verbose
@@ -183,7 +183,7 @@ Examples:
     verbose = args.verbose
 
     if args.version:
-        print("{}".format(VERSION_STRING))
+        CmonitorToolVersion().print()
         sys.exit(0)
 
     if args.input is None:
