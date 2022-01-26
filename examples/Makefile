@@ -64,7 +64,9 @@ all:
 		echo "-- VALIDATING $${jsonExample/.json.gz/.html} ------------------------------------------------------" ; \
 		tidy -o /dev/null $${jsonExample/.json.gz/.html} 2>/dev/null && echo "$${jsonExample/.json.gz/.html} is valid HTML" || exit 11; \
 		echo "-- TOOL: cmonitor_statistics -------------------------------------------------" ; \
-		$(PYTHON_TOOLS_DIR)/statistics/cmonitor_statistics.py --input=$$jsonExample || exit 12; \
+		$(PYTHON_TOOLS_DIR)/statistics/cmonitor_statistics.py --output=/tmp/stats_$$jsonExample $$jsonExample || exit 12; \
+		echo "-- TOOL: cmonitor_filter -------------------------------------------------" ; \
+		$(PYTHON_TOOLS_DIR)/filter/cmonitor_filter.py --verbose --task_name=TEST --output=/tmp/filtered_$$jsonExample $$jsonExample || exit 12; \
 	done
 
 regen_all_example_jsons:

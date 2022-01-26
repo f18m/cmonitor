@@ -214,11 +214,15 @@ def parse_command_line():
     )
 
     # Optional arguments
-    # NOTE: we cannot add required=True to --input option otherwise it's impossible to invoke this tool with just --version
-    parser.add_argument("-i", "--input", help="The JSON file to analyze.", default="")
-    parser.add_argument("-o", "--output", help="The name of the output JSON file with statistics.", default="")
+    # NOTE: we cannot add required=True to --output option otherwise it's impossible to invoke this tool with just --version
+    parser.add_argument("-o", "--output", help="The name of the output JSON file with statistics.", default=None)
     parser.add_argument("-v", "--verbose", help="Be verbose.", action="store_true", default=False)
     parser.add_argument("-V", "--version", help="Print version and exit", action="store_true", default=False)
+    # NOTE: we use nargs='?' to make it possible to invoke this tool with just --version
+    parser.add_argument("input", nargs="?", help="The JSON file to analyze. If '-' the JSON is read from stdin.", default=None)
+    
+    if "COLUMNS" not in os.environ:
+        os.environ["COLUMNS"] = "120"  # avoid too many line wraps
     args = parser.parse_args()
 
     global verbose
@@ -228,17 +232,18 @@ def parse_command_line():
         print("{}".format(VERSION_STRING))
         sys.exit(0)
 
-    if args.input == "":
-        print("Please provide --input option to analyze some cmonitor_collector trace.")
+    if args.input is None:
+        print("Please provide the input file to process as positional argument")
+        parser.print_help()
         sys.exit(os.EX_USAGE)
 
-    abs_input_json = args.input
-    if not os.path.isabs(args.input):
-        abs_input_json = os.path.join(os.getcwd(), args.input)
+    if args.input != "-" and not os.path.isabs(args.input):
+        # take absolute path
+        args.input = os.path.join(os.getcwd(), args.input)
 
-    abs_ouput_file = args.output
-    if abs_ouput_file and not os.path.isabs(args.output):
-        abs_ouput_file = os.path.join(os.getcwd(), args.output)
+    if args.output is not None and not os.path.isabs(args.output):
+        # take absolute path
+        args.output = os.path.join(os.getcwd(), args.output)
 
     return {"input_json": args.input, "output_file": args.output}
 

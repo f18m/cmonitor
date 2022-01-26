@@ -140,24 +140,43 @@ class CmonitorFilter:
 # MAIN HELPERS
 # =======================================================================================================
 
+from argparse import RawTextHelpFormatter
+
 
 def parse_command_line():
     """Parses the command line and returns the configuration as dictionary object."""
     parser = argparse.ArgumentParser(
-        description="Utility to post-process data recorded by 'cmonitor_collector' and filter out samples based on different criteria."
+        description="Utility to post-process data recorded by 'cmonitor_collector' and filter out samples based on different criteria.",
+        epilog="""
+Examples:
+
+* Filter a recording by task name and create an HTML chart out of it
+    cmonitor_filter --input=cmonitor_collector_trace.json --task_name=myApp | cmonitor_chart --output=cmonitor_collector_trace.html -
+
+* Filter a recording by start time and get some statistics from remaining samples
+    cmonitor_filter --input=cmonitor_collector_trace.json --start_timestamp="2022-01-18T00:02:50" | cmonitor_statistics --output=cmonitor_collector_trace.json -
+
+""",
+        formatter_class=RawTextHelpFormatter,
     )
 
     # Optional arguments
-    # NOTE: we cannot add required=True to --input option otherwise it's impossible to invoke this tool with just --version
-    parser.add_argument("-i", "--input", help="The JSON file to analyze.", default=None)
-    parser.add_argument("-o", "--output", help="The name of the output filtered JSON file.", default=None)
-    parser.add_argument("--start_timestamp", help="Output only samples recorded AFTER the provided start timestamp (UTC required).", default=None)
-    parser.add_argument("--end_timestamp", help="Output only samples recorded BEFORE the provided end timestamp (UTC required).", default=None)
+    # NOTE: we cannot add required=True to --output option otherwise it's impossible to invoke this tool with just --version
     parser.add_argument(
-        "--task_name", help="Output only samples related to processes/threads (tasks) whose name matches the provided wildcard.", default=None
+        "-o", "--output", help="The name of the output filtered JSON file. If not provided the filtered JSON is printed on stdout.", default=None
+    )
+    parser.add_argument("--start_timestamp", help="Output only samples recorded AFTER the provided UTC start timestamp.", default=None)
+    parser.add_argument("--end_timestamp", help="Output only samples recorded BEFORE the provided UTC end timestamp.", default=None)
+    parser.add_argument(
+        "--task_name", help="Output only samples related to processes/threads (tasks) whose name contains the TASK_NAME string.", default=None
     )
     parser.add_argument("-v", "--verbose", help="Be verbose.", action="store_true", default=False)
     parser.add_argument("-V", "--version", help="Print version and exit", action="store_true", default=False)
+    # NOTE: we use nargs='?' to make it possible to invoke this tool with just --version
+    parser.add_argument("input", nargs="?", help="The JSON file to analyze.", default=None)
+
+    if "COLUMNS" not in os.environ:
+        os.environ["COLUMNS"] = "120"  # avoid too many line wraps
     args = parser.parse_args()
 
     global verbose
@@ -168,16 +187,18 @@ def parse_command_line():
         sys.exit(0)
 
     if args.input is None:
-        print("Please provide --input option to analyze some cmonitor_collector trace.")
+        print("Please provide the input file to process as positional argument")
+        parser.print_help()
         sys.exit(os.EX_USAGE)
 
-    abs_input_json = args.input
-    if not os.path.isabs(args.input):
-        abs_input_json = os.path.join(os.getcwd(), args.input)
+    if args.input != "-" and not os.path.isabs(args.input):
+        # take absolute path:
+        args.input = os.path.join(os.getcwd(), args.input)
 
-    abs_ouput_file = args.output
-    if abs_ouput_file and not os.path.isabs(args.output):
-        abs_ouput_file = os.path.join(os.getcwd(), args.output)
+    if args.output is not None and not os.path.isabs(args.output):
+        # take absolute path:
+        args.output = os.path.join(os.getcwd(), args.output)
+    # else: will send output to stdout
 
     if args.start_timestamp:
         try:
@@ -193,8 +214,8 @@ def parse_command_line():
             sys.exit(os.EX_USAGE)
 
     return {
-        "input_json": abs_input_json,
-        "output_file": abs_ouput_file,
+        "input_json": args.input,
+        "output_file": args.output,
         "start_timestamp": args.start_timestamp,
         "end_timestamp": args.end_timestamp,
         "task_name": args.task_name,

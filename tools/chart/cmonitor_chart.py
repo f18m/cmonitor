@@ -2104,6 +2104,9 @@ def parse_command_line():
     parser.add_argument("-V", "--version", help="Print version and exit", action="store_true", default=False)
     # NOTE: we use nargs='?' to make it possible to invoke this tool with just --version
     parser.add_argument("input", nargs="?", help="The JSON file to analyze. If '-' the JSON is read from stdin.", default=None)
+
+    if "COLUMNS" not in os.environ:
+        os.environ["COLUMNS"] = "120"  # avoid too many line wraps
     args = parser.parse_args()
 
     global verbose
@@ -2124,8 +2127,8 @@ def parse_command_line():
         parser.print_help()
         sys.exit(os.EX_USAGE)
 
-    # default value for output file
     if args.output is None:
+        # create a good default value for output file
         if args.input[-8:] == ".json.gz":
             args.output = args.input[:-8] + ".html"
         elif args.input[-5:] == ".json":
