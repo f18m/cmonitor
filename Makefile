@@ -22,7 +22,7 @@ all:
 test:
 	$(MAKE) -C collector test
 	$(MAKE) -C examples all
-	#if [ -d "examples" ]; then	$(MAKE) -C examples CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) ; fi
+	if [ -d "tools" ]; then	$(MAKE) -C tools test ; fi
 
 clean:
 	$(MAKE) -C collector clean

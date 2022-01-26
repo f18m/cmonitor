@@ -49,6 +49,11 @@ endif
 	@mkdir -p $(DESTDIR)/$(PYTHON3_SITELIB)/
 	cp -fv $(COMMON_CODE) $(DESTDIR)/$(PYTHON3_SITELIB)/
 
+test:
+	$(MAKE) -C filter    test
+	# FIXME:
+	# $(MAKE) -C chart         test
+	# $(MAKE) -C statistics    test
 
 # TOOLS
 
