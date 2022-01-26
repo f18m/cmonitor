@@ -41,3 +41,5 @@ collector/src/tests/fedora35-Linux-5.14.17-x86_64-systemd/result*.json
 collector/src/tests/fedora35-Linux-5.14.17-x86_64-systemd/sample*
 collector/src/tests/fedora35-Linux-5.14.17-x86_64-systemd/current-sample
 
+# more unit tests on tools
+tools/filter/tests/result.json
