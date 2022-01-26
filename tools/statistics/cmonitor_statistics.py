@@ -130,7 +130,8 @@ class CmonitorStatistics:
         pass
 
     def process(self, input_json: str, output_file: str) -> None:
-        json_data = CmonitorCollectorJsonLoader().load(input_json, this_tool_version=VERSION_STRING)
+        global verbose
+        json_data = CmonitorCollectorJsonLoader().load(input_json, this_tool_version=VERSION_STRING, be_verbose=verbose)
         if "samples" not in json_data:
             print("Unexpected JSON format. Aborting.")
             sys.exit(1)

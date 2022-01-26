@@ -2094,15 +2094,16 @@ def parse_command_line():
     )
 
     # Optional arguments
-    # NOTE: we cannot add required=True to --input option otherwise it's impossible to invoke this tool with just --version
-    parser.add_argument("-i", "--input", help="The JSON file to analyze.", default="")
+    # NOTE: we cannot add required=True to --output option otherwise it's impossible to invoke this tool with just --version
     parser.add_argument(
-        "-o", "--output", help="The name of the output HTML file. Defaults to the name of the input JSON with .html extension.", default=""
+        "-o", "--output", help="The name of the output HTML file. Defaults to the name of the input JSON with .html extension.", default=None
     )
     parser.add_argument("-t", "--top_scorer", help="Plot the N most-CPU-hungry processes/threads. Default is 20. Zero means plot all.", default=20)
     parser.add_argument("-u", "--utc", help="Plot data using UTC timestamps instead of local timezone", action="store_true", default=False)
     parser.add_argument("-v", "--verbose", help="Be verbose.", action="store_true", default=False)
     parser.add_argument("-V", "--version", help="Print version and exit", action="store_true", default=False)
+    # NOTE: we use nargs='?' to make it possible to invoke this tool with just --version
+    parser.add_argument("input", nargs="?", help="The JSON file to analyze. If '-' the JSON is read from stdin.", default=None)
     args = parser.parse_args()
 
     global verbose
@@ -2118,22 +2119,27 @@ def parse_command_line():
         print("{}".format(VERSION_STRING))
         sys.exit(0)
 
-    if args.input == "":
-        print("Please provide --input option (it is a required option)")
+    if args.input is None:
+        print("Please provide the input file to process as positional argument")
+        parser.print_help()
         sys.exit(os.EX_USAGE)
 
     # default value for output file
-    if args.output == "":
+    if args.output is None:
         if args.input[-8:] == ".json.gz":
             args.output = args.input[:-8] + ".html"
         elif args.input[-5:] == ".json":
             args.output = args.input[:-5] + ".html"
+        elif args.input == "-":
+            print("Please provide the output HTML filename with --output option when reading from stdin")
+            parser.print_help()
+            sys.exit(os.EX_USAGE)
         else:
             args.output = args.input + ".html"
 
-    abs_input_json = args.input
-    if not os.path.isabs(args.input):
-        abs_input_json = os.path.join(os.getcwd(), args.input)
+    if args.input != "-" and not os.path.isabs(args.input):
+        # take absolute path:
+        args.input = os.path.join(os.getcwd(), args.input)
 
     if args.top_scorer:
         try:
@@ -2143,7 +2149,7 @@ def parse_command_line():
             sys.exit(os.EX_USAGE)
 
     return {
-        "input_json": abs_input_json,
+        "input_json": args.input,
         "output_html": args.output,
         "top_scorer": args.top_scorer,
     }
@@ -2158,13 +2164,13 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # load the JSON
-    entry = CmonitorCollectorJsonLoader().load(config["input_json"], this_tool_version=VERSION_STRING, min_num_samples=2)
+    entry = CmonitorCollectorJsonLoader().load(config["input_json"], this_tool_version=VERSION_STRING, min_num_samples=2, be_verbose=verbose)
     jheader = entry["header"]
     jdata = entry["samples"]
     if verbose:
         print("Found %d data samples" % len(jdata))
 
-    print("Opening output file %s" % config["output_html"])
+    print("Opening output file [%s]" % config["output_html"])
     graph_generator = CMonitorGraphGenerator(config["output_html"], jheader, jdata)
     graph_generator.generate_html(config["top_scorer"])
 

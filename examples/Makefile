@@ -60,7 +60,7 @@ all:
 	export PYTHONPATH=$(PYTHON_COMMON_CODE) ; \
 	for jsonExample in $(EXAMPLE_JSON_FILES); do \
 		echo "-- TOOL: cmonitor_chart ------------------------------------------------------" ; \
-		$(PYTHON_TOOLS_DIR)/chart/cmonitor_chart.py --input=$$jsonExample --verbose || exit 10; \
+		$(PYTHON_TOOLS_DIR)/chart/cmonitor_chart.py $$jsonExample --verbose || exit 10; \
 		echo "-- VALIDATING $${jsonExample/.json.gz/.html} ------------------------------------------------------" ; \
 		tidy -o /dev/null $${jsonExample/.json.gz/.html} 2>/dev/null && echo "$${jsonExample/.json.gz/.html} is valid HTML" || exit 11; \
 		echo "-- TOOL: cmonitor_statistics -------------------------------------------------" ; \
