@@ -348,13 +348,12 @@ class GoogleChartsGraph:
         assert (len(self.button_label) == 0 and len(self.combobox_label) > 0) or (len(self.button_label) > 0 and len(self.combobox_label) == 0)
         self.combobox_entry = combobox_entry
         self.source_data = graph_source  # one of GRAPH_TYPE_BAREMETAL or GRAPH_TYPE_CGROUP
-        self.graph_type = graph_type
-        self.graph_title = graph_title
         self.stack_state = stack_state
+        self.graph_type = graph_type
+        self.graph_title = graph_title.strip() + (", STACKED graph" if self.stack_state else "")
         self.y_axes_titles = y_axes_titles
         self.columns_for_2nd_yaxis = columns_for_2nd_yaxis
         self.y_axes_max_value = y_axes_max_value
-        self.graph_title += ", STACKED graph" if self.stack_state else ""
 
         # generate new JS name for this graph
         global g_num_generated_charts
@@ -1337,7 +1336,7 @@ class CMonitorGraphGenerator:
     # Public API
     # =======================================================================================================
 
-    def generate_cgroup_topN_procs(self, numProcsToShow=20, thread_filter=""):
+    def generate_cgroup_topN_procs(self, numProcsToShow=20):
         # if process data was not collected, just return:
         if "cgroup_tasks" not in self.sample_template:
             return
@@ -1355,9 +1354,6 @@ class CMonitorGraphGenerator:
                     # parse data from JSON
                     entry = sample["cgroup_tasks"][process]
                     cmd = entry["cmd"]
-                    # filter by thread name if there is a filter
-                    if thread_filter and thread_filter not in cmd:
-                        continue
                     cputime = entry["cpu_usr_total_secs"] + entry["cpu_sys_total_secs"]
                     iobytes = entry["io_total_read"] + entry["io_total_write"]
                     membytes = entry["mem_rss_bytes"]  # take RSS, more realistic/useful compared to the "mem_virtual_bytes"
@@ -2057,7 +2053,7 @@ class CMonitorGraphGenerator:
         ]
         self.output_page.appendHtmlTable("About this", about_this, div_class="bottom_about_div")
 
-    def generate_html(self, top_scorer, thread_filter):
+    def generate_html(self, top_scorer):
         # baremetal stats:
         self.generate_baremetal_cpus()
         self.generate_baremetal_memory()
@@ -2068,7 +2064,7 @@ class CMonitorGraphGenerator:
         # cgroup stats:
         self.generate_cgroup_cpus()
         self.generate_cgroup_memory()
-        self.generate_cgroup_topN_procs(top_scorer, thread_filter)
+        self.generate_cgroup_topN_procs(top_scorer)
         self.generate_cgroup_network_traffic()
 
         # HTML HEAD -- generate all the JS code to draw all the graphs created so far
@@ -2091,102 +2087,65 @@ class CMonitorGraphGenerator:
 # =======================================================================================================
 
 
-def usage():
-    """Provides commandline usage"""
-    print("cmonitor_chart version {}".format(VERSION_STRING))
-    print("Utility to post-process data recorded by 'cmonitor_collector' and")
-    print("create a self-contained HTML file for visualizing that data.")
-    print("Typical usage:")
-    print("  %s --input=output_from_cmonitor_collector.json [--output=myreport.html]" % sys.argv[0])
-    print("Required parameters:")
-    print("  -i, --input=<file.json>    The JSON file to analyze.")
-    print("Main options:")
-    print("  -h, --help                 (this help)")
-    print("  -v, --verbose              Be verbose.")
-    print("  -o, --output=<file.html>   The name of the output HTML file. Defaults to the name of the JSON with .html extension.")
-    print("  -u, --utc                  Plot data using UTC timestamps instead of local timezone.")
-    print("  -t, --top-scorer=N         Plot the N most-CPU-hungry processes/threads. Default is 20. Zero means plot all.")
-    print("  -f, --filter=<tname>       Plot only the threads whose name contains the <tname> string. By default no filtering is done.")
-    print("      --version              Print version and exit.")
-    sys.exit(0)
-
-
 def parse_command_line():
     """Parses the command line and returns the configuration as dictionary object."""
-    try:
-        opts, remaining_args = getopt.getopt(
-            sys.argv[1:],
-            "hvvut",
-            [
-                "help",
-                "verbose",
-                "version",
-                "output=",
-                "input=",
-                "utc",
-                "top-scorer=",
-                "filter=",
-            ],
-        )
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
-        usage()  # will exit program
+    parser = argparse.ArgumentParser(
+        description="Utility to post-process data recorded by 'cmonitor_collector' and create a self-contained HTML file for visualizing that data."
+    )
+
+    # Optional arguments
+    # NOTE: we cannot add required=True to --input option otherwise it's impossible to invoke this tool with just --version
+    parser.add_argument("-i", "--input", help="The JSON file to analyze.", default="")
+    parser.add_argument(
+        "-o", "--output", help="The name of the output HTML file. Defaults to the name of the input JSON with .html extension.", default=""
+    )
+    parser.add_argument("-t", "--top_scorer", help="Plot the N most-CPU-hungry processes/threads. Default is 20. Zero means plot all.", default=20)
+    parser.add_argument("-u", "--utc", help="Plot data using UTC timestamps instead of local timezone", action="store_true", default=False)
+    parser.add_argument("-v", "--verbose", help="Be verbose.", action="store_true", default=False)
+    parser.add_argument("-V", "--version", help="Print version and exit", action="store_true", default=False)
+    args = parser.parse_args()
 
     global verbose
-    global g_datetime
-    input_json = ""
-    output_html = ""
-    top_scorer = 20
-    thread_filter = ""
-    for o, a in opts:
-        if o in ("-i", "--input"):
-            input_json = a
-        elif o in ("-o", "--output"):
-            output_html = a
-        elif o in ("-h", "--help"):
-            usage()
-        elif o in ("-v", "--verbose"):
-            verbose = True
-        elif o in ("-u", "--utc"):
-            # instead of default 'datetime' which means local timezone
-            g_datetime = "UTC"
-        elif o in ("-t", "--top-scorer"):
-            try:
-                top_scorer = int(a)
-            except:
-                print("Invalid argument for --top-scorer. Provide a number.")
-                sys.exit(1)
-        elif o in ("-f", "--filter"):
-            thread_filter = a
-        elif o in ("--version"):
-            print("{}".format(VERSION_STRING))
-            sys.exit(0)
-        else:
-            assert False, "unhandled option " + o + a
+    verbose = args.verbose
 
-    if input_json == "":
+    global g_datetime
+    # instead of default 'datetime' which means local timezone
+    # FIXME: currently the presence/absence of --utc flag is ignored... we need to add code that reads from the JSON header the timezone offset
+    #        and that applies the offset on top of the UTC timestamps
+    g_datetime = "UTC"
+
+    if args.version:
+        print("{}".format(VERSION_STRING))
+        sys.exit(0)
+
+    if args.input == "":
         print("Please provide --input option (it is a required option)")
         sys.exit(os.EX_USAGE)
 
     # default value for output file
-    if output_html == "":
-        if input_json[-8:] == ".json.gz":
-            output_html = input_json[:-8] + ".html"
-        elif input_json[-5:] == ".json":
-            output_html = input_json[:-5] + ".html"
+    if args.output == "":
+        if args.input[-8:] == ".json.gz":
+            args.output = args.input[:-8] + ".html"
+        elif args.input[-5:] == ".json":
+            args.output = args.input[:-5] + ".html"
         else:
-            output_html = input_json + ".html"
+            args.output = args.input + ".html"
 
-    abs_input_json = input_json
-    if not os.path.isabs(input_json):
-        abs_input_json = os.path.join(os.getcwd(), input_json)
+    abs_input_json = args.input
+    if not os.path.isabs(args.input):
+        abs_input_json = os.path.join(os.getcwd(), args.input)
+
+    if args.top_scorer:
+        try:
+            args.top_scorer = int(args.top_scorer)
+        except:
+            print(f"Please provide an integer number to --top_scorer option instead of {args.top_scorer}")
+            sys.exit(os.EX_USAGE)
 
     return {
-        "input_json": input_json,
-        "output_html": output_html,
-        "top_scorer": top_scorer,
-        "thread_filter": thread_filter,
+        "input_json": abs_input_json,
+        "output_html": args.output,
+        "top_scorer": args.top_scorer,
     }
 
 
@@ -2207,7 +2166,7 @@ if __name__ == "__main__":
 
     print("Opening output file %s" % config["output_html"])
     graph_generator = CMonitorGraphGenerator(config["output_html"], jheader, jdata)
-    graph_generator.generate_html(config["top_scorer"], config["thread_filter"])
+    graph_generator.generate_html(config["top_scorer"])
 
     end_time = time.time()
     print("Completed processing of input JSON file of %d samples in %.3fsec. HTML output file is ready." % (len(jdata), end_time - start_time))
