@@ -833,13 +833,18 @@ function reset_combo_boxes(combobox_to_exclude_from_reset) {
             for field_name in ["scaling_min_freq_mhz", "scaling_max_freq_mhz", "bogomips", "cache_size_kb"]:
                 cpudict[field_name] = set()
                 for cpu_name in jheader["cpuinfo"].keys():
-                    cpudict[field_name].add(int(jheader["cpuinfo"][cpu_name][field_name]))
+                    cpuinfo_from_header = jheader["cpuinfo"][cpu_name]
+                    if field_name in cpuinfo_from_header:  # these fields are optionals: cmonitor_collector may not be able to populate them
+                        cpudict[field_name].add(int(cpuinfo_from_header[field_name]))
 
             # now convert each dictionary entry from a set() to a simple string:
             for field_name in cpudict.keys():
                 the_list = [str(v) for v in cpudict[field_name]]
                 # join by comma each set() inside the dict:
-                cpudict[field_name] = ",".join(the_list)
+                if len(the_list) > 0:
+                    cpudict[field_name] = ",".join(the_list)
+                else:
+                    cpudict[field_name] = "Not Available"
 
             return cpudict
 

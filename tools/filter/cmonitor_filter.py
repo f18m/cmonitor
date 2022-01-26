@@ -3,7 +3,7 @@
 #
 # cmonitor_filter.py
 #
-# Author: Francesco Montorsi
+# Author: Francesco Montorsi, Marco Zizzi
 # Created: January 2022
 #
 
