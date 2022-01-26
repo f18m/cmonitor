@@ -14,6 +14,9 @@ Source0:        cmonitor-tools-__RPM_VERSION__.tar.gz
 # IMPORTANT: python3-devel provide macros like %{python3_sitelib}
 BuildRequires:  gcc-c++, make, python3-devel
 
+# cmonitor_filter uses dateutil library to parse dates:
+Requires: python-dateutil
+
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
 # of debug info files apparently:
 %global debug_package %{nil}
