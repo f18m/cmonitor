@@ -17,9 +17,7 @@ SYMLINKS = \
 	chart/cmonitor_chart \
 	filter/cmonitor_filter \
 	statistics/cmonitor_statistics
-COMMON_CODE = \
-	common-code/cmonitor_loader.py \
-	common-code/cmonitor_version.py
+COMMON_CODE = $(wildcard common-code/*.py)
 
 #
 # BUILD TARGETS
