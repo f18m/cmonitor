@@ -5,7 +5,7 @@
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/../../..)
 
-CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 -DVERSION_STRING=\"$(RPM_VERSION)-$(RPM_RELEASE)\"
+CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 -fPIC -DVERSION_STRING=\"$(RPM_VERSION)-$(RPM_RELEASE)\"
 
 ifeq ($(DEBUG),1)
 CXXFLAGS += -g -O0    #useful for debugging

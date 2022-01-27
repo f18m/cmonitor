@@ -18,7 +18,7 @@ SYMLINKS = \
 	filter/cmonitor_filter \
 	statistics/cmonitor_statistics
 COMMON_CODE = \
-	common-code/cmonitor_loader.py \
+	$(wildcard common-code/*.py) \
 	common-code/cmonitor_version.py
 
 #
@@ -89,6 +89,7 @@ srpm_tarball:
 		mv cmonitor cmonitor-tools-$(CMONITOR_VERSION) && \
 		sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec && \
 		sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec && \
+		sed -i 's@__LAST_COMMIT_HASH__@$(CMONITOR_LAST_COMMIT_HASH)@g' cmonitor-tools-$(CMONITOR_VERSION)/tools/spec/tools.spec && \
 		tar cvzf $(RPM_TMP_DIR)/cmonitor-tools-$(CMONITOR_VERSION).tar.gz cmonitor-tools-$(CMONITOR_VERSION)/*
 #
 # This target is used by Fedora COPR to automatically produce RPMs for lots of distros.

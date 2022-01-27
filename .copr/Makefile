@@ -25,11 +25,14 @@ COPR_PACKAGE_NAMES_SUFFIX:=1.8-4 2.0-0 2.2-0 latest
 #        make -f /home/fmontorsi/git/cmonitor/.copr/Makefile srpm outdir=/tmp/cmonitor-tools-rpm
 #
 # NOTE: 
-# https://docs.pagure.org/copr.copr/user_documentation.html#how-long-do-you-keep-the-builds
+# see https://docs.pagure.org/copr.copr/user_documentation.html#how-long-do-you-keep-the-builds
+#     https://pagure.io/copr/copr/issue/2050
 #
 srpm:
 	@echo "Env variables in this COPR build:"
-	export
+	@export
+	@echo "Installing git client:"
+	dnf -y install git
 	@echo "Running srpm target from .copr/Makefile"
 	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
 	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
@@ -42,6 +45,17 @@ ifndef COPR_TOKEN
 	@exit 1
 endif
 	for pkgname in $(COPR_PACKAGE_NAMES_SUFFIX); do \
+		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-collector-$${pkgname}/ ; \
+		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-tools-$${pkgname}/ ; \
+	done
+
+rebuild_latest_copr_packages:
+	# IMPORTANT: take the COPR_TOKEN from the webpage: https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/integrations/
+ifndef COPR_TOKEN
+	@echo "*** ERROR: please call this makefile supplying explicitly the COPR_TOKEN variable"
+	@exit 1
+endif
+	for pkgname in latest; do \
 		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-collector-$${pkgname}/ ; \
 		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-tools-$${pkgname}/ ; \
 	done

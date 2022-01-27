@@ -11,7 +11,8 @@ DEFS=-DVERSION_STRING=\"$(CMONITOR_VERSION)-$(CMONITOR_RELEASE)\" -DCMONITOR_LAS
 # IMPORTANT: we do require c++11, i.e. GCC 4.8.1 or higher;
 #            Centos7 which is one of the oldest-supported distributions provides gcc 4.8.5 so we
 #            cannot move to e.g. c++14/17/20 yet
-CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 $(DEFS)
+# IMPORTANT#2: -fPIC is required to build on fedora-rawhide
+CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 -fPIC $(DEFS)
 
 ifeq ($(DEBUG),1)
 CXXFLAGS += -g -O0    #useful for debugging
