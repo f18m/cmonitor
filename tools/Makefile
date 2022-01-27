@@ -17,6 +17,9 @@ SYMLINKS = \
 	chart/cmonitor_chart \
 	filter/cmonitor_filter \
 	statistics/cmonitor_statistics
+
+# cmonitor_version.py has to be listed explicitly because it does not exist yet
+# when the $(wilcard) runs (after a clean checkout)
 COMMON_CODE = \
 	$(wildcard common-code/*.py) \
 	common-code/cmonitor_version.py
