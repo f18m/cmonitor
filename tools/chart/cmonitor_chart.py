@@ -49,7 +49,6 @@ TOOLTIP_DATEFORMAT = "HH:mm:ss.SSS z"
 # =======================================================================================================
 
 verbose = False
-g_num_generated_charts = 1
 g_next_graph_need_stacking = 0
 g_datetime = "localtz"  # can be changed to "UTC" with --utc; FIXME currently we always use just UTC, never localtz...
 
@@ -330,6 +329,7 @@ class GoogleChartsGraph:
 
     def __init__(
         self,
+        js_name=None,
         data=None,
         button_label="",
         combobox_label="",
@@ -354,11 +354,10 @@ class GoogleChartsGraph:
         self.y_axes_titles = y_axes_titles
         self.columns_for_2nd_yaxis = columns_for_2nd_yaxis
         self.y_axes_max_value = y_axes_max_value
+        self.js_name = js_name
 
-        # generate new JS name for this graph
-        global g_num_generated_charts
-        self.js_name = "graph" + str(g_num_generated_charts)
-        g_num_generated_charts += 1
+    def setJSName(self, js_name):
+        self.js_name = js_name
 
     def __genGoogleChartJS_AreaChart(self):
         """After the JavaScript line graph data is output, the data is terminated and the graph options set"""
@@ -539,9 +538,16 @@ class HtmlOutputPage:
         self.outfile = outfile
         self.file = open(outfile, "w")  # Open the output file
         self.graphs = []
+        self.num_generated_charts = 1
 
     def appendGoogleChart(self, chart):
         assert isinstance(chart, GoogleChartsGraph)
+
+        # set the unique name for this page
+        chart.setJSName("graph" + str(self.num_generated_charts))
+        self.num_generated_charts += 1
+
+        # save the graph for later
         self.graphs.append(chart)
 
     def writeHtmlHead(self):
