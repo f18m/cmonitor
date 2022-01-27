@@ -25,11 +25,14 @@ COPR_PACKAGE_NAMES_SUFFIX:=1.8-4 2.0-0 2.2-0 latest
 #        make -f /home/fmontorsi/git/cmonitor/.copr/Makefile srpm outdir=/tmp/cmonitor-tools-rpm
 #
 # NOTE: 
-# https://docs.pagure.org/copr.copr/user_documentation.html#how-long-do-you-keep-the-builds
+# see https://docs.pagure.org/copr.copr/user_documentation.html#how-long-do-you-keep-the-builds
+#     https://pagure.io/copr/copr/issue/2050
 #
 srpm:
 	@echo "Env variables in this COPR build:"
-	export
+	@export
+	@echo "Installing git client:"
+	dnf -y install git
 	@echo "Running srpm target from .copr/Makefile"
 	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
 	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
