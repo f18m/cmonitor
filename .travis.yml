@@ -15,6 +15,7 @@ addons:
     - libbenchmark-dev
     - libfmt-dev
     - tidy
+    - git
 
 install: pip install j2cli
 

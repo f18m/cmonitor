@@ -45,3 +45,14 @@ endif
 		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-collector-$${pkgname}/ ; \
 		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-tools-$${pkgname}/ ; \
 	done
+
+rebuild_latest_copr_packages:
+	# IMPORTANT: take the COPR_TOKEN from the webpage: https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/integrations/
+ifndef COPR_TOKEN
+	@echo "*** ERROR: please call this makefile supplying explicitly the COPR_TOKEN variable"
+	@exit 1
+endif
+	for pkgname in latest; do \
+		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-collector-$${pkgname}/ ; \
+		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-tools-$${pkgname}/ ; \
+	done

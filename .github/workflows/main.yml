@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install deps
-      run: sudo apt install -y libgtest-dev libbenchmark-dev libfmt-dev tidy python3 python3-dateutil
+      run: sudo apt install -y libgtest-dev libbenchmark-dev libfmt-dev tidy python3 python3-dateutil git
     - name: make all
       run: make
     - name: make test
