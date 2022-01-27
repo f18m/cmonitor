@@ -16,7 +16,7 @@ include $(ROOT_DIR)/Constants.mk
 all:
 	$(MAKE) -C src \
 		DISABLE_UNIT_TESTS_BUILD=$(DISABLE_UNIT_TESTS_BUILD) DISABLE_BENCHMARKS_BUILD=$(DISABLE_BENCHMARKS_BUILD) \
-		FMTLIB_MAJOR_VER=$(FMTLIB_MAJOR_VER)
+		FMTLIB_MAJOR_VER=$(FMTLIB_MAJOR_VER) CMONITOR_LAST_COMMIT_HASH=$(CMONITOR_LAST_COMMIT_HASH)
 
 test: 
 	$(MAKE) -C src test
@@ -63,6 +63,7 @@ srpm_tarball:
 		mv cmonitor cmonitor-collector-$(CMONITOR_VERSION) && \
 		sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' cmonitor-collector-$(CMONITOR_VERSION)/collector/spec/collector.spec && \
 		sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' cmonitor-collector-$(CMONITOR_VERSION)/collector/spec/collector.spec && \
+		sed -i 's@__LAST_COMMIT_HASH__@$(CMONITOR_LAST_COMMIT_HASH)@g' cmonitor-collector-$(CMONITOR_VERSION)/collector/spec/collector.spec && \
 		tar cvzf $(RPM_TMP_DIR)/cmonitor-collector-$(CMONITOR_VERSION).tar.gz cmonitor-collector-$(CMONITOR_VERSION)/*
 #
 # This target is used by Fedora COPR to automatically produce RPMs for lots of distros.

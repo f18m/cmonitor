@@ -61,6 +61,7 @@ common-code/cmonitor_version.py: common-code/cmonitor_version.py.j2
 	cp common-code/cmonitor_version.py.j2 common-code/cmonitor_version.py
 	sed -i 's@__RPM_VERSION__@$(CMONITOR_VERSION)@g' common-code/cmonitor_version.py
 	sed -i 's@__RPM_RELEASE__@$(CMONITOR_RELEASE)@g' common-code/cmonitor_version.py
+	sed -i 's@__LAST_COMMIT_HASH__@$(CMONITOR_LAST_COMMIT_HASH)@g' common-code/cmonitor_version.py
 
 $(TOOLS): common-code/cmonitor_version.py
 

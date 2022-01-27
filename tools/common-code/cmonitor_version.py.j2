@@ -4,12 +4,14 @@
 # CONSTANTS
 # =======================================================================================================
 
+
 class CmonitorToolVersion:
     def __init__(self):
         self.version_string = "__RPM_VERSION__-__RPM_RELEASE__"
+        self.commit_hash = "__LAST_COMMIT_HASH__"
 
     def print(self):
-        print(self.version_string)
+        print(f"{self.version_string} (commit {self.commit_hash})")
 
     def get(self):
         return self.version_string

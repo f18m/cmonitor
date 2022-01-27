@@ -562,7 +562,7 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
 
             // help
             case 'v':
-                printf("cmonitor_collector version: %s\n", VERSION_STRING);
+                printf("%s (commit %s)\n", VERSION_STRING, CMONITOR_LAST_COMMIT_HASH);
                 exit(0);
                 break;
             case 'd':

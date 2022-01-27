@@ -12,8 +12,14 @@ RPM_TARBALL_DIR:=/tmp/cmonitor/tarball
 # IMPORTANT: other places where the version must be updated:
 #  - debian/changelog             -> to release a new Ubuntu package
 # See also https://github.com/f18m/cmonitor/wiki/new-release
-CMONITOR_VERSION:=2.3
+CMONITOR_VERSION:=2.3.0
 CMONITOR_RELEASE:=0
+
+ifeq ($(CMONITOR_LAST_COMMIT_HASH),)
+# when building RPMs we need to provide this value from inside the .spec file,
+# so it gets passed to GNU make externally. In all other cases, we can ask git:
+CMONITOR_LAST_COMMIT_HASH:=$(shell git rev-parse HEAD)
+endif
 
 ifeq ($(DOCKER_LATEST),1)
 DOCKER_TAG=latest
@@ -26,4 +32,4 @@ ifeq ($(FMTLIB_MAJOR_VER),)
 FMTLIB_MAJOR_VER:=6
 endif
 
-$(info CMONITOR_VERSION version is $(CMONITOR_VERSION), CMONITOR_RELEASE release is $(CMONITOR_RELEASE), DOCKER_TAG is $(DOCKER_TAG))
+$(info CMONITOR_VERSION-RELEASE version is $(CMONITOR_VERSION)-$(CMONITOR_RELEASE), last commit hash is $(CMONITOR_LAST_COMMIT_HASH), DOCKER_TAG is $(DOCKER_TAG))

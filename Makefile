@@ -16,8 +16,8 @@ include $(ROOT_DIR)/Constants.mk
 all:
 	# reason why we have so many "if directory exists" is that during COPR builds, 
 	# the source RPM tarball will contain only a subset of the folders
-	if [ -d "collector" ]; then	$(MAKE) -C collector CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) DOCKER_TAG=$(DOCKER_TAG) ; fi
-	if [ -d "tools" ]; then	$(MAKE) -C tools CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) ; fi
+	if [ -d "collector" ]; then	$(MAKE) -C collector CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) CMONITOR_LAST_COMMIT_HASH=$(CMONITOR_LAST_COMMIT_HASH) DOCKER_TAG=$(DOCKER_TAG) ; fi
+	if [ -d "tools" ]; then	$(MAKE) -C tools CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) CMONITOR_LAST_COMMIT_HASH=$(CMONITOR_LAST_COMMIT_HASH) ; fi
 
 test:
 	$(MAKE) -C collector test
