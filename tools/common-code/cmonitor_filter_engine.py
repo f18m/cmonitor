@@ -16,9 +16,6 @@ import datetime
 # which is not available on Centos7
 import dateutil.parser as datetime_parser
 
-from cmonitor_loader import CmonitorCollectorJsonLoader
-from cmonitor_version import CmonitorToolVersion
-
 # =======================================================================================================
 # CmonitorFilterEngine
 # =======================================================================================================
