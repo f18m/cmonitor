@@ -5,11 +5,16 @@ include $(ROOT_DIR)/Constants.mk
 
 $(info Launching COPR build from directory: $(COPR_CURRENT_SUBDIRECTORY))
 
+COPR_PACKAGE_NAMES_SUFFIX:=1.8-4 2.0-0 2.2-0 latest
+
 #
 # This target is used by Fedora COPR to automatically produce RPMs for lots of distros.
 # COPR will invoke this target like that:
 #   make -f <cloned_repodir>/.copr/Makefile srpm outdir="<outdir>" spec="<spec_path>"
 # See https://docs.pagure.org/copr.copr/user_documentation.html#make-srpm.
+#
+# For issues / questions, see
+#     https://pagure.io/copr/copr
 #
 # This Makefile is currently invoked twice:
 # 1) from "collector" subdirectory; test by running
@@ -18,6 +23,10 @@ $(info Launching COPR build from directory: $(COPR_CURRENT_SUBDIRECTORY))
 # 2) from "tools" subdirectory; test by running
 #        cd /home/fmontorsi/git/cmonitor/tools
 #        make -f /home/fmontorsi/git/cmonitor/.copr/Makefile srpm outdir=/tmp/cmonitor-tools-rpm
+#
+# NOTE: 
+# https://docs.pagure.org/copr.copr/user_documentation.html#how-long-do-you-keep-the-builds
+#
 srpm:
 	@echo "Env variables in this COPR build:"
 	export
@@ -25,3 +34,14 @@ srpm:
 	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
 	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
 	$(MAKE) -C $(COPR_CURRENT_SUBDIRECTORY) srpm
+
+rebuild_all_copr_packages:
+	# IMPORTANT: take the COPR_TOKEN from the webpage: https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/integrations/
+ifndef COPR_TOKEN
+	@echo "*** ERROR: please call this makefile supplying explicitly the COPR_TOKEN variable"
+	@exit 1
+endif
+	for pkgname in $(COPR_PACKAGE_NAMES_SUFFIX); do \
+		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-collector-$${pkgname}/ ; \
+		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-tools-$${pkgname}/ ; \
+	done

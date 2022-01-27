@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>Monitoring data for stress (Redis docker)</title>
+  <title>stress (Redis docker)</title>
   <style>
      html,body { height:85%; }
      body { background-color: #eaeaea; }
@@ -568,7 +568,7 @@ function set_main_chart_div_as_visible() {
   </script>
 </head>
 <body>
-  <h1>Monitoring data collected from <span id="monitored_system_span">stress (Redis docker)</span></h1>
+  <h1>Data collected from <span id="monitored_system_span">stress (Redis docker)</span></h1>
   <div id="button_div">
   <table id="button_table" summary="buttons to visualize charts">
   <tr>
@@ -669,6 +669,8 @@ function set_main_chart_div_as_visible() {
     <tr><td class='config_key'>Username</td><td class='config_val'>root</td></tr>
     <tr><td class='config_key'>Userid</td><td class='config_val'>0</td></tr>
     <tr><td class='config_key'>Pid</td><td class='config_val'>3996504</td></tr>
+    <tr><td colspan='2' class='config_sectioncol'>Custom Metadata</td></tr>
+    <tr><td class='config_key'>Cmonitor chart name</td><td class='config_val'>stress (Redis docker)</td></tr>
   </table>
   </div>
   <div class='bottom_div'>
@@ -682,7 +684,7 @@ function set_main_chart_div_as_visible() {
       </ul></td><td><ul>
       <li>Total time sampled (hh:mm:ss): <span class='bottom_table_val'>0:00:15</span></li>
       <li>Version (cmonitor_collector): <span class='bottom_table_val'>2.2-0</span></li>
-      <li>Version (cmonitor_chart): <span class='bottom_table_val'>2.2-0</span></li>
+      <li>Version (cmonitor_chart): <span class='bottom_table_val'>2.3-0</span></li>
     </ul></td></tr>
     </table>
   </div>
@@ -698,6 +700,7 @@ function set_main_chart_div_as_visible() {
       <li>Monitored CPUs: <span class='bottom_table_val'>2</span></li>
       <li>Monitored Disks: <span class='bottom_table_val'>0</span></li>
       <li>Monitored Network Devices: <span class='bottom_table_val'>0</span></li>
+      <li>Monitored NUMA Nodes: <span class='bottom_table_val'>0,1</span></li>
     </ul></td></tr>
     </table>
   </div>

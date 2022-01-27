@@ -202,7 +202,7 @@ struct option_extended {
         "Use '0' to turn off filtering by score." },
     { "Data sampling options", &g_long_opts[8],
         "Allows to specify custom metadata key:value pairs that will be saved into the JSON output (if saving data\n"
-        "locally) under the 'header.custom_metadata' path. See usage examples below.\n" },
+        "locally) under the 'header.custom_metadata' path. Can be used multiple times. See usage examples below.\n" },
 
     // Options to save data locally
     { "Options to save data locally", &g_long_opts[9],
@@ -383,6 +383,7 @@ void CMonitorCollectorApp::print_help()
     std::cerr << "\tcmonitor_collector --allow-multiple-instances --num-samples=until-cgroup-alive " << std::endl;
     std::cerr << "\t\t\t--cgroup-name=docker/$DOCKER_ID --custom-metadata='cmonitor_chart_name:$DOCKER_NAME'"
               << std::endl;
+    std::cerr << "\t\t\t--custom-metadata='additional_metadata:some-data'" << std::endl;
     std::cerr << "    3) Use the defaults (-s 60, collect forever), saving to custom file in background:" << std::endl;
     std::cerr << "\tcmonitor_collector --output-filename=my_server_today" << std::endl;
     std::cerr << "    4) Crontab entry:" << std::endl;
@@ -561,7 +562,7 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
 
             // help
             case 'v':
-                printf("cmonitor_collector version: %s\n", VERSION_STRING);
+                printf("%s (commit %s)\n", VERSION_STRING, CMONITOR_LAST_COMMIT_HASH);
                 exit(0);
                 break;
             case 'd':

@@ -7,11 +7,12 @@ collector/bin/*
 examples/*/cmonitor_collector
 examples/*/example-load.sh
 
+# pycache
+tools/common-code/__pycache__/
+tools/statistics/__pycache__/
+
 # autogen from jinja2 templates
-tools/chart/cmonitor_chart
-tools/chart/cmonitor_chart.py
-tools/statistics/cmonitor_statistics
-tools/statistics/cmonitor_statistics.py
+tools/common-code/cmonitor_version.py
 
 # ides
 .cproject
@@ -40,3 +41,5 @@ collector/src/tests/fedora35-Linux-5.14.17-x86_64-systemd/result*.json
 collector/src/tests/fedora35-Linux-5.14.17-x86_64-systemd/sample*
 collector/src/tests/fedora35-Linux-5.14.17-x86_64-systemd/current-sample
 
+# more unit tests on tools
+tools/filter/tests/result.json
