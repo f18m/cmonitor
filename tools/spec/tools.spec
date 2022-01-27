@@ -37,10 +37,6 @@ rm -rf %{buildroot}
 %make_install -C tools BINDIR=%{_bindir} PYTHON3_SITELIB=%{python3_sitelib}
 
 %files
-%{_bindir}/cmonitor_chart
-%{_bindir}/cmonitor_filter
-%{_bindir}/cmonitor_statistics
-%{python3_sitelib}/cmonitor_loader.py
-%{python3_sitelib}/cmonitor_version.py
-%{python3_sitelib}//__pycache__/cmonitor_loader.*.pyc
-%{python3_sitelib}//__pycache__/cmonitor_version.*.pyc
+%{_bindir}/cmonitor_*
+%{python3_sitelib}/cmonitor_*.py
+%{python3_sitelib}//__pycache__/cmonitor_*.*.pyc
