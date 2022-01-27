@@ -34,7 +34,9 @@ containers in real-time.
 
 %install
 rm -rf %{buildroot}
-%make_install -C tools BINDIR=%{_bindir} PYTHON3_SITELIB=%{python3_sitelib}
+# this command invokes the root Makefile of cmonitor repo, from inside the source tarball
+# produced by COPR that will pass all the options listed here to tools/Makefile
+%make_install -C tools BINDIR=%{_bindir} PYTHON3_SITELIB=%{python3_sitelib} CMONITOR_LAST_COMMIT_HASH=__LAST_COMMIT_HASH__
 
 %files
 %{_bindir}/cmonitor_*
