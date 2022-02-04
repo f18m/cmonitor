@@ -11,6 +11,8 @@ from cmonitor_version import CmonitorToolVersion
 
 # fmt: off
 test_list = [
+
+    # run0
     {
         "input_file": "docker-collecting-docker-stats.json", 
         "expected_process_success": True,
@@ -48,6 +50,8 @@ test_list = [
             'unit': ''
         }
     },
+
+    # run1
     {
         "input_file": "toosmall.json", 
         "expected_process_success": False,
