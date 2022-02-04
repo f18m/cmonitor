@@ -4,3 +4,8 @@ PYTHON_COMMON_CODE=$(ROOT_DIR)/tools/common-code
 run:
 	export PYTHONPATH=$(PYTHON_COMMON_CODE) ; \
 		./cmonitor_statistics.py $(ARGS)
+
+test:
+	cd tests && \
+		export PYTHONPATH=$(PYTHON_COMMON_CODE) && \
+		pytest --capture=no -vv

@@ -53,10 +53,10 @@ endif
 	cp -fv $(COMMON_CODE) $(DESTDIR)/$(PYTHON3_SITELIB)/
 
 test:
-	$(MAKE) -C filter    test
+	$(MAKE) -C filter        test
+	$(MAKE) -C statistics    test
 	# FIXME:
 	# $(MAKE) -C chart         test
-	# $(MAKE) -C statistics    test
 
 # TOOLS
 
