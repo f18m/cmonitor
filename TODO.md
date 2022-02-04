@@ -18,7 +18,6 @@
 - Add 'blkio' cgroup data plotting once available
 - Plot CPU "counters" JSON section
 - rewrite in pytest the cmonitor_filter unit tests
-- remove all sys.exit() code from "common-code" part: that's not OK for library use
 - publish Pypi package
 
 ## TODO influxdb/grafana

@@ -123,14 +123,14 @@ if __name__ == "__main__":
     config = parse_command_line()
 
     json_data = CmonitorCollectorJsonLoader().load(config["input_json"], this_tool_version=CmonitorToolVersion().get(), be_verbose=verbose)
-    filter_engine = CmonitorFilterEngine(json_data, config["output_file"], be_verbose=verbose)
+    filter_engine = CmonitorFilterEngine(json_data, be_verbose=verbose)
 
     if config["start_timestamp"] or config["end_timestamp"]:
         filter_engine.filter_by_time(config["start_timestamp"], config["end_timestamp"])
-        filter_engine.write_output_file()
+        filter_engine.write_output_file(config["output_file"])
     elif config["task_name"]:
         filter_engine.filter_by_task_name(config["task_name"])
-        filter_engine.write_output_file()
+        filter_engine.write_output_file(config["output_file"])
     else:
         print("Please provide at least one filter criteria using CLI options. Use --help for more info.")
         sys.exit(os.EX_USAGE)

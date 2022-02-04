@@ -4,7 +4,7 @@
     Verify the behavior of CmonitorStatisticsEngine
 """
 
-import pytest
+import pytest, sys
 from cmonitor_statistics_engine import CmonitorStatisticsEngine
 from cmonitor_loader import CmonitorCollectorJsonLoader
 from cmonitor_version import CmonitorToolVersion
@@ -66,6 +66,15 @@ def test_outputCmonitorStatisticsEngine(testrun_idx):
     global test_list
     testrun = test_list[testrun_idx]
 
+    # IMPORTANT: Python difference:
+    if sys.version_info[0] < 3:
+        raise Exception("Must be using Python 3")
+    if sys.version_info[1] < 8:
+        if testrun_idx == 0:
+            # as documented https://docs.python.org/3/library/statistics.html#statistics.mode there's a different
+            # implementation for mode() starting from Python 3.8 -- older Python versions produce "no unique mode"
+            testrun["expected_cpu"]["mode"] = "no unique mode"
+
     # load test input JSON
     json_data = CmonitorCollectorJsonLoader().load(testrun["input_file"], this_tool_version=CmonitorToolVersion().get(), be_verbose=True)
 
@@ -79,7 +88,7 @@ def test_outputCmonitorStatisticsEngine(testrun_idx):
     if actual_success:
         # validate the dictionary produced
         actual_output = engine.get_statistics_dict()
-        print(actual_output)
+        # print(actual_output) -- just for debug
         assert actual_output["num_samples_analyzed"] == testrun["expected_num_samples"]
         assert actual_output["statistics"]["cpu"] == testrun["expected_cpu"]
         assert actual_output["statistics"]["cpu_throttle"] == testrun["expected_cpu_throttle"]

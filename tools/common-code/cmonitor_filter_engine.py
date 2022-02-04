@@ -20,33 +20,37 @@ import dateutil.parser as datetime_parser
 # CmonitorFilterEngine
 # =======================================================================================================
 class CmonitorFilterEngine:
-    def __init__(self, json_data, output_file=None, be_verbose=False) -> None:
-        self.output_file = output_file
+    def __init__(self, json_data, be_verbose=False) -> None:
         self.json_data = json_data
         self.verbose = be_verbose
 
-    def write_output_file(self):
+    def get_filtered_data(self):
+        return self.json_data
+
+    def write_output_file(self, output_file):
         """
         Write the filtered JSON to a file or stdout
         """
         n_samples = len(self.json_data["samples"])
-        if self.output_file:  # use has provided an output file... dump on disk:
-            dest_dir = os.path.dirname(self.output_file)
+        if output_file:  # user has provided an output file... dump on disk:
+            dest_dir = os.path.dirname(output_file)
             if not os.path.exists(dest_dir):
                 os.makedirs(dest_dir)
-            with open(self.output_file, "w") as f:
+            with open(output_file, "w") as f:
                 json.dump(self.json_data, f)
             if self.verbose:
-                print(f"Wrote {n_samples} samples into {self.output_file}")
-        else:
+                print(f"Wrote {n_samples} samples into {output_file}")
+        else:  # write on stdout
             print(json.dumps(self.json_data))
             if self.verbose:
                 print(f"Wrote {n_samples} samples on standard output")
 
-    def filter_by_time(self, start_timestamp=None, end_timestamp=None):
+    def filter_by_time(self, start_timestamp=None, end_timestamp=None) -> int:
         """
         Filter samples outside the given interval.
-        One of the two timestamps can be None.
+        One of the two timestamps (start or end) can be None to indicate no filtering should
+        be done on the start or end time.
+        Returns the number of samples FILTERED OUT.
         """
 
         assert start_timestamp is None or isinstance(start_timestamp, datetime.datetime)
@@ -86,7 +90,7 @@ class CmonitorFilterEngine:
             for sample in self.json_data["samples"]:
                 _filter_by_both_starttime_endtime(sample)
             if self.verbose:
-                print(f"Filtering samples by start and end timestamp [{start_timestamp}-{end_timestamp}]. Removed {n_removed_samples} samples.")
+                print(f"Filtering samples by start and end timestamp [{start_timestamp}]-[{end_timestamp}]. Removed {n_removed_samples} samples.")
         elif start_timestamp:
             for sample in self.json_data["samples"]:
                 _filter_only_by_starttime(sample)
@@ -100,9 +104,12 @@ class CmonitorFilterEngine:
         else:
             assert False
 
-    def filter_by_task_name(self, task_name: str):
+        return n_removed_samples
+
+    def filter_by_task_name(self, task_name: str) -> int:
         """
-        Filter tasks by given name
+        Filter tasks by given name.
+        Returns the number of tasks FILTERED OUT.
         """
 
         # we cannot iterate over a list on which we're
@@ -120,3 +127,5 @@ class CmonitorFilterEngine:
 
         if self.verbose:
             print(f"Filtering samples by task name [{task_name}]. Removed {n_removed_tasks} tasks.")
+
+        return n_removed_tasks
