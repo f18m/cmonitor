@@ -22,7 +22,7 @@ test_list = [
             'maximum': 0.196,
             'mean': 0.16802234636871508,
             'median': 0.169,
-            'mode': 'no unique mode',
+            'mode': 0.168,
             'unit': '%'
         },
         "expected_cpu_throttle": {
