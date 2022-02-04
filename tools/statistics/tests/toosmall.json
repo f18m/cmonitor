@@ -1,0 +1,753 @@
+{
+    "header": {
+        "cmonitor": {
+            "command": "/usr/bin/cmonitor_collector",
+            "arg1": "--foreground",
+            "arg2": "--output-directory",
+            "arg3": "/perf",
+            "arg4": "--sampling-interval=1",
+            "arg5": "--num-samples=180",
+            "arg6": "--collect=cgroup_threads,cgroup_cpu,cgroup_memory,cgroup_network",
+            "arg7": "--score-threshold=0",
+            "arg8": "--custom-metadata=cmonitor_chart_name:userapp",
+            "arg9": "--cgroup-name=docker/6e7d4a7e1b925a060906515670e8c0303ca311c21938dcf9f32b45e0994e88b2",
+            "arg10": "--output-filename=docker-collecting-docker-stats",
+            "version": "2.2-0",
+            "gmt_offset_seconds": 0,
+            "timezone_name": "UTC",
+            "sample_interval_seconds": 1.000,
+            "sample_num": 180,
+            "collecting": "cgroup_cpu,cgroup_memory,cgroup_network,cgroup_threads",
+            "username": "root",
+            "userid": 0,
+            "pid": 4009863
+        },
+        "identity": {
+            "hostname": "MSP153.empirix.com",
+            "shorthostname": "MSP153",
+            "br-0babd71b0e11": "172.17.34.1",
+            "br-1a20f6f5f4a1": "172.17.31.1",
+            "br-61e4d329ad98": "172.17.36.1",
+            "br-6bfe0011516b": "172.17.46.1",
+            "br-6e5c5345b3cc": "172.17.28.1",
+            "br-9406b57c917a": "172.17.35.1",
+            "br-dad653fba6aa": "172.17.32.1",
+            "br-e4759077474e": "172.17.33.1",
+            "br-eb648a719a2a": "172.17.38.1",
+            "br-f25d319c255d": "172.17.37.1",
+            "docker0": "172.17.0.1",
+            "eno1": "fe80::2979:7829:ff99:a609",
+            "tailscale0": "100.66.40.29",
+            "all_ip_addresses": "172.17.34.1,172.17.31.1,172.17.36.1,172.17.46.1,172.17.28.1,172.17.35.1,172.17.32.1,172.17.33.1,172.17.38.1,172.17.37.1,172.17.0.1,fe80::2979:7829:ff99:a609,100.66.40.29",
+            "serial-number": "............",
+            "model": "S2600GZ",
+            "vendor": "Intel Corporation"
+        },
+        "os_release": {
+            "name": "CentOS Linux",
+            "version": "7 (Core)",
+            "version_id": "7",
+            "pretty_name": "CentOS Linux 7 (Core)"
+        },
+        "proc_version": {
+            "version": "Linux version 3.10.0-1160.36.2.el7.x86_64 (mockbuild@kbuilder.bsys.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-44) (GCC) ) #1 SMP Wed Jul 21 11:57:15 UTC 2021"
+        },
+        "proc_meminfo": {
+            "MemTotal": 197816788000,
+            "HugePages_Total": 4,
+            "Hugepagesize": 1048576000
+        },
+        "cpuinfo": {
+            "proc0": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 0,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc1": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 1,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc2": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 2,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc3": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 3,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc4": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 4,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc5": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 8,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc6": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 9,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc7": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 10,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc8": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 11,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc9": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 12,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc10": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 0,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc11": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 1,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc12": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 2,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc13": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 3,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc14": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 4,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc15": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 8,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc16": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 9,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc17": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 10,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc18": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 11,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc19": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 12,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc20": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 0,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc21": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 1,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc22": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 2,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc23": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 3,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc24": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 4,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc25": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 8,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc26": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 9,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc27": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 10,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc28": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 11,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc29": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 0,
+                "siblings": 20,
+                "core_id": 12,
+                "cpu_cores": 10,
+                "bogomips": 5586,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc30": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 0,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc31": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 1,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc32": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 2,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc33": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 3,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc34": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 4,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc35": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 8,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc36": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 9,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc37": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 10,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc38": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 11,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200,
+                "scaling_max_freq_mhz": 3600
+            },
+            "proc39": {
+                "vendor_id": "GenuineIntel",
+                "model_name": "Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz",
+                "cache_size_kb": 25600,
+                "physical_id": 1,
+                "siblings": 20,
+                "core_id": 12,
+                "cpu_cores": 10,
+                "bogomips": 5592,
+                "scaling_min_freq_mhz": 1200.000,
+                "scaling_max_freq_mhz": 3600.000
+            }
+        },
+        "numa_nodes": {
+            "node0": "0-9,20-29",
+            "node1": "10-19,30-39"
+        },
+        "cgroup_config": {
+            "name": "docker/6e7d4a7e1b925a060906515670e8c0303ca311c21938dcf9f32b45e0994e88b2",
+            "version": "1",
+            "memory_path": "/sys/fs/cgroup/memory/docker/6e7d4a7e1b925a060906515670e8c0303ca311c21938dcf9f32b45e0994e88b2",
+            "cpuacct_path": "/sys/fs/cgroup/cpu,cpuacct/docker/6e7d4a7e1b925a060906515670e8c0303ca311c21938dcf9f32b45e0994e88b2",
+            "cpuset_path": "/sys/fs/cgroup/cpuset/docker/6e7d4a7e1b925a060906515670e8c0303ca311c21938dcf9f32b45e0994e88b2",
+            "cpus": "0,1",
+            "cpu_quota_perc": 0.900,
+            "memory_limit_bytes": 10485760
+        },
+        "custom_metadata": {
+            "cmonitor_chart_name": "userapp"
+        }
+    },
+    "samples": [
+        {
+            "timestamp": {
+                "UTC": "2022-01-18T00:02:47.897",
+                "sample_index": 0
+            },
+            "proc_loadavg": {
+                "load_avg_1min": 0.420,
+                "load_avg_5min": 0.280,
+                "load_avg_15min": 0.340
+            },
+            "cgroup_cpuacct_stats": {
+                "throttling": {
+                    "nr_periods": 2,
+                    "nr_throttled": 0,
+                    "throttled_time": 0
+                }
+            },
+            "cgroup_memory_stats": {
+                "stat.cache": 0,
+                "stat.rss": 2334720
+            },
+            "cgroup_tasks": {}
+        },
+        {
+            "timestamp": {
+                "UTC": "2022-01-18T00:02:48.900",
+                "sample_index": 1
+            },
+            "proc_loadavg": {
+                "load_avg_1min": 0.420,
+                "load_avg_5min": 0.280,
+                "load_avg_15min": 0.340
+            },
+            "cgroup_cpuacct_stats": {
+                "cpu0": {
+                    "user": 0.179
+                },
+                "cpu1": {
+                    "user": 0.000
+                },
+                "throttling": {
+                    "nr_periods": 2,
+                    "nr_throttled": 0,
+                    "throttled_time": 0
+                },
+                "cpu_tot": {
+                    "user": 0.179,
+                    "sys": 0.000
+                }
+            },
+            "cgroup_memory_stats": {
+                "stat.cache": 0,
+                "stat.rss": 2334720,
+                "events.failcnt": 0
+            },
+            "cgroup_network": {
+                "eth0": {
+                    "ibytes": 0,
+                    "obytes": 0,
+                    "ipackets": 0,
+                    "opackets": 0
+                }
+            },
+            "cgroup_tasks": {
+                "pid_4009727": {
+                    "cmon_score": 0,
+                    "cmd": "redis-server",
+                    "pid": 4009727,
+                    "ppid": 4009707,
+                    "tgid": 4009727,
+                    "priority": 20,
+                    "nice": 0,
+                    "state": "Sleeping-interruptible",
+                    "uid": 999,
+                    "cpu_last": 0,
+                    "cpu_usr": 0.000,
+                    "cpu_sys": 0.000,
+                    "cpu_usr_total_secs": 0.020,
+                    "cpu_sys_total_secs": 0.020,
+                    "mem_minor_fault": 0.000,
+                    "mem_major_fault": 0.000,
+                    "mem_virtual_bytes": 54079488,
+                    "mem_rss_bytes": 5287936,
+                    "io_delayacct_blkio_secs": 0.000,
+                    "io_rchar": 0,
+                    "io_wchar": 0,
+                    "io_total_read": 0,
+                    "io_total_write": 0
+                },
+                "pid_4009792": {
+                    "cmon_score": 0,
+                    "cmd": "bio_close_file",
+                    "pid": 4009792,
+                    "ppid": 4009707,
+                    "tgid": 4009727,
+                    "priority": 20,
+                    "nice": 0,
+                    "state": "Sleeping-interruptible",
+                    "uid": 999,
+                    "cpu_last": 0,
+                    "cpu_usr": 0.000,
+                    "cpu_sys": 0.000,
+                    "cpu_usr_total_secs": 0.000,
+                    "cpu_sys_total_secs": 0.000,
+                    "mem_minor_fault": 0.000,
+                    "mem_major_fault": 0.000,
+                    "mem_virtual_bytes": 54079488,
+                    "mem_rss_bytes": 5287936,
+                    "io_delayacct_blkio_secs": 0.000,
+                    "io_rchar": 0,
+                    "io_wchar": 0,
+                    "io_total_read": 0,
+                    "io_total_write": 0
+                },
+                "pid_4009793": {
+                    "cmon_score": 0,
+                    "cmd": "bio_aof_fsync",
+                    "pid": 4009793,
+                    "ppid": 4009707,
+                    "tgid": 4009727,
+                    "priority": 20,
+                    "nice": 0,
+                    "state": "Sleeping-interruptible",
+                    "uid": 999,
+                    "cpu_last": 1,
+                    "cpu_usr": 0.000,
+                    "cpu_sys": 0.000,
+                    "cpu_usr_total_secs": 0.000,
+                    "cpu_sys_total_secs": 0.000,
+                    "mem_minor_fault": 0.000,
+                    "mem_major_fault": 0.000,
+                    "mem_virtual_bytes": 54079488,
+                    "mem_rss_bytes": 5287936,
+                    "io_delayacct_blkio_secs": 0.000,
+                    "io_rchar": 0,
+                    "io_wchar": 0,
+                    "io_total_read": 0,
+                    "io_total_write": 0
+                },
+                "pid_4009794": {
+                    "cmon_score": 0,
+                    "cmd": "bio_lazy_free",
+                    "pid": 4009794,
+                    "ppid": 4009707,
+                    "tgid": 4009727,
+                    "priority": 20,
+                    "nice": 0,
+                    "state": "Sleeping-interruptible",
+                    "uid": 999,
+                    "cpu_last": 1,
+                    "cpu_usr": 0.000,
+                    "cpu_sys": 0.000,
+                    "cpu_usr_total_secs": 0.000,
+                    "cpu_sys_total_secs": 0.000,
+                    "mem_minor_fault": 0.000,
+                    "mem_major_fault": 0.000,
+                    "mem_virtual_bytes": 54079488,
+                    "mem_rss_bytes": 5287936,
+                    "io_delayacct_blkio_secs": 0.000,
+                    "io_rchar": 0,
+                    "io_wchar": 0,
+                    "io_total_read": 0,
+                    "io_total_write": 0
+                },
+                "pid_4009795": {
+                    "cmon_score": 0,
+                    "cmd": "jemalloc_bg_thd",
+                    "pid": 4009795,
+                    "ppid": 4009707,
+                    "tgid": 4009727,
+                    "priority": 20,
+                    "nice": 0,
+                    "state": "Sleeping-interruptible",
+                    "uid": 999,
+                    "cpu_last": 0,
+                    "cpu_usr": 0.000,
+                    "cpu_sys": 0.000,
+                    "cpu_usr_total_secs": 0.000,
+                    "cpu_sys_total_secs": 0.000,
+                    "mem_minor_fault": 0.000,
+                    "mem_major_fault": 0.000,
+                    "mem_virtual_bytes": 54079488,
+                    "mem_rss_bytes": 5287936,
+                    "io_delayacct_blkio_secs": 0.000,
+                    "io_rchar": 0,
+                    "io_wchar": 0,
+                    "io_total_read": 0,
+                    "io_total_write": 0
+                }
+            }
+        }
+    ]
+}
