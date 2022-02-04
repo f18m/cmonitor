@@ -16,6 +16,18 @@ test_list = [
     # run0
     {
         "input_file": "docker-collecting-docker-stats.json", 
+        "task_name": "non_existent",
+
+        "expected_survived_tasks": 0,
+        "expected_removed_tasks": 895,
+
+        # number of samples in the output should not change:
+        "expected_num_samples": 180,
+    },
+
+    # run1
+    {
+        "input_file": "docker-collecting-docker-stats.json", 
         "task_name": "jemalloc_bg_thd",
 
         # the input JSON contains 179 samples having "jemalloc_bg_thd" recordings inside; since we are filtering out every other
@@ -27,6 +39,36 @@ test_list = [
         "expected_num_samples": 180,
     },
 
+    # run2
+    {
+        "input_file": "docker-collecting-docker-stats.json", 
+        "task_name": "jemall", # a subset of the full thread name is fine
+
+        # the input JSON contains 179 samples having "jemalloc_bg_thd" recordings inside; since we are filtering out every other
+        # process/thread, we expect to count now only 179 tasks over 180 samples:
+        "expected_survived_tasks": 179,
+        "expected_removed_tasks": 716,
+
+        # number of samples in the output should not change:
+        "expected_num_samples": 180,
+    },
+
+    # run3
+    {
+        "input_file": "docker-collecting-docker-stats.json", 
+        "task_name": "bio_", # this string will match 3 threads of Redis: bio_close_file bio_aof_fsync bio_lazy_free
+
+        # the input JSON contains 179 samples, each with 3 threads matching task name filter, so we expect 179*3
+        "expected_survived_tasks": 179*3,
+        "expected_removed_tasks": 358,
+
+        # number of samples in the output should not change:
+        "expected_num_samples": 180,
+    },
+
+
+
+    
 ]
 # fmt: on
 
