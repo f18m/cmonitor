@@ -57,52 +57,67 @@ class CmonitorFilterEngine:
         assert end_timestamp is None or isinstance(end_timestamp, datetime.datetime)
 
         n_removed_samples = 0
+        n_survived_samples = 0
 
         def _filter_by_both_starttime_endtime(sample):
-            nonlocal n_removed_samples
+            nonlocal n_removed_samples, n_survived_samples
             # convert from string to datetime object:
             sample_datetime = datetime.datetime.strptime(sample["timestamp"]["UTC"], "%Y-%m-%dT%H:%M:%S.%f")
             # filter:
             if not (start_timestamp <= sample_datetime <= end_timestamp):
-                self.json_data["samples"].remove(sample)
                 n_removed_samples += 1
+            else:
+                self.filtered_json_samples.append(sample)
+                n_survived_samples += 1
 
         def _filter_only_by_starttime(sample):
-            nonlocal n_removed_samples
+            nonlocal n_removed_samples, n_survived_samples
             # convert from string to datetime object:
             sample_datetime = datetime.datetime.strptime(sample["timestamp"]["UTC"], "%Y-%m-%dT%H:%M:%S.%f")
-            print(sample_datetime)
             # filter:
             if not (start_timestamp <= sample_datetime):
-                self.json_data["samples"].remove(sample)
                 n_removed_samples += 1
+            else:
+                self.filtered_json_samples.append(sample)
+                n_survived_samples += 1
 
         def _filter_only_by_endtime(sample):
-            nonlocal n_removed_samples
+            nonlocal self, n_removed_samples, n_survived_samples
             # convert from string to datetime object:
             sample_datetime = datetime.datetime.strptime(sample["timestamp"]["UTC"], "%Y-%m-%dT%H:%M:%S.%f")
             # filter:
             if not (sample_datetime <= end_timestamp):
-                self.json_data["samples"].remove(sample)
                 n_removed_samples += 1
+            else:
+                self.filtered_json_samples.append(sample)
+                n_survived_samples += 1
 
+        self.filtered_json_samples = []
         if start_timestamp and end_timestamp:
             for sample in self.json_data["samples"]:
                 _filter_by_both_starttime_endtime(sample)
             if self.verbose:
-                print(f"Filtering samples by start and end timestamp [{start_timestamp}]-[{end_timestamp}]. Removed {n_removed_samples} samples.")
+                print(
+                    f"Filtered samples by start and end timestamp [{start_timestamp}]-[{end_timestamp}]. {n_removed_samples} samples removed, {n_survived_samples} samples survived."
+                )
         elif start_timestamp:
             for sample in self.json_data["samples"]:
                 _filter_only_by_starttime(sample)
             if self.verbose:
-                print(f"Filtering samples by start timestamp [{start_timestamp}]. Removed {n_removed_samples} samples.")
+                print(
+                    f"Filtered samples by start timestamp [{start_timestamp}]. {n_removed_samples} samples removed, {n_survived_samples} samples survived."
+                )
         elif end_timestamp:
             for sample in self.json_data["samples"]:
                 _filter_only_by_endtime(sample)
             if self.verbose:
-                print(f"Filtering samples by end timestamp [{end_timestamp}]. Removed {n_removed_samples} samples.")
+                print(
+                    f"Filtered samples by end timestamp [{end_timestamp}]. {n_removed_samples} samples removed, {n_survived_samples} samples survived."
+                )
         else:
             assert False
+
+        self.json_data["samples"] = self.filtered_json_samples
 
         return n_removed_samples
 
