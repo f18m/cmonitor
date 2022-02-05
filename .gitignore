@@ -10,6 +10,8 @@ examples/*/example-load.sh
 # pycache
 tools/common-code/__pycache__/
 tools/statistics/__pycache__/
+tools/statistics/tests/__pycache__/
+tools/filter/tests/__pycache__/
 
 # autogen from jinja2 templates
 tools/common-code/cmonitor_version.py

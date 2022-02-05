@@ -77,5 +77,6 @@ if __name__ == "__main__":
     config = parse_command_line()
     json_data = CmonitorCollectorJsonLoader().load(config["input_json"], this_tool_version=CmonitorToolVersion().get(), be_verbose=verbose)
     engine = CmonitorStatisticsEngine()
-    engine.process(json_data)
+    if not engine.process(json_data):
+        sys.exit(1)
     engine.dump_statistics_json(config["output_file"])

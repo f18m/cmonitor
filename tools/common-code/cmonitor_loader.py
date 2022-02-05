@@ -66,13 +66,17 @@ class CmonitorCollectorJsonLoader:
         # Convert the text to json and extract the samples
         try:
             entry = json.loads(text)  # convert text to JSON
-        except json.decoder.JSONDecodeError as e:
+        except json.decoder.JSONDecodeError as err:
             # fix up the end of the file if it is not complete
             if text[-1] == ",":
                 # try removing last comma
                 text[-1] = " "
             # add the closure of the "samples" array and JSON end-of-object
-            entry = json.loads(text + "]}")
+            try:
+                entry = json.loads(text + "]}")
+            except json.decoder.JSONDecodeError as err:
+                print("Invalid input JSON file '%s': %s" % (infile, err))
+                sys.exit(1)
 
         try:
             jheader = entry["header"]

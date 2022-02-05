@@ -5,16 +5,6 @@
 - Add support for UDP data tx to InfluxDB
 - Remove sscanf() calls in favour of a more optimized logic; from some simple
   benchmark test, sscanf() dominates the sampling time
-
-## TODO chart-side
-
-- Add javascript buttons to toggle graphs for e.g. disks/networks/cpus
-- Add 'blkio' cgroup data plotting
-- Plot CPU "counters" JSON section
-
-## TODO testing/documentation
-
-- Add tests on cmonitor_statistics tool taking the expected JSONs of unit tests
 - Add tests on:
    CMonitorSystem
    -> challenge is it uses "lsblk" utility, does not just read the filesystem!
@@ -22,8 +12,13 @@
 
 - add more sampled data for CMonitorCGroup, for several kernels
 - test more configurations for CMonitorCGroup, like dockers having no memory limit or no cpu limits
-- Test deployment on supported Linux distributions
-- Add LXC examples
+
+## TODO tools-side
+
+- Add 'blkio' cgroup data plotting once available
+- Plot CPU "counters" JSON section
+- rewrite in pytest the cmonitor_filter unit tests
+- publish Pypi package
 
 ## TODO influxdb/grafana
 

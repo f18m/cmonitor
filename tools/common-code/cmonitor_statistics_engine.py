@@ -96,10 +96,10 @@ class CgroupTasksStatistics:
         else:
             print(f"WARNING: The JSON file provided does not contain the 'throttling' measurement for sample #{sample_index}. Skipping this sample.")
 
-    def dump_cpu_stats(self, verbose) -> None:
+    def dump_cpu_stats(self, verbose) -> dict:
         return self.cpu.dump_json(verbose)
 
-    def dump_cpu_throttle_stats(self, verbose) -> None:
+    def dump_cpu_throttle_stats(self, verbose) -> dict:
         return self.cpu_throttle.dump_json(verbose)
 
     def insert_memory_stats(self, stats: dict, sample_index: int) -> None:
@@ -114,10 +114,10 @@ class CgroupTasksStatistics:
                 f"WARNING: The JSON file provided does not contain the 'events.failcnt' measurement for sample #{sample_index}. Skipping this sample."
             )
 
-    def dump_memory_stats(self, verbose) -> None:
+    def dump_memory_stats(self, verbose) -> dict:
         return self.memory.dump_json(verbose)
 
-    def dump_memory_failcnt_stats(self, verbose) -> None:
+    def dump_memory_failcnt_stats(self, verbose) -> dict:
         return self.memory_failcnt.dump_json(verbose)
 
     # cgroup_blkio not yet available
@@ -138,18 +138,19 @@ class CmonitorStatisticsEngine:
     def __init__(self, be_verbose=False) -> None:
         self.cgroup_statistics = CgroupTasksStatistics()
         self.verbose = be_verbose
+        self.num_samples_analyzed = 0
         pass
 
-    def process(self, json_data) -> None:
+    def process(self, json_data) -> bool:
         """
         Loads the provided JSON data and runs all statistical analyses on it.
         """
         if "samples" not in json_data:
             print("Unexpected JSON format. Aborting.")
-            sys.exit(1)
+            return False
         if len(json_data["samples"]) <= 2:
             print("This tool requires at least 3 samples in the input JSON file. Aborting.")
-            sys.exit(1)
+            return False
 
         # skip sample 0 because it contains less statistics due to the differential logic that requires some
         # initialization sample for most of the stats
@@ -173,7 +174,8 @@ class CmonitorStatisticsEngine:
                 "WARNING: The JSON file provided does not contain measurements for the 'memory' cgroup. Please use '--collect=cgroup_memory' when launching cmonitor_collector."
             )
 
-        for sample in json_data["samples"][1:]:
+        samples_to_analyze = json_data["samples"][1:]
+        for sample in samples_to_analyze:
             try:
                 nsample = sample["timestamp"]["sample_index"]
             except KeyError:
@@ -183,7 +185,9 @@ class CmonitorStatisticsEngine:
             if do_memory_stats:
                 self.cgroup_statistics.insert_memory_stats(sample["cgroup_memory_stats"], nsample)
 
-            # self.cgroup_statistics.insert_io_stats(stats)     # cgroup_blkio not yet available
+        self.num_samples_analyzed = len(samples_to_analyze)
+        # self.cgroup_statistics.insert_io_stats(stats)     # cgroup_blkio not yet available
+        return True
 
     def __dump_json_to_file(
         self,
@@ -194,25 +198,28 @@ class CmonitorStatisticsEngine:
         with open(outfile, "w") as of:
             json.dump(statistics, of)
 
-    def dump_statistics_json(self, output_file=None) -> None:
-        """
-        Writes the result of the statistical analysis on a file or to stdout
-        """
-        statistics = {
+    def get_cgroup_statistics(self) -> CgroupTasksStatistics:
+        return self.cgroup_statistics
+
+    def get_statistics_dict(self) -> dict:
+        return {
+            "num_samples_analyzed": self.num_samples_analyzed,
             "statistics": {
                 "cpu": self.cgroup_statistics.dump_cpu_stats(self.verbose),
                 "cpu_throttle": self.cgroup_statistics.dump_cpu_throttle_stats(self.verbose),
                 "memory": self.cgroup_statistics.dump_memory_stats(self.verbose),
                 "memory_failcnt": self.cgroup_statistics.dump_memory_failcnt_stats(self.verbose),
                 # "io": self.cgroup_statistics.dump_io_stats(),
-            }
+            },
         }
 
+    def dump_statistics_json(self, output_file=None) -> None:
+        """
+        Writes the result of the statistical analysis on a file or to stdout
+        """
+        statistics = self.get_statistics_dict()
         if output_file:
             self.__dump_json_to_file(statistics, output_file)
         else:
             print("Result of analysis:")
             print(json.dumps(statistics, indent=4, sort_keys=True))
-
-    def get_cgroup_statistics(self):
-        return self.cgroup_statistics
