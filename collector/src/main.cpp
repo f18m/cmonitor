@@ -83,9 +83,9 @@ bool g_bExiting = false;
 class CMonitorCollectorApp {
 public:
     CMonitorCollectorApp()
-        : m_header_info_generator(&m_cfg, &m_output,&m_prometheus)
-        , m_cgroups_collector(&m_cfg, &m_output,&m_prometheus)
-        , m_system_collector(&m_cfg, &m_output,&m_prometheus)
+        : m_header_info_generator(&m_cfg, &m_output, &m_prometheus)
+        , m_cgroups_collector(&m_cfg, &m_output, &m_prometheus)
+        , m_system_collector(&m_cfg, &m_output, &m_prometheus)
     {
     }
 
@@ -93,7 +93,6 @@ public:
     void parse_args(int argc, char** argv);
     void init_collector(int argc, char** argv);
     int run_main_loop();
-
 
 private:
     void print_help();
@@ -121,7 +120,6 @@ private:
 
     //prometheus
     CMonitorPromethues m_prometheus;
-
 };
 
 //------------------------------------------------------------------------------
@@ -232,8 +230,8 @@ struct option_extended {
     { "Options to stream data remotely", &g_long_opts[14],
         "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).\n" },
     { "Options to stream data remotely", &g_long_opts[15], "Set the InfluxDB database name.\n" },
-    { "Options promethus lebels", &g_long_opts[16], "Set the scrape port for the promethues.\n" },
-    { "Options promethus lebels", &g_long_opts[17], "Set the lebel name for the promethues.\n" },
+    { "Options promethus lebels", &g_long_opts[16], "Set the scrape port for the Promethues.\n" },
+    { "Options promethus lebels", &g_long_opts[17], "Set the lebel name for the Promethues.\n" },
 
     // help
     { "Other options", &g_long_opts[18], "Show version and exit" }, // force newline
@@ -415,7 +413,6 @@ void CMonitorCollectorApp::print_help()
 
 void CMonitorCollectorApp::init_defaults()
 {
-
     if (getenv("CMONITOR_SECRET"))
         m_cfg.m_strRemoteSecret = getenv("CMONITOR_SECRET");
 
@@ -576,15 +573,20 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'L':
             {
                 std::string key_value = optarg;
-                std::vector<std::string> key_value_tokens = split_string_in_array(key_value, ':');
+                std::vector<std::string> vec_label = split_string_in_array(key_value, ',');
+                for(auto &elem : vec_label)
+                 {
+                  std::vector<std::string> key_value_tokens = split_string_in_array(elem, ':');
 
-                  if (key_value_tokens.size() != 2) {
-                    printf(
-                        "Invalid label metadata [%s]. Every prometheus metadata option should be in the form key:value.\n",
-                        optarg);
-                    exit(51);
+                   if (key_value_tokens.size() != 2) {
+                     printf(
+                         "Invalid label metadata [%s]. Every prometheus metadata option should be in the form key:value.\n",
+                         optarg);
+                     exit(51);
                   }
-                 m_cfg.m_mapLabelsData.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
+                  m_cfg.m_mapLabelsData.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
+                }
+
 
             }break;
 
@@ -746,14 +748,15 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
     // statistic files, only of the CPUs that can be used by the cgroup-under-monitor:
     // m_system_collector.set_monitored_cpus(m_cgroups_collector.get_cgroup_cpus());
 
-    //initialize prometheus exposer to scrape the registry on incoming HTTP requests
-     //auto listenAddress = std::string{"0.0.0.0:"} + m_cfg.m_strPrometheusPort;
-     auto listenAddress = std::string{m_cfg.m_strPrometheusPort};
-     m_prometheus.setExposePort(listenAddress);
-     m_prometheus.init();
-     printf("Prometheus Listening On: %s\n", m_cfg.m_strPrometheusPort.c_str());
-     //set promethues labels
-     m_prometheus.setLabels(m_cfg.m_mapLabelsData);
+    // initialize prometheus exposer to scrape the registry on incoming HTTP requests
+    // auto listenAddress = std::string{"0.0.0.0:"} + m_cfg.m_strPrometheusPort;
+    auto listenAddress = std::string{m_cfg.m_strPrometheusPort};
+    m_prometheus.setExposePort(listenAddress);
+    m_prometheus.init();
+    printf("Prometheus Listening On: %s\n", m_cfg.m_strPrometheusPort.c_str());
+
+    // set promethues labels
+    m_prometheus.setLabels(m_cfg.m_mapLabelsData);
 
     // INIT SYSTEM/BAREMETAL STATS COLLECTOR
     m_system_collector.init();

@@ -28,26 +28,23 @@
 class CMonitorPromethues
 {
 public:
-	CMonitorPromethues()
-	{
-	}
+    CMonitorPromethues()
+    {
+    }
 
-	void init();
-	void addKPI(const std::string& str, double value);
-
-	void setExposePort(const std::string& str)
-	{
-		m_exposer = prometheus::detail::make_unique<prometheus::Exposer>(str);
-	}
-
-	void setLabels(const std::map<std::string, std::string>& labels)
-	{
-		m_labels_map = labels;
-	}
-
+   void init();
+   void addKPI(const std::string& str, double value);
+   void setExposePort(const std::string& str)
+   {
+      m_exposer = prometheus::detail::make_unique<prometheus::Exposer>(str);
+   }
+   void setLabels(const std::map<std::string, std::string>& labels)
+   {
+      m_labels_map = labels;
+   }
 
 private:
-	std::map<std::string, std::string> m_labels_map;
-	std::unique_ptr<prometheus::Exposer> m_exposer;
-	std::shared_ptr<prometheus::Registry> m_prometheus_registry = std::make_shared<prometheus::Registry>();
+    std::map<std::string, std::string> m_labels_map;
+    std::unique_ptr<prometheus::Exposer> m_exposer;
+    std::shared_ptr<prometheus::Registry> m_prometheus_registry = std::make_shared<prometheus::Registry>();
 };
