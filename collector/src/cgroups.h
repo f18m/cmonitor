@@ -78,11 +78,12 @@ typedef struct {
 
 class CMonitorOutputFrontend;
 class CMonitorLoggerUtils;
+class CMonitorPromethues;
 
 class CMonitorCgroups : public CMonitorAppHelper {
 public:
-    CMonitorCgroups(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
-        : CMonitorAppHelper(pCfg, pOutput)
+    CMonitorCgroups(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput, CMonitorPromethues* pPrometheus)
+        : CMonitorAppHelper(pCfg, pOutput,pPrometheus)
     {
         memset(&m_cpuacct_prev_values[0], 0, MAX_LOGICAL_CPU * sizeof(cpuacct_utilisation_t));
         memset(&m_cpuacct_prev_values_for_total_cpu, 0, sizeof(cpuacct_utilisation_t));

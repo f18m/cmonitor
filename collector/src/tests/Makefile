@@ -14,7 +14,7 @@ else
 CXXFLAGS += -g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
 LDFLAGS += -g -O2
 endif
-LIBS += -lfmt -lgtest -lpthread
+LIBS += -lfmt -lgtest -lpthread -lprometheus-cpp-pull -lprometheus-cpp-core -lz
 
 ifeq ($(MUSL_BUILD),1)
 OUTDIR=../../bin/musl
@@ -38,6 +38,7 @@ OBJS_CMONITOR_COLLECTOR = \
 	$(OUTDIR)/fast_file_reader.o \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/output_frontend.o \
+    $(OUTDIR)/prometheus.o \
     $(OUTDIR)/system.o \
     $(OUTDIR)/utils_files.o \
     $(OUTDIR)/utils_misc.o \

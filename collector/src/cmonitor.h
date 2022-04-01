@@ -189,6 +189,9 @@ public:
     std::string m_strCGroupName; // --cgroup-name
     uint64_t m_nProcessScoreThreshold = 1; // --score-threshold
     std::map<std::string, std::string> m_mapCustomMetadata; // --custom-metadata
+    std::string m_strPrometheusPort; // prometheus port {127.0.0.0:9090}
+    std::map<std::string, std::string> m_mapLabelsData; // --Labels {function:capture}
+    
 };
 
 //------------------------------------------------------------------------------
@@ -196,15 +199,18 @@ public:
 //------------------------------------------------------------------------------
 
 class CMonitorOutputFrontend;
+class CMonitorPromethues;
 class CMonitorAppHelper {
 public:
-    CMonitorAppHelper(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
+    CMonitorAppHelper(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput, CMonitorPromethues* pPrometheus)
     {
         m_pCfg = pCfg;
         m_pOutput = pOutput;
+        m_prometheus = pPrometheus;
     }
-
+        
 protected:
     CMonitorCollectorAppConfig* m_pCfg;
     CMonitorOutputFrontend* m_pOutput;
+    CMonitorPromethues* m_prometheus;
 };

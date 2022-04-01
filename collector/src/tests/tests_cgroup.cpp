@@ -5,6 +5,7 @@
 #include "../cgroups.h"
 #include "../logger.h"
 #include "../output_frontend.h"
+#include "../prometheus.h"
 #include "../utils_files.h"
 #include "../utils_string.h"
 #include <fstream>
@@ -95,6 +96,7 @@ void run_cmonitor_on_tarball_samples( // fn
     std::string result_json_file = get_unit_test_abs_dir() + kernel_under_test + "/result-" + test_name + ".json";
     std::string expected_json_file = get_unit_test_abs_dir() + kernel_under_test + "/expected-" + test_name + ".json";
     CMonitorOutputFrontend actual_output(result_json_file);
+    CMonitorPromethues pPrometheus;
     actual_output.enable_json_pretty_print();
 
     CMonitorCollectorAppConfig cfg;
@@ -120,7 +122,7 @@ void run_cmonitor_on_tarball_samples( // fn
     // NOTE: the 'simulated_cmonitor_collector_pid' PID is important to remove ANY dependency of CMonitorGroups code
     //       from the PID of this gtest executable and make sure it never uses stuff like /proc/self/mounts but rather
     //       reads some unit-test-data file instead
-    CMonitorCgroups t(&cfg, &actual_output);
+    CMonitorCgroups t(&cfg, &actual_output,&pPrometheus);
     t.init(include_threads, current_sample_abs_dir, current_sample_abs_dir, simulated_cmonitor_collector_pid);
     ASSERT_EQ(t.get_detected_cgroup_version(), expected_cgroup_ver);
 
