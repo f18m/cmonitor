@@ -574,19 +574,17 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             {
                 std::string key_value = optarg;
                 std::vector<std::string> vec_label = split_string_in_array(key_value, ',');
-                for(auto &elem : vec_label)
-                 {
-                  std::vector<std::string> key_value_tokens = split_string_in_array(elem, ':');
-
-                   if (key_value_tokens.size() != 2) {
-                     printf(
-                         "Invalid label metadata [%s]. Every prometheus metadata option should be in the form key:value.\n",
-                         optarg);
-                     exit(51);
-                  }
-                  m_cfg.m_mapLabelsData.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
-                }
-
+                   for(auto &elem : vec_label)
+                    {
+                        std::vector<std::string> key_value_tokens = split_string_in_array(elem, ':');
+                            if (key_value_tokens.size() != 2)
+                            {
+                                printf(
+                                   "Invalid label metadata [%s]. Every prometheus metadata option should be in the form key:value.\n",optarg);
+                                     exit(51);
+                             }
+                        m_cfg.m_mapLabelsData.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
+                    }
 
             }break;
 
@@ -685,7 +683,6 @@ void CMonitorCollectorApp::do_sampling_sleep()
 
 void CMonitorCollectorApp::init_collector(int argc, char** argv)
 {
-
     // if only one instance allowed, do the check:
     if (!m_cfg.m_bAllowMultipleInstances)
         check_pid_file();
