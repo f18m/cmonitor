@@ -751,20 +751,19 @@ bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, dou
             // prometheus
             if(CMonitorPromethues::instance().is_prometheus_enabled()) {
                 CMonitorPromethues::instance().add_kpi("ibytes", DELTA_NET_STAT(if_ibytes), "systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("ipackets", DELTA_NET_STAT(if_ipackets),"systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("ierrs", DELTA_NET_STAT(if_ierrs),"systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("idrop", DELTA_NET_STAT(if_idrop),"systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("ififo", DELTA_NET_STAT(if_ififo),"systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("iframe", DELTA_NET_STAT(if_iframe),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("ipackets", DELTA_NET_STAT(if_ipackets), "systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("ierrs", DELTA_NET_STAT(if_ierrs), "systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("idrop", DELTA_NET_STAT(if_idrop), "systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("ififo", DELTA_NET_STAT(if_ififo), "systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("iframe", DELTA_NET_STAT(if_iframe), "systems", "network_interfaces");
 
-                CMonitorPromethues::instance().add_kpi("obytes", DELTA_NET_STAT(if_obytes),"systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("opackets", DELTA_NET_STAT(if_opackets),"systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("oerrs", DELTA_NET_STAT(if_oerrs),"systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("odrop", DELTA_NET_STAT(if_odrop),"systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("ofifo", DELTA_NET_STAT(if_ofifo),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("opackets", DELTA_NET_STAT(if_opackets), "systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("oerrs", DELTA_NET_STAT(if_oerrs), "systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("odrop", DELTA_NET_STAT(if_odrop), "systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("ofifo", DELTA_NET_STAT(if_ofifo), "systems", "network_interfaces");
 
-                CMonitorPromethues::instance().add_kpi("ocolls", DELTA_NET_STAT(if_ocolls),"systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("ocarrier", DELTA_NET_STAT(if_ocarrier),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("ocolls", DELTA_NET_STAT(if_ocolls), "systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("ocarrier", DELTA_NET_STAT(if_ocarrier), "systems", "network_interfaces");
             }
             break;
 
@@ -812,9 +811,9 @@ void CMonitorSystem::sample_uptime()
 
         // prometheus
         if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("total_seconds", value,"systems", "proc_uptime");
-            CMonitorPromethues::instance().add_kpi("days", days,"systems", "proc_uptime");
-            CMonitorPromethues::instance().add_kpi("hours", hours,"systems", "proc_uptime");
+            CMonitorPromethues::instance().add_kpi("total_seconds", value, "systems", "proc_uptime");
+            CMonitorPromethues::instance().add_kpi("days", days, "systems", "proc_uptime");
+            CMonitorPromethues::instance().add_kpi("hours", hours, "systems", "proc_uptime");
         }
     }
 }
@@ -918,7 +917,7 @@ void CMonitorSystem::sample_filesystems()
                 //CMonitorPromethues::instance().add_kpi("fs_opts", fs->mnt_opts);
 
                 CMonitorPromethues::instance().add_kpi("fs_freqs", fs->mnt_freq, "system", "filesystems");
-                CMonitorPromethues::instance().add_kpi("fs_passno", fs->mnt_passno,"system", "filesystems");
+                CMonitorPromethues::instance().add_kpi("fs_passno", fs->mnt_passno, "system", "filesystems");
                 CMonitorPromethues::instance().add_kpi("fs_bsize", vfs.f_bsize, "system", "filesystems");
                 CMonitorPromethues::instance().add_kpi("fs_size_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024, "system", "filesystems");
                 CMonitorPromethues::instance().add_kpi("fs_free_mb", (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024, "system", "filesystems");
