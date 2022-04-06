@@ -227,8 +227,8 @@ struct option_extended {
     { "Options to stream data remotely", &g_long_opts[14],
         "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).\n" },
     { "Options to stream data remotely", &g_long_opts[15], "Set the InfluxDB database name.\n" },
-    { "Options prometheus port", &g_long_opts[16], "Set the scrape port for the Prometheus.\n" },
-    { "Options prometheus labels", &g_long_opts[17], "Set the label names for the Prometheus.\n" },
+    { "Options to set prometheus port", &g_long_opts[16], "Set the scrape port for the Prometheus.\n" },
+    { "Options to set prometheus labels", &g_long_opts[17], "Set the label names for the Prometheus.\n" },
 
     // help
     { "Other options", &g_long_opts[18], "Show version and exit" }, // force newline
