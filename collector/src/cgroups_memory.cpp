@@ -176,6 +176,7 @@ void CMonitorCgroups::sample_memory(
     for (auto entry : statsValues) {
         m_pOutput->plong(entry.first.c_str(), entry.second);
         if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+          //TO-DO : kpis with dot(.) <events.failcnt> not supported in prometheus metric.
           //CMonitorPromethues::instance().add_kpi(entry.first.c_str(), entry.second , "cgroup_memory_stats", "");
         }
     }
@@ -186,6 +187,7 @@ void CMonitorCgroups::sample_memory(
             if (print) {
                 m_pOutput->plong("events.failcnt", value - m_memory_prev_values.v1_failcnt);
                 if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                     //TO-DO : kpis with dot(.) <events.failcnt> not supported in prometheus metric.
                      //CMonitorPromethues::instance().add_kpi("events_failcnt", value - m_memory_prev_values.v1_failcnt,"cgroup_memory_stats", "" );
                 }
             }

@@ -621,16 +621,14 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 
        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
             // CMonitorPromethues::instance().add_kpi(fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid)).c_str());
-            //CMonitorPromethues::instance().add_kpi("cmon_score", score);
-            // CMonitorPromethues::instance().add_kpi(
-            //    "cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
-            CMonitorPromethues::instance().add_kpi("pid", CURRENT(pi_pid),"cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("ppid", CURRENT(pi_ppid),"cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("tgid", CURRENT(pi_tgid),"cmd", CURRENT(pi_comm));
+            // CMonitorPromethues::instance().add_kpi("cmon_score", score);
+            CMonitorPromethues::instance().add_kpi("pid", CURRENT(pi_pid), "cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("ppid", CURRENT(pi_ppid), "cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("tgid", CURRENT(pi_tgid), "cmd", CURRENT(pi_comm));
             CMonitorPromethues::instance().add_kpi("priority", CURRENT(pi_priority), "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("nice", CURRENT(pi_nice),"cmd", CURRENT(pi_comm));
-            // m_pOutput->pstring("state", get_state(CURRENT(pi_state)));
-            CMonitorPromethues::instance().add_kpi("uid", CURRENT(uid),"cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("nice", CURRENT(pi_nice), "cmd", CURRENT(pi_comm));
+            // CMonitorPromethues::instance().add_kpi("state", get_state(CURRENT(pi_state)));
+            CMonitorPromethues::instance().add_kpi("uid", CURRENT(uid), "cmd", CURRENT(pi_comm));
         }
 
         if (output_opts == PF_ALL) {
@@ -640,10 +638,10 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
             m_pOutput->plong("pgrp", CURRENT(pi_pgrp)); // see NOTE above
             m_pOutput->plong("session", CURRENT(pi_session)); // see NOTE above 
             if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                CMonitorPromethues::instance().add_kpi("tty_nr", CURRENT(pi_tty_nr),"cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("threads", CURRENT(pi_num_threads),"cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("pgrp", CURRENT(pi_pgrp),"cmd", CURRENT(pi_comm)); // see NOTE above
-                CMonitorPromethues::instance().add_kpi("session", CURRENT(pi_session),"cmd", CURRENT(pi_comm)); // see NOTE above
+                CMonitorPromethues::instance().add_kpi("tty_nr", CURRENT(pi_tty_nr), "cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("threads", CURRENT(pi_num_threads), "cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("pgrp", CURRENT(pi_pgrp), "cmd", CURRENT(pi_comm)); // see NOTE above
+                CMonitorPromethues::instance().add_kpi("session", CURRENT(pi_session), "cmd", CURRENT(pi_comm)); // see NOTE above
                 CMonitorPromethues::instance().add_kpi("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks, "cmd", CURRENT(pi_comm));
             }
             if (strlen(CURRENT(username)) > 0)

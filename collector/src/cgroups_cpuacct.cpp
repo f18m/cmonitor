@@ -139,7 +139,6 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
                     m_pOutput->psubsection_end();
 
                     if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                       //CMonitorPromethues::instance().add_kpi(fmt::format("cpu{}", i).c_str());
                        CMonitorPromethues::instance().add_kpi("user", cpuUserPercent, "cgroup_cpuacct_stats", fmt::format("cpu{}", i).c_str());
                        CMonitorPromethues::instance().add_kpi("sys", cpuSysPercent, "cgroup_cpuacct_stats", fmt::format("cpu{}", i).c_str());
                     }
@@ -183,7 +182,6 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
                     m_pOutput->psubsection_end();
 
                     if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                        //CMonitorPromethues::instance().add_kpi(fmt::format("cpu{}", i).c_str());
                         CMonitorPromethues::instance().add_kpi("user", cpuUserPercent, "cgroup_cpuacct_stats", fmt::format("cpu{}", i).c_str());
                     }
                 }
@@ -232,7 +230,6 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
                 m_pOutput->psubsection_end();
 
                 if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                    //m_pOutput->psubsection_start("throttling");
                     CMonitorPromethues::instance().add_kpi(
                         "nr_periods", counter_throttling.nr_periods - m_cpuacct_prev_values_for_throttling.nr_periods, "cgroup_cpuacct_stats", "throttling");
                     CMonitorPromethues::instance().add_kpi("nr_throttled",
@@ -307,7 +304,6 @@ bool CMonitorCgroups::sample_cpuacct_v2_counters(bool print, double elapsed_sec,
         m_pOutput->psubsection_end();
 
         if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            //m_pOutput->psubsection_start("throttling");
             CMonitorPromethues::instance().add_kpi("nr_periods", counter_throttling.nr_periods - m_cpuacct_prev_values_for_throttling.nr_periods, "cgroup_cpuacct_stats", "throttling");
             CMonitorPromethues::instance().add_kpi(
                 "nr_throttled", counter_throttling.nr_throttled - m_cpuacct_prev_values_for_throttling.nr_throttled, "cgroup_cpuacct_stats", "throttling");
@@ -442,7 +438,6 @@ void CMonitorCgroups::sample_cpuacct(double elapsed_sec)
             m_pOutput->psubsection_end();
 
             if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                //m_pOutput->psubsection_start("cpu_tot");
                 CMonitorPromethues::instance().add_kpi("user", cpuUserPercent, "cgroup_cpuacct_stats", "cpu_tot");
                 CMonitorPromethues::instance().add_kpi("sys", cpuSysPercent, "cgroup_cpuacct_stats", "cpu_tot");
             }
