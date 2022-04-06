@@ -578,11 +578,10 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
                             {
                                 printf(
                                    "Invalid label metadata [%s]. Every prometheus metadata option should be in the form key:value.\n",optarg);
-                                     exit(51);
-                             }
+                                exit(51);
+                            }
                         m_cfg.m_mapLabelsData.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
                     }
-
             }break;
 
             // help
@@ -628,7 +627,6 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
         printf("Option --remote-port=%lu provided but the --remote-ip option was not provided\n", m_cfg.m_nRemotePort);
         exit(53);
     }
-
     if (!m_cfg.m_strPrometheusPort.empty() && m_cfg.m_mapLabelsData.empty()) {
         printf("Option --prometheus-port=%s provided but the --labels option was not provided\n",
             m_cfg.m_strPrometheusPort.c_str());
@@ -636,10 +634,9 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
     }
     if (m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty()) {
         for(auto e:m_cfg.m_mapLabelsData)
-         printf("Option --labels=%s%s provided but the --prometheus-port option was not provided\n", e.first.c_str(),e.second.c_str());
+         printf("Option --labels=%s:%s provided but the --prometheus-port option was not provided\n", e.first.c_str(),e.second.c_str());
         exit(55);
     }
-    
     if ((m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) && (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {
         printf("If --collect=cgroup_threads is provided, it is not required to provide --collect=cgroup_processes "
                "since implicitly statistics for all processes will already be collected\n");
@@ -755,15 +752,13 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
     // m_system_collector.set_monitored_cpus(m_cgroups_collector.get_cgroup_cpus());
 
     // initialize prometheus exposer to scrape the registry on incoming HTTP requests
-    // auto listenAddress = std::string{"0.0.0.0:"} + m_cfg.m_strPrometheusPort;
- 
     if(!m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty())
     {
         auto listenAddress = std::string{m_cfg.m_strPrometheusPort};
         CMonitorPromethues::instance().set_expose_port(listenAddress);
         CMonitorPromethues::instance().init();
         CMonitorPromethues::instance().set_input_labels(m_cfg.m_mapLabelsData);
-        printf("Prometheus Listening On: %s\n", m_cfg.m_strPrometheusPort.c_str());
+        printf("Prometheus listening on port: %s\n", m_cfg.m_strPrometheusPort.c_str());
     }
 
     // INIT SYSTEM/BAREMETAL STATS COLLECTOR
