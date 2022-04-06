@@ -19,6 +19,7 @@
 
 #include "cgroups.h"
 #include "logger.h"
+#include "prometheus.h"
 #include "output_frontend.h"
 #include "utils_files.h"
 #include "utils_string.h"
@@ -159,8 +160,12 @@ void CMonitorCgroups::sample_memory(
 
     if (m_nCGroupsFound == CG_VERSION2)
         // list as first value the main "current" KPI
-        if (m_cgroup_memory_v2_current.read_integer(value))
+        if (m_cgroup_memory_v2_current.read_integer(value)) {
             m_pOutput->plong("stat.current", value);
+            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+               //CMonitorPromethues::instance().add_kpi("stat.current", value , "cgroup_memory_stats", "");
+            }
+        }
 
     // dump main memory statistics file
     const std::set<std::string>& allowedStatsNames
@@ -168,14 +173,22 @@ void CMonitorCgroups::sample_memory(
     key_value_map_t statsValues;
 
     sample_flat_keyed_file(m_cgroup_memory_v1v2_stat, allowedStatsNames, "stat.", statsValues);
-    for (auto entry : statsValues)
+    for (auto entry : statsValues) {
         m_pOutput->plong(entry.first.c_str(), entry.second);
+        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+          //CMonitorPromethues::instance().add_kpi(entry.first.c_str(), entry.second , "cgroup_memory_stats", "");
+        }
+    }
 
     switch (m_nCGroupsFound) {
     case CG_VERSION1:
         if (m_cgroup_memory_v1_failcnt.read_integer(value)) {
-            if (print)
+            if (print) {
                 m_pOutput->plong("events.failcnt", value - m_memory_prev_values.v1_failcnt);
+                if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                     //CMonitorPromethues::instance().add_kpi("events_failcnt", value - m_memory_prev_values.v1_failcnt,"cgroup_memory_stats", "" );
+                }
+            }
 
             // save new values for next sample:
             m_memory_prev_values.v1_failcnt = value;
@@ -188,8 +201,12 @@ void CMonitorCgroups::sample_memory(
             if (print) {
                 for (auto entry : newEventsValues) {
                     auto prevValue = m_memory_prev_values.v2_events.find(entry.first);
-                    if (prevValue != m_memory_prev_values.v2_events.end())
+                    if (prevValue != m_memory_prev_values.v2_events.end()) {
                         m_pOutput->plong(entry.first.c_str(), entry.second - prevValue->second);
+                        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                             //CMonitorPromethues::instance().add_kpi(entry.first.c_str(), entry.second - prevValue->second);
+                        }
+                    }
                 }
 
                 // save new values for next sample:

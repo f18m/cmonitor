@@ -328,7 +328,7 @@ void CMonitorHeaderInfo::header_proc_meminfo()
     static_memory_stats.insert("MemTotal");
     static_memory_stats.insert("HugePages_Total");
     static_memory_stats.insert("Hugepagesize");
-    CMonitorSystem::output_meminfo_stats(m_pOutput, m_prometheus, static_memory_stats);
+    CMonitorSystem::output_meminfo_stats(m_pOutput, static_memory_stats);
 }
 
 void CMonitorHeaderInfo::header_proc_version()

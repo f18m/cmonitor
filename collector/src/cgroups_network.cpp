@@ -113,7 +113,7 @@ void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields
     // output delta stats
     if (output_opts != PF_NONE) {
         m_pOutput->psection_start("cgroup_network");
-        CMonitorSystem::output_net_dev_stats(m_pOutput, m_prometheus, elapsed_sec, new_stats, m_previous_netinfo, output_opts);
+        CMonitorSystem::output_net_dev_stats(m_pOutput, elapsed_sec, new_stats, m_previous_netinfo, output_opts);
         m_pOutput->psection_end();
     }
 

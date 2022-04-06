@@ -236,12 +236,14 @@ void CMonitorSystem::sample_cpu_stat(double elapsed_sec, OutputFields output_opt
 
         m_pOutput->psection_end();
 
-        //send KPIs to promethues
-        m_prometheus->addKPI("ctxt", ((double)(new_ctx - m_cpu_stat_old_ctxt) / elapsed_sec));
-        m_prometheus->addKPI("btime", btime);
-        m_prometheus->addKPI("processes_forks", ((double)(new_processes - m_cpu_stat_old_processes) / elapsed_sec));
-        m_prometheus->addKPI("procs_running", procs_running);
-        m_prometheus->addKPI("procs_blocked", procs_blocked);
+        // send KPIs to promethues
+        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+            CMonitorPromethues::instance().add_kpi("ctxt", ((double)(new_ctx - m_cpu_stat_old_ctxt) / elapsed_sec), "system", "counters");
+            CMonitorPromethues::instance().add_kpi("btime", btime, "system", "counters");
+            CMonitorPromethues::instance().add_kpi("processes_forks", ((double)(new_processes - m_cpu_stat_old_processes) / elapsed_sec), "system", "counters");
+            CMonitorPromethues::instance().add_kpi("procs_running", procs_running, "system", "counters");
+            CMonitorPromethues::instance().add_kpi("procs_blocked", procs_blocked, "system", "counters");
+        }
         
     }
 
@@ -259,7 +261,7 @@ or
     STATNAME: <value>
 */
 bool CMonitorSystem::read_meminfo_stats(FastFileReader& reader, const std::set<std::string>& allowedStatsNames,
-    CMonitorOutputFrontend* pOutput,CMonitorPromethues* pPrometheus, numeric_parser_stats_t& out_stats)
+    CMonitorOutputFrontend* pOutput, numeric_parser_stats_t& out_stats)
 {
     /*
         NOTE: this is a specialized variant of FastFileReader::read_numeric_stats()
@@ -303,7 +305,9 @@ bool CMonitorSystem::read_meminfo_stats(FastFileReader& reader, const std::set<s
                 if (allowedStatsNames.empty() /* all stats must be put in output */
                     || allowedStatsNames.find(label) != allowedStatsNames.end()) {
                     pOutput->plong(label.c_str(), value);
-                    pPrometheus->addKPI(label, value);
+                    if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                        CMonitorPromethues::instance().add_kpi(label.c_str(), value, "system", "proc_meminfo");
+                    }
                     nread++;
                 } else
                     ndiscarded++;
@@ -330,7 +334,7 @@ void CMonitorSystem::sample_memory(const std::set<std::string>& charted_stats_fr
 
     key_value_map_t out;
     numeric_parser_stats_t out_stats;
-    read_meminfo_stats(m_meminfo, charted_stats_from_meminfo, m_pOutput, m_prometheus, out_stats);
+    read_meminfo_stats(m_meminfo, charted_stats_from_meminfo, m_pOutput, out_stats);
 
     if (m_pCfg->m_nOutputFields == PF_ALL) {
         key_value_map_t out;
@@ -341,8 +345,10 @@ void CMonitorSystem::sample_memory(const std::set<std::string>& charted_stats_fr
         for (auto entry : out)
         {
             m_pOutput->plong(entry.first.c_str(), entry.second);
-            //prometheus
-            m_prometheus->addKPI(entry.first, entry.second);
+            // prometheus
+            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                CMonitorPromethues::instance().add_kpi(entry.first.c_str(), entry.second, "system", "proc_vmstat" );
+            }
         }
         m_pOutput->psection_end();
     }
@@ -482,22 +488,24 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
                     m_pOutput->pdouble("xfers", DELTA_DISK_STAT(dk_xfers));
                     m_pOutput->plong("bsize", current.dk_bsize);
 
-                    //prometheus
-                    m_prometheus->addKPI("reads", DELTA_DISK_STAT(dk_reads));
-                    m_prometheus->addKPI("rmerge", DELTA_DISK_STAT(dk_rmerge));
-                    m_prometheus->addKPI("rkb", DELTA_DISK_STAT(dk_rkb));
-                    m_prometheus->addKPI("rmsec", DELTA_DISK_STAT(dk_rmsec));
+                    // prometheus
+                    if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                        CMonitorPromethues::instance().add_kpi("reads", DELTA_DISK_STAT(dk_reads), "system", "disks");
+                        CMonitorPromethues::instance().add_kpi("rmerge", DELTA_DISK_STAT(dk_rmerge), "system", "disks");
+                        CMonitorPromethues::instance().add_kpi("rkb", DELTA_DISK_STAT(dk_rkb), "system", "disks");
+                        CMonitorPromethues::instance().add_kpi("rmsec", DELTA_DISK_STAT(dk_rmsec), "system", "disks");
 
-                    m_prometheus->addKPI("writes", DELTA_DISK_STAT(dk_writes));
-                    m_prometheus->addKPI("wmerge", DELTA_DISK_STAT(dk_wmerge));
-                    m_prometheus->addKPI("wkb", DELTA_DISK_STAT(dk_wkb));
-                    m_prometheus->addKPI("wmsec", DELTA_DISK_STAT(dk_wmsec));
+                        CMonitorPromethues::instance().add_kpi("writes", DELTA_DISK_STAT(dk_writes), "system", "disks");
+                        CMonitorPromethues::instance().add_kpi("wmerge", DELTA_DISK_STAT(dk_wmerge), "system", "disks");
+                        CMonitorPromethues::instance().add_kpi("wkb", DELTA_DISK_STAT(dk_wkb), "system", "disks");
+                        CMonitorPromethues::instance().add_kpi("wmsec", DELTA_DISK_STAT(dk_wmsec), "system", "disks");
 
-                    m_prometheus->addKPI("inflight", current.dk_inflight);
-                    m_prometheus->addKPI("time", DELTA_DISK_STAT(dk_time));
-                    m_prometheus->addKPI("backlog", DELTA_DISK_STAT(dk_backlog));
-                    m_prometheus->addKPI("xfers", DELTA_DISK_STAT(dk_xfers));
-                    m_prometheus->addKPI("bsize", current.dk_bsize);
+                        CMonitorPromethues::instance().add_kpi("inflight", current.dk_inflight, "system", "disks");
+                        CMonitorPromethues::instance().add_kpi("time", DELTA_DISK_STAT(dk_time), "system", "disks");
+                        CMonitorPromethues::instance().add_kpi("backlog", DELTA_DISK_STAT(dk_backlog), "system", "disks");
+                        CMonitorPromethues::instance().add_kpi("xfers", DELTA_DISK_STAT(dk_xfers), "system", "disks");
+                        CMonitorPromethues::instance().add_kpi("bsize", current.dk_bsize, "system", "disks");
+                    }
                     break;
 
                 case PF_USED_BY_CHART_SCRIPT_ONLY:
@@ -564,7 +572,7 @@ void CMonitorSystem::sample_net_dev(double elapsed_sec, OutputFields output_opts
 
     if (output_opts != PF_NONE) {
         m_pOutput->psection_start("network_interfaces");
-        output_net_dev_stats(m_pOutput, m_prometheus, elapsed_sec, new_stats, m_previous_netinfo, output_opts);
+        output_net_dev_stats(m_pOutput, elapsed_sec, new_stats, m_previous_netinfo, output_opts);
         m_pOutput->psection_end();
     }
 
@@ -701,7 +709,7 @@ bool CMonitorSystem::read_net_dev_stats(
 }
 
 /* static */
-bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, CMonitorPromethues* m_prometheus,double elapsed_sec,
+bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, double elapsed_sec,
     const netinfo_map_t& new_stats, const netinfo_map_t& prev_stats, OutputFields output_opts)
 {
 #define DELTA_NET_STAT(member) ((double)(current.member - previous.member) / elapsed_sec)
@@ -740,22 +748,24 @@ bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, CMo
             m_pOutput->plong("ocolls", DELTA_NET_STAT(if_ocolls));
             m_pOutput->plong("ocarrier", DELTA_NET_STAT(if_ocarrier));
 
-            //prometheus
-            m_prometheus->addKPI("ibytes", DELTA_NET_STAT(if_ibytes));
-            m_prometheus->addKPI("ipackets", DELTA_NET_STAT(if_ipackets));
-            m_prometheus->addKPI("ierrs", DELTA_NET_STAT(if_ierrs));
-            m_prometheus->addKPI("idrop", DELTA_NET_STAT(if_idrop));
-            m_prometheus->addKPI("ififo", DELTA_NET_STAT(if_ififo));
-            m_prometheus->addKPI("iframe", DELTA_NET_STAT(if_iframe));
+            // prometheus
+            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                CMonitorPromethues::instance().add_kpi("ibytes", DELTA_NET_STAT(if_ibytes), "systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("ipackets", DELTA_NET_STAT(if_ipackets),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("ierrs", DELTA_NET_STAT(if_ierrs),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("idrop", DELTA_NET_STAT(if_idrop),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("ififo", DELTA_NET_STAT(if_ififo),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("iframe", DELTA_NET_STAT(if_iframe),"systems", "network_interfaces");
 
-            m_prometheus->addKPI("obytes", DELTA_NET_STAT(if_obytes));
-            m_prometheus->addKPI("opackets", DELTA_NET_STAT(if_opackets));
-            m_prometheus->addKPI("oerrs", DELTA_NET_STAT(if_oerrs));
-            m_prometheus->addKPI("odrop", DELTA_NET_STAT(if_odrop));
-            m_prometheus->addKPI("ofifo", DELTA_NET_STAT(if_ofifo));
+                CMonitorPromethues::instance().add_kpi("obytes", DELTA_NET_STAT(if_obytes),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("opackets", DELTA_NET_STAT(if_opackets),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("oerrs", DELTA_NET_STAT(if_oerrs),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("odrop", DELTA_NET_STAT(if_odrop),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("ofifo", DELTA_NET_STAT(if_ofifo),"systems", "network_interfaces");
 
-            m_prometheus->addKPI("ocolls", DELTA_NET_STAT(if_ocolls));
-            m_prometheus->addKPI("ocarrier", DELTA_NET_STAT(if_ocarrier));
+                CMonitorPromethues::instance().add_kpi("ocolls", DELTA_NET_STAT(if_ocolls),"systems", "network_interfaces");
+                CMonitorPromethues::instance().add_kpi("ocarrier", DELTA_NET_STAT(if_ocarrier),"systems", "network_interfaces");
+            }
             break;
 
         case PF_USED_BY_CHART_SCRIPT_ONLY:
@@ -800,10 +810,12 @@ void CMonitorSystem::sample_uptime()
         m_pOutput->plong("hours", hours);
         m_pOutput->psection_end();
 
-        //prometheus
-        m_prometheus->addKPI("total_seconds", value);
-        m_prometheus->addKPI("days", days);
-        m_prometheus->addKPI("hours", hours);
+        // prometheus
+        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+            CMonitorPromethues::instance().add_kpi("total_seconds", value,"systems", "proc_uptime");
+            CMonitorPromethues::instance().add_kpi("days", days,"systems", "proc_uptime");
+            CMonitorPromethues::instance().add_kpi("hours", hours,"systems", "proc_uptime");
+        }
     }
 }
 
@@ -845,9 +857,11 @@ void CMonitorSystem::sample_loadavg()
         m_pOutput->pdouble("load_avg_15min", load_avg_15min);
         m_pOutput->psection_end();
 
-       m_prometheus->addKPI("load_avg_1min", load_avg_1min);
-       m_prometheus->addKPI("load_avg_5min", load_avg_5min);
-       m_prometheus->addKPI("load_avg_15min", load_avg_15min);
+       if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+           CMonitorPromethues::instance().add_kpi("load_avg_1min", load_avg_1min, "system", "proc_loadavg");
+           CMonitorPromethues::instance().add_kpi("load_avg_5min", load_avg_5min, "system", "proc_loadavg");
+           CMonitorPromethues::instance().add_kpi("load_avg_15min", load_avg_15min, "system", "proc_loadavg");
+       }
     }
 }
 
@@ -897,28 +911,26 @@ void CMonitorSystem::sample_filesystems()
             m_pOutput->plong("fs_namelength", vfs.f_namelen);
             m_pOutput->psubsection_end();
 
-            //prometheus
-            //m_prometheus->addKPI("fs_dir", fs->mnt_dir);
-            //m_prometheus->addKPI("fs_type", fs->mnt_type);
-            //m_prometheus->addKPI("fs_opts", fs->mnt_opts);
+            // prometheus
+            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                //CMonitorPromethues::instance().add_kpi("fs_dir", fs->mnt_dir);
+                //CMonitorPromethues::instance().add_kpi("fs_type", fs->mnt_type);
+                //CMonitorPromethues::instance().add_kpi("fs_opts", fs->mnt_opts);
 
-            m_prometheus->addKPI("fs_freqs", fs->mnt_freq);
-            m_prometheus->addKPI("fs_passno", fs->mnt_passno);
-            m_prometheus->addKPI("fs_bsize", vfs.f_bsize);
-            m_prometheus->addKPI("fs_size_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024);
-            m_prometheus->addKPI("fs_free_mb", (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024);
-            m_prometheus->addKPI(
-                "fs_used_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024 - (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024);
-            m_prometheus->addKPI(
-                "fs_full_percent", ((double)vfs.f_blocks - (double)vfs.f_bfree) / (double)vfs.f_blocks * (double)100.0);
-            /*
-             * m_prometheus->addKPI("fs_full_percent", ((vfs.f_blocks * vfs.f_bsize) - (vfs.f_bfree * vfs.f_bsize) ) /
-             *					(vfs.f_blocks * vfs.f_bsize) * 100.00);
-             */
-            m_prometheus->addKPI("fs_avail", (vfs.f_bavail * vfs.f_bsize) / 1024 / 1024);
-            m_prometheus->addKPI("fs_files", vfs.f_files);
-            m_prometheus->addKPI("fs_files_free", vfs.f_ffree);
-            m_prometheus->addKPI("fs_namelength", vfs.f_namelen);
+                CMonitorPromethues::instance().add_kpi("fs_freqs", fs->mnt_freq, "system", "filesystems");
+                CMonitorPromethues::instance().add_kpi("fs_passno", fs->mnt_passno,"system", "filesystems");
+                CMonitorPromethues::instance().add_kpi("fs_bsize", vfs.f_bsize, "system", "filesystems");
+                CMonitorPromethues::instance().add_kpi("fs_size_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024, "system", "filesystems");
+                CMonitorPromethues::instance().add_kpi("fs_free_mb", (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024, "system", "filesystems");
+                CMonitorPromethues::instance().add_kpi(
+                    "fs_used_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024 - (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024, "system", "filesystems");
+                CMonitorPromethues::instance().add_kpi(
+                    "fs_full_percent", ((double)vfs.f_blocks - (double)vfs.f_bfree) / (double)vfs.f_blocks * (double)100.0, "system", "filesystems");
+                CMonitorPromethues::instance().add_kpi("fs_avail", (vfs.f_bavail * vfs.f_bsize) / 1024 / 1024, "system", "filesystems");
+                CMonitorPromethues::instance().add_kpi("fs_files", vfs.f_files, "system", "filesystems");
+                CMonitorPromethues::instance().add_kpi("fs_files_free", vfs.f_ffree, "system", "filesystems");
+                CMonitorPromethues::instance().add_kpi("fs_namelength", vfs.f_namelen, "system", "filesystems");
+            }
         }
     }
     m_pOutput->psection_end();

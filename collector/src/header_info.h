@@ -37,8 +37,8 @@
 
 class CMonitorHeaderInfo : public CMonitorAppHelper {
 public:
-    CMonitorHeaderInfo(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput, CMonitorPromethues* pPrometheus)
-        : CMonitorAppHelper(pCfg, pOutput, pPrometheus)
+    CMonitorHeaderInfo(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
+        : CMonitorAppHelper(pCfg, pOutput)
     {
     }
 

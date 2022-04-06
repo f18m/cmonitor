@@ -198,18 +198,15 @@ public:
 //------------------------------------------------------------------------------
 
 class CMonitorOutputFrontend;
-class CMonitorPromethues;
 class CMonitorAppHelper {
 public:
-    CMonitorAppHelper(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput, CMonitorPromethues* pPrometheus)
+    CMonitorAppHelper(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
     {
         m_pCfg = pCfg;
         m_pOutput = pOutput;
-        m_prometheus = pPrometheus;
     }
 
 protected:
     CMonitorCollectorAppConfig* m_pCfg;
     CMonitorOutputFrontend* m_pOutput;
-    CMonitorPromethues* m_prometheus;
 };

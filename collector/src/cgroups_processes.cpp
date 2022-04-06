@@ -21,6 +21,7 @@
 #include "cgroups.h"
 #include "logger.h"
 #include "output_frontend.h"
+#include "prometheus.h"
 #include "utils_files.h"
 #include "utils_string.h"
 #include <assert.h>
@@ -617,12 +618,34 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         m_pOutput->plong("nice", CURRENT(pi_nice));
         m_pOutput->pstring("state", get_state(CURRENT(pi_state)));
         m_pOutput->plong("uid", CURRENT(uid));
+
+       if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+            // CMonitorPromethues::instance().add_kpi(fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid)).c_str());
+            //CMonitorPromethues::instance().add_kpi("cmon_score", score);
+            // CMonitorPromethues::instance().add_kpi(
+            //    "cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
+            CMonitorPromethues::instance().add_kpi("pid", CURRENT(pi_pid),"cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("ppid", CURRENT(pi_ppid),"cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("tgid", CURRENT(pi_tgid),"cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("priority", CURRENT(pi_priority), "cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("nice", CURRENT(pi_nice),"cmd", CURRENT(pi_comm));
+            // m_pOutput->pstring("state", get_state(CURRENT(pi_state)));
+            CMonitorPromethues::instance().add_kpi("uid", CURRENT(uid),"cmd", CURRENT(pi_comm));
+        }
+
         if (output_opts == PF_ALL) {
             // seldomly used fields:
             m_pOutput->plong("tty_nr", CURRENT(pi_tty_nr));
             m_pOutput->plong("threads", CURRENT(pi_num_threads));
             m_pOutput->plong("pgrp", CURRENT(pi_pgrp)); // see NOTE above
-            m_pOutput->plong("session", CURRENT(pi_session)); // see NOTE above
+            m_pOutput->plong("session", CURRENT(pi_session)); // see NOTE above 
+            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                CMonitorPromethues::instance().add_kpi("tty_nr", CURRENT(pi_tty_nr),"cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("threads", CURRENT(pi_num_threads),"cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("pgrp", CURRENT(pi_pgrp),"cmd", CURRENT(pi_comm)); // see NOTE above
+                CMonitorPromethues::instance().add_kpi("session", CURRENT(pi_session),"cmd", CURRENT(pi_comm)); // see NOTE above
+                CMonitorPromethues::instance().add_kpi("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks, "cmd", CURRENT(pi_comm));
+            }
             if (strlen(CURRENT(username)) > 0)
                 m_pOutput->pstring("username", CURRENT(username));
             m_pOutput->pdouble("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks);
@@ -648,6 +671,17 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         m_pOutput->pdouble("cpu_usr_total_secs", (double)CURRENT(pi_utime) / ticks);
         m_pOutput->pdouble("cpu_sys_total_secs", (double)CURRENT(pi_stime) / ticks);
 
+        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+            CMonitorPromethues::instance().add_kpi("cpu_last", CURRENT(pi_last_cpu), "cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi(
+                "cpu_usr", std::min(100.0, (double)DELTA(pi_utime) / elapsed_sec), "cmd", CURRENT(pi_comm)); // percentage between 0-100
+            CMonitorPromethues::instance().add_kpi(
+                "cpu_sys", std::min(100.0, (double)DELTA(pi_stime) / elapsed_sec), "cmd", CURRENT(pi_comm)); // percentage between 0-100
+
+            CMonitorPromethues::instance().add_kpi("cpu_usr_total_secs", (double)CURRENT(pi_utime) / ticks, "cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("cpu_sys_total_secs", (double)CURRENT(pi_stime) / ticks, "cmd", CURRENT(pi_comm));
+      }
+
         /*
          * Memory fields
          */
@@ -658,12 +692,27 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
             m_pOutput->plong("mem_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
             m_pOutput->plong("mem_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
             m_pOutput->plong("mem_rss_limit_bytes", CURRENT(pi_rsslimit));
+
+            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                CMonitorPromethues::instance().add_kpi("mem_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024, "cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("mem_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024, "cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("mem_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024, "cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("mem_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024, "cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("mem_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024, "cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("mem_rss_limit_bytes", CURRENT(pi_rsslimit), "cmd", CURRENT(pi_comm));
+            }
         }
         m_pOutput->pdouble("mem_minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec);
         m_pOutput->pdouble("mem_major_fault", COUNTDELTA(pi_majflt) / elapsed_sec);
         m_pOutput->plong("mem_virtual_bytes", CURRENT(pi_vsize));
         m_pOutput->plong("mem_rss_bytes", CURRENT(pi_rss) * PAGESIZE_BYTES);
-
+        
+        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+            CMonitorPromethues::instance().add_kpi("mem_minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec, "cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("mem_major_fault", COUNTDELTA(pi_majflt) / elapsed_sec, "cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("mem_virtual_bytes", CURRENT(pi_vsize), "cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("mem_rss_bytes", CURRENT(pi_rss) * PAGESIZE_BYTES, "cmd", CURRENT(pi_comm));
+       }
         /*
          * Signal fields
          */
@@ -687,7 +736,15 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
             m_pOutput->plong("child_swap_pages", CURRENT(pi_child_swap_pages));
             m_pOutput->plong("realtime_priority", CURRENT(pi_realtime_priority));
             m_pOutput->plong("sched_policy", CURRENT(pi_sched_policy));
+
+            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                CMonitorPromethues::instance().add_kpi("swap_pages", CURRENT(pi_swap_pages), "cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("child_swap_pages", CURRENT(pi_child_swap_pages), "cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("realtime_priority", CURRENT(pi_realtime_priority), "cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("sched_policy", CURRENT(pi_sched_policy), "cmd", CURRENT(pi_comm));
+            }
         }
+
 
         /*
          * I/O fields
@@ -695,15 +752,30 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         m_pOutput->pdouble("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
         m_pOutput->plong("io_rchar", DELTA(io_rchar) / elapsed_sec);
         m_pOutput->plong("io_wchar", DELTA(io_wchar) / elapsed_sec);
+
+        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+            CMonitorPromethues::instance().add_kpi("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks, "cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("io_rchar", DELTA(io_rchar) / elapsed_sec, "cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("io_wchar", DELTA(io_wchar) / elapsed_sec, "cmd", CURRENT(pi_comm));
+        }
         if (output_opts == PF_ALL) {
             m_pOutput->plong("io_read_bytes", DELTA(io_read_bytes) / elapsed_sec);
             m_pOutput->plong("io_write_bytes", DELTA(io_write_bytes) / elapsed_sec);
+            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+                CMonitorPromethues::instance().add_kpi("io_read_bytes", DELTA(io_read_bytes) / elapsed_sec, "cmd", CURRENT(pi_comm));
+                CMonitorPromethues::instance().add_kpi("io_write_bytes", DELTA(io_write_bytes) / elapsed_sec, "cmd", CURRENT(pi_comm));
+            }
         }
 
         // provide also the total, monotonically-increasing I/O time:
         // this is used by chart script to produce the "top of the topper" chart
         m_pOutput->plong("io_total_read", CURRENT(io_rchar));
         m_pOutput->plong("io_total_write", CURRENT(io_wchar));
+
+        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
+            CMonitorPromethues::instance().add_kpi("io_total_read", CURRENT(io_rchar), "cmd", CURRENT(pi_comm));
+            CMonitorPromethues::instance().add_kpi("io_total_write", CURRENT(io_wchar), "cmd", CURRENT(pi_comm));
+        }
 
         m_pOutput->psubsection_end();
         nProcsOverThreshold++;

@@ -117,8 +117,8 @@ typedef std::map<std::string /* disk name */, diskinfo_t> diskinfo_map_t;
 
 class CMonitorSystem : public CMonitorAppHelper {
 public:
-    CMonitorSystem(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput, CMonitorPromethues* pPrometheus)
-        : CMonitorAppHelper(pCfg, pOutput, pPrometheus)
+    CMonitorSystem(CMonitorCollectorAppConfig* pCfg, CMonitorOutputFrontend* pOutput)
+        : CMonitorAppHelper(pCfg, pOutput)
     {
         memset(&m_cpu_stat_prev_values[0], 0, MAX_LOGICAL_CPU * sizeof(cpu_specs_t));
     }
@@ -148,18 +148,18 @@ public:
     static bool get_net_dev_list(netdevices_map_t& out_map, bool include_only_interfaces_up);
     static bool read_net_dev_stats(
         const std::string& filename, const std::set<std::string>& net_iface_whitelist, netinfo_map_t& out_infos);
-    static bool output_net_dev_stats(CMonitorOutputFrontend* pOutput, CMonitorPromethues* pPrometheus, double elapsed_sec,
+    static bool output_net_dev_stats(CMonitorOutputFrontend* pOutput, double elapsed_sec,
         const netinfo_map_t& new_stats, const netinfo_map_t& prev_stats, OutputFields output_opts);
 
     //------------------------------------------------------------------------------
     // Utilities shared with CMonitorHeaderInfo
     //------------------------------------------------------------------------------
 
-    static bool output_meminfo_stats(CMonitorOutputFrontend* pOutput, CMonitorPromethues* pPrometheus, const std::set<std::string>& allowedStatsNames)
+    static bool output_meminfo_stats(CMonitorOutputFrontend* pOutput, const std::set<std::string>& allowedStatsNames)
     {
         FastFileReader tmp_reader("/proc/meminfo");
         numeric_parser_stats_t dummy;
-        return read_meminfo_stats(tmp_reader, allowedStatsNames, pOutput, pPrometheus, dummy);
+        return read_meminfo_stats(tmp_reader, allowedStatsNames, pOutput, dummy);
     }
 
 private:
@@ -176,7 +176,7 @@ private:
     //    int max_cpu_count); // utility of proc_stat()
 
     static bool read_meminfo_stats(FastFileReader& reader, const std::set<std::string>& allowedStatsNames,
-        CMonitorOutputFrontend* pOutput, CMonitorPromethues* pPrometheus, numeric_parser_stats_t& out_stats);
+        CMonitorOutputFrontend* pOutput, numeric_parser_stats_t& out_stats);
 
 private:
     std::set<uint64_t> m_monitored_cpus;
