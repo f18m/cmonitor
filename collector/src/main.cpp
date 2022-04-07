@@ -567,21 +567,18 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'S':
                 m_cfg.m_strPrometheusPort = optarg;
                 break;
-            case 'L':
-            {
+            case 'L': {
                 std::string key_value = optarg;
                 std::vector<std::string> vec_label = split_string_in_array(key_value, ',');
-                   for(auto &elem : vec_label)
-                    {
-                        std::vector<std::string> key_value_tokens = split_string_in_array(elem, ':');
-                            if (key_value_tokens.size() != 2)
-                            {
-                                printf(
-                                   "Invalid label metadata [%s]. Every prometheus metadata option should be in the form key:value.\n",optarg);
-                                exit(51);
-                            }
-                        m_cfg.m_mapLabelsData.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
+                for(auto &elem : vec_label) {
+                    std::vector<std::string> key_value_tokens = split_string_in_array(elem, ':');
+                    if (key_value_tokens.size() != 2) {
+                        printf(
+                            "Invalid label metadata [%s]. Every prometheus metadata option should be in the form key:value.\n",optarg);
+                        exit(51);
                     }
+                    m_cfg.m_mapLabelsData.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
+                }
             }break;
 
             // help
@@ -633,8 +630,7 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
         exit(54);
     }
     if (m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty()) {
-        for(auto e:m_cfg.m_mapLabelsData)
-         printf("Option --labels=%s:%s provided but the --prometheus-port option was not provided\n", e.first.c_str(),e.second.c_str());
+         printf("Option --labels provided but the --prometheus-port option was not provided\n");
         exit(55);
     }
     if ((m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) && (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {
