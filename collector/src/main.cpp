@@ -712,6 +712,14 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
         // We are attempting to send the data remotely
         m_output.init_influxdb_connection(m_cfg.m_strRemoteAddress, m_cfg.m_nRemotePort, m_cfg.m_strRemoteDatabaseName);
     }
+    // initialize prometheus exposer to scrape the registry on incoming HTTP requests
+    if(!m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty())
+    {
+        auto listenAddress = std::string{m_cfg.m_strPrometheusPort};
+        m_output.set_prometheus_port(listenAddress);
+        m_output.init_prometheus_connection();
+        printf("Prometheus listening on port: %s\n", m_cfg.m_strPrometheusPort.c_str());
+    }
 
     // daemonize or stay foreground:
     if (!m_cfg.m_bForeground) {
@@ -746,16 +754,6 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
     // if cgroup monitoring is enabled we assume the user is interested in the CPU usage, computed from system-wide
     // statistic files, only of the CPUs that can be used by the cgroup-under-monitor:
     // m_system_collector.set_monitored_cpus(m_cgroups_collector.get_cgroup_cpus());
-
-    // initialize prometheus exposer to scrape the registry on incoming HTTP requests
-    if(!m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty())
-    {
-        auto listenAddress = std::string{m_cfg.m_strPrometheusPort};
-        CMonitorPromethues::instance().set_expose_port(listenAddress);
-        CMonitorPromethues::instance().init();
-        CMonitorPromethues::instance().set_input_labels(m_cfg.m_mapLabelsData);
-        printf("Prometheus listening on port: %s\n", m_cfg.m_strPrometheusPort.c_str());
-    }
 
     // INIT SYSTEM/BAREMETAL STATS COLLECTOR
     m_system_collector.init();

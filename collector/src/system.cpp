@@ -20,7 +20,6 @@
 #include "system.h"
 #include "logger.h"
 #include "output_frontend.h"
-#include "prometheus.h"
 #include "utils_files.h"
 #include "utils_string.h"
 #include <arpa/inet.h>
@@ -235,16 +234,6 @@ void CMonitorSystem::sample_cpu_stat(double elapsed_sec, OutputFields output_opt
         m_pOutput->psubsection_end();
 
         m_pOutput->psection_end();
-
-        // send KPIs to promethues
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("ctxt", ((double)(new_ctx - m_cpu_stat_old_ctxt) / elapsed_sec), "system", "counters");
-            CMonitorPromethues::instance().add_kpi("btime", btime, "system", "counters");
-            CMonitorPromethues::instance().add_kpi("processes_forks", ((double)(new_processes - m_cpu_stat_old_processes) / elapsed_sec), "system", "counters");
-            CMonitorPromethues::instance().add_kpi("procs_running", procs_running, "system", "counters");
-            CMonitorPromethues::instance().add_kpi("procs_blocked", procs_blocked, "system", "counters");
-        }
-        
     }
 
     m_cpu_stat_old_ctxt = new_ctx;
@@ -305,9 +294,6 @@ bool CMonitorSystem::read_meminfo_stats(FastFileReader& reader, const std::set<s
                 if (allowedStatsNames.empty() /* all stats must be put in output */
                     || allowedStatsNames.find(label) != allowedStatsNames.end()) {
                     pOutput->plong(label.c_str(), value);
-                    if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                        CMonitorPromethues::instance().add_kpi(label.c_str(), value, "system", "proc_meminfo");
-                    }
                     nread++;
                 } else
                     ndiscarded++;
@@ -343,13 +329,7 @@ void CMonitorSystem::sample_memory(const std::set<std::string>& charted_stats_fr
 
         m_pOutput->psection_start("proc_vmstat");
         for (auto entry : out)
-        {
             m_pOutput->plong(entry.first.c_str(), entry.second);
-            // prometheus
-            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                CMonitorPromethues::instance().add_kpi(entry.first.c_str(), entry.second, "system", "proc_vmstat" );
-            }
-        }
         m_pOutput->psection_end();
     }
 }
@@ -487,25 +467,6 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
                     m_pOutput->pdouble("backlog", DELTA_DISK_STAT(dk_backlog));
                     m_pOutput->pdouble("xfers", DELTA_DISK_STAT(dk_xfers));
                     m_pOutput->plong("bsize", current.dk_bsize);
-
-                    // prometheus
-                    if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                        CMonitorPromethues::instance().add_kpi("reads", DELTA_DISK_STAT(dk_reads), "system", "disks");
-                        CMonitorPromethues::instance().add_kpi("rmerge", DELTA_DISK_STAT(dk_rmerge), "system", "disks");
-                        CMonitorPromethues::instance().add_kpi("rkb", DELTA_DISK_STAT(dk_rkb), "system", "disks");
-                        CMonitorPromethues::instance().add_kpi("rmsec", DELTA_DISK_STAT(dk_rmsec), "system", "disks");
-
-                        CMonitorPromethues::instance().add_kpi("writes", DELTA_DISK_STAT(dk_writes), "system", "disks");
-                        CMonitorPromethues::instance().add_kpi("wmerge", DELTA_DISK_STAT(dk_wmerge), "system", "disks");
-                        CMonitorPromethues::instance().add_kpi("wkb", DELTA_DISK_STAT(dk_wkb), "system", "disks");
-                        CMonitorPromethues::instance().add_kpi("wmsec", DELTA_DISK_STAT(dk_wmsec), "system", "disks");
-
-                        CMonitorPromethues::instance().add_kpi("inflight", current.dk_inflight, "system", "disks");
-                        CMonitorPromethues::instance().add_kpi("time", DELTA_DISK_STAT(dk_time), "system", "disks");
-                        CMonitorPromethues::instance().add_kpi("backlog", DELTA_DISK_STAT(dk_backlog), "system", "disks");
-                        CMonitorPromethues::instance().add_kpi("xfers", DELTA_DISK_STAT(dk_xfers), "system", "disks");
-                        CMonitorPromethues::instance().add_kpi("bsize", current.dk_bsize, "system", "disks");
-                    }
                     break;
 
                 case PF_USED_BY_CHART_SCRIPT_ONLY:
@@ -726,52 +687,65 @@ bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, dou
         const netinfo_t& previous = it_prev->second;
         m_pOutput->psubsection_start(name.c_str());
 
+        // subsection strings
+        std::string subsec_name_bytes = name + "_" + "bytes";
+        std::string subsec_name_packets = name + "_" + "packets";
+        std::string subsec_name_errs = name + "_" + "errs";
+        std::string subsec_name_drop = name + "_" + "drop";
+        std::string subsec_name_fifo = name + "_" + "fifo";
+        std::string subsec_name_frame = name + "_" + "frame";
+        std::string subsec_name_colls = name + "_" + "colls";
+        std::string subsec_name_carrier = name + "_" + "carrier";
+
         switch (output_opts) {
         case PF_NONE:
             assert(0);
             break;
 
         case PF_ALL:
-            m_pOutput->plong("ibytes", DELTA_NET_STAT(if_ibytes));
-            m_pOutput->plong("ipackets", DELTA_NET_STAT(if_ipackets));
-            m_pOutput->plong("ierrs", DELTA_NET_STAT(if_ierrs));
-            m_pOutput->plong("idrop", DELTA_NET_STAT(if_idrop));
-            m_pOutput->plong("ififo", DELTA_NET_STAT(if_ififo));
-            m_pOutput->plong("iframe", DELTA_NET_STAT(if_iframe));
+            m_pOutput->psubsection_start(subsec_name_bytes.c_str());
+                m_pOutput->plong("input", DELTA_NET_STAT(if_ibytes));
+                m_pOutput->plong("output", DELTA_NET_STAT(if_obytes));
+            m_pOutput->psubsection_end();
 
-            m_pOutput->plong("obytes", DELTA_NET_STAT(if_obytes));
-            m_pOutput->plong("opackets", DELTA_NET_STAT(if_opackets));
-            m_pOutput->plong("oerrs", DELTA_NET_STAT(if_oerrs));
-            m_pOutput->plong("odrop", DELTA_NET_STAT(if_odrop));
-            m_pOutput->plong("ofifo", DELTA_NET_STAT(if_ofifo));
+            m_pOutput->psubsection_start(subsec_name_packets.c_str());
+               m_pOutput->plong("input", DELTA_NET_STAT(if_ipackets));
+               m_pOutput->plong("output", DELTA_NET_STAT(if_opackets));
+            m_pOutput->psubsection_end();
 
-            m_pOutput->plong("ocolls", DELTA_NET_STAT(if_ocolls));
-            m_pOutput->plong("ocarrier", DELTA_NET_STAT(if_ocarrier));
+            m_pOutput->psubsection_start(subsec_name_errs.c_str());
+                m_pOutput->plong("input", DELTA_NET_STAT(if_ierrs));
+                m_pOutput->plong("output", DELTA_NET_STAT(if_oerrs));
+            m_pOutput->psubsection_end();
 
-            // prometheus
-            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                CMonitorPromethues::instance().add_kpi("ibytes", DELTA_NET_STAT(if_ibytes), "systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("ipackets", DELTA_NET_STAT(if_ipackets), "systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("ierrs", DELTA_NET_STAT(if_ierrs), "systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("idrop", DELTA_NET_STAT(if_idrop), "systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("ififo", DELTA_NET_STAT(if_ififo), "systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("iframe", DELTA_NET_STAT(if_iframe), "systems", "network_interfaces");
+            m_pOutput->psubsection_start(subsec_name_drop.c_str());
+                m_pOutput->plong("input", DELTA_NET_STAT(if_idrop));
+                m_pOutput->plong("output", DELTA_NET_STAT(if_odrop));
+            m_pOutput->psubsection_end();
 
-                CMonitorPromethues::instance().add_kpi("opackets", DELTA_NET_STAT(if_opackets), "systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("oerrs", DELTA_NET_STAT(if_oerrs), "systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("odrop", DELTA_NET_STAT(if_odrop), "systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("ofifo", DELTA_NET_STAT(if_ofifo), "systems", "network_interfaces");
+            m_pOutput->psubsection_start(subsec_name_fifo.c_str());
+                m_pOutput->plong("input", DELTA_NET_STAT(if_ififo));
+                m_pOutput->plong("output", DELTA_NET_STAT(if_ofifo));
+            m_pOutput->psubsection_end();
 
-                CMonitorPromethues::instance().add_kpi("ocolls", DELTA_NET_STAT(if_ocolls), "systems", "network_interfaces");
-                CMonitorPromethues::instance().add_kpi("ocarrier", DELTA_NET_STAT(if_ocarrier), "systems", "network_interfaces");
-            }
+            m_pOutput->psubsection_start(subsec_name_frame.c_str());
+                m_pOutput->plong("input", DELTA_NET_STAT(if_iframe));
+            m_pOutput->psubsection_end();
+
+            m_pOutput->psubsection_start(subsec_name_colls.c_str());
+                m_pOutput->plong("output", DELTA_NET_STAT(if_ocolls));
+            m_pOutput->psubsection_end();
+
+            m_pOutput->psubsection_start(subsec_name_carrier.c_str());
+                m_pOutput->plong("output", DELTA_NET_STAT(if_ocarrier));
+            m_pOutput->psubsection_end();
             break;
 
         case PF_USED_BY_CHART_SCRIPT_ONLY:
-            m_pOutput->plong("ibytes", DELTA_NET_STAT(if_ibytes));
-            m_pOutput->plong("obytes", DELTA_NET_STAT(if_obytes));
-            m_pOutput->plong("ipackets", DELTA_NET_STAT(if_ipackets));
-            m_pOutput->plong("opackets", DELTA_NET_STAT(if_opackets));
+                m_pOutput->plong("ibytes", DELTA_NET_STAT(if_ibytes));
+                m_pOutput->plong("obytes", DELTA_NET_STAT(if_obytes));
+                m_pOutput->plong("ipackets", DELTA_NET_STAT(if_ipackets));
+                m_pOutput->plong("opackets", DELTA_NET_STAT(if_opackets));
             break;
         }
         m_pOutput->psubsection_end();
@@ -808,13 +782,6 @@ void CMonitorSystem::sample_uptime()
         m_pOutput->plong("days", days);
         m_pOutput->plong("hours", hours);
         m_pOutput->psection_end();
-
-        // prometheus
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("total_seconds", value, "systems", "proc_uptime");
-            CMonitorPromethues::instance().add_kpi("days", days, "systems", "proc_uptime");
-            CMonitorPromethues::instance().add_kpi("hours", hours, "systems", "proc_uptime");
-        }
     }
 }
 
@@ -855,12 +822,6 @@ void CMonitorSystem::sample_loadavg()
         m_pOutput->pdouble("load_avg_5min", load_avg_5min);
         m_pOutput->pdouble("load_avg_15min", load_avg_15min);
         m_pOutput->psection_end();
-
-       if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-           CMonitorPromethues::instance().add_kpi("load_avg_1min", load_avg_1min, "system", "proc_loadavg");
-           CMonitorPromethues::instance().add_kpi("load_avg_5min", load_avg_5min, "system", "proc_loadavg");
-           CMonitorPromethues::instance().add_kpi("load_avg_15min", load_avg_15min, "system", "proc_loadavg");
-       }
     }
 }
 
@@ -909,27 +870,6 @@ void CMonitorSystem::sample_filesystems()
             m_pOutput->plong("fs_files_free", vfs.f_ffree);
             m_pOutput->plong("fs_namelength", vfs.f_namelen);
             m_pOutput->psubsection_end();
-
-            // prometheus
-            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                //CMonitorPromethues::instance().add_kpi("fs_dir", fs->mnt_dir);
-                //CMonitorPromethues::instance().add_kpi("fs_type", fs->mnt_type);
-                //CMonitorPromethues::instance().add_kpi("fs_opts", fs->mnt_opts);
-
-                CMonitorPromethues::instance().add_kpi("fs_freqs", fs->mnt_freq, "system", "filesystems");
-                CMonitorPromethues::instance().add_kpi("fs_passno", fs->mnt_passno, "system", "filesystems");
-                CMonitorPromethues::instance().add_kpi("fs_bsize", vfs.f_bsize, "system", "filesystems");
-                CMonitorPromethues::instance().add_kpi("fs_size_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024, "system", "filesystems");
-                CMonitorPromethues::instance().add_kpi("fs_free_mb", (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024, "system", "filesystems");
-                CMonitorPromethues::instance().add_kpi(
-                    "fs_used_mb", (vfs.f_blocks * vfs.f_bsize) / 1024 / 1024 - (vfs.f_bfree * vfs.f_bsize) / 1024 / 1024, "system", "filesystems");
-                CMonitorPromethues::instance().add_kpi(
-                    "fs_full_percent", ((double)vfs.f_blocks - (double)vfs.f_bfree) / (double)vfs.f_blocks * (double)100.0, "system", "filesystems");
-                CMonitorPromethues::instance().add_kpi("fs_avail", (vfs.f_bavail * vfs.f_bsize) / 1024 / 1024, "system", "filesystems");
-                CMonitorPromethues::instance().add_kpi("fs_files", vfs.f_files, "system", "filesystems");
-                CMonitorPromethues::instance().add_kpi("fs_files_free", vfs.f_ffree, "system", "filesystems");
-                CMonitorPromethues::instance().add_kpi("fs_namelength", vfs.f_namelen, "system", "filesystems");
-            }
         }
     }
     m_pOutput->psection_end();

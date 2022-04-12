@@ -38,7 +38,6 @@ OBJS_CMONITOR_COLLECTOR = \
 	$(OUTDIR)/fast_file_reader.o \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/output_frontend.o \
-    $(OUTDIR)/prometheus.o \
     $(OUTDIR)/system.o \
     $(OUTDIR)/utils_files.o \
     $(OUTDIR)/utils_misc.o \

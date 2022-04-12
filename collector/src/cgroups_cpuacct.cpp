@@ -20,7 +20,6 @@
 #include "cgroups.h"
 #include "logger.h"
 #include "output_frontend.h"
-#include "prometheus.h"
 #include "utils_files.h"
 #include "utils_string.h"
 #include <assert.h>
@@ -137,11 +136,6 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
                     m_pOutput->pdouble("user", cpuUserPercent);
                     m_pOutput->pdouble("sys", cpuSysPercent);
                     m_pOutput->psubsection_end();
-
-                    if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                       CMonitorPromethues::instance().add_kpi("user", cpuUserPercent, "cgroup_cpuacct_stats", fmt::format("cpu{}", i).c_str());
-                       CMonitorPromethues::instance().add_kpi("sys", cpuSysPercent, "cgroup_cpuacct_stats", fmt::format("cpu{}", i).c_str());
-                    }
                 }
 
                 // maintain the total cpu usage counter
@@ -180,10 +174,6 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
                     m_pOutput->psubsection_start(fmt::format("cpu{}", i).c_str());
                     m_pOutput->pdouble("user", cpuUserPercent);
                     m_pOutput->psubsection_end();
-
-                    if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                        CMonitorPromethues::instance().add_kpi("user", cpuUserPercent, "cgroup_cpuacct_stats", fmt::format("cpu{}", i).c_str());
-                    }
                 }
 
                 // maintain the total cpu usage counter
@@ -228,16 +218,6 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
                 m_pOutput->plong("throttled_time",
                     counter_throttling.throttled_time_nsec - m_cpuacct_prev_values_for_throttling.throttled_time_nsec);
                 m_pOutput->psubsection_end();
-
-                if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                    CMonitorPromethues::instance().add_kpi(
-                        "nr_periods", counter_throttling.nr_periods - m_cpuacct_prev_values_for_throttling.nr_periods, "cgroup_cpuacct_stats", "throttling");
-                    CMonitorPromethues::instance().add_kpi("nr_throttled",
-                        counter_throttling.nr_throttled - m_cpuacct_prev_values_for_throttling.nr_throttled, "cgroup_cpuacct_stats", "throttling");
-                    CMonitorPromethues::instance().add_kpi("throttled_time",
-                        counter_throttling.throttled_time_nsec - m_cpuacct_prev_values_for_throttling.throttled_time_nsec, "cgroup_cpuacct_stats", "throttling");
-               
-                }
             }
 
             // save for next cycle
@@ -302,14 +282,6 @@ bool CMonitorCgroups::sample_cpuacct_v2_counters(bool print, double elapsed_sec,
         m_pOutput->plong("throttled_time",
             counter_throttling.throttled_time_nsec - m_cpuacct_prev_values_for_throttling.throttled_time_nsec);
         m_pOutput->psubsection_end();
-
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("nr_periods", counter_throttling.nr_periods - m_cpuacct_prev_values_for_throttling.nr_periods, "cgroup_cpuacct_stats", "throttling");
-            CMonitorPromethues::instance().add_kpi(
-                "nr_throttled", counter_throttling.nr_throttled - m_cpuacct_prev_values_for_throttling.nr_throttled, "cgroup_cpuacct_stats", "throttling");
-            CMonitorPromethues::instance().add_kpi("throttled_time",
-                counter_throttling.throttled_time_nsec - m_cpuacct_prev_values_for_throttling.throttled_time_nsec, "cgroup_cpuacct_stats", "throttling");
-        }
     }
 
     // save for next cycle
@@ -436,11 +408,6 @@ void CMonitorCgroups::sample_cpuacct(double elapsed_sec)
             m_pOutput->pdouble("user", cpuUserPercent);
             m_pOutput->pdouble("sys", cpuSysPercent);
             m_pOutput->psubsection_end();
-
-            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                CMonitorPromethues::instance().add_kpi("user", cpuUserPercent, "cgroup_cpuacct_stats", "cpu_tot");
-                CMonitorPromethues::instance().add_kpi("sys", cpuSysPercent, "cgroup_cpuacct_stats", "cpu_tot");
-            }
         }
 
         // save for next cycle

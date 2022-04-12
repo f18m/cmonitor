@@ -119,6 +119,18 @@ void CMonitorOutputFrontend::init_influxdb_connection(
         m_influxdb_client_conn->host, m_influxdb_client_conn->port);
 }
 
+void CMonitorOutputFrontend::init_prometheus_connection()
+{
+    m_exposer->RegisterCollectable(m_prometheus_registry);
+}
+
+void CMonitorOutputFrontend::set_prometheus_port(const std::string& port)
+{
+    m_exposer = prometheus::detail::make_unique<prometheus::Exposer>(port);
+    CMonitorLogger::instance()->LogDebug("set_prometheus_port() initialized Prometheus port to %s", port.c_str());
+    m_prometheusEnabled = true;
+}
+
 void CMonitorOutputFrontend::enable_json_pretty_print()
 {
     m_onelevel_indent_string = "    ";
@@ -464,6 +476,9 @@ void CMonitorOutputFrontend::push_current_sections(bool is_header)
     if (m_influxdb_client_conn)
         push_current_sections_to_influxdb(is_header);
 
+    if (m_prometheusEnabled)
+        push_current_sections_to_prometheus();
+
     fflush(NULL); /* force I/O output now */
 
     // IMPORTANT: clear() but do not shrink_to_fit() to avoid a bunch of reallocations for next sample:
@@ -488,6 +503,42 @@ size_t CMonitorOutputFrontend::get_current_sample_measurements() const
     return ntotal_meas;
 }
 
+void CMonitorOutputFrontend::push_current_sections_to_prometheus()
+{
+    std::string section_name;
+    for (size_t i = 0; i < m_current_sections.size(); i++) {
+        auto& sec = m_current_sections[i];
+        if (sec.m_measurements.empty()) {
+            for (size_t i = 0; i < sec.m_subsections.size(); i++) {
+                auto& subsec = sec.m_subsections[i];
+                section_name = sec.m_name;
+                for (size_t n = 0; n < subsec.m_measurements.size(); n++) {
+                    auto& m = subsec.m_measurements[n];
+                    std::string metric_name = section_name + "_" + subsec.m_name;
+                    generate_prometheus_metric(metric_name,m.m_name.data(),m.m_value.data());
+                 }
+            }
+        }
+        else {
+            for (size_t n = 0; n < sec.m_measurements.size(); n++) {
+                auto& m = sec.m_measurements[n];
+                generate_prometheus_metric(sec.m_name,m.m_name.data(),m.m_value.data());
+            }
+        }
+    }
+}
+
+void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data, const std::string& metric_value)
+{
+   auto& metrics2 = prometheus::BuildGauge()
+                                          .Name(metric_name)
+                                          .Help(metric_name)
+                                          .Labels({})
+                                          .Register(*m_prometheus_registry)
+                                          .Add({{"metric",metric_data}});
+    double value = ::atof(metric_value.c_str());
+    metrics2.Set(value);
+}
 //------------------------------------------------------------------------------
 // JSON objects
 //------------------------------------------------------------------------------

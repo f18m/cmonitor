@@ -21,7 +21,6 @@
 #include "cgroups.h"
 #include "logger.h"
 #include "output_frontend.h"
-#include "prometheus.h"
 #include "utils_files.h"
 #include "utils_string.h"
 #include <assert.h>
@@ -598,7 +597,15 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 #define DELTA(member) (CURRENT(member) - PREVIOUS(member))
 #define COUNTDELTA(member) ((PREVIOUS(member) > CURRENT(member)) ? 0 : (CURRENT(member) - PREVIOUS(member)))
 
-        m_pOutput->psubsection_start(fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid)).c_str());
+        //m_pOutput->psubsection_start(fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid)).c_str());
+        std:: string  comm = CURRENT(pi_comm);
+        // remove spacial characher as its not supported in prometheus.
+        std::replace(comm.begin(),comm.end(),'/','_');
+        std::replace(comm.begin(),comm.end(),'-','_');
+        std::string subsection_name = fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid))
+                                            +  "_"  + "cmd" + "_" + comm;
+        std::string process_subsection_name =  subsection_name + "_" + "process";
+        m_pOutput->psubsection_start(process_subsection_name.c_str());
         m_pOutput->plong("cmon_score", score);
 
         /*
@@ -609,8 +616,6 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
          *           https://en.wikipedia.org/wiki/Process_group
          *       to avoid confusing the consumer of data, they're left out of the data stream
          */
-        m_pOutput->pstring(
-            "cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
         m_pOutput->plong("pid", CURRENT(pi_pid));
         m_pOutput->plong("ppid", CURRENT(pi_ppid));
         m_pOutput->plong("tgid", CURRENT(pi_tgid));
@@ -618,36 +623,22 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         m_pOutput->plong("nice", CURRENT(pi_nice));
         m_pOutput->pstring("state", get_state(CURRENT(pi_state)));
         m_pOutput->plong("uid", CURRENT(uid));
-
-       if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            // CMonitorPromethues::instance().add_kpi(fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid)).c_str());
-            // CMonitorPromethues::instance().add_kpi("cmon_score", score);
-            CMonitorPromethues::instance().add_kpi("pid", CURRENT(pi_pid), "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("ppid", CURRENT(pi_ppid), "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("tgid", CURRENT(pi_tgid), "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("priority", CURRENT(pi_priority), "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("nice", CURRENT(pi_nice), "cmd", CURRENT(pi_comm));
-            // CMonitorPromethues::instance().add_kpi("state", get_state(CURRENT(pi_state)));
-            CMonitorPromethues::instance().add_kpi("uid", CURRENT(uid), "cmd", CURRENT(pi_comm));
-        }
-
         if (output_opts == PF_ALL) {
             // seldomly used fields:
             m_pOutput->plong("tty_nr", CURRENT(pi_tty_nr));
             m_pOutput->plong("threads", CURRENT(pi_num_threads));
             m_pOutput->plong("pgrp", CURRENT(pi_pgrp)); // see NOTE above
-            m_pOutput->plong("session", CURRENT(pi_session)); // see NOTE above 
-            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                CMonitorPromethues::instance().add_kpi("tty_nr", CURRENT(pi_tty_nr), "cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("threads", CURRENT(pi_num_threads), "cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("pgrp", CURRENT(pi_pgrp), "cmd", CURRENT(pi_comm)); // see NOTE above
-                CMonitorPromethues::instance().add_kpi("session", CURRENT(pi_session), "cmd", CURRENT(pi_comm)); // see NOTE above
-                CMonitorPromethues::instance().add_kpi("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks, "cmd", CURRENT(pi_comm));
-            }
+            m_pOutput->plong("session", CURRENT(pi_session)); // see NOTE above
             if (strlen(CURRENT(username)) > 0)
                 m_pOutput->pstring("username", CURRENT(username));
             m_pOutput->pdouble("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks);
         }
+        // End sub-section for process
+        m_pOutput->psubsection_end();
+
+        // start sub-section for CPU
+        std::string cpu_subsection_name =  subsection_name + "_" + "cpu";
+        m_pOutput->psubsection_start(cpu_subsection_name.c_str());
 
         /*
          * CPU fields
@@ -658,59 +649,46 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
                  IOW there is no need to do any math to produce a percentage, just taking
                  the delta of the absolute, monotonic-increasing value and divide by the elapsed time
         */
-        m_pOutput->plong("cpu_last", CURRENT(pi_last_cpu));
+        m_pOutput->plong("last", CURRENT(pi_last_cpu));
         m_pOutput->pdouble(
-            "cpu_usr", std::min(100.0, (double)DELTA(pi_utime) / elapsed_sec)); // percentage between 0-100
+            "usr", std::min(100.0, (double)DELTA(pi_utime) / elapsed_sec)); // percentage between 0-100
         m_pOutput->pdouble(
-            "cpu_sys", std::min(100.0, (double)DELTA(pi_stime) / elapsed_sec)); // percentage between 0-100
+            "sys", std::min(100.0, (double)DELTA(pi_stime) / elapsed_sec)); // percentage between 0-100
+
+         m_pOutput->psubsection_end();
 
         // provide also the total, monotonically-increasing CPU time:
         // this is used by chart script to produce the "top of the topper" chart
-        m_pOutput->pdouble("cpu_usr_total_secs", (double)CURRENT(pi_utime) / ticks);
-        m_pOutput->pdouble("cpu_sys_total_secs", (double)CURRENT(pi_stime) / ticks);
+        std::string cpu_total_subsection_name =  subsection_name + "_" + "cpu_total_secs";
+        m_pOutput->psubsection_start(cpu_total_subsection_name.c_str());
 
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("cpu_last", CURRENT(pi_last_cpu), "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi(
-                "cpu_usr", std::min(100.0, (double)DELTA(pi_utime) / elapsed_sec), "cmd", CURRENT(pi_comm)); // percentage between 0-100
-            CMonitorPromethues::instance().add_kpi(
-                "cpu_sys", std::min(100.0, (double)DELTA(pi_stime) / elapsed_sec), "cmd", CURRENT(pi_comm)); // percentage between 0-100
+        m_pOutput->pdouble("usr", (double)CURRENT(pi_utime) / ticks);
+        m_pOutput->pdouble("sys", (double)CURRENT(pi_stime) / ticks);
 
-            CMonitorPromethues::instance().add_kpi("cpu_usr_total_secs", (double)CURRENT(pi_utime) / ticks, "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("cpu_sys_total_secs", (double)CURRENT(pi_stime) / ticks, "cmd", CURRENT(pi_comm));
-      }
+        // End subsection for CPU
+        m_pOutput->psubsection_end();
 
         /*
          * Memory fields
          */
-        if (output_opts == PF_ALL) {
-            m_pOutput->plong("mem_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
-            m_pOutput->plong("mem_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
-            m_pOutput->plong("mem_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
-            m_pOutput->plong("mem_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
-            m_pOutput->plong("mem_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
-            m_pOutput->plong("mem_rss_limit_bytes", CURRENT(pi_rsslimit));
 
-            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                CMonitorPromethues::instance().add_kpi("mem_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024, "cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("mem_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024, "cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("mem_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024, "cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("mem_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024, "cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("mem_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024, "cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("mem_rss_limit_bytes", CURRENT(pi_rsslimit), "cmd", CURRENT(pi_comm));
-            }
+        // start sub-section for memory
+        std::string memory_subsection_name =  subsection_name + "_" + "memory";
+        m_pOutput->psubsection_start(memory_subsection_name.c_str());
+
+        if (output_opts == PF_ALL) {
+            m_pOutput->plong("size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("rss_limit_bytes", CURRENT(pi_rsslimit));
         }
-        m_pOutput->pdouble("mem_minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec);
-        m_pOutput->pdouble("mem_major_fault", COUNTDELTA(pi_majflt) / elapsed_sec);
-        m_pOutput->plong("mem_virtual_bytes", CURRENT(pi_vsize));
-        m_pOutput->plong("mem_rss_bytes", CURRENT(pi_rss) * PAGESIZE_BYTES);
-        
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("mem_minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec, "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("mem_major_fault", COUNTDELTA(pi_majflt) / elapsed_sec, "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("mem_virtual_bytes", CURRENT(pi_vsize), "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("mem_rss_bytes", CURRENT(pi_rss) * PAGESIZE_BYTES, "cmd", CURRENT(pi_comm));
-       }
+        m_pOutput->pdouble("minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec);
+        m_pOutput->pdouble("major_fault", COUNTDELTA(pi_majflt) / elapsed_sec);
+        m_pOutput->plong("virtual_bytes", CURRENT(pi_vsize));
+        m_pOutput->plong("rss_bytes", CURRENT(pi_rss) * PAGESIZE_BYTES);
+
         /*
          * Signal fields
          */
@@ -734,46 +712,38 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
             m_pOutput->plong("child_swap_pages", CURRENT(pi_child_swap_pages));
             m_pOutput->plong("realtime_priority", CURRENT(pi_realtime_priority));
             m_pOutput->plong("sched_policy", CURRENT(pi_sched_policy));
-
-            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                CMonitorPromethues::instance().add_kpi("swap_pages", CURRENT(pi_swap_pages), "cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("child_swap_pages", CURRENT(pi_child_swap_pages), "cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("realtime_priority", CURRENT(pi_realtime_priority), "cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("sched_policy", CURRENT(pi_sched_policy), "cmd", CURRENT(pi_comm));
-            }
         }
-
+        // End subsection for memory
+        m_pOutput->psubsection_end();
 
         /*
          * I/O fields
          */
-        m_pOutput->pdouble("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
-        m_pOutput->plong("io_rchar", DELTA(io_rchar) / elapsed_sec);
-        m_pOutput->plong("io_wchar", DELTA(io_wchar) / elapsed_sec);
+        std::string io_subsection_name =  subsection_name + "_" + "io";
+        m_pOutput->psubsection_start(io_subsection_name.c_str());
 
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks, "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("io_rchar", DELTA(io_rchar) / elapsed_sec, "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("io_wchar", DELTA(io_wchar) / elapsed_sec, "cmd", CURRENT(pi_comm));
-        }
+        m_pOutput->pdouble("delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
+        m_pOutput->plong("rchar", DELTA(io_rchar) / elapsed_sec);
+        m_pOutput->plong("wchar", DELTA(io_wchar) / elapsed_sec);
+
+        m_pOutput->psubsection_end();
+
+        std::string io_subsection_name_bytes =  subsection_name + "_" + "io_bytes";
+        m_pOutput->psubsection_start(io_subsection_name_bytes.c_str());
+
         if (output_opts == PF_ALL) {
-            m_pOutput->plong("io_read_bytes", DELTA(io_read_bytes) / elapsed_sec);
-            m_pOutput->plong("io_write_bytes", DELTA(io_write_bytes) / elapsed_sec);
-            if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-                CMonitorPromethues::instance().add_kpi("io_read_bytes", DELTA(io_read_bytes) / elapsed_sec, "cmd", CURRENT(pi_comm));
-                CMonitorPromethues::instance().add_kpi("io_write_bytes", DELTA(io_write_bytes) / elapsed_sec, "cmd", CURRENT(pi_comm));
-            }
+            m_pOutput->plong("read", DELTA(io_read_bytes) / elapsed_sec);
+            m_pOutput->plong("write", DELTA(io_write_bytes) / elapsed_sec);
         }
+        m_pOutput->psubsection_end();
 
         // provide also the total, monotonically-increasing I/O time:
         // this is used by chart script to produce the "top of the topper" chart
-        m_pOutput->plong("io_total_read", CURRENT(io_rchar));
-        m_pOutput->plong("io_total_write", CURRENT(io_wchar));
+        std::string io_subsection_name_total =  subsection_name + "_" + "io_total";
+        m_pOutput->psubsection_start(io_subsection_name_total.c_str());
 
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("io_total_read", CURRENT(io_rchar), "cmd", CURRENT(pi_comm));
-            CMonitorPromethues::instance().add_kpi("io_total_write", CURRENT(io_wchar), "cmd", CURRENT(pi_comm));
-        }
+        m_pOutput->plong("read", CURRENT(io_rchar));
+        m_pOutput->plong("write", CURRENT(io_wchar));
 
         m_pOutput->psubsection_end();
         nProcsOverThreshold++;

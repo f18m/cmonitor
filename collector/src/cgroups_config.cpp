@@ -19,7 +19,6 @@
 
 #include "cgroups.h"
 #include "logger.h"
-#include "prometheus.h"
 #include "output_frontend.h"
 #include "utils_files.h"
 #include "utils_string.h"
@@ -794,39 +793,20 @@ void CMonitorCgroups::output_config()
     // actual cgroup limits
     std::string tmp = stl_container2string(m_cgroup_cpus, ",");
     m_pOutput->pstring("cpus", &tmp[0]);
-    if (m_cgroup_cpuacct_quota_us == UINT64_MAX) {
+    if (m_cgroup_cpuacct_quota_us == UINT64_MAX)
         m_pOutput->pdouble("cpu_quota_perc", -1.0f);
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("cpu_quota_perc", -1.0f, "cpus", &tmp[0]);
-        }
-    }
-    else if (m_cgroup_cpuacct_period_us) {
+    else if (m_cgroup_cpuacct_period_us)
         // FIXME we should add 100* to actually get a percentage, e.g. if we start a docker with --cpu-limit=2 we
         //       should see "200" as "cpu_quota_perc" not just "2". Or we rename to "cpu_quota" only
         m_pOutput->pdouble("cpu_quota_perc", (double)m_cgroup_cpuacct_quota_us / (double)m_cgroup_cpuacct_period_us);
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("cpu_quota_perc", (double)m_cgroup_cpuacct_quota_us / (double)m_cgroup_cpuacct_period_us, "cpus", &tmp[0]);
-        }
-    }
-    else {
+    else
         m_pOutput->pdouble("cpu_quota_perc", 0.0);
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("cpu_quota_perc", 0.0, "cpus", &tmp[0]);
-        }
-    }
 
-    if (m_cgroup_memory_limit_bytes == UINT64_MAX) {
+    if (m_cgroup_memory_limit_bytes == UINT64_MAX)
         m_pOutput->pdouble("memory_limit_bytes", -1.0f);
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("memory_limit_bytes", -1.0f, "cpus", &tmp[0]);
-        }
-    }
-    else {
-        m_pOutput->plong("memory_limit_bytes", m_cgroup_memory_limit_bytes); 
-        if(CMonitorPromethues::instance().is_prometheus_enabled()) {
-            CMonitorPromethues::instance().add_kpi("memory_limit_bytes", m_cgroup_memory_limit_bytes, "cpus", &tmp[0]);
-        }
-    }
+    else
+        m_pOutput->plong("memory_limit_bytes", m_cgroup_memory_limit_bytes);
+
     m_pOutput->psection_end();
 }
 

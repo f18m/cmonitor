@@ -54,7 +54,6 @@ OBJS = \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/main.o \
     $(OUTDIR)/output_frontend.o \
-    $(OUTDIR)/prometheus.o \
     $(OUTDIR)/system.o \
     $(OUTDIR)/utils_files.o \
     $(OUTDIR)/utils_misc.o \
