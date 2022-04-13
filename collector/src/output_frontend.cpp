@@ -119,16 +119,12 @@ void CMonitorOutputFrontend::init_influxdb_connection(
         m_influxdb_client_conn->host, m_influxdb_client_conn->port);
 }
 
-void CMonitorOutputFrontend::init_prometheus_connection()
-{
-    m_exposer->RegisterCollectable(m_prometheus_registry);
-}
-
-void CMonitorOutputFrontend::set_prometheus_port(const std::string& port)
+void CMonitorOutputFrontend::init_prometheus_connection(const std::string& port)
 {
     m_exposer = prometheus::detail::make_unique<prometheus::Exposer>(port);
-    CMonitorLogger::instance()->LogDebug("set_prometheus_port() initialized Prometheus port to %s", port.c_str());
+    m_exposer->RegisterCollectable(m_prometheus_registry);
     m_prometheusEnabled = true;
+    CMonitorLogger::instance()->LogDebug("init_prometheus_connection() initialized Prometheus port to %s", port.c_str());
 }
 
 void CMonitorOutputFrontend::enable_json_pretty_print()

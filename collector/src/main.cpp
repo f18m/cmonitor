@@ -737,8 +737,7 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
     if(!m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty())
     {
         auto listenAddress = std::string{m_cfg.m_strPrometheusPort};
-        m_output.set_prometheus_port(listenAddress);
-        m_output.init_prometheus_connection();
+        m_output.init_prometheus_connection(listenAddress);
         printf("Prometheus listening on port: %s\n", m_cfg.m_strPrometheusPort.c_str());
     }
 
