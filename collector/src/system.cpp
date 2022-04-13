@@ -742,10 +742,10 @@ bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, dou
             break;
 
         case PF_USED_BY_CHART_SCRIPT_ONLY:
-                m_pOutput->plong("ibytes", DELTA_NET_STAT(if_ibytes));
-                m_pOutput->plong("obytes", DELTA_NET_STAT(if_obytes));
-                m_pOutput->plong("ipackets", DELTA_NET_STAT(if_ipackets));
-                m_pOutput->plong("opackets", DELTA_NET_STAT(if_opackets));
+            m_pOutput->plong("ibytes", DELTA_NET_STAT(if_ibytes));
+            m_pOutput->plong("obytes", DELTA_NET_STAT(if_obytes));
+            m_pOutput->plong("ipackets", DELTA_NET_STAT(if_ipackets));
+            m_pOutput->plong("opackets", DELTA_NET_STAT(if_opackets));
             break;
         }
         m_pOutput->psubsection_end();

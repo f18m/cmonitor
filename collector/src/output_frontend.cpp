@@ -530,8 +530,13 @@ void CMonitorOutputFrontend::push_current_sections_to_prometheus()
 
 void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data, const std::string& metric_value)
 {
-   auto& metrics2 = prometheus::BuildGauge()
-                                          .Name(metric_name)
+    // remove spacial characher from metric name as its not supported in prometheus.
+    std::string metric = metric_name;
+    std::replace(metric.begin(),metric.end(),'/','_');
+    std::replace(metric.begin(),metric.end(),'-','_');
+
+    auto& metrics2 = prometheus::BuildGauge()
+                                          .Name(metric)
                                           .Help(metric_name)
                                           .Labels({})
                                           .Register(*m_prometheus_registry)

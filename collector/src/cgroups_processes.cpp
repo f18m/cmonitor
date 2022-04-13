@@ -597,13 +597,8 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 #define DELTA(member) (CURRENT(member) - PREVIOUS(member))
 #define COUNTDELTA(member) ((PREVIOUS(member) > CURRENT(member)) ? 0 : (CURRENT(member) - PREVIOUS(member)))
 
-        //m_pOutput->psubsection_start(fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid)).c_str());
-        std:: string  comm = CURRENT(pi_comm);
-        // remove spacial characher as its not supported in prometheus.
-        std::replace(comm.begin(),comm.end(),'/','_');
-        std::replace(comm.begin(),comm.end(),'-','_');
         std::string subsection_name = fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid))
-                                            +  "_"  + "cmd" + "_" + comm;
+                                            +  "_"  + "cmd" + "_" + CURRENT(pi_comm);
         std::string process_subsection_name =  subsection_name + "_" + "process";
         m_pOutput->psubsection_start(process_subsection_name.c_str());
         m_pOutput->plong("cmon_score", score);

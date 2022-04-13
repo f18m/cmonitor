@@ -22,7 +22,6 @@
 #include "header_info.h"
 #include "logger.h"
 #include "output_frontend.h"
-#include "prometheus.h"
 #include "system.h"
 #include "utils_files.h"
 #include "utils_misc.h"
