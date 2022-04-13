@@ -513,16 +513,16 @@ void CMonitorOutputFrontend::push_current_sections_to_prometheus()
                 auto& subsec = sec.m_subsections[i];
                 section_name = sec.m_name;
                 for (size_t n = 0; n < subsec.m_measurements.size(); n++) {
-                    auto& m = subsec.m_measurements[n];
+                    auto& measurement = subsec.m_measurements[n];
                     std::string metric_name = section_name + "_" + subsec.m_name;
-                    generate_prometheus_metric(metric_name,m.m_name.data(),m.m_value.data());
-                 }
+                    generate_prometheus_metric(metric_name, measurement.m_name.data(), measurement.m_value.data());
+                }
             }
         }
         else {
             for (size_t n = 0; n < sec.m_measurements.size(); n++) {
-                auto& m = sec.m_measurements[n];
-                generate_prometheus_metric(sec.m_name,m.m_name.data(),m.m_value.data());
+                auto& measurement = sec.m_measurements[n];
+                generate_prometheus_metric(sec.m_name, measurement.m_name.data(), measurement.m_value.data());
             }
         }
     }
@@ -532,17 +532,18 @@ void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metri
 {
     // remove spacial characher from metric name as its not supported in prometheus.
     std::string metric = metric_name;
-    std::replace(metric.begin(),metric.end(),'/','_');
-    std::replace(metric.begin(),metric.end(),'-','_');
-
-    auto& metrics2 = prometheus::BuildGauge()
+    std::replace(metric.begin(), metric.end(), '/', '_');
+    std::replace(metric.begin(), metric.end(), '-', '_');
+    std::replace(metric.begin(), metric.end(), '.', '_');
+    printf("metric name :%s\n", metric.c_str());
+    auto& metrics = prometheus::BuildGauge()
                                           .Name(metric)
                                           .Help(metric_name)
                                           .Labels({})
                                           .Register(*m_prometheus_registry)
-                                          .Add({{"metric",metric_data}});
+                                          .Add({{"metric", metric_data}});
     double value = ::atof(metric_value.c_str());
-    metrics2.Set(value);
+    metrics.Set(value);
 }
 //------------------------------------------------------------------------------
 // JSON objects

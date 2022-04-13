@@ -5,7 +5,6 @@
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/../..)
 include $(ROOT_DIR)/Constants.mk
-LIBS += -lfmt -lprometheus-cpp-pull -lprometheus-cpp-core -lz
 
 DEFS=-DVERSION_STRING=\"$(CMONITOR_VERSION)-$(CMONITOR_RELEASE)\" -DCMONITOR_LAST_COMMIT_HASH=\"$(CMONITOR_LAST_COMMIT_HASH)\" -DFMTLIB_MAJOR_VER=$(FMTLIB_MAJOR_VER)
 
@@ -22,7 +21,7 @@ else
 CXXFLAGS += -g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
 LDFLAGS += -g -O2
 endif
-#LIBS += -lfmt -lprometheus-cpp-pull -lprometheus-cpp-core -lz
+LIBS += -lfmt -lprometheus-cpp-pull -lprometheus-cpp-core -lz
 
 ifeq ($(MUSL_BUILD),1)
 OUTDIR=../bin/musl

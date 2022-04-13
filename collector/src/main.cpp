@@ -569,7 +569,7 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'L': {
                 std::string key_value = optarg;
                 std::vector<std::string> vec_label = split_string_in_array(key_value, ',');
-                for(auto &elem : vec_label) {
+                for (auto &elem : vec_label) {
                     std::vector<std::string> key_value_tokens = split_string_in_array(elem, ':');
                     if (key_value_tokens.size() != 2) {
                         printf(
@@ -578,7 +578,7 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
                     }
                     m_cfg.m_mapLabelsData.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
                 }
-            }break;
+            } break;
 
             // help
             case 'v':
@@ -711,14 +711,6 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
         // We are attempting to send the data remotely
         m_output.init_influxdb_connection(m_cfg.m_strRemoteAddress, m_cfg.m_nRemotePort, m_cfg.m_strRemoteDatabaseName);
     }
-    // initialize prometheus exposer to scrape the registry on incoming HTTP requests
-    if(!m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty())
-    {
-        auto listenAddress = std::string{m_cfg.m_strPrometheusPort};
-        m_output.set_prometheus_port(listenAddress);
-        m_output.init_prometheus_connection();
-        printf("Prometheus listening on port: %s\n", m_cfg.m_strPrometheusPort.c_str());
-    }
 
     // daemonize or stay foreground:
     if (!m_cfg.m_bForeground) {
@@ -739,6 +731,15 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
         close(STDERR_FILENO);
         setpgrp(); /* become process group leader */
         signal(SIGHUP, SIG_IGN); /* ignore hangups */
+    }
+
+    // initialize prometheus exposer to scrape the registry on incoming HTTP requests
+    if(!m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty())
+    {
+        auto listenAddress = std::string{m_cfg.m_strPrometheusPort};
+        m_output.set_prometheus_port(listenAddress);
+        m_output.init_prometheus_connection();
+        printf("Prometheus listening on port: %s\n", m_cfg.m_strPrometheusPort.c_str());
     }
 
     bool bCollectCGroupInfo = // force newline
