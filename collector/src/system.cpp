@@ -704,40 +704,40 @@ bool CMonitorSystem::output_net_dev_stats(CMonitorOutputFrontend* m_pOutput, dou
 
         case PF_ALL:
             m_pOutput->psubsection_start(subsec_name_bytes.c_str());
-                m_pOutput->plong("input", DELTA_NET_STAT(if_ibytes));
-                m_pOutput->plong("output", DELTA_NET_STAT(if_obytes));
+            m_pOutput->plong("input", DELTA_NET_STAT(if_ibytes));
+            m_pOutput->plong("output", DELTA_NET_STAT(if_obytes));
             m_pOutput->psubsection_end();
 
             m_pOutput->psubsection_start(subsec_name_packets.c_str());
-               m_pOutput->plong("input", DELTA_NET_STAT(if_ipackets));
-               m_pOutput->plong("output", DELTA_NET_STAT(if_opackets));
+            m_pOutput->plong("input", DELTA_NET_STAT(if_ipackets));
+            m_pOutput->plong("output", DELTA_NET_STAT(if_opackets));
             m_pOutput->psubsection_end();
 
             m_pOutput->psubsection_start(subsec_name_errs.c_str());
-                m_pOutput->plong("input", DELTA_NET_STAT(if_ierrs));
-                m_pOutput->plong("output", DELTA_NET_STAT(if_oerrs));
+            m_pOutput->plong("input", DELTA_NET_STAT(if_ierrs));
+            m_pOutput->plong("output", DELTA_NET_STAT(if_oerrs));
             m_pOutput->psubsection_end();
 
             m_pOutput->psubsection_start(subsec_name_drop.c_str());
-                m_pOutput->plong("input", DELTA_NET_STAT(if_idrop));
-                m_pOutput->plong("output", DELTA_NET_STAT(if_odrop));
+            m_pOutput->plong("input", DELTA_NET_STAT(if_idrop));
+            m_pOutput->plong("output", DELTA_NET_STAT(if_odrop));
             m_pOutput->psubsection_end();
 
             m_pOutput->psubsection_start(subsec_name_fifo.c_str());
-                m_pOutput->plong("input", DELTA_NET_STAT(if_ififo));
-                m_pOutput->plong("output", DELTA_NET_STAT(if_ofifo));
+            m_pOutput->plong("input", DELTA_NET_STAT(if_ififo));
+            m_pOutput->plong("output", DELTA_NET_STAT(if_ofifo));
             m_pOutput->psubsection_end();
 
             m_pOutput->psubsection_start(subsec_name_frame.c_str());
-                m_pOutput->plong("input", DELTA_NET_STAT(if_iframe));
+            m_pOutput->plong("input", DELTA_NET_STAT(if_iframe));
             m_pOutput->psubsection_end();
 
             m_pOutput->psubsection_start(subsec_name_colls.c_str());
-                m_pOutput->plong("output", DELTA_NET_STAT(if_ocolls));
+            m_pOutput->plong("output", DELTA_NET_STAT(if_ocolls));
             m_pOutput->psubsection_end();
 
             m_pOutput->psubsection_start(subsec_name_carrier.c_str());
-                m_pOutput->plong("output", DELTA_NET_STAT(if_ocarrier));
+            m_pOutput->plong("output", DELTA_NET_STAT(if_ocarrier));
             m_pOutput->psubsection_end();
             break;
 

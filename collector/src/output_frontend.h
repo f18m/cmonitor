@@ -128,7 +128,6 @@ public:
     size_t get_current_sample_measurements() const;
     void push_header() { push_current_sections(true); } // writes on file, stdout or socket
     void push_current_sample() { push_current_sections(false); } // writes on file, stdout or socket
-    void print_sample();
 
 private:
     class CMonitorOutputMeasurement {
