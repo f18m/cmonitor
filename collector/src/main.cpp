@@ -144,8 +144,7 @@ struct option g_long_opts[] = {
     { "remote-port", required_argument, 0, 'p' }, // force newline
     { "remote-secret", required_argument, 0, 'X' }, // force newline
     { "remote-dbname", required_argument, 0, 'D' }, // force newline
-    { "prometheus-port ", required_argument, 0, 'S' },
-    { "labels", required_argument, 0, 'L' },
+    { "prometheus-port ", required_argument, 0, 'S' }, { "labels", required_argument, 0, 'L' },
 
     // Other options
     { "version", no_argument, 0, 'v' }, // force newline
@@ -569,11 +568,12 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'L': {
                 std::string key_value = optarg;
                 std::vector<std::string> vec_label = split_string_in_array(key_value, ',');
-                for (auto &elem : vec_label) {
+                for (auto& elem : vec_label) {
                     std::vector<std::string> key_value_tokens = split_string_in_array(elem, ':');
                     if (key_value_tokens.size() != 2) {
-                        printf(
-                            "Invalid label metadata [%s]. Every prometheus metadata option should be in the form key:value.\n",optarg);
+                        printf("Invalid label metadata [%s]. Every prometheus metadata option should be in the form "
+                               "key:value.\n",
+                            optarg);
                         exit(51);
                     }
                     m_cfg.m_mapLabelsData.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
@@ -629,7 +629,7 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
         exit(54);
     }
     if (m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty()) {
-         printf("Option --labels provided but the --prometheus-port option was not provided\n");
+        printf("Option --labels provided but the --prometheus-port option was not provided\n");
         exit(55);
     }
     if ((m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) && (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {
@@ -734,10 +734,9 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
     }
 
     // initialize prometheus exposer to scrape the registry on incoming HTTP requests
-    if(!m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty())
-    {
-        auto listenAddress = std::string{m_cfg.m_strPrometheusPort};
-        m_output.init_prometheus_connection(listenAddress);
+    if (!m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty()) {
+        auto listenAddress = std::string { m_cfg.m_strPrometheusPort };
+        m_output.init_prometheus_connection(listenAddress, m_cfg.m_mapCustomMetadata);
         printf("Prometheus listening on port: %s\n", m_cfg.m_strPrometheusPort.c_str());
     }
 

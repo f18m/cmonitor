@@ -38,11 +38,6 @@
 #include <prometheus/labels.h>
 #include <prometheus/registry.h>
 
-#include <chrono>
-#include <cstdlib>
-#include <memory>
-#include <thread>
-
 //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
@@ -90,7 +85,7 @@ public:
 
     void init_json_output_file(const std::string& filenamePrefix);
     void init_influxdb_connection(const std::string& hostname, unsigned int port, const std::string& dbname);
-    void init_prometheus_connection(const std::string& port);
+    void init_prometheus_connection(const std::string& port, std::map<std::string, std::string> metaData = {});
     void enable_json_pretty_print();
     void close();
 
@@ -223,6 +218,8 @@ private:
 
     // Prometheus exposer
     bool m_prometheusEnabled = false;
+    std::string m_metadata_key;
+    std::string m_metadata_value;
     std::unique_ptr<prometheus::Exposer> m_exposer;
     std::shared_ptr<prometheus::Registry> m_prometheus_registry = std::make_shared<prometheus::Registry>();
 

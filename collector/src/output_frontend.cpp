@@ -119,13 +119,20 @@ void CMonitorOutputFrontend::init_influxdb_connection(
         m_influxdb_client_conn->host, m_influxdb_client_conn->port);
 }
 
-void CMonitorOutputFrontend::init_prometheus_connection(const std::string& port)
+void CMonitorOutputFrontend::init_prometheus_connection(
+    const std::string& port, std::map<std::string, std::string> metaData)
 {
     m_exposer = prometheus::detail::make_unique<prometheus::Exposer>(port);
     m_exposer->RegisterCollectable(m_prometheus_registry);
     m_prometheusEnabled = true;
     CMonitorLogger::instance()->LogDebug(
         "init_prometheus_connection() initialized Prometheus port to %s", port.c_str());
+
+    // strore the metadata from command line.
+    for (const auto& entry : metaData) {
+        m_metadata_key = entry.first;
+        m_metadata_value = entry.second;
+    }
 }
 
 void CMonitorOutputFrontend::enable_json_pretty_print()
@@ -528,18 +535,13 @@ void CMonitorOutputFrontend::push_current_sections_to_prometheus()
 void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data,
     const std::string& metric_value, std::map<std::string, std::string> labels)
 {
-    // remove spacial characher from metric name as its not supported in prometheus.
-    std::string metric = metric_name;
-    std::replace(metric.begin(), metric.end(), '/', '_');
-    std::replace(metric.begin(), metric.end(), '-', '_');
-    std::replace(metric.begin(), metric.end(), '.', '_');
 
     labels.insert(std::make_pair("metric", metric_data));
 
     auto& metrics = prometheus::BuildGauge()
-                        .Name(metric)
+                        .Name(metric_name)
                         .Help(metric_name)
-                        .Labels({ { "app", "cmonitor" } })
+                        .Labels({ { m_metadata_key, m_metadata_value } })
                         .Register(*m_prometheus_registry)
                         .Add(labels);
     double value = ::atof(metric_value.c_str());

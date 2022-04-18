@@ -442,7 +442,14 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
             const diskinfo_t& previous = it_prev->second;
 
             if (output_opts != PF_NONE) {
-                m_pOutput->psubsection_start(current.dk_name);
+                // m_pOutput->psubsection_start(current.dk_name);
+                std::string subsection_name = current.dk_name;
+                // m_pOutput->psubsection_start(subsection_name.c_str());
+
+                std::string cpu_subsection_name_complete = subsection_name + "_" + "complete";
+                std::string cpu_subsection_name_merge = subsection_name + "_" + "merge";
+                std::string cpu_subsection_name_sectors = subsection_name + "_" + "bytes";
+                std::string cpu_subsection_name_seconds = subsection_name + "_" + "seconds";
 
 #define DELTA_DISK_STAT(member) ((double)(current.member - previous.member) / elapsed_sec)
 
@@ -452,30 +459,43 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
                     break;
 
                 case PF_ALL:
+                    m_pOutput->psubsection_start(cpu_subsection_name_complete.c_str());
                     m_pOutput->pdouble("reads", DELTA_DISK_STAT(dk_reads));
-                    m_pOutput->pdouble("rmerge", DELTA_DISK_STAT(dk_rmerge));
-                    m_pOutput->pdouble("rkb", DELTA_DISK_STAT(dk_rkb));
-                    m_pOutput->pdouble("rmsec", DELTA_DISK_STAT(dk_rmsec));
-
                     m_pOutput->pdouble("writes", DELTA_DISK_STAT(dk_writes));
-                    m_pOutput->pdouble("wmerge", DELTA_DISK_STAT(dk_wmerge));
-                    m_pOutput->pdouble("wkb", DELTA_DISK_STAT(dk_wkb));
-                    m_pOutput->pdouble("wmsec", DELTA_DISK_STAT(dk_wmsec));
+                    m_pOutput->psubsection_end();
 
+                    m_pOutput->psubsection_start(cpu_subsection_name_merge.c_str());
+                    m_pOutput->pdouble("read", DELTA_DISK_STAT(dk_rmerge));
+                    m_pOutput->pdouble("write", DELTA_DISK_STAT(dk_wmerge));
+                    m_pOutput->psubsection_end();
+
+                    m_pOutput->psubsection_start(cpu_subsection_name_sectors.c_str());
+                    m_pOutput->pdouble("read", DELTA_DISK_STAT(dk_rkb));
+                    m_pOutput->pdouble("write", DELTA_DISK_STAT(dk_wkb));
+                    m_pOutput->plong("size", current.dk_bsize);
+                    m_pOutput->psubsection_end();
+
+                    m_pOutput->psubsection_start(cpu_subsection_name_seconds.c_str());
+                    m_pOutput->pdouble("read", DELTA_DISK_STAT(dk_rmsec));
+                    m_pOutput->pdouble("write", DELTA_DISK_STAT(dk_wmsec));
+                    m_pOutput->psubsection_end();
+
+                    m_pOutput->psubsection_start(subsection_name.c_str());
                     m_pOutput->plong("inflight", current.dk_inflight);
                     m_pOutput->pdouble("time", DELTA_DISK_STAT(dk_time));
                     m_pOutput->pdouble("backlog", DELTA_DISK_STAT(dk_backlog));
                     m_pOutput->pdouble("xfers", DELTA_DISK_STAT(dk_xfers));
-                    m_pOutput->plong("bsize", current.dk_bsize);
+                    m_pOutput->psubsection_end();
+                    // m_pOutput->plong("bsize", current.dk_bsize);
                     break;
 
                 case PF_USED_BY_CHART_SCRIPT_ONLY:
+                    m_pOutput->psubsection_start(subsection_name.c_str());
                     m_pOutput->pdouble("rkb", DELTA_DISK_STAT(dk_rkb));
                     m_pOutput->pdouble("wkb", DELTA_DISK_STAT(dk_wkb));
+                    m_pOutput->psubsection_end();
                     break;
                 }
-
-                m_pOutput->psubsection_end();
             }
         }
 
