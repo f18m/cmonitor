@@ -128,10 +128,15 @@ void CMonitorOutputFrontend::init_prometheus_connection(
     CMonitorLogger::instance()->LogDebug(
         "init_prometheus_connection() initialized Prometheus port to %s", port.c_str());
 
-    // strore the metadata from command line.
-    for (const auto& entry : metaData) {
-        m_metadata_key = entry.first;
-        m_metadata_value = entry.second;
+    if (!metaData.empty()) {
+        // strore the metadata from command line.
+        for (const auto& entry : metaData) {
+            m_metadata_key = entry.first;
+            m_metadata_value = entry.second;
+        }
+    } else {
+        m_metadata_key = "app"; // set default
+        m_metadata_value = "cmonitor";
     }
 }
 

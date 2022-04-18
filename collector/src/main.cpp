@@ -144,7 +144,7 @@ struct option g_long_opts[] = {
     { "remote-port", required_argument, 0, 'p' }, // force newline
     { "remote-secret", required_argument, 0, 'X' }, // force newline
     { "remote-dbname", required_argument, 0, 'D' }, // force newline
-    { "prometheus-port ", required_argument, 0, 'S' }, { "labels", required_argument, 0, 'L' },
+    { "prometheus-port ", required_argument, 0, 'S' }, { "prometheus-ip", required_argument, 0, 'A' },
 
     // Other options
     { "version", no_argument, 0, 'v' }, // force newline
@@ -226,7 +226,7 @@ struct option_extended {
         "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).\n" },
     { "Options to stream data remotely", &g_long_opts[15], "Set the InfluxDB database name.\n" },
     { "Options to set prometheus port", &g_long_opts[16], "Set the scrape port for the Prometheus.\n" },
-    { "Options to set prometheus labels", &g_long_opts[17], "Set the label names for the Prometheus.\n" },
+    { "Options to set prometheus ip", &g_long_opts[17], "Set the ip-address for the Prometheus.\n" },
 
     // help
     { "Other options", &g_long_opts[18], "Show version and exit" }, // force newline
@@ -565,20 +565,10 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'S':
                 m_cfg.m_strPrometheusPort = optarg;
                 break;
-            case 'L': {
-                std::string key_value = optarg;
-                std::vector<std::string> vec_label = split_string_in_array(key_value, ',');
-                for (auto& elem : vec_label) {
-                    std::vector<std::string> key_value_tokens = split_string_in_array(elem, ':');
-                    if (key_value_tokens.size() != 2) {
-                        printf("Invalid label metadata [%s]. Every prometheus metadata option should be in the form "
-                               "key:value.\n",
-                            optarg);
-                        exit(51);
-                    }
-                    m_cfg.m_mapLabelsData.insert(std::make_pair(key_value_tokens[0], key_value_tokens[1]));
-                }
-            } break;
+            case 'A':
+                m_cfg.m_strPrometheusAddress = optarg;
+                ;
+                break;
 
             // help
             case 'v':
@@ -623,13 +613,13 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
         printf("Option --remote-port=%lu provided but the --remote-ip option was not provided\n", m_cfg.m_nRemotePort);
         exit(53);
     }
-    if (!m_cfg.m_strPrometheusPort.empty() && m_cfg.m_mapLabelsData.empty()) {
-        printf("Option --prometheus-port=%s provided but the --labels option was not provided\n",
+    if (!m_cfg.m_strPrometheusPort.empty() && m_cfg.m_strPrometheusAddress.empty()) {
+        printf("Option --prometheus-port=%s provided but the --prometheus-ip option was not provided\n",
             m_cfg.m_strPrometheusPort.c_str());
         exit(54);
     }
-    if (m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty()) {
-        printf("Option --labels provided but the --prometheus-port option was not provided\n");
+    if (m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_strPrometheusAddress.empty()) {
+        printf("Option --prometheus-ip provided but the --prometheus-port option was not provided\n");
         exit(55);
     }
     if ((m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) && (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {
@@ -734,8 +724,8 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
     }
 
     // initialize prometheus exposer to scrape the registry on incoming HTTP requests
-    if (!m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_mapLabelsData.empty()) {
-        auto listenAddress = std::string { m_cfg.m_strPrometheusPort };
+    if (!m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_strPrometheusAddress.empty()) {
+        auto listenAddress = m_cfg.m_strPrometheusAddress + ":" + m_cfg.m_strPrometheusPort;
         m_output.init_prometheus_connection(listenAddress, m_cfg.m_mapCustomMetadata);
         printf("Prometheus listening on port: %s\n", m_cfg.m_strPrometheusPort.c_str());
     }

@@ -164,7 +164,7 @@ typedef struct proc_topper_s {
 
 class CMonitorCollectorAppConfig {
 public:
-    CMonitorCollectorAppConfig() { }
+    CMonitorCollectorAppConfig() {}
 
     // configuration for this process:
     bool m_bAllowMultipleInstances = false; // --allow-multiple-instances
@@ -189,8 +189,8 @@ public:
     std::string m_strCGroupName; // --cgroup-name
     uint64_t m_nProcessScoreThreshold = 1; // --score-threshold
     std::map<std::string, std::string> m_mapCustomMetadata; // --custom-metadata
-    std::string m_strPrometheusPort; // --prometheus-port {127.0.0.0:9090}
-    std::map<std::string, std::string> m_mapLabelsData; // --labels {label:value}
+    std::string m_strPrometheusPort; // --prometheus-port {9090}
+    std::string m_strPrometheusAddress; // --prometheus-ip{127.1.0.0}
 };
 
 //------------------------------------------------------------------------------
