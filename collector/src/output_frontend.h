@@ -30,13 +30,13 @@
 #include <vector>
 
 // Prometheus
+#include <prometheus/counter.h>
+#include <prometheus/detail/future_std.h>
+#include <prometheus/exposer.h>
+#include <prometheus/family.h>
 #include <prometheus/gauge.h>
 #include <prometheus/labels.h>
-#include <prometheus/family.h>
-#include <prometheus/counter.h>
-#include <prometheus/exposer.h>
 #include <prometheus/registry.h>
-#include <prometheus/detail/future_std.h>
 
 #include <chrono>
 #include <cstdlib>
@@ -107,7 +107,7 @@ public:
     void psection_start(const char* section);
     void psection_end();
 
-    void psubsection_start(const char* resource);
+    void psubsection_start(const char* resource, std::map<std::string, std::string> labels = {});
     void psubsection_end();
 
     //------------------------------------------------------------------------------
@@ -149,6 +149,7 @@ private:
     class CMonitorOutputSubsection {
     public:
         std::string m_name;
+        std::map<std::string, std::string> m_labels;
         CMonitorMeasurementVector m_measurements;
 
         std::string get_value_for_measurement(const std::string& name) const
@@ -204,7 +205,8 @@ private:
     // Prometheus low-level functions
     //------------------------------------------------------------------------------
     void push_current_sections_to_prometheus();
-    void generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data, const std::string& metric_value);
+    void generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data,
+        const std::string& metric_value, std::map<std::string, std::string> labels = {});
 
     // main output routine:
     void push_current_sections(bool is_header);
@@ -220,9 +222,9 @@ private:
     std::string m_influxdb_tagset;
 
     // Prometheus exposer
-     bool m_prometheusEnabled = false;
-     std::unique_ptr<prometheus::Exposer> m_exposer;
-     std::shared_ptr<prometheus::Registry> m_prometheus_registry = std::make_shared<prometheus::Registry>();
+    bool m_prometheusEnabled = false;
+    std::unique_ptr<prometheus::Exposer> m_exposer;
+    std::shared_ptr<prometheus::Registry> m_prometheus_registry = std::make_shared<prometheus::Registry>();
 
     // JSON internals
     FILE* m_outputJson = nullptr;

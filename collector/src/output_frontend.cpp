@@ -124,7 +124,8 @@ void CMonitorOutputFrontend::init_prometheus_connection(const std::string& port)
     m_exposer = prometheus::detail::make_unique<prometheus::Exposer>(port);
     m_exposer->RegisterCollectable(m_prometheus_registry);
     m_prometheusEnabled = true;
-    CMonitorLogger::instance()->LogDebug("init_prometheus_connection() initialized Prometheus port to %s", port.c_str());
+    CMonitorLogger::instance()->LogDebug(
+        "init_prometheus_connection() initialized Prometheus port to %s", port.c_str());
 }
 
 void CMonitorOutputFrontend::enable_json_pretty_print()
@@ -511,11 +512,11 @@ void CMonitorOutputFrontend::push_current_sections_to_prometheus()
                 for (size_t n = 0; n < subsec.m_measurements.size(); n++) {
                     auto& measurement = subsec.m_measurements[n];
                     std::string metric_name = section_name + "_" + subsec.m_name;
-                    generate_prometheus_metric(metric_name, measurement.m_name.data(), measurement.m_value.data());
+                    generate_prometheus_metric(
+                        metric_name, measurement.m_name.data(), measurement.m_value.data(), subsec.m_labels);
                 }
             }
-        }
-        else {
+        } else {
             for (size_t n = 0; n < sec.m_measurements.size(); n++) {
                 auto& measurement = sec.m_measurements[n];
                 generate_prometheus_metric(sec.m_name, measurement.m_name.data(), measurement.m_value.data());
@@ -524,20 +525,23 @@ void CMonitorOutputFrontend::push_current_sections_to_prometheus()
     }
 }
 
-void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data, const std::string& metric_value)
+void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data,
+    const std::string& metric_value, std::map<std::string, std::string> labels)
 {
     // remove spacial characher from metric name as its not supported in prometheus.
     std::string metric = metric_name;
     std::replace(metric.begin(), metric.end(), '/', '_');
     std::replace(metric.begin(), metric.end(), '-', '_');
     std::replace(metric.begin(), metric.end(), '.', '_');
-    printf("metric name :%s\n", metric.c_str());
+
+    labels.insert(std::make_pair("metric", metric_data));
+
     auto& metrics = prometheus::BuildGauge()
-                                          .Name(metric)
-                                          .Help(metric_name)
-                                          .Labels({})
-                                          .Register(*m_prometheus_registry)
-                                          .Add({{"metric", metric_data}});
+                        .Name(metric)
+                        .Help(metric_name)
+                        .Labels({ { "app", "cmonitor" } })
+                        .Register(*m_prometheus_registry)
+                        .Add(labels);
     double value = ::atof(metric_value.c_str());
     metrics.Set(value);
 }
@@ -599,13 +603,14 @@ void CMonitorOutputFrontend::psection_end()
     m_current_meas_list = nullptr;
 }
 
-void CMonitorOutputFrontend::psubsection_start(const char* resource)
+void CMonitorOutputFrontend::psubsection_start(const char* resource, std::map<std::string, std::string> labels)
 {
     m_subsections++;
 
-    CMonitorOutputSubsection sec;
-    sec.m_name = resource;
-    m_current_sections.back().m_subsections.push_back(sec);
+    CMonitorOutputSubsection subsec;
+    subsec.m_name = resource;
+    subsec.m_labels = labels;
+    m_current_sections.back().m_subsections.push_back(subsec);
 
     // when adding new measurements, add them as children of this new subsection:
     m_current_meas_list = &m_current_sections.back().m_subsections.back().m_measurements;
