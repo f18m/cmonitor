@@ -222,7 +222,7 @@ private:
     std::string m_metadata_key;
     std::string m_metadata_value;
     std::unique_ptr<prometheus::Exposer> m_exposer;
-    std::shared_ptr<prometheus::Registry> m_prometheus_registry = std::make_shared<prometheus::Registry>();
+    std::shared_ptr<prometheus::Registry> m_prometheus_registry;
 
     // JSON internals
     FILE* m_outputJson = nullptr;

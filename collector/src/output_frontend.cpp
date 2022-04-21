@@ -123,7 +123,9 @@ void CMonitorOutputFrontend::init_prometheus_connection(
     const std::string& port, std::map<std::string, std::string> metaData)
 {
     m_exposer = prometheus::detail::make_unique<prometheus::Exposer>(port);
+    m_prometheus_registry = std::make_shared<prometheus::Registry>();
     m_exposer->RegisterCollectable(m_prometheus_registry);
+
     m_prometheusEnabled = true;
     CMonitorLogger::instance()->LogDebug(
         "init_prometheus_connection() initialized Prometheus port to %s", port.c_str());
