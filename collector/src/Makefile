@@ -15,13 +15,18 @@ DEFS=-DVERSION_STRING=\"$(CMONITOR_VERSION)-$(CMONITOR_RELEASE)\" -DCMONITOR_LAS
 CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 -fPIC $(DEFS)
 
 ifeq ($(DEBUG),1)
-CXXFLAGS += -g -O0    #useful for debugging
+CXXFLAGS += -g -O0   #useful for debugging
 LDFLAGS += -g -O0    #useful for debugging
 else
-CXXFLAGS += -g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
+CXXFLAGS += -g -O2   # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
 LDFLAGS += -g -O2
 endif
-LIBS += -lfmt -lprometheus-cpp-pull -lprometheus-cpp-core -lz
+LIBS += -lfmt
+
+ifeq ($(PROMETHEUS_SUPPORT),)
+LIBS += -lprometheus-cpp-pull -lprometheus-cpp-core -lz
+CXXFLAGS += -DPROMETHEUS_SUPPORT=1
+endif
 
 ifeq ($(MUSL_BUILD),1)
 OUTDIR=../bin/musl

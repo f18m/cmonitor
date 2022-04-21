@@ -30,6 +30,7 @@
 #include <vector>
 
 // Prometheus
+#ifdef PROMETHEUS_SUPPORT
 #include <prometheus/counter.h>
 #include <prometheus/detail/future_std.h>
 #include <prometheus/exposer.h>
@@ -37,7 +38,7 @@
 #include <prometheus/gauge.h>
 #include <prometheus/labels.h>
 #include <prometheus/registry.h>
-
+#endif
 //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------

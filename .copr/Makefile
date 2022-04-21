@@ -33,6 +33,10 @@ srpm:
 	@export
 	@echo "Installing git client:"
 	dnf -y install git
+	@echo "Installing conan:"
+	pip3 install conan
+	@echo "Installing prometheus:"
+	conan install $(ROOT_DIR)/conanfile.txt --build=missing
 	@echo "Running srpm target from .copr/Makefile"
 	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
 	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*

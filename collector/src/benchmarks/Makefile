@@ -14,7 +14,12 @@ else
 CXXFLAGS += -g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
 LDFLAGS += -g -O2
 endif
-LIBS += -lfmt -lbenchmark -lpthread -lprometheus-cpp-pull -lprometheus-cpp-core -lz
+LIBS += -lfmt -lbenchmark -lpthread
+
+ifeq ($(PROMETHEUS_SUPPORT),)
+LIBS += -lprometheus-cpp-pull -lprometheus-cpp-core -lz
+CXXFLAGS += -DPROMETHEUS_SUPPORT=1
+endif
 
 ifeq ($(MUSL_BUILD),1)
 OUTDIR=../../bin/musl
