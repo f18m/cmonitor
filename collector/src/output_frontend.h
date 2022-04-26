@@ -87,6 +87,8 @@ public:
     void init_json_output_file(const std::string& filenamePrefix);
     void init_influxdb_connection(const std::string& hostname, unsigned int port, const std::string& dbname);
     void init_prometheus_connection(const std::string& port, std::map<std::string, std::string> metaData = {});
+    prometheus::Registry& GetPrometheusRegistry() { return (*m_prometheus_registry); }
+
     void enable_json_pretty_print();
     void close();
 

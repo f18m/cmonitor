@@ -549,7 +549,7 @@ void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metri
                         .Name(metric_name)
                         .Help(metric_name)
                         .Labels({ { m_metadata_key, m_metadata_value } })
-                        .Register(*m_prometheus_registry)
+                        .Register(GetPrometheusRegistry())
                         .Add(labels);
     double value = ::atof(metric_value.c_str());
     metrics.Set(value);
