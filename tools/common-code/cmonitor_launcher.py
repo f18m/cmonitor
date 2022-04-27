@@ -1,30 +1,28 @@
-#
+# =======================================================================================================
 # cmonitor_launcher.py
 #
 # Author: Satyabrata Bharati
 # Created: April 2022
 #
+# =======================================================================================================
 
 import inotify.adapters
 import multiprocessing
 from threading import Thread, Lock
 from queue import Queue
 from subprocess import Popen
-import os, fnmatch
+import os
 import time
-import logging
 
+# =======================================================================================================
+# CmonitorLauncher
+# =======================================================================================================
 
 class CmonitorLauncher:
     def __init__(self):
         self.path = ""
         self.filter = ""
         self.command = ""
-
-    def load(self, input_path, filter, command):
-        self.path = input_path
-        self.filter = filter
-        self.command = command
 
     def get_cgroup_version(self):
         proc_self_mount = "/proc/self/mounts"
@@ -92,8 +90,8 @@ class CmonitorLauncher:
                         process_name = self.get_process_name(pid)
                         match = self.check_filter(process_name)
                         if match is True:
-                            print("found match:", process_name)
-                            print("launchig cmonitor", process_name, self.filter)
+                            print("Found match:", process_name)
+                            print("Launchig CMonitor", process_name, self.filter)
                             self.launch_cmonitor(file)
 
     def launch_cmonitor(self, filename):
@@ -101,9 +99,8 @@ class CmonitorLauncher:
             cmd = c.strip()
             base_path = os.path.dirname(filename)
             path = "/".join(base_path.split("/")[5:])
-            print("path:", path)
             cmd = cmd + " " + "--cgroup-name=" + path
-            print("Launch CMonitor : After update command:", cmd)
+            print("Launch CMonitor : with command:", cmd)
             # p = Popen(cmd)
             # print("process id:",p.pid)  #FIXME : need to delete the current cmonitor already running fot this process..!!!
             os.system(cmd)
@@ -116,7 +113,6 @@ class CmonitorLauncher:
     def inotify_events(self, input_path, queue):
         lock = multiprocessing.Lock()
         i = inotify.adapters.Inotify()
-        print("path:", input_path)
         i.add_watch(input_path)
         try:
             for event in i.event_gen():
@@ -149,7 +145,6 @@ class CmonitorLauncher:
 
 def main():
     import argparse
-
     parser = argparse.ArgumentParser(description="Processsome integers.")
     parser.add_argument("-p", "--path", help="path to watch")
     parser.add_argument(
@@ -162,15 +157,13 @@ def main():
         "-command",
         "--command",
         nargs="*",
-        help="cmonitor triggers for matching pattern",
+        help="cmonitor input command parameters",
     )
     args = parser.parse_args()
     input_path = args.path
-    print("input path:", input_path)
+    print("Input path to watch:", input_path)
     filter = args.filter
     command = args.command
-
-    CmonitorLauncher().load(input_path, filter, command)
 
     queue = multiprocessing.Queue()
     process_1 = multiprocessing.Process(
