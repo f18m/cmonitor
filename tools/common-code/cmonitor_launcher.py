@@ -16,8 +16,13 @@ import time
 
 # =======================================================================================================
 # CmonitorLauncher
+#
+#  - Watch all files below a directory and nottify an event for changes.
+#  - Retrieves all the process and extract the process name "/proc/<pid>/stat.
+#  - check the process name against the white-list given in the filter list.
+#  - Execute command to launch CMonitor if the process name mathes with the filter.
+#
 # =======================================================================================================
-
 class CmonitorLauncher:
     def __init__(self):
         self.path = ""
