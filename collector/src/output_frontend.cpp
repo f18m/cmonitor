@@ -140,6 +140,8 @@ void CMonitorOutputFrontend::init_prometheus_connection(
         m_metadata_key = "app"; // set default
         m_metadata_value = "cmonitor";
     }
+
+    // init_metric();
 }
 
 void CMonitorOutputFrontend::enable_json_pretty_print()
@@ -527,32 +529,39 @@ void CMonitorOutputFrontend::push_current_sections_to_prometheus()
                     auto& measurement = subsec.m_measurements[n];
                     std::string metric_name = section_name + "_" + subsec.m_name;
                     generate_prometheus_metric(
-                        metric_name, measurement.m_name.data(), measurement.m_value.data(), subsec.m_labels);
+                        metric_name, measurement.m_name.data(), measurement.m_dvalue, subsec.m_labels);
                 }
             }
         } else {
             for (size_t n = 0; n < sec.m_measurements.size(); n++) {
                 auto& measurement = sec.m_measurements[n];
-                generate_prometheus_metric(sec.m_name, measurement.m_name.data(), measurement.m_value.data());
+                generate_prometheus_metric(sec.m_name, measurement.m_name.data(), measurement.m_dvalue);
             }
         }
     }
 }
 
 void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data,
-    const std::string& metric_value, std::map<std::string, std::string> labels)
+    double metric_value, std::map<std::string, std::string> labels)
 {
 
-    labels.insert(std::make_pair("metric", metric_data));
+    std::map<std::string, std::string> metric_labels = { { "metric", metric_data } };
+    metric_labels.insert(labels.begin(), labels.end());
 
-    auto& metrics = prometheus::BuildGauge()
-                        .Name(metric_name)
-                        .Help(metric_name)
-                        .Labels({ { m_metadata_key, m_metadata_value } })
-                        .Register(GetPrometheusRegistry())
-                        .Add(labels);
-    double value = ::atof(metric_value.c_str());
-    metrics.Set(value);
+    auto search_metric = m_metric_gauge_list.find(make_pair(metric_name, labels));
+    if (search_metric != m_metric_gauge_list.end()) {
+        m_metric = (search_metric->second);
+        m_metric->Set(metric_value);
+    } else {
+        auto& metrics = prometheus::BuildGauge()
+                            .Name(metric_name)
+                            .Help(metric_name)
+                            .Labels({ { m_metadata_key, m_metadata_value } })
+                            .Register(GetPrometheusRegistry());
+        m_metric = &(metrics.Add(metric_labels));
+        m_metric->Set(metric_value);
+        m_metric_gauge_list.insert(std::make_pair(std::make_pair(metric_name, metric_labels), m_metric));
+    }
 }
 //------------------------------------------------------------------------------
 // JSON objects
@@ -641,7 +650,7 @@ void CMonitorOutputFrontend::phex(const char* name, long long value)
     assert(m_current_meas_list);
 
     auto fmt_string = fmt::format("hex:{:#08x}", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), value, true));
 }
 
 void CMonitorOutputFrontend::plong(const char* name, long long value)
@@ -657,7 +666,7 @@ void CMonitorOutputFrontend::plong(const char* name, long long value)
 #else
     auto fmt_string = fmt::format("{}", value);
 #endif
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), value, true));
 }
 
 void CMonitorOutputFrontend::pdouble(const char* name, double value)
@@ -667,7 +676,7 @@ void CMonitorOutputFrontend::pdouble(const char* name, double value)
 
     // with std::to_string() you cannot specify the accuracy (how many decimal digits)
     auto fmt_string = fmt::format("{:.3f}", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), value, true));
 }
 
 void CMonitorOutputFrontend::pstring(const char* name, const char* value)

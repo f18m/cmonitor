@@ -88,6 +88,7 @@ public:
     void init_influxdb_connection(const std::string& hostname, unsigned int port, const std::string& dbname);
     void init_prometheus_connection(const std::string& port, std::map<std::string, std::string> metaData = {});
     prometheus::Registry& GetPrometheusRegistry() { return (*m_prometheus_registry); }
+    bool is_prometheus_enabled() { return m_prometheusEnabled; }
 
     void enable_json_pretty_print();
     void close();
@@ -130,15 +131,18 @@ public:
 private:
     class CMonitorOutputMeasurement {
     public:
-        CMonitorOutputMeasurement(const char* name = "", const char* value = "", bool numeric = false)
+        CMonitorOutputMeasurement(
+            const char* name = "", const char* value = "", double dvalue = 0, bool numeric = false)
         {
             strncpy(m_name.data(), name, CMONITOR_MEASUREMENT_NAME_MAXLEN - 1);
             strncpy(m_value.data(), value, CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
+            m_dvalue = dvalue;
             m_numeric = numeric;
         }
 
         std::array<char, CMONITOR_MEASUREMENT_NAME_MAXLEN> m_name; // use std::array to void dynamic allocations
         std::array<char, CMONITOR_MEASUREMENT_VALUE_MAXLEN> m_value; // use std::array to void dynamic allocations
+        double m_dvalue;
         bool m_numeric;
     };
 
@@ -203,8 +207,8 @@ private:
     // Prometheus low-level functions
     //------------------------------------------------------------------------------
     void push_current_sections_to_prometheus();
-    void generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data,
-        const std::string& metric_value, std::map<std::string, std::string> labels = {});
+    void generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data, double metric_value,
+        std::map<std::string, std::string> labels = {});
 
     // main output routine:
     void push_current_sections(bool is_header);
@@ -221,10 +225,14 @@ private:
 
     // Prometheus exposer
     bool m_prometheusEnabled = false;
+    prometheus::Gauge* m_metric;
     std::string m_metadata_key;
     std::string m_metadata_value;
     std::unique_ptr<prometheus::Exposer> m_exposer;
     std::shared_ptr<prometheus::Registry> m_prometheus_registry;
+
+    typedef std::pair<std::string, std::map<std::string, std::string>> metric_key;
+    std::map<metric_key, prometheus::Gauge*> m_metric_gauge_list;
 
     // JSON internals
     FILE* m_outputJson = nullptr;
