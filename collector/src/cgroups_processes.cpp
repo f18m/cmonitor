@@ -598,6 +598,9 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 #define COUNTDELTA(member) ((PREVIOUS(member) > CURRENT(member)) ? 0 : (CURRENT(member) - PREVIOUS(member)))
 
         m_pOutput->psubsection_start(fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid)).c_str());
+        // m_pOutput->plong("cmon_score", score);
+
+        m_pOutput->psubsubsection_start("proc_info");
         m_pOutput->plong("cmon_score", score);
 
         /*
@@ -628,6 +631,10 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
             m_pOutput->pdouble("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks);
         }
 
+        m_pOutput->psubsubsection_end();
+
+        m_pOutput->psubsubsection_start("cpu");
+
         /*
          * CPU fields
          * NOTE: all CPU fields specify amount of time, measured in units of USER_HZ
@@ -648,9 +655,13 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         m_pOutput->pdouble("cpu_usr_total_secs", (double)CURRENT(pi_utime) / ticks);
         m_pOutput->pdouble("cpu_sys_total_secs", (double)CURRENT(pi_stime) / ticks);
 
+        m_pOutput->psubsubsection_end();
+
         /*
          * Memory fields
          */
+        m_pOutput->psubsubsection_start("memory");
+
         if (output_opts == PF_ALL) {
             m_pOutput->plong("mem_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
             m_pOutput->plong("mem_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
@@ -689,9 +700,13 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
             m_pOutput->plong("sched_policy", CURRENT(pi_sched_policy));
         }
 
+        m_pOutput->psubsubsection_end();
+
         /*
          * I/O fields
          */
+        m_pOutput->psubsubsection_start("io");
+
         m_pOutput->pdouble("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
         m_pOutput->plong("io_rchar", DELTA(io_rchar) / elapsed_sec);
         m_pOutput->plong("io_wchar", DELTA(io_wchar) / elapsed_sec);
@@ -704,6 +719,8 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         // this is used by chart script to produce the "top of the topper" chart
         m_pOutput->plong("io_total_read", CURRENT(io_rchar));
         m_pOutput->plong("io_total_write", CURRENT(io_wchar));
+
+        m_pOutput->psubsubsection_end();
 
         m_pOutput->psubsection_end();
         nProcsOverThreshold++;

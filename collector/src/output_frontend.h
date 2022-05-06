@@ -95,6 +95,9 @@ public:
     void psubsection_start(const char* resource);
     void psubsection_end();
 
+    void psubsubsection_start(const char* resource);
+    void psubsubsection_end();
+
     //------------------------------------------------------------------------------
     // Measurement creation:
     //------------------------------------------------------------------------------
@@ -131,9 +134,24 @@ private:
 
     typedef std::vector<CMonitorOutputMeasurement> CMonitorMeasurementVector;
 
+    class CMonitorOutputSubSubsection {
+    public:
+        std::string m_name;
+        CMonitorMeasurementVector m_measurements;
+
+        std::string get_value_for_measurement(const std::string& name) const
+        {
+            for (const auto& m : m_measurements)
+                if (strncmp(m.m_name.data(), name.c_str(), m.m_name.size()) == 0)
+                    return std::string(m.m_value.data());
+            return "";
+        }
+    };
+
     class CMonitorOutputSubsection {
     public:
         std::string m_name;
+        std::vector<CMonitorOutputSubSubsection> m_subsubsections;
         CMonitorMeasurementVector m_measurements;
 
         std::string get_value_for_measurement(const std::string& name) const
@@ -207,6 +225,7 @@ private:
     unsigned int m_samples = 0;
     unsigned int m_sections = 0;
     unsigned int m_subsections = 0;
+    unsigned int m_subsubsections = 0;
     unsigned int m_string = 0;
     unsigned int m_long = 0;
     unsigned int m_double = 0;
