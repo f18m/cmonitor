@@ -585,9 +585,8 @@ void CMonitorOutputFrontend::psubsection_start(const char* subsection)
     subsec.m_name = subsection;
     m_current_sections.back().m_subsections.push_back(subsec);
 
-    // when adding new measurements, add them as children of this new section:
+    // when adding new measurements, add them as children of this new subsection:
     m_current_meas_list = &m_current_sections.back().m_subsections.back().m_measurements;
-
 }
 
 void CMonitorOutputFrontend::psubsection_end()
@@ -604,7 +603,7 @@ void CMonitorOutputFrontend::psubsubsection_start(const char* resource)
     subsubsec.m_name = resource;
     m_current_sections.back().m_subsections.back().m_subsubsections.push_back(subsubsec);
 
-    // when adding new measurements, add them as children of this new subsection:
+    // when adding new measurements, add them as children of this new sub-subsection:
     m_current_meas_list = &m_current_sections.back().m_subsections.back().m_subsubsections.back().m_measurements;
 }
 
