@@ -59,15 +59,15 @@
     },
     {
         "cgroup_cpuacct_stats": {
-            "throttling": {
-                "nr_periods": 0,
-                "nr_throttled": 0,
-                "throttled_time": 0
-            },
-            "cpu_tot": {
-                "user": 0.489,
-                "sys": 1.729
-            }
+        "throttling": {
+            "nr_periods": 0,
+            "nr_throttled": 0,
+            "throttled_time": 0
+        },
+        "cpu_tot": {
+            "user": 0.489,
+            "sys": 1.729
+        }
         },
         "cgroup_memory_stats": {
             "stat.current": 64954368,
@@ -113,7 +113,8 @@
             "stat.workingset_restore_file": 0
         },
         "cgroup_tasks": {
-            "pid_1003": {
+        "pid_1003": {
+            "proc_info": {
                 "cmon_score": 0,
                 "cmd": "sshd",
                 "pid": 1003,
@@ -122,23 +123,31 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 3,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.000,
-                "cpu_usr_total_secs": 0.010,
-                "cpu_sys_total_secs": 0.020,
-                "mem_minor_fault": 0.000,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 16990208,
-                "mem_rss_bytes": 10203136,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 0,
-                "io_wchar": 0,
-                "io_total_read": 1742347,
-                "io_total_write": 16635
+                "uid": 0
             },
-            "pid_1021": {
+            "cpu": {
+                "last": 3,
+                "usr": 0.000,
+                "sys": 0.000,
+                "usr_total_secs": 0.010,
+                "sys_total_secs": 0.020
+            },
+            "memory": {
+                "minor_fault": 0.000,
+                "major_fault": 0.000,
+                "virtual_bytes": 16990208,
+                "rss_bytes": 10203136
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 0,
+                "wchar": 0,
+                "total_read": 1742347,
+                "total_write": 16635
+            }
+        },
+        "pid_1021": {
+            "proc_info": {
                 "cmon_score": 0,
                 "cmd": "bash",
                 "pid": 1021,
@@ -147,23 +156,31 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 3,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.000,
-                "cpu_usr_total_secs": 1.280,
-                "cpu_sys_total_secs": 0.300,
-                "mem_minor_fault": 0.000,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 10121216,
-                "mem_rss_bytes": 7090176,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 0,
-                "io_wchar": 0,
-                "io_total_read": 62344930,
-                "io_total_write": 5853227
+                "uid": 0
             },
-            "pid_1020": {
+            "cpu": {
+                "last": 3,
+                "usr": 0.000,
+                "sys": 0.000,
+                "usr_total_secs": 1.280,
+                "sys_total_secs": 0.300
+            },
+            "memory": {
+                "minor_fault": 0.000,
+                "major_fault": 0.000,
+                "virtual_bytes": 10121216,
+                "rss_bytes": 7090176
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 0,
+                "wchar": 0,
+                "total_read": 62344930,
+                "total_write": 5853227
+            }
+        },
+        "pid_1020": {
+            "proc_info": {
                 "cmon_score": 100,
                 "cmd": "sshd",
                 "pid": 1020,
@@ -172,23 +189,31 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 0,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.196,
-                "cpu_usr_total_secs": 0.040,
-                "cpu_sys_total_secs": 0.470,
-                "mem_minor_fault": 0.000,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 17338368,
-                "mem_rss_bytes": 6184960,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 536,
-                "io_wchar": 618,
-                "io_total_read": 262560,
-                "io_total_write": 78546
+                "uid": 0
             },
-            "pid_5034": {
+            "cpu": {
+                "last": 0,
+                "usr": 0.000,
+                "sys": 0.196,
+                "usr_total_secs": 0.040,
+                "sys_total_secs": 0.470
+            },
+            "memory": {
+                "minor_fault": 0.000,
+                "major_fault": 0.000,
+                "virtual_bytes": 17338368,
+                "rss_bytes": 6184960
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 536,
+                "wchar": 618,
+                "total_read": 262560,
+                "total_write": 78546
+            }
+        },
+        "pid_5034": {
+            "proc_info": {
                 "cmon_score": 200,
                 "cmd": "generate_sample",
                 "pid": 5034,
@@ -197,55 +222,62 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 1,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.393,
-                "cpu_usr_total_secs": 0.000,
-                "cpu_sys_total_secs": 0.020,
-                "mem_minor_fault": 336.799,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 7557120,
-                "mem_rss_bytes": 4186112,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 129491,
-                "io_wchar": 34894,
-                "io_total_read": 974378,
-                "io_total_write": 202565
+                "uid": 0
+            },
+            "cpu": {
+                "last": 1,
+                "usr": 0.000,
+                "sys": 0.393,
+                "usr_total_secs": 0.000,
+                "sys_total_secs": 0.020
+            },
+            "memory": {
+                "minor_fault": 336.799,
+                "major_fault": 0.000,
+                "virtual_bytes": 7557120,
+                "rss_bytes": 4186112
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 129491,
+                "wchar": 34894,
+                "total_read": 974378,
+                "total_write": 202565
             }
+        }
         },
         "cgroup_network": {
-            "docker0": {
-                "ibytes": 0,
-                "obytes": 0,
-                "ipackets": 0,
-                "opackets": 0
-            },
-            "ens160": {
-                "ibytes": 515,
-                "obytes": 1494,
-                "ipackets": 8,
-                "opackets": 16
-            },
-            "vethd856714": {
-                "ibytes": 0,
-                "obytes": 0,
-                "ipackets": 0,
-                "opackets": 0
-            }
+        "docker0": {
+            "ibytes": 0,
+            "obytes": 0,
+            "ipackets": 0,
+            "opackets": 0
+        },
+        "ens160": {
+            "ibytes": 515,
+            "obytes": 1494,
+            "ipackets": 8,
+            "opackets": 16
+        },
+        "vethd856714": {
+            "ibytes": 0,
+            "obytes": 0,
+            "ipackets": 0,
+            "opackets": 0
+        }
         }
     },
     {
         "cgroup_cpuacct_stats": {
-            "throttling": {
-                "nr_periods": 0,
-                "nr_throttled": 0,
-                "throttled_time": 0
-            },
-            "cpu_tot": {
-                "user": 0.611,
-                "sys": 2.157
-            }
+        "throttling": {
+            "nr_periods": 0,
+            "nr_throttled": 0,
+            "throttled_time": 0
+        },
+        "cpu_tot": {
+            "user": 0.611,
+            "sys": 2.157
+        }
         },
         "cgroup_memory_stats": {
             "stat.current": 64802816,
@@ -296,7 +328,8 @@
             "events.oom_kill": 0
         },
         "cgroup_tasks": {
-            "pid_1003": {
+        "pid_1003": {
+            "proc_info": {
                 "cmon_score": 0,
                 "cmd": "sshd",
                 "pid": 1003,
@@ -305,23 +338,31 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 3,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.000,
-                "cpu_usr_total_secs": 0.010,
-                "cpu_sys_total_secs": 0.020,
-                "mem_minor_fault": 0.000,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 16990208,
-                "mem_rss_bytes": 10203136,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 0,
-                "io_wchar": 0,
-                "io_total_read": 1742347,
-                "io_total_write": 16635
+                "uid": 0
             },
-            "pid_1021": {
+            "cpu": {
+                "last": 3,
+                "usr": 0.000,
+                "sys": 0.000,
+                "usr_total_secs": 0.010,
+                "sys_total_secs": 0.020
+            },
+            "memory": {
+                "minor_fault": 0.000,
+                "major_fault": 0.000,
+                "virtual_bytes": 16990208,
+                "rss_bytes": 10203136
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 0,
+                "wchar": 0,
+                "total_read": 1742347,
+                "total_write": 16635
+            }
+        },
+        "pid_1021": {
+            "proc_info": {
                 "cmon_score": 0,
                 "cmd": "bash",
                 "pid": 1021,
@@ -330,23 +371,31 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 3,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.000,
-                "cpu_usr_total_secs": 1.280,
-                "cpu_sys_total_secs": 0.300,
-                "mem_minor_fault": 0.000,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 10121216,
-                "mem_rss_bytes": 7090176,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 0,
-                "io_wchar": 0,
-                "io_total_read": 62344930,
-                "io_total_write": 5853227
+                "uid": 0
             },
-            "pid_1020": {
+            "cpu": {
+                "last": 3,
+                "usr": 0.000,
+                "sys": 0.000,
+                "usr_total_secs": 1.280,
+                "sys_total_secs": 0.300
+            },
+            "memory": {
+                "minor_fault": 0.000,
+                "major_fault": 0.000,
+                "virtual_bytes": 10121216,
+                "rss_bytes": 7090176
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 0,
+                "wchar": 0,
+                "total_read": 62344930,
+                "total_write": 5853227
+            }
+        },
+        "pid_1020": {
+            "proc_info": {
                 "cmon_score": 100,
                 "cmd": "sshd",
                 "pid": 1020,
@@ -355,23 +404,31 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 0,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.195,
-                "cpu_usr_total_secs": 0.040,
-                "cpu_sys_total_secs": 0.480,
-                "mem_minor_fault": 0.000,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 17338368,
-                "mem_rss_bytes": 6184960,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 531,
-                "io_wchar": 572,
-                "io_total_read": 265291,
-                "io_total_write": 81486
+                "uid": 0
             },
-            "pid_5034": {
+            "cpu": {
+                "last": 0,
+                "usr": 0.000,
+                "sys": 0.195,
+                "usr_total_secs": 0.040,
+                "sys_total_secs": 0.480
+            },
+            "memory": {
+                "minor_fault": 0.000,
+                "major_fault": 0.000,
+                "virtual_bytes": 17338368,
+                "rss_bytes": 6184960
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 531,
+                "wchar": 572,
+                "total_read": 265291,
+                "total_write": 81486
+            }
+        },
+        "pid_5034": {
+            "proc_info": {
                 "cmon_score": 300,
                 "cmd": "generate_sample",
                 "pid": 5034,
@@ -380,55 +437,62 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 3,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.584,
-                "cpu_usr_total_secs": 0.000,
-                "cpu_sys_total_secs": 0.050,
-                "mem_minor_fault": 353.125,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 7557120,
-                "mem_rss_bytes": 4186112,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 128438,
-                "io_wchar": 34613,
-                "io_total_read": 1634164,
-                "io_total_write": 380374
+                "uid": 0
+            },
+            "cpu": {
+                "last": 3,
+                "usr": 0.000,
+                "sys": 0.584,
+                "usr_total_secs": 0.000,
+                "sys_total_secs": 0.050
+            },
+            "memory": {
+                "minor_fault": 353.125,
+                "major_fault": 0.000,
+                "virtual_bytes": 7557120,
+                "rss_bytes": 4186112
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 128438,
+                "wchar": 34613,
+                "total_read": 1634164,
+                "total_write": 380374
             }
+        }
         },
         "cgroup_network": {
-            "docker0": {
-                "ibytes": 0,
-                "obytes": 0,
-                "ipackets": 0,
-                "opackets": 0
-            },
-            "ens160": {
-                "ibytes": 510,
-                "obytes": 1423,
-                "ipackets": 7,
-                "opackets": 15
-            },
-            "vethd856714": {
-                "ibytes": 0,
-                "obytes": 0,
-                "ipackets": 0,
-                "opackets": 0
-            }
+        "docker0": {
+            "ibytes": 0,
+            "obytes": 0,
+            "ipackets": 0,
+            "opackets": 0
+        },
+        "ens160": {
+            "ibytes": 510,
+            "obytes": 1423,
+            "ipackets": 7,
+            "opackets": 15
+        },
+        "vethd856714": {
+            "ibytes": 0,
+            "obytes": 0,
+            "ipackets": 0,
+            "opackets": 0
+        }
         }
     },
     {
         "cgroup_cpuacct_stats": {
-            "throttling": {
-                "nr_periods": 0,
-                "nr_throttled": 0,
-                "throttled_time": 0
-            },
-            "cpu_tot": {
-                "user": 0.446,
-                "sys": 2.043
-            }
+        "throttling": {
+            "nr_periods": 0,
+            "nr_throttled": 0,
+            "throttled_time": 0
+        },
+        "cpu_tot": {
+            "user": 0.446,
+            "sys": 2.043
+        }
         },
         "cgroup_memory_stats": {
             "stat.current": 64974848,
@@ -479,7 +543,8 @@
             "events.oom_kill": 0
         },
         "cgroup_tasks": {
-            "pid_1003": {
+        "pid_1003": {
+            "proc_info": {
                 "cmon_score": 0,
                 "cmd": "sshd",
                 "pid": 1003,
@@ -488,23 +553,31 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 3,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.000,
-                "cpu_usr_total_secs": 0.010,
-                "cpu_sys_total_secs": 0.020,
-                "mem_minor_fault": 0.000,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 16990208,
-                "mem_rss_bytes": 10203136,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 0,
-                "io_wchar": 0,
-                "io_total_read": 1742347,
-                "io_total_write": 16635
+                "uid": 0
             },
-            "pid_1021": {
+            "cpu": {
+                "last": 3,
+                "usr": 0.000,
+                "sys": 0.000,
+                "usr_total_secs": 0.010,
+                "sys_total_secs": 0.020
+            },
+            "memory": {
+                "minor_fault": 0.000,
+                "major_fault": 0.000,
+                "virtual_bytes": 16990208,
+                "rss_bytes": 10203136
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 0,
+                "wchar": 0,
+                "total_read": 1742347,
+                "total_write": 16635
+            }
+        },
+        "pid_1021": {
+            "proc_info": {
                 "cmon_score": 0,
                 "cmd": "bash",
                 "pid": 1021,
@@ -513,23 +586,31 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 3,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.000,
-                "cpu_usr_total_secs": 1.280,
-                "cpu_sys_total_secs": 0.300,
-                "mem_minor_fault": 0.000,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 10121216,
-                "mem_rss_bytes": 7090176,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 0,
-                "io_wchar": 0,
-                "io_total_read": 62344930,
-                "io_total_write": 5853227
+                "uid": 0
             },
-            "pid_1020": {
+            "cpu": {
+                "last": 3,
+                "usr": 0.000,
+                "sys": 0.000,
+                "usr_total_secs": 1.280,
+                "sys_total_secs": 0.300
+            },
+            "memory": {
+                "minor_fault": 0.000,
+                "major_fault": 0.000,
+                "virtual_bytes": 10121216,
+                "rss_bytes": 7090176
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 0,
+                "wchar": 0,
+                "total_read": 62344930,
+                "total_write": 5853227
+            }
+        },
+        "pid_1020": {
+            "proc_info": {
                 "cmon_score": 100,
                 "cmd": "sshd",
                 "pid": 1020,
@@ -538,23 +619,31 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 0,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.195,
-                "cpu_usr_total_secs": 0.040,
-                "cpu_sys_total_secs": 0.490,
-                "mem_minor_fault": 0.000,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 17338368,
-                "mem_rss_bytes": 6184960,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 546,
-                "io_wchar": 246,
-                "io_total_read": 268094,
-                "io_total_write": 82750
+                "uid": 0
             },
-            "pid_5034": {
+            "cpu": {
+                "last": 0,
+                "usr": 0.000,
+                "sys": 0.195,
+                "usr_total_secs": 0.040,
+                "sys_total_secs": 0.490
+            },
+            "memory": {
+                "minor_fault": 0.000,
+                "major_fault": 0.000,
+                "virtual_bytes": 17338368,
+                "rss_bytes": 6184960
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 546,
+                "wchar": 246,
+                "total_read": 268094,
+                "total_write": 82750
+            }
+        },
+        "pid_5034": {
+            "proc_info": {
                 "cmon_score": 100,
                 "cmd": "generate_sample",
                 "pid": 5034,
@@ -563,42 +652,49 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 2,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.195,
-                "cpu_usr_total_secs": 0.000,
-                "cpu_sys_total_secs": 0.060,
-                "mem_minor_fault": 357.792,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 7557120,
-                "mem_rss_bytes": 4186112,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 128578,
-                "io_wchar": 34650,
-                "io_total_read": 2293959,
-                "io_total_write": 558181
+                "uid": 0
+            },
+            "cpu": {
+                "last": 2,
+                "usr": 0.000,
+                "sys": 0.195,
+                "usr_total_secs": 0.000,
+                "sys_total_secs": 0.060
+            },
+            "memory": {
+                "minor_fault": 357.792,
+                "major_fault": 0.000,
+                "virtual_bytes": 7557120,
+                "rss_bytes": 4186112
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 128578,
+                "wchar": 34650,
+                "total_read": 2293959,
+                "total_write": 558181
             }
+        }
         },
         "cgroup_network": {
-            "docker0": {
-                "ibytes": 0,
-                "obytes": 0,
-                "ipackets": 0,
-                "opackets": 0
-            },
-            "ens160": {
-                "ibytes": 248,
-                "obytes": 614,
-                "ipackets": 3,
-                "opackets": 6
-            },
-            "vethd856714": {
-                "ibytes": 0,
-                "obytes": 0,
-                "ipackets": 0,
-                "opackets": 0
-            }
+        "docker0": {
+            "ibytes": 0,
+            "obytes": 0,
+            "ipackets": 0,
+            "opackets": 0
+        },
+        "ens160": {
+            "ibytes": 248,
+            "obytes": 614,
+            "ipackets": 3,
+            "opackets": 6
+        },
+        "vethd856714": {
+            "ibytes": 0,
+            "obytes": 0,
+            "ipackets": 0,
+            "opackets": 0
+        }
         }
     }    ]
 }

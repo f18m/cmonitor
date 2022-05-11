@@ -136,7 +136,7 @@ class CmonitorFilterEngine:
         for sample_idx, sample in enumerate(samples_copy):
             if "cgroup_tasks" in sample:
                 for pid_sample in sample["cgroup_tasks"].copy():
-                    if task_name not in sample["cgroup_tasks"][pid_sample]["cmd"]:
+                    if task_name not in sample["cgroup_tasks"][pid_sample]["proc_info"]["cmd"]:
                         del self.json_data["samples"][sample_idx]["cgroup_tasks"][pid_sample]
                         n_removed_tasks += 1
 

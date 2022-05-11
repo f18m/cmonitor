@@ -644,16 +644,16 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
                  IOW there is no need to do any math to produce a percentage, just taking
                  the delta of the absolute, monotonic-increasing value and divide by the elapsed time
         */
-        m_pOutput->plong("cpu_last", CURRENT(pi_last_cpu));
+        m_pOutput->plong("last", CURRENT(pi_last_cpu));
         m_pOutput->pdouble(
-            "cpu_usr", std::min(100.0, (double)DELTA(pi_utime) / elapsed_sec)); // percentage between 0-100
+            "usr", std::min(100.0, (double)DELTA(pi_utime) / elapsed_sec)); // percentage between 0-100
         m_pOutput->pdouble(
-            "cpu_sys", std::min(100.0, (double)DELTA(pi_stime) / elapsed_sec)); // percentage between 0-100
+            "sys", std::min(100.0, (double)DELTA(pi_stime) / elapsed_sec)); // percentage between 0-100
 
         // provide also the total, monotonically-increasing CPU time:
         // this is used by chart script to produce the "top of the topper" chart
-        m_pOutput->pdouble("cpu_usr_total_secs", (double)CURRENT(pi_utime) / ticks);
-        m_pOutput->pdouble("cpu_sys_total_secs", (double)CURRENT(pi_stime) / ticks);
+        m_pOutput->pdouble("usr_total_secs", (double)CURRENT(pi_utime) / ticks);
+        m_pOutput->pdouble("sys_total_secs", (double)CURRENT(pi_stime) / ticks);
 
         m_pOutput->psubsubsection_end();
 
@@ -663,17 +663,17 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         m_pOutput->psubsubsection_start("memory");
 
         if (output_opts == PF_ALL) {
-            m_pOutput->plong("mem_size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
-            m_pOutput->plong("mem_resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
-            m_pOutput->plong("mem_restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
-            m_pOutput->plong("mem_resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
-            m_pOutput->plong("mem_share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
-            m_pOutput->plong("mem_rss_limit_bytes", CURRENT(pi_rsslimit));
+            m_pOutput->plong("size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("resident_kb", CURRENT(statm_resident) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("restext_kb", CURRENT(statm_trs) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("resdata_kb", CURRENT(statm_drs) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("share_kb", CURRENT(statm_share) * PAGESIZE_BYTES / 1024);
+            m_pOutput->plong("rss_limit_bytes", CURRENT(pi_rsslimit));
         }
-        m_pOutput->pdouble("mem_minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec);
-        m_pOutput->pdouble("mem_major_fault", COUNTDELTA(pi_majflt) / elapsed_sec);
-        m_pOutput->plong("mem_virtual_bytes", CURRENT(pi_vsize));
-        m_pOutput->plong("mem_rss_bytes", CURRENT(pi_rss) * PAGESIZE_BYTES);
+        m_pOutput->pdouble("minor_fault", COUNTDELTA(pi_minflt) / elapsed_sec);
+        m_pOutput->pdouble("major_fault", COUNTDELTA(pi_majflt) / elapsed_sec);
+        m_pOutput->plong("virtual_bytes", CURRENT(pi_vsize));
+        m_pOutput->plong("rss_bytes", CURRENT(pi_rss) * PAGESIZE_BYTES);
 
         /*
          * Signal fields
@@ -707,18 +707,18 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
          */
         m_pOutput->psubsubsection_start("io");
 
-        m_pOutput->pdouble("io_delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
-        m_pOutput->plong("io_rchar", DELTA(io_rchar) / elapsed_sec);
-        m_pOutput->plong("io_wchar", DELTA(io_wchar) / elapsed_sec);
+        m_pOutput->pdouble("delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
+        m_pOutput->plong("rchar", DELTA(io_rchar) / elapsed_sec);
+        m_pOutput->plong("wchar", DELTA(io_wchar) / elapsed_sec);
         if (output_opts == PF_ALL) {
-            m_pOutput->plong("io_read_bytes", DELTA(io_read_bytes) / elapsed_sec);
-            m_pOutput->plong("io_write_bytes", DELTA(io_write_bytes) / elapsed_sec);
+            m_pOutput->plong("read_bytes", DELTA(io_read_bytes) / elapsed_sec);
+            m_pOutput->plong("write_bytes", DELTA(io_write_bytes) / elapsed_sec);
         }
 
         // provide also the total, monotonically-increasing I/O time:
         // this is used by chart script to produce the "top of the topper" chart
-        m_pOutput->plong("io_total_read", CURRENT(io_rchar));
-        m_pOutput->plong("io_total_write", CURRENT(io_wchar));
+        m_pOutput->plong("total_read", CURRENT(io_rchar));
+        m_pOutput->plong("total_write", CURRENT(io_wchar));
 
         m_pOutput->psubsubsection_end();
 

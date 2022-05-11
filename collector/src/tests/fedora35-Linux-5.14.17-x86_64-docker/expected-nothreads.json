@@ -59,15 +59,15 @@
     },
     {
         "cgroup_cpuacct_stats": {
-            "throttling": {
-                "nr_periods": 17,
-                "nr_throttled": 0,
-                "throttled_time": 0
-            },
-            "cpu_tot": {
-                "user": 0.078,
-                "sys": 0.118
-            }
+        "throttling": {
+            "nr_periods": 17,
+            "nr_throttled": 0,
+            "throttled_time": 0
+        },
+        "cpu_tot": {
+            "user": 0.078,
+            "sys": 0.118
+        }
         },
         "cgroup_memory_stats": {
             "stat.current": 6045696,
@@ -113,7 +113,8 @@
             "stat.workingset_restore_file": 0
         },
         "cgroup_tasks": {
-            "pid_3792": {
+        "pid_3792": {
+            "proc_info": {
                 "cmon_score": 0,
                 "cmd": "redis-server",
                 "pid": 3792,
@@ -122,43 +123,50 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 0,
-                "cpu_usr": 0.000,
-                "cpu_sys": 0.000,
-                "cpu_usr_total_secs": 0.020,
-                "cpu_sys_total_secs": 0.020,
-                "mem_minor_fault": 0.000,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 54095872,
-                "mem_rss_bytes": 7225344,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 3082,
-                "io_wchar": 0,
-                "io_total_read": 115271,
-                "io_total_write": 10369
+                "uid": 0
+            },
+            "cpu": {
+                "last": 0,
+                "usr": 0.000,
+                "sys": 0.000,
+                "usr_total_secs": 0.020,
+                "sys_total_secs": 0.020
+            },
+            "memory": {
+                "minor_fault": 0.000,
+                "major_fault": 0.000,
+                "virtual_bytes": 54095872,
+                "rss_bytes": 7225344
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 3082,
+                "wchar": 0,
+                "total_read": 115271,
+                "total_write": 10369
             }
+        }
         },
         "cgroup_network": {
-            "eth0": {
-                "ibytes": 101,
-                "obytes": 0,
-                "ipackets": 1,
-                "opackets": 0
-            }
+        "eth0": {
+            "ibytes": 101,
+            "obytes": 0,
+            "ipackets": 1,
+            "opackets": 0
+        }
         }
     },
     {
         "cgroup_cpuacct_stats": {
-            "throttling": {
-                "nr_periods": 48,
-                "nr_throttled": 0,
-                "throttled_time": 0
-            },
-            "cpu_tot": {
-                "user": 2.329,
-                "sys": 19.523
-            }
+        "throttling": {
+            "nr_periods": 48,
+            "nr_throttled": 0,
+            "throttled_time": 0
+        },
+        "cpu_tot": {
+            "user": 2.329,
+            "sys": 19.523
+        }
         },
         "cgroup_memory_stats": {
             "stat.current": 6385664,
@@ -209,7 +217,8 @@
             "events.oom_kill": 0
         },
         "cgroup_tasks": {
-            "pid_3792": {
+        "pid_3792": {
+            "proc_info": {
                 "cmon_score": 11400,
                 "cmd": "redis-server",
                 "pid": 3792,
@@ -218,43 +227,50 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Running",
-                "uid": 0,
-                "cpu_last": 0,
-                "cpu_usr": 2.309,
-                "cpu_sys": 19.626,
-                "cpu_usr_total_secs": 0.140,
-                "cpu_sys_total_secs": 1.040,
-                "mem_minor_fault": 10.775,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 56717312,
-                "mem_rss_bytes": 7225344,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 455810,
-                "io_wchar": 80250,
-                "io_total_read": 2484204,
-                "io_total_write": 427444
+                "uid": 0
+            },
+            "cpu": {
+                "last": 0,
+                "usr": 2.309,
+                "sys": 19.626,
+                "usr_total_secs": 0.140,
+                "sys_total_secs": 1.040
+            },
+            "memory": {
+                "minor_fault": 10.775,
+                "major_fault": 0.000,
+                "virtual_bytes": 56717312,
+                "rss_bytes": 7225344
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 455810,
+                "wchar": 80250,
+                "total_read": 2484204,
+                "total_write": 427444
             }
+        }
         },
         "cgroup_network": {
-            "eth0": {
-                "ibytes": 1530982,
-                "obytes": 1148324,
-                "ipackets": 16294,
-                "opackets": 16175
-            }
+        "eth0": {
+            "ibytes": 1530982,
+            "obytes": 1148324,
+            "ipackets": 16294,
+            "opackets": 16175
+        }
         }
     },
     {
         "cgroup_cpuacct_stats": {
-            "throttling": {
-                "nr_periods": 37,
-                "nr_throttled": 0,
-                "throttled_time": 0
-            },
-            "cpu_tot": {
-                "user": 0.544,
-                "sys": 5.284
-            }
+        "throttling": {
+            "nr_periods": 37,
+            "nr_throttled": 0,
+            "throttled_time": 0
+        },
+        "cpu_tot": {
+            "user": 0.544,
+            "sys": 5.284
+        }
         },
         "cgroup_memory_stats": {
             "stat.current": 6270976,
@@ -305,7 +321,8 @@
             "events.oom_kill": 0
         },
         "cgroup_tasks": {
-            "pid_3792": {
+        "pid_3792": {
+            "proc_info": {
                 "cmon_score": 3800,
                 "cmd": "redis-server",
                 "pid": 3792,
@@ -314,30 +331,37 @@
                 "priority": 20,
                 "nice": 0,
                 "state": "Sleeping-interruptible",
-                "uid": 0,
-                "cpu_last": 1,
-                "cpu_usr": 0.619,
-                "cpu_sys": 5.266,
-                "cpu_usr_total_secs": 0.180,
-                "cpu_sys_total_secs": 1.380,
-                "mem_minor_fault": 0.000,
-                "mem_major_fault": 0.000,
-                "mem_virtual_bytes": 56717312,
-                "mem_rss_bytes": 7225344,
-                "io_delayacct_blkio_secs": 0.000,
-                "io_rchar": 106722,
-                "io_wchar": 18372,
-                "io_total_read": 3173296,
-                "io_total_write": 546074
+                "uid": 0
+            },
+            "cpu": {
+                "last": 1,
+                "usr": 0.619,
+                "sys": 5.266,
+                "usr_total_secs": 0.180,
+                "sys_total_secs": 1.380
+            },
+            "memory": {
+                "minor_fault": 0.000,
+                "major_fault": 0.000,
+                "virtual_bytes": 56717312,
+                "rss_bytes": 7225344
+            },
+            "io": {
+                "delayacct_blkio_secs": 0.000,
+                "rchar": 106722,
+                "wchar": 18372,
+                "total_read": 3173296,
+                "total_write": 546074
             }
+        }
         },
         "cgroup_network": {
-            "eth0": {
-                "ibytes": 338978,
-                "obytes": 255476,
-                "ipackets": 3600,
-                "opackets": 3598
-            }
+        "eth0": {
+            "ibytes": 338978,
+            "obytes": 255476,
+            "ipackets": 3600,
+            "opackets": 3598
+        }
         }
     }    ]
 }
