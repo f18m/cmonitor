@@ -418,7 +418,7 @@ void CMonitorOutputFrontend::push_current_sections_to_json(bool is_header)
     // convert the current sample into JSON format:
 
     // we do all the JSON with max 4 indentation levels:
-    enum { FIRST_LEVEL = 1, SECOND_LEVEL = 2, THIRD_LEVEL = 3, FOURTH_LEVEL = 4 };
+    enum { FIRST_LEVEL = 1, SECOND_LEVEL = 2, THIRD_LEVEL = 3, FOURTH_LEVEL = 4 , FIFTH_LEVEL = 5};
 
     if (is_header) {
         fputs("{\n", m_outputJson); // document begin
@@ -439,18 +439,18 @@ void CMonitorOutputFrontend::push_current_sections_to_json(bool is_header)
             for (size_t subsec_idx = 0; subsec_idx < sec.m_subsections.size(); subsec_idx++) {
                 auto& subsec = sec.m_subsections[subsec_idx];
                 if (subsec.m_measurements.empty()) {
-                    push_json_object_start(subsec.m_name, SECOND_LEVEL);
+                    push_json_object_start(subsec.m_name, THIRD_LEVEL);
                     for (size_t subsubsec_idx = 0; subsubsec_idx < subsec.m_subsubsections.size(); subsubsec_idx++) {
                         auto& subsubsec = subsec.m_subsubsections[subsubsec_idx];
-                        push_json_object_start(subsubsec.m_name, THIRD_LEVEL);
-                        push_json_measurements(subsubsec.m_measurements, FOURTH_LEVEL);
-                        push_json_object_end(subsubsec_idx == subsec.m_subsubsections.size() - 1, THIRD_LEVEL);
+                        push_json_object_start(subsubsec.m_name, FOURTH_LEVEL);
+                        push_json_measurements(subsubsec.m_measurements, FIFTH_LEVEL);
+                        push_json_object_end(subsubsec_idx == subsec.m_subsubsections.size() - 1, FOURTH_LEVEL);
                     }
-                    push_json_object_end(subsec_idx == sec.m_subsections.size() - 1, SECOND_LEVEL);
+                    push_json_object_end(subsec_idx == sec.m_subsections.size() - 1, THIRD_LEVEL);
                 } else {
-                    push_json_object_start(subsec.m_name, SECOND_LEVEL);
-                    push_json_measurements(subsec.m_measurements, THIRD_LEVEL);
-                    push_json_object_end(subsec_idx == sec.m_subsections.size() - 1, SECOND_LEVEL);
+                    push_json_object_start(subsec.m_name, THIRD_LEVEL);
+                    push_json_measurements(subsec.m_measurements, FOURTH_LEVEL);
+                    push_json_object_end(subsec_idx == sec.m_subsections.size() - 1, THIRD_LEVEL);
                 }
             }
         } else {
