@@ -474,7 +474,7 @@ void CMonitorCgroups::sample_process_list()
 
     // collect all PIDs for current cgroup
     m_cgroup_all_pids.clear();
-    !collect_pids(m_cgroup_processes_reader_pids, m_cgroup_all_pids);
+    collect_pids(m_cgroup_processes_reader_pids, m_cgroup_all_pids);
 }
 
 void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_opts)
@@ -645,10 +645,8 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
                  the delta of the absolute, monotonic-increasing value and divide by the elapsed time
         */
         m_pOutput->plong("last", CURRENT(pi_last_cpu));
-        m_pOutput->pdouble(
-            "usr", std::min(100.0, (double)DELTA(pi_utime) / elapsed_sec)); // percentage between 0-100
-        m_pOutput->pdouble(
-            "sys", std::min(100.0, (double)DELTA(pi_stime) / elapsed_sec)); // percentage between 0-100
+        m_pOutput->pdouble("usr", std::min(100.0, (double)DELTA(pi_utime) / elapsed_sec)); // percentage between 0-100
+        m_pOutput->pdouble("sys", std::min(100.0, (double)DELTA(pi_stime) / elapsed_sec)); // percentage between 0-100
 
         // provide also the total, monotonically-increasing CPU time:
         // this is used by chart script to produce the "top of the topper" chart
