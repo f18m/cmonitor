@@ -1086,8 +1086,8 @@ class CMonitorGraphGenerator:
     @staticmethod
     def __get_main_thread_associated_with(sample, tid):
         json_key = "pid_%s" % tid
-        tgid = sample["cgroup_tasks"][json_key]["tgid"]
-        if tgid == sample["cgroup_tasks"][json_key]["pid"]:
+        tgid = sample["cgroup_tasks"][json_key]["proc_info"]["tgid"]
+        if tgid == sample["cgroup_tasks"][json_key]["proc_info"]["pid"]:
             # actually current entry is not a secondary thread but a PROCESS, append it:
             return tid
         else:
@@ -1269,8 +1269,8 @@ class CMonitorGraphGenerator:
                     if json_key in sample["cgroup_tasks"]:
                         top_proc_sample = sample["cgroup_tasks"][json_key]
 
-                        cpu = top_proc_sample["cpu_usr"] + top_proc_sample["cpu_sys"]
-                        io = int((top_proc_sample["io_rchar"] + top_proc_sample["io_wchar"]))
+                        cpu = top_proc_sample["cpu"]["usr"] + top_proc_sample["cpu"]["sys"]
+                        io = int((top_proc_sample["io"]["rchar"] + top_proc_sample["io"]["wchar"]))
 
                         tot_cpu_usage_perc += cpu
                         row["cpu"].append(cpu)
@@ -1287,10 +1287,10 @@ class CMonitorGraphGenerator:
                     # print(top_process_pid)
                     json_key = "pid_%s" % top_process_pid
                     if json_key in sample["cgroup_tasks"]:
-                        top_proc_sample = sample["cgroup_tasks"][json_key]
+                        top_proc_sample = sample["cgroup_tasks"][json_key]["memory"]
 
-                        tot_mem_usage_bytes += top_proc_sample["mem_rss_bytes"]
-                        mem = int(top_proc_sample["mem_rss_bytes"])
+                        tot_mem_usage_bytes += top_proc_sample["rss_bytes"]
+                        mem = int(top_proc_sample["rss_bytes"])
                         row["mem"].append(mem)
                     else:
                         # probably this process was born later or dead earlier than this timestamp
@@ -1347,11 +1347,11 @@ class CMonitorGraphGenerator:
                 for process in sample["cgroup_tasks"]:
                     # parse data from JSON
                     entry = sample["cgroup_tasks"][process]
-                    cmd = entry["cmd"]
-                    cputime = entry["cpu_usr_total_secs"] + entry["cpu_sys_total_secs"]
-                    iobytes = entry["io_total_read"] + entry["io_total_write"]
-                    membytes = entry["mem_rss_bytes"]  # take RSS, more realistic/useful compared to the "mem_virtual_bytes"
-                    thepid = entry["pid"]  # can be the TID (thread ID) if cmonitor_collector was started with --collect=cgroup_threads
+                    cmd = entry["proc_info"]["cmd"]
+                    cputime = entry["cpu"]["usr_total_secs"] + entry["cpu"]["sys_total_secs"]
+                    iobytes = entry["io"]["total_read"] + entry["io"]["total_write"]
+                    membytes = entry["memory"]["rss_bytes"]  # take RSS, more realistic/useful compared to the "mem_virtual_bytes"
+                    thepid = entry["proc_info"]["pid"]  # can be the TID (thread ID) if cmonitor_collector was started with --collect=cgroup_threads
 
                     # keep track of maxs:
                     max_byte_value_dict["mem_rss"] = max(membytes, max_byte_value_dict["mem_rss"])
