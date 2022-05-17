@@ -4,7 +4,7 @@
 
 Name:           cmonitor-tools
 Version:        __RPM_VERSION__
-Release:        __RPM_RELEASE__
+Release:        __RPM_RELEASE__%{?dist}
 Summary:        A Docker/LXC, database-free, lightweight container performance monitoring solution
 License:        GPL
 URL:            https://github.com/f18m/cmonitor
@@ -14,8 +14,14 @@ Source0:        cmonitor-tools-__RPM_VERSION__.tar.gz
 # IMPORTANT: python3-devel provide macros like %{python3_sitelib}
 BuildRequires:  gcc-c++, make, python3-devel
 
-# cmonitor_filter uses dateutil library to parse dates:
+# cmonitor_filter uses dateutil library to parse dates.. of course to make our life easier the same python library
+# RPM has different names on different distro versions...
+%if 0%{?rhel} == 7
 Requires: python-dateutil
+%endif
+%if 0%{?rhel} >= 8
+Requires: python3-dateutil
+%endif
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
 # of debug info files apparently:

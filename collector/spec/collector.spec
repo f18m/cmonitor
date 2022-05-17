@@ -1,6 +1,6 @@
 Name:           cmonitor-collector
 Version:        __RPM_VERSION__
-Release:        __RPM_RELEASE__
+Release:        __RPM_RELEASE__%{?dist}
 Summary:        A Docker/LXC, database-free, lightweight container performance monitoring solution
 License:        GPL
 URL:            https://github.com/f18m/cmonitor

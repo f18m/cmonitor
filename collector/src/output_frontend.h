@@ -29,16 +29,6 @@
 #include <string>
 #include <vector>
 
-// Prometheus
-#ifdef PROMETHEUS_SUPPORT
-#include <prometheus/counter.h>
-#include <prometheus/detail/future_std.h>
-#include <prometheus/exposer.h>
-#include <prometheus/family.h>
-#include <prometheus/gauge.h>
-#include <prometheus/labels.h>
-#include <prometheus/registry.h>
-#endif
 //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
@@ -86,10 +76,6 @@ public:
 
     void init_json_output_file(const std::string& filenamePrefix);
     void init_influxdb_connection(const std::string& hostname, unsigned int port, const std::string& dbname);
-    void init_prometheus_connection(const std::string& port, std::map<std::string, std::string> metaData = {});
-    prometheus::Registry& GetPrometheusRegistry() { return (*m_prometheus_registry); }
-    bool is_prometheus_enabled() { return m_prometheusEnabled; }
-
     void enable_json_pretty_print();
     void close();
 
@@ -106,8 +92,11 @@ public:
     void psection_start(const char* section);
     void psection_end();
 
-    void psubsection_start(const char* resource, std::map<std::string, std::string> labels = {});
+    void psubsection_start(const char* resource);
     void psubsection_end();
+
+    void psubsubsection_start(const char* resource);
+    void psubsubsection_end();
 
     //------------------------------------------------------------------------------
     // Measurement creation:
@@ -131,27 +120,38 @@ public:
 private:
     class CMonitorOutputMeasurement {
     public:
-        CMonitorOutputMeasurement(
-            const char* name = "", const char* value = "", double dvalue = 0, bool numeric = false)
+        CMonitorOutputMeasurement(const char* name = "", const char* value = "", bool numeric = false)
         {
             strncpy(m_name.data(), name, CMONITOR_MEASUREMENT_NAME_MAXLEN - 1);
             strncpy(m_value.data(), value, CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
-            m_dvalue = dvalue;
             m_numeric = numeric;
         }
 
         std::array<char, CMONITOR_MEASUREMENT_NAME_MAXLEN> m_name; // use std::array to void dynamic allocations
         std::array<char, CMONITOR_MEASUREMENT_VALUE_MAXLEN> m_value; // use std::array to void dynamic allocations
-        double m_dvalue;
         bool m_numeric;
     };
 
     typedef std::vector<CMonitorOutputMeasurement> CMonitorMeasurementVector;
 
+    class CMonitorOutputSubSubsection {
+    public:
+        std::string m_name;
+        CMonitorMeasurementVector m_measurements;
+
+        std::string get_value_for_measurement(const std::string& name) const
+        {
+            for (const auto& m : m_measurements)
+                if (strncmp(m.m_name.data(), name.c_str(), m.m_name.size()) == 0)
+                    return std::string(m.m_value.data());
+            return "";
+        }
+    };
+
     class CMonitorOutputSubsection {
     public:
         std::string m_name;
-        std::map<std::string, std::string> m_labels;
+        std::vector<CMonitorOutputSubSubsection> m_subsubsections;
         CMonitorMeasurementVector m_measurements;
 
         std::string get_value_for_measurement(const std::string& name) const
@@ -203,13 +203,6 @@ private:
 
     void push_current_sections_to_influxdb(bool is_header);
 
-    //------------------------------------------------------------------------------
-    // Prometheus low-level functions
-    //------------------------------------------------------------------------------
-    void push_current_sections_to_prometheus();
-    void generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data, double metric_value,
-        std::map<std::string, std::string> labels = {});
-
     // main output routine:
     void push_current_sections(bool is_header);
 
@@ -223,17 +216,6 @@ private:
     influx_client_t* m_influxdb_client_conn = nullptr;
     std::string m_influxdb_tagset;
 
-    // Prometheus exposer
-    bool m_prometheusEnabled = false;
-    prometheus::Gauge* m_metric;
-    std::string m_metadata_key;
-    std::string m_metadata_value;
-    std::unique_ptr<prometheus::Exposer> m_exposer;
-    std::shared_ptr<prometheus::Registry> m_prometheus_registry;
-
-    typedef std::pair<std::string, std::map<std::string, std::string>> metric_key;
-    std::map<metric_key, prometheus::Gauge*> m_metric_gauge_list;
-
     // JSON internals
     FILE* m_outputJson = nullptr;
     std::string m_onelevel_indent_string;
@@ -243,6 +225,7 @@ private:
     unsigned int m_samples = 0;
     unsigned int m_sections = 0;
     unsigned int m_subsections = 0;
+    unsigned int m_subsubsections = 0;
     unsigned int m_string = 0;
     unsigned int m_long = 0;
     unsigned int m_double = 0;

@@ -16,12 +16,12 @@ test_list = [
     # run0
     {
         "input_file": "docker-collecting-docker-stats.json", 
-        "start_timestamp": "2022-01-18T00:02:50",
-        "end_timestamp": "2022-01-18T00:05:47.300",
+        "start_timestamp": "2022-05-11T09:31:04",
+        "end_timestamp": "2022-05-11T09:33:59.812",
 
         # the input JSON contains 180 samples:
-        #   first one: "2022-01-18T00:02:47.897"
-        #   last one: "2022-01-18T00:05:47.313"
+        #   first one: "2022-05-11T09:31:00.684"
+        #   last one: "2022-05-11T09:33:59.812"
         # so with filtering criteria we remove 3 samples from the start and 1 from the end --> 176
         "expected_survived_samples": 176,
         "expected_removed_samples": 4,
@@ -30,12 +30,12 @@ test_list = [
     # run1
     {
         "input_file": "docker-collecting-docker-stats.json", 
-        "start_timestamp": "2022-01-18T00:02:50",
+        "start_timestamp": "2022-05-11T09:31:03",
         "end_timestamp": None,
 
         # the input JSON contains 180 samples:
-        #   first one: "2022-01-18T00:02:47.897"
-        #   last one: "2022-01-18T00:05:47.313"
+        #   first one: "2022-05-11T09:31:00.684"
+        #   last one: "2022-05-11T09:33:59.812"
         # so with filtering criteria we remove 3 samples from the start
         "expected_survived_samples": 177,
         "expected_removed_samples": 3,
@@ -45,11 +45,11 @@ test_list = [
     {
         "input_file": "docker-collecting-docker-stats.json", 
         "start_timestamp": None,
-        "end_timestamp": "2022-01-18T00:05:47.300",
+        "end_timestamp": "2022-05-11T09:33:59.811",
 
         # the input JSON contains 180 samples:
-        #   first one: "2022-01-18T00:02:47.897"
-        #   last one: "2022-01-18T00:05:47.313"
+        #   first one: "2022-05-11T09:31:00.684"
+        #   last one: "2022-05-11T09:33:59.812"
         # so with filtering criteria we remove 1 samples from the end
         "expected_survived_samples": 179,
         "expected_removed_samples": 1,
@@ -62,8 +62,8 @@ test_list = [
         "end_timestamp": "1970-02-03",
 
         # the input JSON contains 180 samples:
-        #   first one: "2022-01-18T00:02:47.897"
-        #   last one: "2022-01-18T00:05:47.313"
+        #   first one: "2022-05-11T09:31:00.684"
+        #   last one: "2022-05-11T09:33:59.812"
         # so with filtering criteria we remove 1 samples from the end
         "expected_survived_samples": 0,
         "expected_removed_samples": 180,

@@ -474,7 +474,7 @@ void CMonitorCgroups::sample_process_list()
 
     // collect all PIDs for current cgroup
     m_cgroup_all_pids.clear();
-    !collect_pids(m_cgroup_processes_reader_pids, m_cgroup_all_pids);
+    collect_pids(m_cgroup_processes_reader_pids, m_cgroup_all_pids);
 }
 
 void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_opts)
@@ -597,10 +597,10 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 #define DELTA(member) (CURRENT(member) - PREVIOUS(member))
 #define COUNTDELTA(member) ((PREVIOUS(member) > CURRENT(member)) ? 0 : (CURRENT(member) - PREVIOUS(member)))
 
-        std::string process_subsection_name = "process";
-        std::map<std::string, std::string> labels
-            = { { "pid", fmt::format("{}", (unsigned long)CURRENT(pi_pid)).c_str() }, { "cmd", CURRENT(pi_comm) } };
-        m_pOutput->psubsection_start(process_subsection_name.c_str(), labels);
+        m_pOutput->psubsection_start(fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid)).c_str());
+        // m_pOutput->plong("cmon_score", score);
+
+        m_pOutput->psubsubsection_start("proc_info");
         m_pOutput->plong("cmon_score", score);
 
         /*
@@ -611,6 +611,8 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
          *           https://en.wikipedia.org/wiki/Process_group
          *       to avoid confusing the consumer of data, they're left out of the data stream
          */
+        m_pOutput->pstring(
+            "cmd", CURRENT(pi_comm)); // Full command line can be found /proc/PID/cmdline with zeros in it!
         m_pOutput->plong("pid", CURRENT(pi_pid));
         m_pOutput->plong("ppid", CURRENT(pi_ppid));
         m_pOutput->plong("tgid", CURRENT(pi_tgid));
@@ -628,12 +630,10 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
                 m_pOutput->pstring("username", CURRENT(username));
             m_pOutput->pdouble("start_time_secs", (double)(CURRENT(pi_start_time)) / ticks);
         }
-        // End sub-section for process
-        m_pOutput->psubsection_end();
 
-        // start sub-section for CPU
-        std::string cpu_subsection_name = "cpu";
-        m_pOutput->psubsection_start(cpu_subsection_name.c_str(), labels);
+        m_pOutput->psubsubsection_end();
+
+        m_pOutput->psubsubsection_start("cpu");
 
         /*
          * CPU fields
@@ -648,26 +648,17 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         m_pOutput->pdouble("usr", std::min(100.0, (double)DELTA(pi_utime) / elapsed_sec)); // percentage between 0-100
         m_pOutput->pdouble("sys", std::min(100.0, (double)DELTA(pi_stime) / elapsed_sec)); // percentage between 0-100
 
-        m_pOutput->psubsection_end();
-
         // provide also the total, monotonically-increasing CPU time:
         // this is used by chart script to produce the "top of the topper" chart
-        std::string cpu_total_subsection_name = "cpu_total_secs";
-        m_pOutput->psubsection_start(cpu_total_subsection_name.c_str(), labels);
+        m_pOutput->pdouble("usr_total_secs", (double)CURRENT(pi_utime) / ticks);
+        m_pOutput->pdouble("sys_total_secs", (double)CURRENT(pi_stime) / ticks);
 
-        m_pOutput->pdouble("usr", (double)CURRENT(pi_utime) / ticks);
-        m_pOutput->pdouble("sys", (double)CURRENT(pi_stime) / ticks);
-
-        // End subsection for CPU
-        m_pOutput->psubsection_end();
+        m_pOutput->psubsubsection_end();
 
         /*
          * Memory fields
          */
-
-        // start sub-section for memory
-        std::string memory_subsection_name = "memory";
-        m_pOutput->psubsection_start(memory_subsection_name.c_str(), labels);
+        m_pOutput->psubsubsection_start("memory");
 
         if (output_opts == PF_ALL) {
             m_pOutput->plong("size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
@@ -706,37 +697,28 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
             m_pOutput->plong("realtime_priority", CURRENT(pi_realtime_priority));
             m_pOutput->plong("sched_policy", CURRENT(pi_sched_policy));
         }
-        // End subsection for memory
-        m_pOutput->psubsection_end();
+
+        m_pOutput->psubsubsection_end();
 
         /*
          * I/O fields
          */
-        std::string io_subsection_name = "io";
-        m_pOutput->psubsection_start(io_subsection_name.c_str(), labels);
+        m_pOutput->psubsubsection_start("io");
 
         m_pOutput->pdouble("delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
         m_pOutput->plong("rchar", DELTA(io_rchar) / elapsed_sec);
         m_pOutput->plong("wchar", DELTA(io_wchar) / elapsed_sec);
-
-        m_pOutput->psubsection_end();
-
-        std::string io_subsection_name_bytes = "io_bytes";
-        m_pOutput->psubsection_start(io_subsection_name_bytes.c_str(), labels);
-
         if (output_opts == PF_ALL) {
-            m_pOutput->plong("read", DELTA(io_read_bytes) / elapsed_sec);
-            m_pOutput->plong("write", DELTA(io_write_bytes) / elapsed_sec);
+            m_pOutput->plong("read_bytes", DELTA(io_read_bytes) / elapsed_sec);
+            m_pOutput->plong("write_bytes", DELTA(io_write_bytes) / elapsed_sec);
         }
-        m_pOutput->psubsection_end();
 
         // provide also the total, monotonically-increasing I/O time:
         // this is used by chart script to produce the "top of the topper" chart
-        std::string io_subsection_name_total = "io_total";
-        m_pOutput->psubsection_start(io_subsection_name_total.c_str(), labels);
+        m_pOutput->plong("total_read", CURRENT(io_rchar));
+        m_pOutput->plong("total_write", CURRENT(io_wchar));
 
-        m_pOutput->plong("read", CURRENT(io_rchar));
-        m_pOutput->plong("write", CURRENT(io_wchar));
+        m_pOutput->psubsubsection_end();
 
         m_pOutput->psubsection_end();
         nProcsOverThreshold++;

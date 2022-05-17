@@ -119,31 +119,6 @@ void CMonitorOutputFrontend::init_influxdb_connection(
         m_influxdb_client_conn->host, m_influxdb_client_conn->port);
 }
 
-void CMonitorOutputFrontend::init_prometheus_connection(
-    const std::string& port, std::map<std::string, std::string> metaData)
-{
-    m_exposer = prometheus::detail::make_unique<prometheus::Exposer>(port);
-    m_prometheus_registry = std::make_shared<prometheus::Registry>();
-    m_exposer->RegisterCollectable(m_prometheus_registry);
-
-    m_prometheusEnabled = true;
-    CMonitorLogger::instance()->LogDebug(
-        "init_prometheus_connection() initialized Prometheus port to %s", port.c_str());
-
-    if (!metaData.empty()) {
-        // strore the metadata from command line.
-        for (const auto& entry : metaData) {
-            m_metadata_key = entry.first;
-            m_metadata_value = entry.second;
-        }
-    } else {
-        m_metadata_key = "app"; // set default
-        m_metadata_value = "cmonitor";
-    }
-
-    // init_metric();
-}
-
 void CMonitorOutputFrontend::enable_json_pretty_print()
 {
     m_onelevel_indent_string = "    ";
@@ -323,11 +298,23 @@ void CMonitorOutputFrontend::push_current_sections_to_influxdb(bool is_header)
 
                 for (size_t subsec_idx = 0; subsec_idx < sec.m_subsections.size(); subsec_idx++) {
                     auto& subsec = sec.m_subsections[subsec_idx];
-                    all_measurements
-                        += generate_influxdb_line(subsec.m_measurements, sec.m_name + "_" + subsec.m_name, ts_nsec_str);
+                    if (subsec.m_measurements.empty()) {
+                        for (size_t subsubsec_idx = 0; subsubsec_idx < subsec.m_subsubsections.size();
+                             subsubsec_idx++) {
+                            auto& subsubsec = subsec.m_subsubsections[subsubsec_idx];
+                            all_measurements += generate_influxdb_line(
+                                subsubsec.m_measurements, subsubsec.m_name + "_" + subsubsec.m_name, ts_nsec_str);
 
-                    if (subsec_idx < sec.m_subsections.size() - 1)
-                        all_measurements += "\n";
+                            if (subsubsec_idx < subsec.m_subsubsections.size() - 1)
+                                all_measurements += "\n";
+                        }
+                    } else {
+                        all_measurements += generate_influxdb_line(
+                            subsec.m_measurements, subsec.m_name + "_" + subsec.m_name, ts_nsec_str);
+
+                        if (subsec_idx < sec.m_subsections.size() - 1)
+                            all_measurements += "\n";
+                    }
                 }
 
             } else {
@@ -431,7 +418,7 @@ void CMonitorOutputFrontend::push_current_sections_to_json(bool is_header)
     // convert the current sample into JSON format:
 
     // we do all the JSON with max 4 indentation levels:
-    enum { FIRST_LEVEL = 1, SECOND_LEVEL = 2, THIRD_LEVEL = 3, FOURTH_LEVEL = 4 };
+    enum { FIRST_LEVEL = 1, SECOND_LEVEL = 2, THIRD_LEVEL = 3, FOURTH_LEVEL = 4 , FIFTH_LEVEL = 5};
 
     if (is_header) {
         fputs("{\n", m_outputJson); // document begin
@@ -451,10 +438,20 @@ void CMonitorOutputFrontend::push_current_sections_to_json(bool is_header)
         if (sec.m_measurements.empty()) {
             for (size_t subsec_idx = 0; subsec_idx < sec.m_subsections.size(); subsec_idx++) {
                 auto& subsec = sec.m_subsections[subsec_idx];
-
-                push_json_object_start(subsec.m_name, THIRD_LEVEL);
-                push_json_measurements(subsec.m_measurements, FOURTH_LEVEL);
-                push_json_object_end(subsec_idx == sec.m_subsections.size() - 1, THIRD_LEVEL);
+                if (subsec.m_measurements.empty()) {
+                    push_json_object_start(subsec.m_name, THIRD_LEVEL);
+                    for (size_t subsubsec_idx = 0; subsubsec_idx < subsec.m_subsubsections.size(); subsubsec_idx++) {
+                        auto& subsubsec = subsec.m_subsubsections[subsubsec_idx];
+                        push_json_object_start(subsubsec.m_name, FOURTH_LEVEL);
+                        push_json_measurements(subsubsec.m_measurements, FIFTH_LEVEL);
+                        push_json_object_end(subsubsec_idx == subsec.m_subsubsections.size() - 1, FOURTH_LEVEL);
+                    }
+                    push_json_object_end(subsec_idx == sec.m_subsections.size() - 1, THIRD_LEVEL);
+                } else {
+                    push_json_object_start(subsec.m_name, THIRD_LEVEL);
+                    push_json_measurements(subsec.m_measurements, FOURTH_LEVEL);
+                    push_json_object_end(subsec_idx == sec.m_subsections.size() - 1, THIRD_LEVEL);
+                }
             }
         } else {
             push_json_measurements(sec.m_measurements, THIRD_LEVEL);
@@ -489,9 +486,6 @@ void CMonitorOutputFrontend::push_current_sections(bool is_header)
     if (m_influxdb_client_conn)
         push_current_sections_to_influxdb(is_header);
 
-    if (m_prometheusEnabled)
-        push_current_sections_to_prometheus();
-
     fflush(NULL); /* force I/O output now */
 
     // IMPORTANT: clear() but do not shrink_to_fit() to avoid a bunch of reallocations for next sample:
@@ -506,7 +500,15 @@ size_t CMonitorOutputFrontend::get_current_sample_measurements() const
         if (sec.m_measurements.empty()) {
             for (size_t i = 0; i < sec.m_subsections.size(); i++) {
                 auto& subsec = sec.m_subsections[i];
-                ntotal_meas += subsec.m_measurements.size();
+                ;
+                if (subsec.m_measurements.empty()) {
+                    auto& subsubsec = subsec.m_subsubsections[i];
+                    for (size_t i = 0; i < subsec.m_subsubsections.size(); i++) {
+                        ntotal_meas += subsubsec.m_measurements.size();
+                    }
+                } else {
+                    ntotal_meas += subsec.m_measurements.size();
+                }
             }
         } else {
             ntotal_meas += sec.m_measurements.size();
@@ -516,53 +518,6 @@ size_t CMonitorOutputFrontend::get_current_sample_measurements() const
     return ntotal_meas;
 }
 
-void CMonitorOutputFrontend::push_current_sections_to_prometheus()
-{
-    std::string section_name;
-    for (size_t i = 0; i < m_current_sections.size(); i++) {
-        auto& sec = m_current_sections[i];
-        if (sec.m_measurements.empty()) {
-            for (size_t i = 0; i < sec.m_subsections.size(); i++) {
-                auto& subsec = sec.m_subsections[i];
-                section_name = sec.m_name;
-                for (size_t n = 0; n < subsec.m_measurements.size(); n++) {
-                    auto& measurement = subsec.m_measurements[n];
-                    std::string metric_name = section_name + "_" + subsec.m_name;
-                    generate_prometheus_metric(
-                        metric_name, measurement.m_name.data(), measurement.m_dvalue, subsec.m_labels);
-                }
-            }
-        } else {
-            for (size_t n = 0; n < sec.m_measurements.size(); n++) {
-                auto& measurement = sec.m_measurements[n];
-                generate_prometheus_metric(sec.m_name, measurement.m_name.data(), measurement.m_dvalue);
-            }
-        }
-    }
-}
-
-void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data,
-    double metric_value, std::map<std::string, std::string> labels)
-{
-
-    std::map<std::string, std::string> metric_labels = { { "metric", metric_data } };
-    metric_labels.insert(labels.begin(), labels.end());
-
-    auto search_metric = m_metric_gauge_list.find(make_pair(metric_name, labels));
-    if (search_metric != m_metric_gauge_list.end()) {
-        m_metric = (search_metric->second);
-        m_metric->Set(metric_value);
-    } else {
-        auto& metrics = prometheus::BuildGauge()
-                            .Name(metric_name)
-                            .Help(metric_name)
-                            .Labels({ { m_metadata_key, m_metadata_value } })
-                            .Register(GetPrometheusRegistry());
-        m_metric = &(metrics.Add(metric_labels));
-        m_metric->Set(metric_value);
-        m_metric_gauge_list.insert(std::make_pair(std::make_pair(metric_name, metric_labels), m_metric));
-    }
-}
 //------------------------------------------------------------------------------
 // JSON objects
 //------------------------------------------------------------------------------
@@ -572,6 +527,7 @@ void CMonitorOutputFrontend::pstats()
     psection_start("cmonitor_stats");
     plong("section", m_sections);
     plong("subsections", m_subsections);
+    plong("subsubsections", m_subsubsections);
     plong("string", m_string);
     plong("long", m_long);
     plong("double", m_double);
@@ -621,13 +577,12 @@ void CMonitorOutputFrontend::psection_end()
     m_current_meas_list = nullptr;
 }
 
-void CMonitorOutputFrontend::psubsection_start(const char* resource, std::map<std::string, std::string> labels)
+void CMonitorOutputFrontend::psubsection_start(const char* subsection)
 {
     m_subsections++;
 
     CMonitorOutputSubsection subsec;
-    subsec.m_name = resource;
-    subsec.m_labels = labels;
+    subsec.m_name = subsection;
     m_current_sections.back().m_subsections.push_back(subsec);
 
     // when adding new measurements, add them as children of this new subsection:
@@ -635,6 +590,24 @@ void CMonitorOutputFrontend::psubsection_start(const char* resource, std::map<st
 }
 
 void CMonitorOutputFrontend::psubsection_end()
+{
+    // stop adding measurements to last section:
+    m_current_meas_list = nullptr;
+}
+
+void CMonitorOutputFrontend::psubsubsection_start(const char* resource)
+{
+    m_subsubsections++;
+
+    CMonitorOutputSubSubsection subsubsec;
+    subsubsec.m_name = resource;
+    m_current_sections.back().m_subsections.back().m_subsubsections.push_back(subsubsec);
+
+    // when adding new measurements, add them as children of this new sub-subsection:
+    m_current_meas_list = &m_current_sections.back().m_subsections.back().m_subsubsections.back().m_measurements;
+}
+
+void CMonitorOutputFrontend::psubsubsection_end()
 {
     // stop adding measurements to last subsection:
     m_current_meas_list = nullptr;
@@ -650,7 +623,7 @@ void CMonitorOutputFrontend::phex(const char* name, long long value)
     assert(m_current_meas_list);
 
     auto fmt_string = fmt::format("hex:{:#08x}", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), value, true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
 }
 
 void CMonitorOutputFrontend::plong(const char* name, long long value)
@@ -666,7 +639,7 @@ void CMonitorOutputFrontend::plong(const char* name, long long value)
 #else
     auto fmt_string = fmt::format("{}", value);
 #endif
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), value, true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
 }
 
 void CMonitorOutputFrontend::pdouble(const char* name, double value)
@@ -676,7 +649,7 @@ void CMonitorOutputFrontend::pdouble(const char* name, double value)
 
     // with std::to_string() you cannot specify the accuracy (how many decimal digits)
     auto fmt_string = fmt::format("{:.3f}", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), value, true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
 }
 
 void CMonitorOutputFrontend::pstring(const char* name, const char* value)
