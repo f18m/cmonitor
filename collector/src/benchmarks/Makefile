@@ -36,6 +36,7 @@ OBJS_CMONITOR_COLLECTOR = \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/output_frontend.o \
     $(OUTDIR)/system.o \
+    $(OUTDIR)/system_network.o \
     $(OUTDIR)/utils_files.o \
     $(OUTDIR)/utils_misc.o \
     $(OUTDIR)/utils_string.o
