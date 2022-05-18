@@ -159,52 +159,6 @@ void CMonitorSystem::sample_filesystems()
     endmntent(fp);
 }
 
-/* static */
-unsigned int CMonitorSystem::get_all_cpus(std::set<uint64_t>& cpu_indexes, const std::string& stat_file)
-{
-    FastFileReader cpu_stat(stat_file);
-
-    cpu_indexes.clear();
-
-    if (!cpu_stat.open_or_rewind()) {
-        CMonitorLogger::instance()->LogError("failed to re-open %s", cpu_stat.get_file().c_str());
-        return 0;
-    }
-
-    const char* line = cpu_stat.get_next_line();
-    while (line) {
-        if (strncmp(line, "cpu", 3) == 0) {
-            if (line[3] == ' ') {
-                // found the summary line for ALL cpus together, e.g.:
-                //     cpu  265510448 66285 143983783 14772309342 4657946 0 16861124 0 0 0
-                // skip it
-                line = cpu_stat.get_next_line();
-                continue;
-            } else {
-                // found a line for a specific CPU like:
-                //    cpu1 90470 3217 30294 291392 17250 0 3242 0 0 0
-                // process it
-                const char* pStart = &line[3];
-
-                /*
-                from the manpage:
-                Since 0 can legitimately be returned on both success and failure, the calling program should set errno
-                to 0 before the call, and then determine if an error occurred by checking whether errno has a nonzero
-                value after the call.
-                */
-                errno = 0;
-                unsigned long cpuno = strtoul(pStart, NULL, 10);
-                if (errno == 0)
-                    cpu_indexes.insert(cpuno);
-            }
-        }
-
-        line = cpu_stat.get_next_line();
-    }
-
-    return cpu_indexes.size();
-}
-
 void CMonitorSystem::get_list_monitored_files(std::set<std::string>& list)
 {
     list.insert(m_uptime.get_file());
