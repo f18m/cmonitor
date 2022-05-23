@@ -58,6 +58,10 @@ OBJS = \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/main.o \
     $(OUTDIR)/output_frontend.o \
+    $(OUTDIR)/system_cpu.o \
+    $(OUTDIR)/system_memory.o \
+    $(OUTDIR)/system_disk.o \
+    $(OUTDIR)/system_network.o \
     $(OUTDIR)/system.o \
     $(OUTDIR)/utils_files.o \
     $(OUTDIR)/utils_misc.o \
