@@ -32,9 +32,65 @@
 #include <unistd.h>
 #include <vector>
 
+#include "PrometheusKpi.h"
+
 //------------------------------------------------------------------------------
 // Types
 //------------------------------------------------------------------------------
+
+static const prometheus_kpi_descriptor prometheus_kpi_disk[] = {
+    // baremetal : disk
+    { "disks_reads", KPI_TYPE::Gauge, "total reads completed successfully" },
+    { "disks_rmerge", KPI_TYPE::Gauge, "total reads merged" },
+    { "disks_rkb", KPI_TYPE::Gauge, "total number of sectors read from disk" },
+    { "disks_rmsec", KPI_TYPE::Gauge, "total time spent reading (ms)" },
+    { "disks_writes", KPI_TYPE::Gauge, "total writes completed successfully" },
+    { "disks_wmerge", KPI_TYPE::Gauge, "total writes merged" },
+    { "disks_wmsec", KPI_TYPE::Gauge, "total time spent writting (ms)" },
+    { "disks_wkb", KPI_TYPE::Gauge, "total number of sectors writeen to disk" },
+    { "disks_inflight", KPI_TYPE::Gauge, "I/Os currently in progress" },
+    { "disks_time", KPI_TYPE::Gauge, "time spent doing I/Os (ms)" },
+    { "disks_backlog", KPI_TYPE::Gauge, "weighted time spent doing I/Os (ms)" },
+    { "disks_xfers", KPI_TYPE::Gauge, "total reads/writes in Kbyte" },
+    { "disks_bsize", KPI_TYPE::Gauge, "total I/Os in Kbyte" },
+};
+
+static const prometheus_kpi_descriptor prometheus_kpi_network[] = {
+    // baremetal : network
+    { "network_interfaces_ibytes", KPI_TYPE::Gauge, "total number of bytes of data received by the interface" },
+    { "network_interfaces_ipackets", KPI_TYPE::Gauge, "total number of packets of data received by the interface" },
+    { "network_interfaces_ierrs", KPI_TYPE::Gauge, "total number of receive errors detected by the device driver" },
+    { "network_interfaces_idrop", KPI_TYPE::Gauge, "total number of packets dropped by the device driver" },
+    { "network_interfaces_ififo", KPI_TYPE::Gauge, "number of FIFO buffer errors" },
+    { "network_interfaces_iframe", KPI_TYPE::Gauge, "number of packet framing errors" },
+    { "network_interfaces_obytes", KPI_TYPE::Gauge, "total number of bytes of data transmitted by the interface" },
+    { "network_interfaces_opackets", KPI_TYPE::Gauge,
+        "The total number of packets of data transmitted by the interface" },
+    { "network_interfaces_oerrs", KPI_TYPE::Gauge, "total number of transmitted errors detected by the device driver" },
+    { "network_interfaces_odrop", KPI_TYPE::Gauge, "total number of packets dropped by the interface" },
+    { "network_interfaces_ofifo", KPI_TYPE::Gauge, "total number of FIFO buffer errors" },
+    { "network_interfaces_ocolls", KPI_TYPE::Gauge, "number of collisions detected on the interface" },
+    { "network_interfaces_ocarrier", KPI_TYPE::Gauge, "number of carrier losses detected by the device driver" },
+};
+
+static const prometheus_kpi_descriptor prometheus_kpi_cpu[] = {
+    // baremetal : cpu
+    { "stat_user", KPI_TYPE::Gauge, "time spent in user mode" },
+    { "stat_nice", KPI_TYPE::Gauge, "Time spent in user mode with low priority (nice)" },
+    { "stat_sys", KPI_TYPE::Gauge, "Time spent in system mode" },
+    { "stat_idle", KPI_TYPE::Gauge, "Time spent in the idle task" },
+    { "stat_iowait", KPI_TYPE::Gauge, "Time waiting for I/O to complete" },
+    { "stat_hardirq", KPI_TYPE::Gauge, "Time servicing interrupts" },
+    { "stat_softirq", KPI_TYPE::Gauge, "Time servicing softirqs" },
+    {
+        "stat_steal",
+        KPI_TYPE::Gauge,
+        "Stolen time, which is the time spent in other operating systems when running in a
+        virtualized environment " },
+        { "stat_guest", KPI_TYPE::Gauge, "Time spent running a virtual CPU for guest operating systems" },
+        { "stat_guestnice", KPI_TYPE::Gauge,
+            "Time spent running a niced guest (virtual CPU for guest operating systems" },
+    };
 
 typedef std::map<std::string /* interface name */, std::string /* address */> netdevices_map_t;
 

@@ -124,6 +124,12 @@ void CMonitorSystem::sample_cpu_stat(double elapsed_sec, OutputFields output_opt
     if ((m_pCfg->m_nCollectFlags & PK_BAREMETAL_CPU) == 0)
         return;
 
+    if (!m_pCfg->m_strPrometheusPort.empty() && !m_pCfg->m_strPrometheusAddress.empty()) {
+        for (size_t i = 0; i < sizeof(prometheus_kpi_cpu) / sizeof(prometheus_kpi_cpu[0]); i++) {
+            m_pOutput->init_prometheus_kpi(prometheus_kpi_cpu[i]);
+        }
+    }
+
     DEBUGLOG_FUNCTION_START();
 
     CMonitorLogger::instance()->LogDebug("proc_stat(%.4f) max_cpu_count=%d\n", elapsed_sec, m_cpu_count);

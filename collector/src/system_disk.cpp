@@ -33,6 +33,12 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
     if ((m_pCfg->m_nCollectFlags & PK_BAREMETAL_DISK) == 0)
         return;
 
+    if (!m_pCfg->m_strPrometheusPort.empty() && !m_pCfg->m_strPrometheusAddress.empty()) {
+        for (size_t i = 0; i < sizeof(prometheus_kpi_disk) / sizeof(prometheus_kpi_disk[0]); i++) {
+            m_pOutput->init_prometheus_kpi(prometheus_kpi_disk[i]);
+        }
+    }
+
     DEBUGLOG_FUNCTION_START();
 
     if (first_time) {

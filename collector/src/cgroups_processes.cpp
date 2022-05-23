@@ -598,7 +598,9 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 #define COUNTDELTA(member) ((PREVIOUS(member) > CURRENT(member)) ? 0 : (CURRENT(member) - PREVIOUS(member)))
 
         m_pOutput->psubsection_start(fmt::format("pid_{}", (unsigned long)CURRENT(pi_pid)).c_str());
-        // m_pOutput->plong("cmon_score", score);
+
+        std::map<std::string, std::string> labels
+            = { { "pid", fmt::format("{}", (unsigned long)CURRENT(pi_pid)).c_str() }, { "cmd", CURRENT(pi_comm) } };
 
         m_pOutput->psubsubsection_start("proc_info");
         m_pOutput->plong("cmon_score", score);
@@ -633,7 +635,7 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
 
         m_pOutput->psubsubsection_end();
 
-        m_pOutput->psubsubsection_start("cpu");
+        m_pOutput->psubsubsection_start("cpu", labels);
 
         /*
          * CPU fields
@@ -658,7 +660,7 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         /*
          * Memory fields
          */
-        m_pOutput->psubsubsection_start("memory");
+        m_pOutput->psubsubsection_start("memory", labels);
 
         if (output_opts == PF_ALL) {
             m_pOutput->plong("size_kb", CURRENT(statm_size) * PAGESIZE_BYTES / 1024);
@@ -703,7 +705,7 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         /*
          * I/O fields
          */
-        m_pOutput->psubsubsection_start("io");
+        m_pOutput->psubsubsection_start("io", labels);
 
         m_pOutput->pdouble("delayacct_blkio_secs", (double)CURRENT(pi_delayacct_blkio_ticks) / ticks);
         m_pOutput->plong("rchar", DELTA(io_rchar) / elapsed_sec);
