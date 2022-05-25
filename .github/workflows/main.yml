@@ -14,7 +14,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: install deps
       run: sudo apt install -y libgtest-dev libbenchmark-dev libfmt-dev tidy git python3 python3-dateutil python3-pip 
+    - name: install conan 
       run: sudo pip3 install conan
+    - name: install prometheus
       run: sudo conan install $(ROOT_DIR)/conanfile.txt --build=missing
     - name: install PyDeps
       run: sudo pip3 install pytest
