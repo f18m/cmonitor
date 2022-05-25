@@ -82,15 +82,11 @@ static const prometheus_kpi_descriptor prometheus_kpi_cpu[] = {
     { "stat_iowait", KPI_TYPE::Gauge, "Time waiting for I/O to complete" },
     { "stat_hardirq", KPI_TYPE::Gauge, "Time servicing interrupts" },
     { "stat_softirq", KPI_TYPE::Gauge, "Time servicing softirqs" },
-    {
-        "stat_steal",
-        KPI_TYPE::Gauge,
-        "Stolen time, which is the time spent in other operating systems when running in a
-        virtualized environment " },
-        { "stat_guest", KPI_TYPE::Gauge, "Time spent running a virtual CPU for guest operating systems" },
-        { "stat_guestnice", KPI_TYPE::Gauge,
-            "Time spent running a niced guest (virtual CPU for guest operating systems" },
-    };
+    { "stat_steal", KPI_TYPE::Gauge,
+        "Stolen time, which is the time spent in other operating systems when running in a virtualized environment " },
+    { "stat_guest", KPI_TYPE::Gauge, "Time spent running a virtual CPU for guest operating systems" },
+    { "stat_guestnice", KPI_TYPE::Gauge, "Time spent running a niced guest (virtual CPU for guest operating systems" },
+};
 
 typedef std::map<std::string /* interface name */, std::string /* address */> netdevices_map_t;
 
