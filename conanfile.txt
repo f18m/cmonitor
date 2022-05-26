@@ -11,3 +11,7 @@
 [imports]
   lib, *.so* -> /usr/lib64
   include, * -> /usr/include
+
+[settings]
+  compiler.libcxx=libstdc++11
+  compiler.version=10.3
