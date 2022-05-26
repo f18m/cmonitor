@@ -470,6 +470,11 @@ void CMonitorCgroups::sample_process_list()
         (m_pCfg->m_nCollectFlags & PK_CGROUP_NETWORK_INTERFACES) == 0)
         return;
 
+    if (m_pOutput->is_prometheus_enabled()) {
+        size_t size = sizeof(prometheus_kpi_cgroup_processes) / sizeof(prometheus_kpi_cgroup_processes[0]);
+        m_pOutput->init_prometheus_kpi(prometheus_kpi_cgroup_processes, size);
+    }
+
     DEBUGLOG_FUNCTION_START();
 
     // collect all PIDs for current cgroup
@@ -483,6 +488,11 @@ void CMonitorCgroups::sample_processes(double elapsed_sec, OutputFields output_o
         return;
     if ((m_pCfg->m_nCollectFlags & PK_CGROUP_PROCESSES) == 0 && (m_pCfg->m_nCollectFlags & PK_CGROUP_THREADS) == 0)
         return;
+
+    if (m_pOutput->is_prometheus_enabled()) {
+        size_t size = sizeof(prometheus_kpi_cgroup_processes) / sizeof(prometheus_kpi_cgroup_processes[0]);
+        m_pOutput->init_prometheus_kpi(prometheus_kpi_cgroup_processes, size);
+    }
 
     DEBUGLOG_FUNCTION_START();
 

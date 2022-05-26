@@ -143,7 +143,7 @@ void CMonitorOutputFrontend::init_prometheus_connection(
 
 void CMonitorOutputFrontend::init_prometheus_kpi(const prometheus_kpi_descriptor* kpi, size_t size)
 {
-
+    // loop the metric list and create the prometheus KPI metrics.
     for (size_t i = 0; i < size; i++) {
         if (kpi[i].kpi_type == KPI_TYPE::Counter) {
             m_prometheus_kpi

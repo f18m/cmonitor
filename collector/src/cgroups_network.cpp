@@ -54,6 +54,11 @@ void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields
     if ((m_pCfg->m_nCollectFlags & PK_CGROUP_NETWORK_INTERFACES) == 0)
         return;
 
+    if (m_pOutput->is_prometheus_enabled()) {
+        size_t size = sizeof(prometheus_kpi_cgroup_network) / sizeof(prometheus_kpi_cgroup_network[0]);
+        m_pOutput->init_prometheus_kpi(prometheus_kpi_cgroup_network, size);
+    }
+
     DEBUGLOG_FUNCTION_START();
 
     if (m_num_network_samples_collected == 0)

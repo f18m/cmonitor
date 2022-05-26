@@ -361,6 +361,11 @@ void CMonitorCgroups::sample_cpuacct(double elapsed_sec)
     if ((m_pCfg->m_nCollectFlags & PK_CGROUP_CPU_ACCT) == 0)
         return;
 
+    if (m_pOutput->is_prometheus_enabled()) {
+        size_t size = sizeof(prometheus_kpi_cgroup_cpu) / sizeof(prometheus_kpi_cgroup_cpu[0]);
+        m_pOutput->init_prometheus_kpi(prometheus_kpi_cgroup_cpu, size);
+    }
+
     DEBUGLOG_FUNCTION_START();
 
     bool print = (m_num_cpuacct_samples_collected > 0);

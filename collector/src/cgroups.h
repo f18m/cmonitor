@@ -33,6 +33,10 @@
 #include <unistd.h>
 #include <vector>
 
+#ifdef PROMETHEUS_SUPPORT
+#include "prometheus_kpi.h"
+#endif
+
 // ----------------------------------------------------------------------------------
 // Constants
 // ----------------------------------------------------------------------------------
@@ -52,6 +56,114 @@ std::string CGroupDetected2string(CGroupDetected k);
 //------------------------------------------------------------------------------
 // Types
 //------------------------------------------------------------------------------
+
+/* structure for prometheus output : CPU utilization as reported by cpuacct cgroup */
+static const prometheus_kpi_descriptor prometheus_kpi_cgroup_cpu[] = {
+    // cgroup : cpu
+    { "cgroup_cpuacct_stats_user", KPI_TYPE::Gauge, "CPU time consumed by tasks in user mode" },
+    { "cgroup_cpuacct_stats_sys", KPI_TYPE::Gauge, "CPU time consumed by tasks in system (kernel) mode" },
+    { "cgroup_cpuacct_stats_nr_periods", KPI_TYPE::Gauge,
+        "Number of periods that any thread in the cgroup was runnable" },
+    { "cgroup_cpuacct_stats_nr_throttled", KPI_TYPE::Gauge,
+        "Number of runnable periods in which the application used its entire quota and was throttled" },
+    { "cgroup_cpuacct_stats_throttled_time", KPI_TYPE::Gauge,
+        "Sum total amount of time individual threads within the cgroup were throttled" },
+};
+
+/* structure for prometheus output : Memory utilization as reported by cpuacct cgroup */
+static const prometheus_kpi_descriptor prometheus_kpi_cgroup_memory[] = {
+    // cgroup : memory
+    { "cgroup_memory_stats_stat_active_anon", KPI_TYPE::Gauge,
+        "# of bytes of anonymous and swap cache memory on active LRU list" },
+    { "cgroup_memory_stats_stat_inactive_anon", KPI_TYPE::Gauge,
+        "# of bytes of anonymous and swap cache memory on inactive LRU list" },
+    { "cgroup_memory_stats_stat_active_file", KPI_TYPE::Gauge, "# of bytes of file-backed memory on active LRU list" },
+    { "cgroup_memory_stats_stat_inactive_file", KPI_TYPE::Gauge,
+        "# of bytes of file-backed memory on inactive LRU list" },
+    { "cgroup_memory_stats_stat_cache", KPI_TYPE::Gauge, "# of bytes of page cache memory" },
+    { "cgroup_memory_stats_stat_mapped_file", KPI_TYPE::Gauge, "# of bytes of mapped file (includes tmpfs/shmem)" },
+    { "cgroup_memory_stats_stat_pgfault", KPI_TYPE::Gauge, "" },
+    { "cgroup_memory_stats_stat_pgmajfault", KPI_TYPE::Gauge, "" },
+    { "cgroup_memory_stats_stat_pgpgin", KPI_TYPE::Gauge, "# of charging events to the memory cgroup" },
+    { "cgroup_memory_stats_stat_pgpgout", KPI_TYPE::Gauge, "# of uncharging events to the memory cgroup" },
+    { "cgroup_memory_stats_stat_rss", KPI_TYPE::Gauge,
+        "# of bytes of anonymous and swap cache memory (includes transparent hugepages)" },
+    { "cgroup_memory_stats_stat_rss_huge", KPI_TYPE::Gauge, "# of bytes of anonymous transparent hugepages" },
+    { "cgroup_memory_stats_stat_swap", KPI_TYPE::Gauge, "# of bytes of swap usage" },
+    { "cgroup_memory_stats_stat_unevictable", KPI_TYPE::Gauge,
+        "# of bytes of memory that cannot be reclaimed (mlocked etc)" },
+    { "cgroup_memory_stats_events_failcnt", KPI_TYPE::Gauge, "# number of times that a usage counter hit its limit" },
+};
+
+/* structure for prometheus output : Network utilization as reported by BY-NETWORK-INTERFACE */
+static const prometheus_kpi_descriptor prometheus_kpi_cgroup_network[] = {
+    // cgroup : network
+    { "cgroup_network_ibytes", KPI_TYPE::Gauge, "total number of bytes of data received by the interface" },
+    { "cgroup_network_ipackets", KPI_TYPE::Gauge, "total number of packets of data received by the interface" },
+    { "cgroup_network_ierrs", KPI_TYPE::Gauge, "total number of receive errors detected by the device driver" },
+    { "cgroup_network_idrop", KPI_TYPE::Gauge, "total number of packets dropped by the device driver" },
+    { "cgroup_network_ififo", KPI_TYPE::Gauge, "number of FIFO buffer errors" },
+    { "cgroup_network_iframe", KPI_TYPE::Gauge, "number of packet framing errors" },
+    { "cgroup_network_obytes", KPI_TYPE::Gauge, "total number of bytes of data transmitted by the interface" },
+    { "cgroup_network_opackets", KPI_TYPE::Gauge, "The total number of packets of data transmitted by the interface" },
+    { "cgroup_network_oerrs", KPI_TYPE::Gauge, "total number of transmitted errors detected by the device driver" },
+    { "cgroup_network_odrop", KPI_TYPE::Gauge, "total number of packets dropped by the interface" },
+    { "cgroup_network_ofifo", KPI_TYPE::Gauge, "total number of FIFO buffer errors" },
+    { "cgroup_network_ocolls", KPI_TYPE::Gauge, "number of collisions detected on the interface" },
+    { "cgroup_network_ocarrier", KPI_TYPE::Gauge, "number of carrier losses detected by the device driver" },
+
+};
+
+/* structure for prometheus output : PROCESS/THREAD statistics */
+static const prometheus_kpi_descriptor prometheus_kpi_cgroup_processes[] = {
+    // proc_loadavg
+    { "proc_loadavg_load_avg_1min", KPI_TYPE::Gauge,
+        "Load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D) "
+        "averaged over 1min" },
+    { "proc_loadavg_load_avg_5min", KPI_TYPE::Gauge,
+        "Load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D) "
+        "averaged over 5min" },
+    { "proc_loadavg_load_avg_15min", KPI_TYPE::Gauge,
+        "Load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D) "
+        "averaged over 15min" },
+
+    // cgroup : task/threads
+    { "cgroup_tasks_cpu_last", KPI_TYPE::Gauge, "CPU number last executed on" },
+    { "cgroup_tasks_cpu_usr", KPI_TYPE::Gauge,
+        "Amount of time that this process has been scheduled in user mode, measured in clock ticks" },
+    { "cgroup_tasks_cpu_sys", KPI_TYPE::Gauge,
+        "Amount of time that this process has been scheduled in kernel mode, measured in clock ticks" },
+    { "cgroup_tasks_cpu_usr_total_secs", KPI_TYPE::Gauge,
+        "Total amount of time that this process has been scheduled in kernel mode, measured in clock ticks" },
+    { "cgroup_tasks_cpu_sys_total_secs", KPI_TYPE::Gauge,
+        "Total amount of time that this process has been scheduled in kernel mode, measured in clock ticks" },
+    { "cgroup_tasks_memory_size_kb", KPI_TYPE::Gauge, "Total program size" },
+    { "cgroup_tasks_memory_resident_kb", KPI_TYPE::Gauge, "Resident set size" },
+    { "cgroup_tasks_memory_restext_kb", KPI_TYPE::Gauge, "Resident text" },
+    { "cgroup_tasks_memory_resdata_kb", KPI_TYPE::Gauge, "Resident data" },
+    { "cgroup_tasks_memory_share_kb", KPI_TYPE::Gauge, "Shared pages" },
+    { "cgroup_tasks_memory_rss_limit_bytes", KPI_TYPE::Gauge, "Current soft limit in bytes on the rss of the process" },
+    { "cgroup_tasks_memory_minor_fault", KPI_TYPE::Gauge,
+        "The number of minor faults the process has made which have not required loading a memory page from disk" },
+    { "cgroup_tasks_memory_major_fault", KPI_TYPE::Gauge,
+        "The number of major faults the process has made which have required loading a memory page from disk" },
+    { "cgroup_tasks_memory_virtual_bytes", KPI_TYPE::Gauge, "Virtual memory size in bytes" },
+    { "cgroup_tasks_memory_rss_bytes", KPI_TYPE::Gauge,
+        "Resident Set Size: number of pages the process has in real memory" },
+    { "cgroup_tasks_memory_swap_pages", KPI_TYPE::Gauge, "Number of pages swapped " },
+    { "cgroup_tasks_memory_child_swap_pages", KPI_TYPE::Gauge, "Cumulative nswap for child processes" },
+    { "cgroup_tasks_memory_realtime_priority", KPI_TYPE::Gauge, "Real-time scheduling priority" },
+    { "cgroup_tasks_memory_sched_policy", KPI_TYPE::Gauge, "Scheduling policy" },
+    { "cgroup_tasks_io_delayacct_blkio_secs", KPI_TYPE::Gauge, "Aggregated block I/O delays, measured in clock ticks" },
+    { "cgroup_tasks_io_rchar", KPI_TYPE::Gauge,
+        "The number of bytes which this task has caused to be read from storage" },
+    { "cgroup_tasks_io_wchar", KPI_TYPE::Gauge,
+        "The number of bytes which this task has caused, or shall cause to be written to disk" },
+    { "cgroup_tasks_io_read_bytes", KPI_TYPE::Gauge, "Bytes read" },
+    { "cgroup_tasks_io_write_bytes", KPI_TYPE::Gauge, "Bytes written" },
+    { "cgroup_tasks_io_total_read", KPI_TYPE::Gauge, "Total bytes read" },
+    { "cgroup_tasks_io_total_write", KPI_TYPE::Gauge, "Total bytes written" },
+};
 
 /* structure to save CPU utilization as reported by cpuacct cgroup */
 typedef struct {
@@ -90,7 +202,7 @@ public:
         m_memory_prev_values.v1_failcnt = 0;
     }
 
-    ~CMonitorCgroups() { }
+    ~CMonitorCgroups() {}
 
     // main setup
     // NOTE: arguments _for_test are used only during unit testing
