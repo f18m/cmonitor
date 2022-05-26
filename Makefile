@@ -18,8 +18,8 @@ all:
 	# the source RPM tarball will contain only a subset of the folders
 	@echo "Installing conan:"
 	sudo pip3 install conan
-	sudo conan install $(ROOT_DIR)/conanfile.txt --build=missing
 	sudo conan profile update settings.compiler.libcxx=libstdc++11 default
+	sudo conan install $(ROOT_DIR)/conanfile.txt --build=missing
 	if [ -d "collector" ]; then	$(MAKE) -C collector CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) CMONITOR_LAST_COMMIT_HASH=$(CMONITOR_LAST_COMMIT_HASH) DOCKER_TAG=$(DOCKER_TAG) ; fi
 	if [ -d "tools" ]; then	$(MAKE) -C tools CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) CMONITOR_LAST_COMMIT_HASH=$(CMONITOR_LAST_COMMIT_HASH) ; fi
 
