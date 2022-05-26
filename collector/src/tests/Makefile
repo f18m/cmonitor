@@ -17,7 +17,8 @@ endif
 LIBS += -lfmt -lgtest -lpthread
 
 ifeq ($(PROMETHEUS_SUPPORT),)
-LIBS += -L/usr/lib64/ -lprometheus-cpp-pull -lprometheus-cpp-core -lz
+LDFLAGS += -Wl,--rpath,/usr/lib64
+LIBS += -lprometheus-cpp-pull -lprometheus-cpp-core -lz
 CXXFLAGS += -DPROMETHEUS_SUPPORT=1
 endif
 
