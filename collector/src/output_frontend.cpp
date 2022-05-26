@@ -127,35 +127,34 @@ void CMonitorOutputFrontend::init_prometheus_connection(
     m_prometheus_registry = std::make_shared<prometheus::Registry>();
     m_exposer->RegisterCollectable(m_prometheus_registry);
 
-    m_prometheusEnabled = true;
+    m_prometheus_enabled = true;
     CMonitorLogger::instance()->LogDebug(
         "init_prometheus_connection() initialized Prometheus port to %s", port.c_str());
 
+    m_default_labels = { { "app", "cmonitor" } };
+    // strore the metadata from command line.
     if (!metaData.empty()) {
-        // strore the metadata from command line.
         for (const auto& entry : metaData) {
-            m_metadata_key = entry.first;
-            m_metadata_value = entry.second;
+            m_default_labels.insert(std::make_pair(entry.first, entry.second));
         }
-    } else {
-        m_metadata_key = "app"; // set default
-        m_metadata_value = "cmonitor";
     }
 }
 #endif
 
-void CMonitorOutputFrontend::init_prometheus_kpi(const prometheus_kpi_descriptor kpi)
+void CMonitorOutputFrontend::init_prometheus_kpi(const prometheus_kpi_descriptor* kpi, size_t size)
 {
 
-    std::map<std::string, std::string> labels { { m_metadata_key, m_metadata_value } };
-
-    if (kpi.kpi_type == KPI_TYPE::Counter) {
-        m_prometheus_kpi = new PrometheusCounter(m_prometheus_registry, kpi.kpi_name, kpi.description, labels);
-    } else if (kpi.kpi_type == KPI_TYPE::Gauge) {
-        m_prometheus_kpi = new PrometheusGauge(m_prometheus_registry, kpi.kpi_name, kpi.description, labels);
-    }
-    if (m_prometheus_kpi) {
-        m_prometheuskpi_map.insert(std::pair<std::string, PrometheusKpi*>(kpi.kpi_name, m_prometheus_kpi));
+    for (size_t i = 0; i < size; i++) {
+        if (kpi[i].kpi_type == KPI_TYPE::Counter) {
+            m_prometheus_kpi
+                = new PrometheusCounter(m_prometheus_registry, kpi[i].kpi_name, kpi[i].description, m_default_labels);
+        } else if (kpi[i].kpi_type == KPI_TYPE::Gauge) {
+            m_prometheus_kpi
+                = new PrometheusGauge(m_prometheus_registry, kpi[i].kpi_name, kpi[i].description, m_default_labels);
+        }
+        if (m_prometheus_kpi) {
+            m_prometheuskpi_map.insert(std::pair<std::string, PrometheusKpi*>(kpi[i].kpi_name, m_prometheus_kpi));
+        }
     }
 }
 
@@ -526,7 +525,7 @@ void CMonitorOutputFrontend::push_current_sections(bool is_header)
     if (m_influxdb_client_conn)
         push_current_sections_to_influxdb(is_header);
 
-    if (m_prometheusEnabled)
+    if (m_prometheus_enabled)
         push_current_sections_to_prometheus();
 
     fflush(NULL); /* force I/O output now */
@@ -626,10 +625,9 @@ void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metri
         prometheus_kpi->SetKpiValue(metric_value, labels);
     } else {
         printf("CMonitorOutputFrontend::generate_prometheus_metric KPI %s not found in the list \n",
-        prometheus_metric_name.c_str());
+            prometheus_metric_name.c_str());
     }
 }
-
 
 //------------------------------------------------------------------------------
 // JSON objects

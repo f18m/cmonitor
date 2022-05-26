@@ -57,8 +57,8 @@ OBJS = \
     $(OUTDIR)/header_info.o \
     $(OUTDIR)/logger.o \
     $(OUTDIR)/main.o \
-    $(OUTDIR)/PrometheusCounter.o \
-    $(OUTDIR)/PrometheusGauge.o \
+    $(OUTDIR)/prometheus_counter.o \
+    $(OUTDIR)/prometheus_gauge.o \
     $(OUTDIR)/output_frontend.o \
     $(OUTDIR)/system_cpu.o \
     $(OUTDIR)/system_memory.o \

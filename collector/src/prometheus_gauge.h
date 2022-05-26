@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// PrometheusGauge.h
+// prometheus_gauge.h
 //
 //
 // Description:
@@ -19,7 +19,7 @@
 #include <prometheus/gauge.h>
 #include <prometheus/registry.h>
 
-#include "PrometheusKpi.h"
+#include "prometheus_kpi.h"
 
 class PrometheusGauge : public PrometheusKpi {
 public:

@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
-// PrometheusCounter.cpp
+// prometheus_counter.cpp
 //------------------------------------------------------------------------------
 
-#include "PrometheusCounter.h"
+#include "prometheus_counter.h"
 
 PrometheusCounter::PrometheusCounter(std::shared_ptr<prometheus::Registry> prometheus_registry, std::string kpi_name,
     std::string kpi_description, std::map<std::string, std::string>& labels)

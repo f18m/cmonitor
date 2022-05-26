@@ -1,11 +1,11 @@
 //------------------------------------------------------------------------------
-// PrometheusGauge.cpp
+// prometheus_gauge.cpp
 //
 // Description:
 // Implementation of PrometheusGauge class.
 //------------------------------------------------------------------------------
 
-#include "PrometheusGauge.h"
+#include "prometheus_gauge.h"
 
 PrometheusGauge::PrometheusGauge(std::shared_ptr<prometheus::Registry> prometheus_registry, std::string kpi_name,
     std::string kpi_description, std::map<std::string, std::string>& labels)

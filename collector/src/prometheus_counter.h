@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// PrometheusCounter.h
+// prometheus_counter.h
 //------------------------------------------------------------------------------
 
 #ifndef _PROMETHEUS_COUNTER_H_
@@ -13,7 +13,7 @@
 #include <prometheus/family.h>
 #include <prometheus/registry.h>
 
-#include "PrometheusKpi.h"
+#include "prometheus_kpi.h"
 
 class PrometheusCounter : public PrometheusKpi {
 public:

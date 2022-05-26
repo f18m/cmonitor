@@ -33,8 +33,8 @@
 
 // Prometheus
 #ifdef PROMETHEUS_SUPPORT
-#include "PrometheusCounter.h"
-#include "PrometheusGauge.h"
+#include "prometheus_counter.h"
+#include "prometheus_gauge.h"
 #include <prometheus/counter.h>
 #include <prometheus/detail/future_std.h>
 #include <prometheus/exposer.h>
@@ -96,8 +96,8 @@ public:
 
 #ifdef PROMETHEUS_SUPPORT
     void init_prometheus_connection(const std::string& port, std::map<std::string, std::string> metaData = {});
-    void init_prometheus_kpi(const prometheus_kpi_descriptor kpi);
-    bool is_prometheus_enabled() { return m_prometheusEnabled; }
+    void init_prometheus_kpi(const prometheus_kpi_descriptor* kpi, size_t size);
+    bool is_prometheus_enabled() { return m_prometheus_enabled; }
 #endif
 
     //------------------------------------------------------------------------------
@@ -258,13 +258,12 @@ private:
 
 // Prometheus exposer
 #ifdef PROMETHEUS_SUPPORT
-    bool m_prometheusEnabled = false;
-    std::string m_metadata_key;
-    std::string m_metadata_value;
+    bool m_prometheus_enabled = false;
     std::unique_ptr<prometheus::Exposer> m_exposer;
     std::shared_ptr<prometheus::Registry> m_prometheus_registry;
     PrometheusKpi* m_prometheus_kpi = NULL;
     std::map<std::string, PrometheusKpi*> m_prometheuskpi_map;
+    std::map<std::string, std::string> m_default_labels;
 #endif
 
     // Stats on the generated output

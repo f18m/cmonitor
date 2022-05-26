@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <vector>
 
-#include "PrometheusKpi.h"
+#include "prometheus_kpi.h"
 
 //------------------------------------------------------------------------------
 // Types
