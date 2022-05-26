@@ -70,6 +70,7 @@ all: $(OUT)
 
 test: $(OUT)
 	@echo "Running unit test binary $(OUT)"
+	ldd $(OUT)
 	sudo $(OUT) $(ARGS)
 tests: $(OUT)
 	@echo "Running unit test binary $(OUT)"
