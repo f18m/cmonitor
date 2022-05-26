@@ -25,6 +25,11 @@ all:
 	if [ -d "tools" ]; then	$(MAKE) -C tools CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) CMONITOR_LAST_COMMIT_HASH=$(CMONITOR_LAST_COMMIT_HASH) ; fi
 
 test:
+	@echo "Installing conan:"
+	sudo pip3 install conan
+	sudo conan profile new default --detect
+	sudo conan profile update settings.compiler.libcxx=libstdc++11 default
+	sudo conan install $(ROOT_DIR)/conanfile.txt --build=missing
 	$(MAKE) -C collector test
 	$(MAKE) -C examples all
 	if [ -d "tools" ]; then	$(MAKE) -C tools test ; fi
