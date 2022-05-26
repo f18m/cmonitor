@@ -25,7 +25,6 @@ all:
 	if [ -d "tools" ]; then	$(MAKE) -C tools CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) CMONITOR_LAST_COMMIT_HASH=$(CMONITOR_LAST_COMMIT_HASH) ; fi
 
 test:
-	sudo conan install $(ROOT_DIR)/conanfile.txt --build=missing
 	$(MAKE) -C collector test
 	$(MAKE) -C examples all
 	if [ -d "tools" ]; then	$(MAKE) -C tools test ; fi
