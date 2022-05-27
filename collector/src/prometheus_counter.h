@@ -1,5 +1,35 @@
-//------------------------------------------------------------------------------
-// prometheus_counter.h
+/*
+ * prometheus_counter.h
+ * Developer: Satyabrata Bharati.
+ * (C) Copyright 2022 Francesco Montorsi
+ *
+ *  Description:
+ Defines PrometheusCounter class which creates and maintains "prometheus::Family<prometheus::Counter>" and
+ "prometheus::Counter" class reference for each KPI.
+ One object of PrometheusCounter class gets created per KPI, during application startup.
+
+ prometheus::Family<prometheus::Counter> :
+ This class creates a new metric of type prometheus::Counter.
+ Every metric is uniquely identified by its name and a set of key-value pairs, also known as labels.
+ Prometheus's query language allows filtering and aggregation based on metric name and these labels.
+ Each new set of labels adds a new dimensional data and is exposed in Prometheus as a time series.
+ It is possible to filter the time series with Prometheus's query language by appending a set of labels to match in
+ curly braces ({}).
+
+ prometheus::Counter :
+ This class represents the metric type counter whose value can only increase.
+
+ * This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 //------------------------------------------------------------------------------
 
 #ifndef _PROMETHEUS_COUNTER_H_

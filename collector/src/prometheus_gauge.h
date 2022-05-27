@@ -1,12 +1,36 @@
-//------------------------------------------------------------------------------
-// prometheus_gauge.h
-//
-//
-// Description:
-// Defines PrometheusGauge class which creates "prometheus::Family<prometheus::Gauge>" and
-// "prometheus::Gauge" objects for each kpi with type "GAUGE".
-// One object of this class gets created each system health kpi of type "GAUGE", during application startup.
-//------------------------------------------------------------------------------
+/*
+ * prometheus_gauge.h -- code for collecting prometheus gauge metrics
+ * Developer: Satyabrata Bharati.
+ * (C) Copyright 2022 Francesco Montorsi
+ *
+ *  Description:
+ Defines PrometheusGauge class which creates and maintains "prometheus::Family<prometheus::Gauge>" and
+ "prometheus::Gauge" class reference for each kpi with type "GAUGE".
+ One object of PrometheusGauge class gets created per KPI, during application startup.
+
+ prometheus::Family<prometheus::Gauge> :
+ This class creates a new metric of type prometheus::Gauge.
+ Every metric is uniquely identified by its name and a set of key-value pairs, also known as labels.
+ Prometheus's query language allows filtering and aggregation based on metric name and these labels.
+ Each new set of labels adds a new dimensional data and is exposed in Prometheus as a time series.
+ It is possible to filter the time series with Prometheus's query language by appending a set of labels to match in
+ curly braces ({}).
+
+ * prometheus::Gauge :
+ This class represents the metric type gauge whose value can arbitrarily go up and down.
+
+
+ * This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef _PROMETHEUS_GAUGE_H_
 #define _PROMETHEUS_GAUGE_H_
