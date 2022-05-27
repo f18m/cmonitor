@@ -42,6 +42,11 @@ bool CMonitorSystem::read_meminfo_stats(FastFileReader& reader, const std::set<s
         return nread;
     }
 
+    if (pOutput->is_prometheus_enabled()) {
+        size_t size = sizeof(prometheus_kpi_proc_meminfo) / sizeof(prometheus_kpi_proc_meminfo[0]);
+        pOutput->init_prometheus_kpi(prometheus_kpi_proc_meminfo, size);
+    }
+
     pOutput->psection_start("proc_meminfo");
 
     std::string label;
@@ -106,6 +111,11 @@ void CMonitorSystem::sample_memory(const std::set<std::string>& charted_stats_fr
         key_value_map_t out;
         numeric_parser_stats_t out_stats;
         m_vmstat.read_numeric_stats(std::set<std::string>(), out, out_stats);
+
+        if (m_pOutput->is_prometheus_enabled()) {
+            size_t size = sizeof(prometheus_kpi_proc_vmstat) / sizeof(prometheus_kpi_proc_vmstat[0]);
+            m_pOutput->init_prometheus_kpi(prometheus_kpi_proc_vmstat, size);
+        }
 
         m_pOutput->psection_start("proc_vmstat");
         for (auto entry : out)
