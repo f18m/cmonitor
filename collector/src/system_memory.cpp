@@ -42,11 +42,6 @@ bool CMonitorSystem::read_meminfo_stats(FastFileReader& reader, const std::set<s
         return nread;
     }
 
-    if (pOutput->is_prometheus_enabled()) {
-        size_t size = sizeof(prometheus_kpi_proc_meminfo) / sizeof(prometheus_kpi_proc_meminfo[0]);
-        pOutput->init_prometheus_kpi(prometheus_kpi_proc_meminfo, size);
-    }
-
     pOutput->psection_start("proc_meminfo");
 
     std::string label;
@@ -100,6 +95,11 @@ void CMonitorSystem::sample_memory(const std::set<std::string>& charted_stats_fr
 {
     if ((m_pCfg->m_nCollectFlags & PK_BAREMETAL_MEMORY) == 0)
         return;
+
+    if (m_pOutput->is_prometheus_enabled()) {
+        size_t size = sizeof(prometheus_kpi_proc_meminfo) / sizeof(prometheus_kpi_proc_meminfo[0]);
+        m_pOutput->init_prometheus_kpi(prometheus_kpi_proc_meminfo, size);
+    }
 
     DEBUGLOG_FUNCTION_START();
 
