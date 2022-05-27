@@ -574,8 +574,6 @@ void CMonitorOutputFrontend::push_current_sections_to_prometheus()
                         auto& subsubsec = subsec.m_subsubsections[i];
                         for (size_t n = 0; n < subsubsec.m_measurements.size(); n++) {
                             auto& measurement = subsubsec.m_measurements[n];
-                            // printf("subsec:%s - subsubsec:%s",subsec.m_name.c_str(),subsubsec.m_name.c_str());
-                            // std::string metric_name = section_name + "_" + subsec.m_name + "_" + subsubsec.m_name;
                             std::string metric_name = section_name + "_" + subsubsec.m_name;
                             if (subsubsec.m_name != "proc_info")
                                 generate_prometheus_metric(
@@ -598,7 +596,6 @@ void CMonitorOutputFrontend::push_current_sections_to_prometheus()
                             metric_name = section_name + "_" + subsec.m_name;
                             generate_prometheus_metric(metric_name, measurement.m_name.data(), measurement.m_dvalue);
                         }
-                        // generate_prometheus_metric(metric_name, measurement.m_name.data(), measurement.m_dvalue);
                     }
                 }
             }
