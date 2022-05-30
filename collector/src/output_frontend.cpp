@@ -619,7 +619,7 @@ void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metri
     auto kpi = m_prometheuskpi_map.find(prometheus_metric_name);
     if (kpi != m_prometheuskpi_map.end()) {
         PrometheusKpi* prometheus_kpi = kpi->second;
-        prometheus_kpi->SetKpiValue(metric_value, labels);
+        prometheus_kpi->set_kpi_value(metric_value, labels);
     } else {
         printf("CMonitorOutputFrontend::generate_prometheus_metric KPI %s not found in the list \n",
             prometheus_metric_name.c_str());

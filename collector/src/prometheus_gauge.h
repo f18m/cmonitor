@@ -57,15 +57,18 @@ public:
 
     virtual ~PrometheusGauge() = default;
 
-    virtual void SetKpiValue(double kpi_value);
-    virtual void SetKpiValue(double kpi_value, std::map<std::string, std::string>& labels);
+    virtual void set_kpi_value(double kpi_value);
+    virtual void set_kpi_value(double kpi_value, std::map<std::string, std::string>& labels);
 
 private:
     PrometheusGauge() = default;
 
 private:
-    prometheus::Family<prometheus::Gauge>& m_prometheus_kpi_family; // Gauge Family
-    prometheus::Gauge& m_prometheus_kpi; // Gauge
+    // This is a reference inside the prometheus::Registry (m_prometheus_registry) whose lifetime must be longer than
+    // PrometheusGauge class.
+    prometheus::Family<prometheus::Gauge>& m_prometheus_kpi_family;
+    // prometheus::Gauge reference
+    prometheus::Gauge& m_prometheus_kpi;
 };
 
 #endif

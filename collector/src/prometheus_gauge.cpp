@@ -26,9 +26,9 @@ PrometheusGauge::PrometheusGauge(std::shared_ptr<prometheus::Registry> prometheu
 {
 }
 
-void PrometheusGauge::SetKpiValue(double kpi_value) { m_prometheus_kpi.Set(kpi_value); }
+void PrometheusGauge::set_kpi_value(double kpi_value) { m_prometheus_kpi.Set(kpi_value); }
 
-void PrometheusGauge::SetKpiValue(double kpi_value, std::map<std::string, std::string>& labels)
+void PrometheusGauge::set_kpi_value(double kpi_value, std::map<std::string, std::string>& labels)
 {
     prometheus::Gauge& prometheus_kpi = m_prometheus_kpi_family.Add(labels);
 

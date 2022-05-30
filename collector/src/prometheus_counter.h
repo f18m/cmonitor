@@ -57,15 +57,18 @@ public:
 
     virtual ~PrometheusCounter() = default;
 
-    virtual void SetKpiValue(double kpi_value);
-    virtual void SetKpiValue(double kpi_value, std::map<std::string, std::string>& labels);
+    virtual void set_kpi_value(double kpi_value);
+    virtual void set_kpi_value(double kpi_value, std::map<std::string, std::string>& labels);
 
 private:
     PrometheusCounter() = default;
 
 private:
-    prometheus::Family<prometheus::Counter>& m_prometheus_kpi_family; // Counter Family
-    prometheus::Counter& m_prometheus_kpi; // Counter
+    // This is a reference inside the prometheus::Registry (m_prometheus_registry) whose lifetime must be longer than
+    // PrometheusCounter class.
+    prometheus::Family<prometheus::Counter>& m_prometheus_kpi_family;
+    // prometheus::Counter reference
+    prometheus::Counter& m_prometheus_kpi;
 };
 
 #endif
