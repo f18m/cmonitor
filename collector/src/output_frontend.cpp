@@ -145,15 +145,16 @@ void CMonitorOutputFrontend::init_prometheus_kpi(const prometheus_kpi_descriptor
 {
     // loop the metric list and create the prometheus KPI metrics.
     for (size_t i = 0; i < size; i++) {
+        PrometheusKpi* prometheus_kpi = NULL;
         if (kpi[i].kpi_type == KPI_TYPE::Counter) {
-            m_prometheus_kpi
+            prometheus_kpi
                 = new PrometheusCounter(m_prometheus_registry, kpi[i].kpi_name, kpi[i].description, m_default_labels);
         } else if (kpi[i].kpi_type == KPI_TYPE::Gauge) {
-            m_prometheus_kpi
+            prometheus_kpi
                 = new PrometheusGauge(m_prometheus_registry, kpi[i].kpi_name, kpi[i].description, m_default_labels);
         }
-        if (m_prometheus_kpi) {
-            m_prometheuskpi_map.insert(std::pair<std::string, PrometheusKpi*>(kpi[i].kpi_name, m_prometheus_kpi));
+        if (prometheus_kpi) {
+            m_prometheuskpi_map.insert(std::pair<std::string, PrometheusKpi*>(kpi[i].kpi_name, prometheus_kpi));
         }
     }
 }

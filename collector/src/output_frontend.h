@@ -261,7 +261,6 @@ private:
     bool m_prometheus_enabled = false;
     std::unique_ptr<prometheus::Exposer> m_exposer;
     std::shared_ptr<prometheus::Registry> m_prometheus_registry;
-    PrometheusKpi* m_prometheus_kpi = NULL;
     std::map<std::string, PrometheusKpi*> m_prometheuskpi_map;
     std::map<std::string, std::string> m_default_labels;
 #endif

@@ -94,8 +94,7 @@ static const prometheus_kpi_descriptor prometheus_kpi_cgroup_memory[] = {
     { "cgroup_memory_stats_stat_swap", KPI_TYPE::Gauge, "Number of bytes of swap usage" },
     { "cgroup_memory_stats_stat_unevictable", KPI_TYPE::Gauge,
         "Number of bytes of memory that cannot be reclaimed (mlocked etc)" },
-    { "cgroup_memory_stats_events_failcnt", KPI_TYPE::Gauge,
-        "Number number of times that a usage counter hit its limit" },
+    { "cgroup_memory_stats_events_failcnt", KPI_TYPE::Gauge, "Number of times that a usage counter hit its limit" },
 };
 
 /* structure for prometheus output : Network utilization as reported by BY-NETWORK-INTERFACE */
