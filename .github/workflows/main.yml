@@ -15,9 +15,11 @@ jobs:
     - name: install deps
       run: sudo apt install -y libgtest-dev libbenchmark-dev libfmt-dev tidy git python3 python3-dateutil python3-pip
     - name: install PyDeps
-      run: sudo pip3 install pytest conan
+      run: sudo pip3 install pytest
     - name: install Conan
       run: sudo pip3 install conan
+    - name: update CompilerProfile
+      run: sudo conan profile new default --detect
     - name: update CompilerSetting
       run: conan profile update settings.compiler.libcxx=libstdc++11 /root/.conan/profiles/default
     - name: install Prometheus
