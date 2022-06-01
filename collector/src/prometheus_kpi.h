@@ -20,6 +20,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef PROMETHEUS_SUPPORT
 #ifndef _PROMETHEUS_KPI_H_
 #define _PROMETHEUS_KPI_H_
 
@@ -46,5 +47,5 @@ public:
     virtual void set_kpi_value(double kpi_value) = 0;
     virtual void set_kpi_value(double kpi_value, std::map<std::string, std::string>& labels) = 0;
 };
-
+#endif
 #endif

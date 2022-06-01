@@ -45,6 +45,12 @@ void CMonitorOutputFrontend::close()
         delete m_influxdb_client_conn;
         m_influxdb_client_conn = nullptr;
     }
+#ifdef PROMETHEUS_SUPPORT
+    for (const auto& kpi : m_prometheuskpi_map) {
+        delete kpi.second;
+    }
+    m_prometheuskpi_map.clear();
+#endif
 }
 
 void CMonitorOutputFrontend::init_json_output_file(const std::string& filenamePrefix)
