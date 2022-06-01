@@ -96,10 +96,12 @@ void CMonitorSystem::sample_memory(const std::set<std::string>& charted_stats_fr
     if ((m_pCfg->m_nCollectFlags & PK_BAREMETAL_MEMORY) == 0)
         return;
 
+#ifdef PROMETHEUS_SUPPORT
     if (m_pOutput->is_prometheus_enabled()) {
         size_t size = sizeof(prometheus_kpi_proc_meminfo) / sizeof(prometheus_kpi_proc_meminfo[0]);
         m_pOutput->init_prometheus_kpi(prometheus_kpi_proc_meminfo, size);
     }
+#endif
 
     DEBUGLOG_FUNCTION_START();
 
@@ -112,11 +114,12 @@ void CMonitorSystem::sample_memory(const std::set<std::string>& charted_stats_fr
         numeric_parser_stats_t out_stats;
         m_vmstat.read_numeric_stats(std::set<std::string>(), out, out_stats);
 
+#ifdef PROMETHEUS_SUPPORT
         if (m_pOutput->is_prometheus_enabled()) {
             size_t size = sizeof(prometheus_kpi_proc_vmstat) / sizeof(prometheus_kpi_proc_vmstat[0]);
             m_pOutput->init_prometheus_kpi(prometheus_kpi_proc_vmstat, size);
         }
-
+#endif
         m_pOutput->psection_start("proc_vmstat");
         for (auto entry : out)
             m_pOutput->plong(entry.first.c_str(), entry.second);

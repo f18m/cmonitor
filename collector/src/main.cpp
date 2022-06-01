@@ -723,12 +723,14 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
         signal(SIGHUP, SIG_IGN); /* ignore hangups */
     }
 
+#ifdef PROMETHEUS_SUPPORT
     // initialize prometheus exposer to scrape the registry on incoming HTTP requests
     if (!m_cfg.m_strPrometheusPort.empty() && !m_cfg.m_strPrometheusAddress.empty()) {
         auto listenAddress = m_cfg.m_strPrometheusAddress + ":" + m_cfg.m_strPrometheusPort;
         m_output.init_prometheus_connection(listenAddress, m_cfg.m_mapCustomMetadata);
         printf("Prometheus listening on port: %s\n", m_cfg.m_strPrometheusPort.c_str());
     }
+#endif
 
     bool bCollectCGroupInfo = // force newline
         (m_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) || // force newline

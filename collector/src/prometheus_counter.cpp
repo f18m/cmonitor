@@ -14,7 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#ifdef PROMETHEUS_SUPPORT
 #include "prometheus_counter.h"
 
 PrometheusCounter::PrometheusCounter(std::shared_ptr<prometheus::Registry> prometheus_registry, std::string kpi_name,
@@ -52,3 +52,4 @@ void PrometheusCounter::set_kpi_value(double kpi_value, std::map<std::string, st
         prometheus_kpi.Increment(kpi_value - previous_kpi_value);
     }
 }
+#endif

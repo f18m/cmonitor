@@ -36,10 +36,12 @@ void CMonitorSystem::sample_net_dev(double elapsed_sec, OutputFields output_opts
     if ((m_pCfg->m_nCollectFlags & PK_BAREMETAL_NETWORK) == 0)
         return;
 
+#ifdef PROMETHEUS_SUPPORT
     if (m_pOutput->is_prometheus_enabled()) {
         size_t size = sizeof(prometheus_kpi_network) / sizeof(prometheus_kpi_network[0]);
         m_pOutput->init_prometheus_kpi(prometheus_kpi_network, size);
     }
+#endif
 
     DEBUGLOG_FUNCTION_START();
 

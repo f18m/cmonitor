@@ -40,6 +40,7 @@
 // Types
 //------------------------------------------------------------------------------
 
+#ifdef PROMETHEUS_SUPPORT
 static const prometheus_kpi_descriptor prometheus_kpi_disk[] = {
     // baremetal : disk
     { "disks_reads", KPI_TYPE::Gauge, "total reads completed successfully" },
@@ -304,6 +305,7 @@ static const prometheus_kpi_descriptor prometheus_kpi_proc_vmstat[] = {
     { "proc_vmstat_workingset_refault", KPI_TYPE::Gauge, "" },
     { "proc_vmstat_zone_reclaim_failed", KPI_TYPE::Gauge, "" },
 };
+#endif
 
 typedef std::map<std::string /* interface name */, std::string /* address */> netdevices_map_t;
 

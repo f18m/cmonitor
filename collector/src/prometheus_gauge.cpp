@@ -15,6 +15,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef PROMETHEUS_SUPPORT
 #include "prometheus_gauge.h"
 
 PrometheusGauge::PrometheusGauge(std::shared_ptr<prometheus::Registry> prometheus_registry, std::string kpi_name,
@@ -34,3 +35,4 @@ void PrometheusGauge::set_kpi_value(double kpi_value, std::map<std::string, std:
 
     prometheus_kpi.Set(kpi_value);
 }
+#endif

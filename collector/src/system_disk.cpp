@@ -33,10 +33,12 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
     if ((m_pCfg->m_nCollectFlags & PK_BAREMETAL_DISK) == 0)
         return;
 
+#ifdef PROMETHEUS_SUPPORT
     if (m_pOutput->is_prometheus_enabled()) {
         size_t size = sizeof(prometheus_kpi_disk) / sizeof(prometheus_kpi_disk[0]);
         m_pOutput->init_prometheus_kpi(prometheus_kpi_disk, size);
     }
+#endif
 
     DEBUGLOG_FUNCTION_START();
 

@@ -145,11 +145,12 @@ void CMonitorCgroups::sample_memory(
     if ((m_pCfg->m_nCollectFlags & PK_CGROUP_MEMORY) == 0)
         return;
 
+#ifdef PROMETHEUS_SUPPORT
     if (m_pOutput->is_prometheus_enabled()) {
         size_t size = sizeof(prometheus_kpi_cgroup_memory) / sizeof(prometheus_kpi_cgroup_memory[0]);
         m_pOutput->init_prometheus_kpi(prometheus_kpi_cgroup_memory, size);
     }
-
+#endif
     bool print = (m_num_memory_samples_collected > 0);
     m_num_memory_samples_collected++;
 

@@ -124,10 +124,12 @@ void CMonitorSystem::sample_cpu_stat(double elapsed_sec, OutputFields output_opt
     if ((m_pCfg->m_nCollectFlags & PK_BAREMETAL_CPU) == 0)
         return;
 
+#ifdef PROMETHEUS_SUPPORT
     if (m_pOutput->is_prometheus_enabled()) {
         size_t size = sizeof(prometheus_kpi_cpu) / sizeof(prometheus_kpi_cpu[0]);
         m_pOutput->init_prometheus_kpi(prometheus_kpi_cpu, size);
     }
+#endif
 
     DEBUGLOG_FUNCTION_START();
 

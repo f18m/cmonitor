@@ -57,6 +57,7 @@ std::string CGroupDetected2string(CGroupDetected k);
 // Types
 //------------------------------------------------------------------------------
 
+#ifdef PROMETHEUS_SUPPORT
 /* structure for prometheus output : CPU utilization as reported by cpuacct cgroup */
 static const prometheus_kpi_descriptor prometheus_kpi_cgroup_cpu[] = {
     // cgroup : cpu
@@ -166,6 +167,7 @@ static const prometheus_kpi_descriptor prometheus_kpi_cgroup_processes[] = {
     { "cgroup_tasks_io_total_read", KPI_TYPE::Gauge, "Total bytes read" },
     { "cgroup_tasks_io_total_write", KPI_TYPE::Gauge, "Total bytes written" },
 };
+#endif
 
 /* structure to save CPU utilization as reported by cpuacct cgroup */
 typedef struct {

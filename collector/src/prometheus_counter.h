@@ -32,6 +32,7 @@
  */
 //------------------------------------------------------------------------------
 
+#ifdef PROMETHEUS_SUPPORT
 #ifndef _PROMETHEUS_COUNTER_H_
 #define _PROMETHEUS_COUNTER_H_
 
@@ -70,5 +71,5 @@ private:
     // prometheus::Counter reference
     prometheus::Counter& m_prometheus_kpi;
 };
-
+#endif
 #endif

@@ -139,7 +139,6 @@ void CMonitorOutputFrontend::init_prometheus_connection(
         }
     }
 }
-#endif
 
 void CMonitorOutputFrontend::init_prometheus_kpi(const prometheus_kpi_descriptor* kpi, size_t size)
 {
@@ -158,6 +157,7 @@ void CMonitorOutputFrontend::init_prometheus_kpi(const prometheus_kpi_descriptor
         }
     }
 }
+#endif
 
 void CMonitorOutputFrontend::enable_json_pretty_print()
 {
@@ -526,8 +526,10 @@ void CMonitorOutputFrontend::push_current_sections(bool is_header)
     if (m_influxdb_client_conn)
         push_current_sections_to_influxdb(is_header);
 
+#ifdef PROMETHEUS_SUPPORT
     if (m_prometheus_enabled)
         push_current_sections_to_prometheus();
+#endif
 
     fflush(NULL); /* force I/O output now */
 
@@ -561,6 +563,7 @@ size_t CMonitorOutputFrontend::get_current_sample_measurements() const
     return ntotal_meas;
 }
 
+#ifdef PROMETHEUS_SUPPORT
 void CMonitorOutputFrontend::push_current_sections_to_prometheus()
 {
     std::string section_name;
@@ -626,6 +629,7 @@ void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metri
             prometheus_metric_name.c_str());
     }
 }
+#endif
 
 //------------------------------------------------------------------------------
 // JSON objects
