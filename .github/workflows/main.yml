@@ -18,10 +18,6 @@ jobs:
       run: sudo pip3 install pytest
     - name: install Conan
       run: sudo pip3 install conan
-    - name: update CompilerProfile
-      run: sudo conan profile new default --detect
-    - name: update CompilerSetting
-      run: conan profile update settings.compiler.libcxx=libstdc++11 /root/.conan/profiles/default
     - name: install Prometheus
       run: sudo conan install conanfile.txt --build=missing
     - name: make all
