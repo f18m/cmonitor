@@ -38,7 +38,7 @@ void PrometheusCounter::set_kpi_value(double kpi_value)
     }
 }
 
-void PrometheusCounter::set_kpi_value(double kpi_value, std::map<std::string, std::string>& labels)
+void PrometheusCounter::set_kpi_value(double kpi_value, const std::map<std::string, std::string>& labels)
 {
     prometheus::Counter& prometheus_kpi = m_prometheus_kpi_family.Add(labels);
 

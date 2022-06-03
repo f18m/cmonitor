@@ -58,7 +58,7 @@ public:
     virtual ~PrometheusGauge() = default;
 
     virtual void set_kpi_value(double kpi_value);
-    virtual void set_kpi_value(double kpi_value, std::map<std::string, std::string>& labels);
+    virtual void set_kpi_value(double kpi_value, const std::map<std::string, std::string>& labels);
 
 private:
     PrometheusGauge() = default;

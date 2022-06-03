@@ -45,7 +45,7 @@ public:
     virtual ~PrometheusKpi() = default;
 
     virtual void set_kpi_value(double kpi_value) = 0;
-    virtual void set_kpi_value(double kpi_value, std::map<std::string, std::string>& labels) = 0;
+    virtual void set_kpi_value(double kpi_value, const std::map<std::string, std::string>& labels) = 0;
 };
 #endif
 #endif

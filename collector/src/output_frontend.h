@@ -95,7 +95,7 @@ public:
     void close();
 
 #ifdef PROMETHEUS_SUPPORT
-    void init_prometheus_connection(const std::string& port, std::map<std::string, std::string> metaData = {});
+    void init_prometheus_connection(const std::string& port, const std::map<std::string, std::string>& metaData = {});
     void init_prometheus_kpi(const prometheus_kpi_descriptor* kpi, size_t size);
     bool is_prometheus_enabled() { return m_prometheus_enabled; }
 #endif
@@ -113,10 +113,10 @@ public:
     void psection_start(const char* section);
     void psection_end();
 
-    void psubsection_start(const char* resource, std::map<std::string, std::string> labels = {});
+    void psubsection_start(const char* resource, const std::map<std::string, std::string>& labels = {});
     void psubsection_end();
 
-    void psubsubsection_start(const char* resource, std::map<std::string, std::string> labels = {});
+    void psubsubsection_start(const char* resource, const std::map<std::string, std::string>& labels = {});
     void psubsubsection_end();
 
     //------------------------------------------------------------------------------
@@ -238,7 +238,7 @@ private:
 #ifdef PROMETHEUS_SUPPORT
     void push_current_sections_to_prometheus();
     void generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data, double metric_value,
-        std::map<std::string, std::string> labels = {});
+        const std::map<std::string, std::string>& labels = {});
 #endif
 
 private:

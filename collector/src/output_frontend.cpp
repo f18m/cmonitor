@@ -127,7 +127,7 @@ void CMonitorOutputFrontend::init_influxdb_connection(
 
 #ifdef PROMETHEUS_SUPPORT
 void CMonitorOutputFrontend::init_prometheus_connection(
-    const std::string& port, std::map<std::string, std::string> metaData)
+    const std::string& port, const std::map<std::string, std::string>& metaData)
 {
     m_exposer = prometheus::detail::make_unique<prometheus::Exposer>(port);
     m_prometheus_registry = std::make_shared<prometheus::Registry>();
@@ -619,7 +619,7 @@ void CMonitorOutputFrontend::push_current_sections_to_prometheus()
 }
 
 void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data,
-    double metric_value, std::map<std::string, std::string> labels)
+    double metric_value, const std::map<std::string, std::string>& labels)
 {
 
     std::string prometheus_metric_name = metric_name + "_" + metric_data;
@@ -696,7 +696,7 @@ void CMonitorOutputFrontend::psection_end()
     m_current_meas_list = nullptr;
 }
 
-void CMonitorOutputFrontend::psubsection_start(const char* subsection, std::map<std::string, std::string> labels)
+void CMonitorOutputFrontend::psubsection_start(const char* subsection, const std::map<std::string, std::string>& labels)
 {
     m_subsections++;
 
@@ -715,7 +715,8 @@ void CMonitorOutputFrontend::psubsection_end()
     m_current_meas_list = nullptr;
 }
 
-void CMonitorOutputFrontend::psubsubsection_start(const char* resource, std::map<std::string, std::string> labels)
+void CMonitorOutputFrontend::psubsubsection_start(
+    const char* resource, const std::map<std::string, std::string>& labels)
 {
     m_subsubsections++;
 
