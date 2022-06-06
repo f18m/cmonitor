@@ -115,8 +115,7 @@ class CmonitorLauncher:
             if process_name in e:
                 return True
 
-    def inotify_events(self, input_path, queue):
-        lock = multiprocessing.Lock()
+    def inotify_events(self, input_path, lock, queue):
         i = inotify.adapters.Inotify()
         i.add_watch(input_path)
         try:
@@ -125,27 +124,26 @@ class CmonitorLauncher:
                     if "IN_CREATE" in event[1]:
                         (header, type_names, path, filename) = event
                         print(header, type_names, path, filename)
-                        lock.acquire()
                         dir = path + filename
+                        lock.acquire()
                         queue.put(dir)
                         lock.release()
         finally:
             i.remove_watch(path)
 
-    def process_events(self, event, filter, command):
+    def process_events(self, lock, event, filter, command):
         self.filter = filter
         self.command = command
-        lock = multiprocessing.Lock()
         entry = 1
         while True:
-            lock.acquire()
+            #lock.acquire()
             filename = event.get()
+            #lock.release()
             print(" in process events entry:", entry)
             print(" in process events", filename)
             time.sleep(50)
             self.process_task_files(filename)
             entry = entry + 1
-            lock.release()
 
 
 def main():
@@ -153,13 +151,13 @@ def main():
     parser = argparse.ArgumentParser(description="Processsome integers.")
     parser.add_argument("-p", "--path", help="path to watch")
     parser.add_argument(
-        "-filter",
+        "-f",
         "--filter",
         nargs="*",
         help="cmonitor triggers for matching pattern",
     )
     parser.add_argument(
-        "-command",
+        "-c",
         "--command",
         nargs="*",
         help="cmonitor input command parameters",
@@ -170,12 +168,13 @@ def main():
     filter = args.filter
     command = args.command
 
+    lock = multiprocessing.Lock()
     queue = multiprocessing.Queue()
     process_1 = multiprocessing.Process(
-        target=CmonitorLauncher().inotify_events, args=(input_path, queue)
+        target=CmonitorLauncher().inotify_events, args=(input_path, lock, queue)
     )
     process_2 = multiprocessing.Process(
-        target=CmonitorLauncher().process_events, args=(queue, filter, command)
+        target=CmonitorLauncher().process_events, args=(lock, queue, filter, command)
     )
 
     process_1.start()
