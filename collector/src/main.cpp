@@ -607,7 +607,7 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
         printf("Option --remote-port=%lu provided but the --remote-ip option was not provided\n", m_cfg.m_nRemotePort);
         exit(53);
     }
-    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort > 0 && m_cfg.m_strRemote.empty()) {
+    if ((!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort > 0) && m_cfg.m_strRemote.empty()) {
         printf("Option --remote-ip and remort-port provided but the --remote option was not provided\n");
         exit(54);
     }
