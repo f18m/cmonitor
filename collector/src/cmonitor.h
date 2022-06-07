@@ -189,8 +189,7 @@ public:
     std::string m_strCGroupName; // --cgroup-name
     uint64_t m_nProcessScoreThreshold = 1; // --score-threshold
     std::map<std::string, std::string> m_mapCustomMetadata; // --custom-metadata
-    std::string m_strPrometheusPort; // --prometheus-port {9090}
-    std::string m_strPrometheusAddress; // --prometheus-ip{127.1.0.0}
+    std::string m_strRemote; // -- influxdb|prometheus
 };
 
 //------------------------------------------------------------------------------

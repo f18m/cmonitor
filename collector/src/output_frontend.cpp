@@ -46,10 +46,10 @@ void CMonitorOutputFrontend::close()
         m_influxdb_client_conn = nullptr;
     }
 #ifdef PROMETHEUS_SUPPORT
-    for (const auto& kpi : m_prometheuskpi_map) {
+    for (const auto& kpi : m_prometheus_kpi_map) {
         delete kpi.second;
     }
-    m_prometheuskpi_map.clear();
+    m_prometheus_kpi_map.clear();
 #endif
 }
 
@@ -127,15 +127,14 @@ void CMonitorOutputFrontend::init_influxdb_connection(
 
 #ifdef PROMETHEUS_SUPPORT
 void CMonitorOutputFrontend::init_prometheus_connection(
-    const std::string& port, const std::map<std::string, std::string>& metaData)
+    const std::string& url, const std::map<std::string, std::string>& metaData)
 {
-    m_exposer = prometheus::detail::make_unique<prometheus::Exposer>(port);
+    m_prometheus_exposer = prometheus::detail::make_unique<prometheus::Exposer>(url);
     m_prometheus_registry = std::make_shared<prometheus::Registry>();
-    m_exposer->RegisterCollectable(m_prometheus_registry);
+    m_prometheus_exposer->RegisterCollectable(m_prometheus_registry);
 
     m_prometheus_enabled = true;
-    CMonitorLogger::instance()->LogDebug(
-        "init_prometheus_connection() initialized Prometheus port to %s", port.c_str());
+    CMonitorLogger::instance()->LogDebug("init_prometheus_connection() initialized Prometheus port to %s", url.c_str());
 
     m_default_labels = { { "app", "cmonitor" } };
     // strore the metadata from command line.
@@ -151,15 +150,15 @@ void CMonitorOutputFrontend::init_prometheus_kpi(const prometheus_kpi_descriptor
     // loop the metric list and create the prometheus KPI metrics.
     for (size_t i = 0; i < size; i++) {
         PrometheusKpi* prometheus_kpi = NULL;
-        if (kpi[i].kpi_type == KPI_TYPE::Counter) {
+        if (kpi[i].kpi_type == prometheus::MetricType::Counter) {
             prometheus_kpi
                 = new PrometheusCounter(m_prometheus_registry, kpi[i].kpi_name, kpi[i].description, m_default_labels);
-        } else if (kpi[i].kpi_type == KPI_TYPE::Gauge) {
+        } else if (kpi[i].kpi_type == prometheus::MetricType::Gauge) {
             prometheus_kpi
                 = new PrometheusGauge(m_prometheus_registry, kpi[i].kpi_name, kpi[i].description, m_default_labels);
         }
         if (prometheus_kpi) {
-            m_prometheuskpi_map.insert(std::pair<std::string, PrometheusKpi*>(kpi[i].kpi_name, prometheus_kpi));
+            m_prometheus_kpi_map.insert(std::pair<std::string, PrometheusKpi*>(kpi[i].kpi_name, prometheus_kpi));
         }
     }
 }
@@ -572,40 +571,36 @@ size_t CMonitorOutputFrontend::get_current_sample_measurements() const
 #ifdef PROMETHEUS_SUPPORT
 void CMonitorOutputFrontend::push_current_sections_to_prometheus()
 {
-    std::string section_name;
+    std::string metric_name;
+    std::map<std::string, std::string> lbl;
     for (size_t i = 0; i < m_current_sections.size(); i++) {
         auto& sec = m_current_sections[i];
+        metric_name = sec.m_name;
         if (sec.m_measurements.empty()) {
             for (size_t i = 0; i < sec.m_subsections.size(); i++) {
                 auto& subsec = sec.m_subsections[i];
-                section_name = sec.m_name;
                 if (subsec.m_measurements.empty()) {
                     for (size_t i = 0; i < subsec.m_subsubsections.size(); i++) {
                         auto& subsubsec = subsec.m_subsubsections[i];
                         for (size_t n = 0; n < subsubsec.m_measurements.size(); n++) {
                             auto& measurement = subsubsec.m_measurements[n];
-                            std::string metric_name = section_name + "_" + subsubsec.m_name;
+                            lbl = { { "metric", subsubsec.m_name } };
+                            if (!subsubsec.m_labels.empty()) {
+                                for (const auto& entry : subsubsec.m_labels) {
+                                    lbl.insert(std::make_pair(entry.first, entry.second));
+                                }
+                            }
                             if (subsubsec.m_name != "proc_info")
                                 generate_prometheus_metric(
-                                    metric_name, measurement.m_name.data(), measurement.m_dvalue, subsubsec.m_labels);
+                                    metric_name, measurement.m_name.data(), measurement.m_dvalue, lbl);
                         }
                     }
 
                 } else {
                     for (size_t n = 0; n < subsec.m_measurements.size(); n++) {
                         auto& measurement = subsec.m_measurements[n];
-                        std::string metric_name;
-                        if ((section_name == "cgroup_network") || (section_name == "cgroup_cpuacct_stats")
-                            || (section_name == "stat") || (section_name == "network_interfaces")
-                            || (section_name == "disks")) {
-                            metric_name = section_name;
-                            std::map<std::string, std::string> lbl = { { "metric", subsec.m_name } };
-                            generate_prometheus_metric(
-                                metric_name, measurement.m_name.data(), measurement.m_dvalue, lbl);
-                        } else {
-                            metric_name = section_name + "_" + subsec.m_name;
-                            generate_prometheus_metric(metric_name, measurement.m_name.data(), measurement.m_dvalue);
-                        }
+                        lbl = { { "metric", subsec.m_name } };
+                        generate_prometheus_metric(metric_name, measurement.m_name.data(), measurement.m_dvalue, lbl);
                     }
                 }
             }
@@ -626,12 +621,13 @@ void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metri
     std::replace(prometheus_metric_name.begin(), prometheus_metric_name.end(), '-', '_');
     std::replace(prometheus_metric_name.begin(), prometheus_metric_name.end(), '.', '_');
 
-    auto kpi = m_prometheuskpi_map.find(prometheus_metric_name);
-    if (kpi != m_prometheuskpi_map.end()) {
+    auto kpi = m_prometheus_kpi_map.find(prometheus_metric_name);
+    if (kpi != m_prometheus_kpi_map.end()) {
         PrometheusKpi* prometheus_kpi = kpi->second;
         prometheus_kpi->set_kpi_value(metric_value, labels);
     } else {
-        printf("CMonitorOutputFrontend::generate_prometheus_metric KPI %s not found in the list \n",
+        CMonitorLogger::instance()->LogError(
+            "CMonitorOutputFrontend::generate_prometheus_metric KPI %s not found in the list \n",
             prometheus_metric_name.c_str());
     }
 }

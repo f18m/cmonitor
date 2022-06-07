@@ -259,9 +259,9 @@ private:
 // Prometheus exposer
 #ifdef PROMETHEUS_SUPPORT
     bool m_prometheus_enabled = false;
-    std::unique_ptr<prometheus::Exposer> m_exposer;
+    std::unique_ptr<prometheus::Exposer> m_prometheus_exposer;
     std::shared_ptr<prometheus::Registry> m_prometheus_registry;
-    std::map<std::string, PrometheusKpi*> m_prometheuskpi_map;
+    std::map<std::string, PrometheusKpi*> m_prometheus_kpi_map;
     std::map<std::string, std::string> m_default_labels;
 #endif
 

@@ -351,6 +351,13 @@ void CMonitorCgroups::init_cpuacct(const std::string& cgroup_prefix_for_test)
             main_file.c_str());
         return;
     }
+
+#ifdef PROMETHEUS_SUPPORT
+    if (m_pOutput->is_prometheus_enabled() && (!(m_pCfg->m_nCollectFlags & PK_CGROUP_CPU_ACCT)) == 0) {
+        size_t size = sizeof(g_prometheus_kpi_cgroup_cpu) / sizeof(g_prometheus_kpi_cgroup_cpu[0]);
+        m_pOutput->init_prometheus_kpi(g_prometheus_kpi_cgroup_cpu, size);
+    }
+#endif
     CMonitorLogger::instance()->LogDebug("Successfully initialized cpuacct cgroup monitoring.\n");
 }
 
@@ -360,13 +367,6 @@ void CMonitorCgroups::sample_cpuacct(double elapsed_sec)
         return;
     if ((m_pCfg->m_nCollectFlags & PK_CGROUP_CPU_ACCT) == 0)
         return;
-
-#ifdef PROMETHEUS_SUPPORT
-    if (m_pOutput->is_prometheus_enabled()) {
-        size_t size = sizeof(prometheus_kpi_cgroup_cpu) / sizeof(prometheus_kpi_cgroup_cpu[0]);
-        m_pOutput->init_prometheus_kpi(prometheus_kpi_cgroup_cpu, size);
-    }
-#endif
 
     DEBUGLOG_FUNCTION_START();
 

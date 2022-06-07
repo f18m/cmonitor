@@ -30,7 +30,8 @@ void PrometheusCounter::set_kpi_value(double kpi_value)
 {
     double previous_kpi_value = m_prometheus_kpi.Value();
     if (kpi_value < previous_kpi_value) {
-        printf("PrometheusCounter::set_kpi_value,the current KPI value=%ld is less than the previous KPI value=%ld",
+        CMonitorLogger::instance()->LogError(
+            "PrometheusCounter::set_kpi_value,the current KPI value=%ld is less than the previous KPI value=%ld",
             (uint64_t)kpi_value, (uint64_t)previous_kpi_value);
         return;
     } else if (kpi_value > previous_kpi_value) {
@@ -44,8 +45,9 @@ void PrometheusCounter::set_kpi_value(double kpi_value, const std::map<std::stri
 
     double previous_kpi_value = prometheus_kpi.Value();
     if (kpi_value < previous_kpi_value) {
-        printf("PrometheusCounter::set_kpi_value with labels,the current KPI value = %ld is less than the previous KPI "
-               "value = %ld",
+        CMonitorLogger::instance()->LogError(
+            "PrometheusCounter::set_kpi_value with labels,the current KPI value = %ld is less than the previous KPI "
+            "value = %ld",
             (uint64_t)kpi_value, (uint64_t)previous_kpi_value);
         return;
     } else if (kpi_value > previous_kpi_value) {

@@ -24,13 +24,12 @@
 #ifndef _PROMETHEUS_KPI_H_
 #define _PROMETHEUS_KPI_H_
 
+#include "logger.h"
 #include <prometheus/metric_type.h>
-
-typedef prometheus::MetricType KPI_TYPE;
 
 typedef struct {
     std::string kpi_name;
-    KPI_TYPE kpi_type;
+    prometheus::MetricType kpi_type;
     std::string description;
 } prometheus_kpi_descriptor;
 
