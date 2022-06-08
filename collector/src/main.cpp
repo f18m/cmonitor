@@ -686,7 +686,7 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
 
     // init the output channels:
     m_output.init_json_output_file(m_cfg.m_strOutputFilenamePrefix);
-    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort != 0 && m_cfg.m_strRemote == "influxdb") {
+    if (!m_cfg.m_strRemoteAddress.empty() && (m_cfg.m_nRemotePort != 0) && (m_cfg.m_strRemote == "influxdb")) {
         // We are attempting to send the data remotely
         m_output.init_influxdb_connection(m_cfg.m_strRemoteAddress, m_cfg.m_nRemotePort, m_cfg.m_strRemoteDatabaseName);
     }
@@ -714,7 +714,7 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
 
 #ifdef PROMETHEUS_SUPPORT
     // initialize prometheus exposer to scrape the registry on incoming HTTP requests
-    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort != 0 && m_cfg.m_strRemote == "prometheus") {
+    if (!m_cfg.m_strRemoteAddress.empty() && (m_cfg.m_nRemotePort != 0) && (m_cfg.m_strRemote == "prometheus")) {
         auto listenAddress = m_cfg.m_strRemoteAddress + ":" + std::to_string(m_cfg.m_nRemotePort);
         m_output.init_prometheus_connection(listenAddress, m_cfg.m_mapCustomMetadata);
         printf("Prometheus listening on port: %s\n", listenAddress.c_str());
