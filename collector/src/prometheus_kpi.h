@@ -45,6 +45,9 @@ public:
 
     virtual void set_kpi_value(double kpi_value) = 0;
     virtual void set_kpi_value(double kpi_value, const std::map<std::string, std::string>& labels) = 0;
+
+protected:
+    std::string m_prometheus_kpi_name; // kpi_name
 };
 #endif
 #endif

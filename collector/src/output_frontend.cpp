@@ -620,6 +620,9 @@ void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metri
     std::string prometheus_metric_name = metric_name + "_" + metric_data;
     std::replace(prometheus_metric_name.begin(), prometheus_metric_name.end(), '-', '_');
     std::replace(prometheus_metric_name.begin(), prometheus_metric_name.end(), '.', '_');
+    std::replace(prometheus_metric_name.begin(), prometheus_metric_name.end(), '(', '_');
+    prometheus_metric_name.erase(
+        std ::remove(prometheus_metric_name.begin(), prometheus_metric_name.end(), ')'), prometheus_metric_name.end());
 
     auto kpi = m_prometheus_kpi_map.find(prometheus_metric_name);
     if (kpi != m_prometheus_kpi_map.end()) {

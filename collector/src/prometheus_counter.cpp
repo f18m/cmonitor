@@ -24,6 +24,7 @@ PrometheusCounter::PrometheusCounter(std::shared_ptr<prometheus::Registry> prome
     , m_prometheus_kpi(m_prometheus_kpi_family.Add({}))
 
 {
+    m_prometheus_kpi_name = kpi_name;
 }
 
 void PrometheusCounter::set_kpi_value(double kpi_value)
@@ -31,7 +32,7 @@ void PrometheusCounter::set_kpi_value(double kpi_value)
     double previous_kpi_value = m_prometheus_kpi.Value();
     if (kpi_value < previous_kpi_value) {
         CMonitorLogger::instance()->LogError(
-            "PrometheusCounter::set_kpi_value,the current KPI value=%ld is less than the previous KPI value=%ld",
+            "PrometheusCounter::set_kpi_value, the current KPI value=%ld is less than the previous KPI value=%ld",
             (uint64_t)kpi_value, (uint64_t)previous_kpi_value);
         return;
     } else if (kpi_value > previous_kpi_value) {
@@ -45,10 +46,10 @@ void PrometheusCounter::set_kpi_value(double kpi_value, const std::map<std::stri
 
     double previous_kpi_value = prometheus_kpi.Value();
     if (kpi_value < previous_kpi_value) {
-        CMonitorLogger::instance()->LogError(
-            "PrometheusCounter::set_kpi_value with labels,the current KPI value = %ld is less than the previous KPI "
-            "value = %ld",
-            (uint64_t)kpi_value, (uint64_t)previous_kpi_value);
+        CMonitorLogger::instance()->LogError("PrometheusCounter::set_kpi_value with kpi_name=%s, the current KPI value "
+                                             "= %ld is less than the previous KPI "
+                                             "value = %ld",
+            m_prometheus_kpi_name.c_str(), (uint64_t)kpi_value, (uint64_t)previous_kpi_value);
         return;
     } else if (kpi_value > previous_kpi_value) {
         prometheus_kpi.Increment(kpi_value - previous_kpi_value);
