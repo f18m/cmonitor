@@ -44,7 +44,6 @@
 
 void CMonitorCgroups::init_network(const std::string& cgroup_prefix_for_test)
 {
-    CMonitorLogger::instance()->LogDebug("Successfully initialized cgroup network monitoring.\n");
 
 #ifdef PROMETHEUS_SUPPORT
     if (m_pOutput->is_prometheus_enabled() && (!(m_pCfg->m_nCollectFlags & PK_CGROUP_NETWORK_INTERFACES) == 0)) {
@@ -52,6 +51,8 @@ void CMonitorCgroups::init_network(const std::string& cgroup_prefix_for_test)
         m_pOutput->init_prometheus_kpi(g_prometheus_kpi_cgroup_network, size);
     }
 #endif
+
+    CMonitorLogger::instance()->LogDebug("Successfully initialized cgroup network monitoring.\n");
 }
 
 void CMonitorCgroups::sample_network_interfaces(double elapsed_sec, OutputFields output_opts)
