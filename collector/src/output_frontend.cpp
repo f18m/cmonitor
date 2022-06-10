@@ -358,8 +358,16 @@ void CMonitorOutputFrontend::push_json_measurements(CMonitorMeasurementVector& m
         fputs(m.m_name.data(), m_outputJson);
         if (m.m_numeric) {
             fputs("\": ", m_outputJson);
+
+            // m_value comes from an integer -> string conversion so it contains only chars in range [0-9.]
+            // no need to enclose it in double quotes
             fputs(m.m_value.data(), m_outputJson);
         } else {
+
+            // m_value cannot be trusted since this was a string read probably from disk or from kernel...
+            // process it to make sure it's valid JSON:
+            m.m_value.enforce_valid_json_string_value();
+
             fputs("\": \"", m_outputJson);
             fputs(m.m_value.data(), m_outputJson);
             fputs("\"", m_outputJson);
@@ -418,7 +426,7 @@ void CMonitorOutputFrontend::push_current_sections_to_json(bool is_header)
     // convert the current sample into JSON format:
 
     // we do all the JSON with max 4 indentation levels:
-    enum { FIRST_LEVEL = 1, SECOND_LEVEL = 2, THIRD_LEVEL = 3, FOURTH_LEVEL = 4 , FIFTH_LEVEL = 5};
+    enum { FIRST_LEVEL = 1, SECOND_LEVEL = 2, THIRD_LEVEL = 3, FOURTH_LEVEL = 4, FIFTH_LEVEL = 5 };
 
     if (is_header) {
         fputs("{\n", m_outputJson); // document begin
@@ -657,5 +665,10 @@ void CMonitorOutputFrontend::pstring(const char* name, const char* value)
     m_string++;
     assert(m_current_meas_list);
 
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, value));
+    CMonitorOutputMeasurement m(name, value);
+
+    // remove all chars that are not strict ASCII from the given value string
+    m.enforce_ascii_value();
+
+    m_current_meas_list->push_back(m);
 }
