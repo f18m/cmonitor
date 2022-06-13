@@ -366,7 +366,7 @@ void CMonitorOutputFrontend::push_json_measurements(CMonitorMeasurementVector& m
 
             // m_value cannot be trusted since this was a string read probably from disk or from kernel...
             // process it to make sure it's valid JSON:
-            m.m_value.enforce_valid_json_string_value();
+            m.enforce_valid_json_string_value();
 
             fputs("\": \"", m_outputJson);
             fputs(m.m_value.data(), m_outputJson);
@@ -665,10 +665,5 @@ void CMonitorOutputFrontend::pstring(const char* name, const char* value)
     m_string++;
     assert(m_current_meas_list);
 
-    CMonitorOutputMeasurement m(name, value);
-
-    // remove all chars that are not strict ASCII from the given value string
-    m.enforce_ascii_value();
-
-    m_current_meas_list->push_back(m);
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, value));
 }
