@@ -127,6 +127,23 @@ private:
             m_numeric = numeric;
         }
 
+        void enforce_valid_json_string_value()
+        {
+            char* p = &m_value[0];
+            while (*p != '\0') {
+                // isgraph() returns != 0 for following chars:
+                //  !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+                // which are all valid in JSON output, except for the \ character which should be repeated twice to
+                // escape it; however we don't care about that and replace it with space if it appears for some reason
+                // Same thing is done for the double quotes " character since we use to enclose
+                if (*p != ' ' && (isgraph(*p) == 0 || *p == '\\' || *p == '"')) {
+                    *p = '*';
+                }
+
+                p++;
+            }
+        }
+
         std::array<char, CMONITOR_MEASUREMENT_NAME_MAXLEN> m_name; // use std::array to void dynamic allocations
         std::array<char, CMONITOR_MEASUREMENT_VALUE_MAXLEN> m_value; // use std::array to void dynamic allocations
         bool m_numeric;
