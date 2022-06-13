@@ -136,7 +136,7 @@ private:
                 // which are all valid in JSON output, except for the \ character which should be repeated twice to
                 // escape it; however we don't care about that and replace it with space if it appears for some reason
                 // Same thing is done for the double quotes " character since we use to enclose
-                if (isgraph(*p) == 0 || *p == '\\' || *p == '"') {
+                if (*p != ' ' && (isgraph(*p) == 0 || *p == '\\' || *p == '"')) {
                     *p = '*';
                 }
 
