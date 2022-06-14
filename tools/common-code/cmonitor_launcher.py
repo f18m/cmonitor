@@ -7,27 +7,48 @@
 # =======================================================================================================
 
 import inotify.adapters
-import multiprocessing
-from threading import Thread, Lock
-from queue import Queue
+import concurrent.futures
+from concurrent.futures import ProcessPoolExecutor
 from subprocess import Popen
+import queue
 import os
 import time
+import signal
+#import subprocess
 
+queue = queue.Queue()
 # =======================================================================================================
 # CmonitorLauncher
 #
-#  - Watch all files below a directory and nottify an event for changes.
+#  - Watch all files below a directory and notify an event for changes.
 #  - Retrieves all the process and extract the process name "/proc/<pid>/stat.
 #  - check the process name against the white-list given in the filter list.
-#  - Execute command to launch CMonitor if the process name mathes with the filter.
+#  - Execute command to launch CMonitor if the process name matches with the filter.
 #
 # =======================================================================================================
 class CmonitorLauncher:
-    def __init__(self):
-        self.path = ""
-        self.filter = ""
-        self.command = ""
+    def __init__(self,path, filter, ip , port, command):
+        self.path = path
+        self.filter = filter
+        self.ip = ip
+        self.port = port
+        self.command = command
+        self.process_host_dict = {}
+        self.prev_process_dict= {}
+        self.prev_file = ""
+
+        """
+        Should add the list of IPs as key to the dictionary
+        """
+        tmp_ip = self.ip
+        for key in self.filter:
+          for value in tmp_ip:
+            self.process_host_dict[key] = value
+            tmp_ip.remove(value)
+        # Printing resultant dictionary
+        print("Input [filter-host]: " +  str(self.process_host_dict))
+        print("Input [port]: " +  str(self.port))
+
 
     def get_cgroup_version(self):
         proc_self_mount = "/proc/self/mounts"
@@ -96,51 +117,72 @@ class CmonitorLauncher:
                         match = self.check_filter(process_name)
                         if match is True:
                             print("Found match:", process_name)
-                            print("Launchig CMonitor", process_name, self.filter)
-                            self.launch_cmonitor(file)
+                            # remove already running cmonitor for the same process
+                            if self.prev_file:
+                               self.remove_process(process_name, self.prev_file)
+                            # launch cmonitor for new  process
+                            self.ip = self.process_host_dict.get(process_name)
+                            self.launch_cmonitor(file, self.ip)
+                            # store the new process task file
+                            cur_pod = file.split("/")[7]
+                            self.prev_process_dict[process_name] = cur_pod
+                            # store the old process task file
+                            self.prev_file = file
 
-    def launch_cmonitor(self, filename):
+    def remove_process(self, process_name, prev_file):
+        prev_pod = prev_file.split("/")[7]
+        print("Previous running process:", self.prev_process_dict)
+        if process_name in self.prev_process_dict:
+          for line in os.popen("ps -aef | grep " + prev_pod + " | grep -v grep"):
+             fields = line.split()
+             pid = fields[1]
+             # terminating process
+             print("Terminating cMonitor running process with ID:", process_name,pid)
+             os.kill(int(pid), signal.SIGKILL)
+             print("Process Successfully terminated")
+
+
+    def launch_cmonitor(self, filename, ip):
         for c in self.command:
             cmd = c.strip()
+            port = self.port
             base_path = os.path.dirname(filename)
             path = "/".join(base_path.split("/")[5:])
-            cmd = cmd + " " + "--cgroup-name=" + path
-            print("Launch CMonitor : with command:", cmd)
-            # p = Popen(cmd)
-            # print("process id:",p.pid)  #FIXME : need to delete the current cmonitor already running fot this process..!!!
+            cmd = cmd + " " + "--cgroup-name=" + path + " " + "-A" + " " + ip + " " + "-S" + " " + port
+            #cmd = cmd + " " + "--cgroup-name=" + path + " " + "--remote-ip" + " " + ip + " " + "--remote-port" + " " + port
+            print("Launch cMonitor with command:", cmd)
             os.system(cmd)
+            # FIXME : need to delete the current cmonitor already running for this process..!!!
+            # pid = subprocess.Popen(cmd.split(), shell=True)
+            # print("cmd PID:", pid.pid)
+            # As it does not store the pid of the actual command <cmd> , need to find another way to
+            # kill the already running process : using pod ID
 
     def check_filter(self, process_name):
         for e in self.filter:
             if process_name in e:
                 return True
 
-    def inotify_events(self, input_path, lock, queue):
+    def inotify_events(self, queue):
         i = inotify.adapters.Inotify()
-        i.add_watch(input_path)
+        i.add_watch(self.path)
         try:
             for event in i.event_gen():
                 if event is not None:
                     if "IN_CREATE" in event[1]:
                         (header, type_names, path, filename) = event
-                        print(header, type_names, path, filename)
+                        # print(header, type_names, path, filename)
                         dir = path + filename
-                        lock.acquire()
                         queue.put(dir)
-                        lock.release()
         finally:
             i.remove_watch(path)
 
-    def process_events(self, lock, event, filter, command):
-        self.filter = filter
-        self.command = command
+    def process_events(self, event):
         entry = 1
         while True:
-            #lock.acquire()
             filename = event.get()
-            #lock.release()
-            print(" in process events entry:", entry)
-            print(" in process events", filename)
+            print("In process events entry:", entry, filename)
+            # print("In process events", filename)
             time.sleep(50)
             self.process_task_files(filename)
             entry = entry + 1
@@ -162,27 +204,30 @@ def main():
         nargs="*",
         help="cmonitor input command parameters",
     )
+    parser.add_argument(
+        "-i",
+        "--ip",
+        nargs="*",
+        help="cmonitor input IP",
+    )
+    parser.add_argument(
+        "-r",
+        "--port",
+        help="cmonitor input Port",
+    )
     args = parser.parse_args()
     input_path = args.path
-    print("Input path to watch:", input_path)
+    print("Input [path]:", input_path)
     filter = args.filter
     command = args.command
+    ip = args.ip
+    port = args.port
 
-    lock = multiprocessing.Lock()
-    queue = multiprocessing.Queue()
-    process_1 = multiprocessing.Process(
-        target=CmonitorLauncher().inotify_events, args=(input_path, lock, queue)
-    )
-    process_2 = multiprocessing.Process(
-        target=CmonitorLauncher().process_events, args=(lock, queue, filter, command)
-    )
+    cMonitorLauncher = CmonitorLauncher(input_path, filter, ip , port, command)
 
-    process_1.start()
-    process_2.start()
-
-    process_1.join()
-    process_2.join()
-
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+       executor.submit(cMonitorLauncher.inotify_events, queue)
+       executor.submit(cMonitorLauncher.process_events, queue)
 
 if __name__ == "__main__":
     main()
