@@ -13,8 +13,6 @@ from subprocess import Popen
 import queue
 import os
 import time
-import signal
-#import subprocess
 
 queue = queue.Queue()
 # =======================================================================================================
