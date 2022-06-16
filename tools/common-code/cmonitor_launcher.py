@@ -27,15 +27,12 @@ queue = queue.Queue()
 #
 # =======================================================================================================
 class CmonitorLauncher:
-    def __init__(self,path, filter, ip , port, command):
+    def __init__(self,path, filter, ip , command):
         self.path = path
         self.filter = filter
         self.ip = ip
-        self.port = port
         self.command = command
         self.process_host_dict = {}
-        self.prev_process_dict= {}
-        self.prev_file = ""
 
         """
         Should add the list of IPs as key to the dictionary
@@ -47,8 +44,6 @@ class CmonitorLauncher:
             tmp_ip.remove(value)
         # Printing resultant dictionary
         print("Input [filter-host]: " +  str(self.process_host_dict))
-        print("Input [port]: " +  str(self.port))
-
 
     def get_cgroup_version(self):
         proc_self_mount = "/proc/self/mounts"
@@ -117,46 +112,23 @@ class CmonitorLauncher:
                         match = self.check_filter(process_name)
                         if match is True:
                             print("Found match:", process_name)
-                            # remove already running cmonitor for the same process
-                            if self.prev_file:
-                               self.remove_process(process_name, self.prev_file)
-                            # launch cmonitor for new  process
+                            # print("Launchig cMonitor:", process_name)
                             self.ip = self.process_host_dict.get(process_name)
+                            # print("Launchig cMonitor with IP :", str(self.ip))
                             self.launch_cmonitor(file, self.ip)
-                            # store the new process task file
-                            cur_pod = file.split("/")[7]
-                            self.prev_process_dict[process_name] = cur_pod
-                            # store the old process task file
-                            self.prev_file = file
-
-    def remove_process(self, process_name, prev_file):
-        prev_pod = prev_file.split("/")[7]
-        print("Previous running process:", self.prev_process_dict)
-        if process_name in self.prev_process_dict:
-          for line in os.popen("ps -aef | grep " + prev_pod + " | grep -v grep"):
-             fields = line.split()
-             pid = fields[1]
-             # terminating process
-             print("Terminating cMonitor running process with ID:", process_name,pid)
-             os.kill(int(pid), signal.SIGKILL)
-             print("Process Successfully terminated")
 
 
     def launch_cmonitor(self, filename, ip):
         for c in self.command:
             cmd = c.strip()
-            port = self.port
+            ip_port = ip.split(":");
+            ip = ip_port[0]
+            port  = ip_port[1]
             base_path = os.path.dirname(filename)
             path = "/".join(base_path.split("/")[5:])
             cmd = cmd + " " + "--cgroup-name=" + path + " " + "-A" + " " + ip + " " + "-S" + " " + port
-            #cmd = cmd + " " + "--cgroup-name=" + path + " " + "--remote-ip" + " " + ip + " " + "--remote-port" + " " + port
             print("Launch cMonitor with command:", cmd)
             os.system(cmd)
-            # FIXME : need to delete the current cmonitor already running for this process..!!!
-            # pid = subprocess.Popen(cmd.split(), shell=True)
-            # print("cmd PID:", pid.pid)
-            # As it does not store the pid of the actual command <cmd> , need to find another way to
-            # kill the already running process : using pod ID
 
     def check_filter(self, process_name):
         for e in self.filter:
@@ -206,24 +178,18 @@ def main():
     )
     parser.add_argument(
         "-i",
-        "--ip",
+        "--ip-port",
         nargs="*",
-        help="cmonitor input IP",
-    )
-    parser.add_argument(
-        "-r",
-        "--port",
-        help="cmonitor input Port",
+        help="cmonitor input <IP:PORT>",
     )
     args = parser.parse_args()
     input_path = args.path
     print("Input [path]:", input_path)
     filter = args.filter
     command = args.command
-    ip = args.ip
-    port = args.port
+    ip = args.ip_port
 
-    cMonitorLauncher = CmonitorLauncher(input_path, filter, ip , port, command)
+    cMonitorLauncher = CmonitorLauncher(input_path, filter, ip , command)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
        executor.submit(cMonitorLauncher.inotify_events, queue)
