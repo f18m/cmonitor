@@ -110,9 +110,7 @@ class CmonitorLauncher:
                         match = self.check_filter(process_name)
                         if match is True:
                             print("Found match:", process_name)
-                            # print("Launchig cMonitor:", process_name)
                             self.ip = self.process_host_dict.get(process_name)
-                            # print("Launchig cMonitor with IP :", str(self.ip))
                             self.launch_cmonitor(file, self.ip)
 
 
@@ -124,7 +122,7 @@ class CmonitorLauncher:
             port  = ip_port[1]
             base_path = os.path.dirname(filename)
             path = "/".join(base_path.split("/")[5:])
-            cmd = cmd + " " + "--cgroup-name=" + path + " " + "-A" + " " + ip + " " + "-S" + " " + port
+            cmd = f"{cmd} --cgroup-name={path} -A {ip} -S {port}"
             print("Launch cMonitor with command:", cmd)
             os.system(cmd)
 
