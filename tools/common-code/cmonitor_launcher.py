@@ -122,7 +122,7 @@ class CmonitorLauncher:
             port  = ip_port[1]
             base_path = os.path.dirname(filename)
             path = "/".join(base_path.split("/")[5:])
-            cmd = f"{cmd} --cgroup-name={path} -A {ip} -S {port}"
+            cmd = f"{cmd} --cgroup-name={path} --remote-ip {ip} --remote-port {port}"
             print("Launch cMonitor with command:", cmd)
             os.system(cmd)
 
