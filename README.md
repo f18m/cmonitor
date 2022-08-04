@@ -4,7 +4,7 @@
 # cmonitor - lightweight container monitor
 
 A **Docker, LXC, Kubernetes, database-free, lightweight container performance monitoring solution**, perfect for ephemeral containers
-(e.g. containers used for DevOps automatic testing). Can also be used with InfluxDB and Grafana to monitor long-lived 
+(e.g. containers used for DevOps automatic testing). Can also be used with InfluxDB, Prometheus and Grafana to monitor long-lived
 containers in real-time.
 
 The project is composed by 2 parts: 
@@ -411,7 +411,7 @@ in parallel to the JSON default storage). This can be done by simply providing t
 the collector:
 
 ```
-cmonitor_collector --remote-ip=1.2.3.4 --remote-port=8086
+cmonitor_collector --remote-ip 1.2.3.4 --remote-port 8086 --remote influxdb
 ```
 
 The InfluxDB instance can then be used as data source for graphing tools like [Grafana](https://grafana.com/)
@@ -430,6 +430,23 @@ make -C examples regen_grafana_screenshots
 which uses Docker files to deploy a temporary setup and fill the InfluxDB with 10minutes of data collected from the baremetal.
 
 
+### Connecting with Prometheus and Grafana
+
+The `cmonitor_collector` can be connected to an [Prometheus](https://prometheus.io/) instance where the collected metrics gets exposed to(this can happen
+in parallel to the JSON default storage). This can be done by simply providing the IP and port for the Prometheus when launching
+
+```
+cmonitor_collector \
+   --num-samples=until-cgroup-alive \
+   --cgroup-name=${FULL_CGROUP_NAME} \
+   --collect=cgroup_threads,cgroup_cpu,cgroup_memory --score-threshold=0 \
+   --custom-metadata=cmonitor_chart_name:${PODNAME} \
+   --sampling-interval=3 \
+   --output-filename=pod-performances.json \
+   --remote-ip 10.1.2.3 --remote-port 9092 --remote prometheus
+```
+
+Later Grafana can be configured to provide a seamless way to connect to the Prometheus as a data source.
 
 ### Reference Manual
 
@@ -462,7 +479,7 @@ Data sampling options
                                         Note that a comma-separated list of above stats can be provided.
   -e, --deep-collect                    Collect all available details about the stats families enabled by --collect.
                                         By default, for each family, only the stats that are used by the 'cmonitor_chart' companion utility
-                                        are collected. With this option a more detailed but larger JSON / InfluxDB data stream is produced.
+                                        are collected. With this option a more detailed but larger JSON / InfluxDB / Prometheus data stream is produced.
   -g, --cgroup-name=<REQ ARG>           If cgroup sampling is active (--collect=cgroups*), this option allows to provide explicitly the name of
                                         the cgroup to monitor. If 'self' value is passed (the default), the statistics of the cgroups where 
                                         cmonitor_collector runs will be collected. Note that this option is mostly useful when running 
@@ -487,10 +504,14 @@ Options to save data locally
 Options to stream data remotely
   -i, --remote-ip=<REQ ARG>             IP address or hostname of the InfluxDB instance to send measurements to;
                                         cmonitor_collector will use a database named 'cmonitor' to store them.
-  -p, --remote-port=<REQ ARG>           Port used by InfluxDB.
+                                        This can be used to set the hostname for Prometheus instance.
+  -p, --remote-port=<REQ ARG>           Port to be used by InfluxDB or Prometheus instance.
   -X, --remote-secret=<REQ ARG>         Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).
                                         
   -D, --remote-dbname=<REQ ARG>         Set the InfluxDB database name.
+
+Options to set remote
+  -r, --remote=<REQ ARG>                Set the target influxdb|prometheus.
                                         
 Other options
   -v, --version                         Show version and exit
