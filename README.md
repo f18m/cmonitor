@@ -437,7 +437,7 @@ in parallel to the JSON default storage). This can be done by simply providing t
 
 To support prometheus [prometheus-cpp](https://github.com/jupp0r/prometheus-cpp) client library needs to be installed.
 
-`conan`:
+#### How to install:
 Conan package manager contains prometheus-cpp package as well in [ConanCenter](https://conan.io/center/prometheus-cpp) repository
 
 ```
