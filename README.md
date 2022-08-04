@@ -435,10 +435,9 @@ which uses Docker files to deploy a temporary setup and fill the InfluxDB with 1
 The `cmonitor_collector` can be connected to an [Prometheus](https://prometheus.io/) instance where the collected metrics gets exposed to(this can happen
 in parallel to the JSON default storage). This can be done by simply providing the IP and port for the Prometheus when launching the collector.
 
-For prometheus support following client library needs to be installed.
- [prometheus-cpp](https://github.com/jupp0r/prometheus-cpp)
+To support prometheus [prometheus-cpp](https://github.com/jupp0r/prometheus-cpp) client library needs to be installed.
 
-conan:
+`conan`:
 Conan package manager contains prometheus-cpp package as well in [ConanCenter](https://conan.io/center/prometheus-cpp) repository
 
 ```
