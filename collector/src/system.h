@@ -41,6 +41,18 @@
 //------------------------------------------------------------------------------
 
 #ifdef PROMETHEUS_SUPPORT
+static const prometheus_kpi_descriptor g_prometheus_kpi_load[] = {
+    // proc_loadavg
+    { "proc_loadavg_load_avg_1min", prometheus::MetricType::Counter,
+        "Load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D) "
+        "averaged over 1min" },
+    { "proc_loadavg_load_avg_5min", prometheus::MetricType::Counter,
+        "Load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D) "
+        "averaged over 5min" },
+    { "proc_loadavg_load_avg_15min", prometheus::MetricType::Counter,
+        "Load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D) "
+        "averaged over 15min" },
+};
 static const prometheus_kpi_descriptor g_prometheus_kpi_disk[] = {
     // baremetal : disk
     { "disks_reads", prometheus::MetricType::Gauge, "total reads completed successfully" },

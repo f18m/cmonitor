@@ -269,6 +269,8 @@ PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
         return PK_BAREMETAL_MEMORY;
     if (to_lower(str) == "network")
         return PK_BAREMETAL_NETWORK;
+    if (to_lower(str) == "load")
+        return PK_BAREMETAL_LOAD;
 
     if (to_lower(str) == "cgroup_cpu")
         return PK_CGROUP_CPU_ACCT;
@@ -304,6 +306,8 @@ std::string performanceKpiFamily2string(PerformanceKpiFamily k)
         return "memory";
     case PK_BAREMETAL_NETWORK:
         return "network";
+    case PK_BAREMETAL_LOAD:
+        return "load";
 
     case PK_CGROUP_CPU_ACCT:
         return "cgroup_cpu";

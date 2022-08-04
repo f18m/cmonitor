@@ -487,6 +487,7 @@ Data sampling options
                                           'memory': collect memory stats from /proc/meminfo, /proc/vmstat
                                           'disk': collect disk stats from /proc/diskstats
                                           'network': collect network stats from /proc/net/dev
+                                          'load': collect avg load stats from /proc/loadavg
                                           'cgroup_cpu': collect CPU stats from the 'cpuacct' cgroup
                                           'cgroup_memory': collect memory stats from 'memory' cgroup
                                           'cgroup_network': collect network statistics by interface for the network namespace of the cgroup
