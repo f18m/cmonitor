@@ -157,8 +157,8 @@ private:
             // the conversion on the fly ONLY when producing JSON output
 
             // with std::to_string() you cannot specify the accuracy (how many decimal digits)
-            std::string tmp = fmt::format("{:.3f}", value);
-            strncpy(m_value.data(), tmp.data(), CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
+            auto tmp = fmt::format("{:.3f}", value);
+            strncpy(m_value.data(), tmp.c_str(), CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
             m_dvalue = value;
             m_numeric = true;
         }
@@ -177,7 +177,7 @@ private:
 #else
             auto tmp = fmt::format("{}", value);
 #endif
-            strncpy(m_value.data(), tmp.data(), CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
+            strncpy(m_value.data(), tmp.c_str(), CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
             m_dvalue = value;
             m_numeric = true;
         }
