@@ -19,6 +19,10 @@ all:
 	if [ -d "collector" ]; then	$(MAKE) -C collector CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) CMONITOR_LAST_COMMIT_HASH=$(CMONITOR_LAST_COMMIT_HASH) DOCKER_TAG=$(DOCKER_TAG) PROMETHEUS_SUPPORT=$(PROMETHEUS_SUPPORT) ; fi
 	if [ -d "tools" ]; then	$(MAKE) -C tools CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) CMONITOR_LAST_COMMIT_HASH=$(CMONITOR_LAST_COMMIT_HASH) ; fi
 
+centos_install_prereq:
+	# this is just the list present in "BuildRequires" field of the RPM spec file:
+	yum install gcc-c++ make gtest-devel fmt-devel git
+
 test:
 	$(MAKE) -C collector test
 	$(MAKE) -C examples all

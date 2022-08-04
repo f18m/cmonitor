@@ -405,8 +405,16 @@ void CMonitorOutputFrontend::push_json_measurements(CMonitorMeasurementVector& m
         fputs(m.m_name.data(), m_outputJson);
         if (m.m_numeric) {
             fputs("\": ", m_outputJson);
+
+            // m_value comes from an integer -> string conversion so it contains only chars in range [0-9.]
+            // no need to enclose it in double quotes
             fputs(m.m_value.data(), m_outputJson);
         } else {
+
+            // m_value cannot be trusted since this was a string read probably from disk or from kernel...
+            // process it to make sure it's valid JSON:
+            m.enforce_valid_json_string_value();
+
             fputs("\": \"", m_outputJson);
             fputs(m.m_value.data(), m_outputJson);
             fputs("\"", m_outputJson);
