@@ -748,15 +748,6 @@ void CMonitorOutputFrontend::psubsubsection_end()
 // JSON field/values
 //------------------------------------------------------------------------------
 
-void CMonitorOutputFrontend::phex(const char* name, long long value)
-{
-    m_hex++;
-    assert(m_current_meas_list);
-
-    auto fmt_string = fmt::format("hex:{:#08x}", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str()));
-}
-
 void CMonitorOutputFrontend::plong(const char* name, long long value)
 {
     m_long++;
