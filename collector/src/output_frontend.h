@@ -141,15 +141,46 @@ public:
 private:
     class CMonitorOutputMeasurement {
     public:
-        CMonitorOutputMeasurement(
-            const char* name = "", const char* value = "", double dvalue = 0, bool numeric = false)
+        CMonitorOutputMeasurement(const char* name = "", const char* value = "")
         {
             strncpy(m_name.data(), name, CMONITOR_MEASUREMENT_NAME_MAXLEN - 1);
             strncpy(m_value.data(), value, CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
-            m_dvalue = dvalue;
-            m_numeric = numeric;
+            m_dvalue = 0;
+            m_numeric = false;
         }
+        CMonitorOutputMeasurement(const char* name, double value)
+        {
+            strncpy(m_name.data(), name, CMONITOR_MEASUREMENT_NAME_MAXLEN - 1);
+            // FIXME1: we should find a way to format directly into m_value!
+            // FIXME:2 we should do the double -> string conversion only when JSON output is enabled; e.g. Prometheus
+            // output frontend does not need m_value conversion; or even better we should remove entirely m_value and do
+            // the conversion on the fly ONLY when producing JSON output
 
+            // with std::to_string() you cannot specify the accuracy (how many decimal digits)
+            std::string tmp = fmt::format("{:.3f}", value);
+            strncpy(m_value.data(), tmp.data(), CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
+            m_dvalue = value;
+            m_numeric = true;
+        }
+        CMonitorOutputMeasurement(const char* name, long long value)
+        {
+            strncpy(m_name.data(), name, CMONITOR_MEASUREMENT_NAME_MAXLEN - 1);
+            // FIXME1: we should find a way to format directly into m_value!
+            // FIXME:2 we should do the double -> string conversion only when JSON output is enabled; e.g. Prometheus
+            // output frontend does not need m_value conversion; or even better we should remove entirely m_value and do
+            // the conversion on the fly ONLY when producing JSON output
+
+            // according to https://www.zverovich.net/2020/06/13/fast-int-to-string-revisited.html
+            // fmt::format_int is be the fastest way to convert integers
+#if FMTLIB_MAJOR_VER >= 6
+            auto tmp = fmt::format_int(value);
+#else
+            auto tmp = fmt::format("{}", value);
+#endif
+            strncpy(m_value.data(), tmp.data(), CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
+            m_dvalue = value;
+            m_numeric = true;
+        }
         std::array<char, CMONITOR_MEASUREMENT_NAME_MAXLEN> m_name; // use std::array to void dynamic allocations
         std::array<char, CMONITOR_MEASUREMENT_VALUE_MAXLEN> m_value; // use std::array to void dynamic allocations
         double m_dvalue; // double value to avoid atof conversion

@@ -611,10 +611,15 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
         printf("Option --remote-ip and remort-port provided but the --remote option was not provided\n");
         exit(54);
     }
+    std::transform(m_cfg.m_strRemote.begin(), m_cfg.m_strRemote.end(), m_cfg.m_strRemote.begin(), ::tolower);
+    if ((m_cfg.m_strRemote != "prometheus") && (m_cfg.m_strRemote != "influxdb")) {
+        printf("incorrect --remote option provided <%s>\n", m_cfg.m_strRemote.c_str());
+        exit(55);
+    }
     if ((m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) && (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {
         printf("If --collect=cgroup_threads is provided, it is not required to provide --collect=cgroup_processes "
                "since implicitly statistics for all processes will already be collected\n");
-        exit(55);
+        exit(56);
     }
 
     optind = 0; /* reset getopt lib */

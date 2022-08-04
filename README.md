@@ -446,21 +446,6 @@ manual steps:
  sudo conan profile new default --detect
  sudo conan profile update settings.compiler.libcxx=libstdc++11 default
  sudo conan install conanfile.txt --build=missing
-
-conanfile.txt:
-[requires]
-  prometheus-cpp/1.0.0@
-
-[options]
-  prometheus-cpp:shared=True                     # default is True
-  prometheus-cpp:with_pull=True                  # default is True
-  prometheus-cpp:with_push=False                 # default is False
-  prometheus-cpp:with_compression=False          # default is False
-  prometheus-cpp:fPIC=True                       # default is True
-
-[imports]
-  lib, *.so* -> /usr/lib64
-  include, * -> /usr/include
 ```
 
 ```

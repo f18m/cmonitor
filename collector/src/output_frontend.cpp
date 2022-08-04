@@ -156,6 +156,8 @@ void CMonitorOutputFrontend::init_prometheus_kpi(const prometheus_kpi_descriptor
         } else if (kpi[i].kpi_type == prometheus::MetricType::Gauge) {
             prometheus_kpi
                 = new PrometheusGauge(m_prometheus_registry, kpi[i].kpi_name, kpi[i].description, m_default_labels);
+        } else {
+            assert(0);
         }
         if (prometheus_kpi) {
             m_prometheus_kpi_map.insert(std::pair<std::string, PrometheusKpi*>(kpi[i].kpi_name, prometheus_kpi));
@@ -582,14 +584,14 @@ void CMonitorOutputFrontend::push_current_sections_to_prometheus()
                 if (subsec.m_measurements.empty()) {
                     for (size_t i = 0; i < subsec.m_subsubsections.size(); i++) {
                         auto& subsubsec = subsec.m_subsubsections[i];
+                        lbl = { { "metric", subsubsec.m_name } };
+                        if (!subsubsec.m_labels.empty()) {
+                            for (const auto& entry : subsubsec.m_labels) {
+                                lbl.insert(std::make_pair(entry.first, entry.second));
+                            }
+                        }
                         for (size_t n = 0; n < subsubsec.m_measurements.size(); n++) {
                             auto& measurement = subsubsec.m_measurements[n];
-                            lbl = { { "metric", subsubsec.m_name } };
-                            if (!subsubsec.m_labels.empty()) {
-                                for (const auto& entry : subsubsec.m_labels) {
-                                    lbl.insert(std::make_pair(entry.first, entry.second));
-                                }
-                            }
                             if (subsubsec.m_name != "proc_info")
                                 generate_prometheus_metric(
                                     metric_name, measurement.m_name.data(), measurement.m_dvalue, lbl);
@@ -744,7 +746,7 @@ void CMonitorOutputFrontend::phex(const char* name, long long value)
     assert(m_current_meas_list);
 
     auto fmt_string = fmt::format("hex:{:#08x}", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), value, true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str()));
 }
 
 void CMonitorOutputFrontend::plong(const char* name, long long value)
@@ -752,15 +754,7 @@ void CMonitorOutputFrontend::plong(const char* name, long long value)
     m_long++;
     assert(m_current_meas_list);
 
-    // according to
-    //   https://www.zverovich.net/2020/06/13/fast-int-to-string-revisited.html
-    // fmt::format_int is be the fastest way to convert integers
-#if FMTLIB_MAJOR_VER >= 6
-    auto fmt_string = fmt::format_int(value);
-#else
-    auto fmt_string = fmt::format("{}", value);
-#endif
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), value, true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, value));
 }
 
 void CMonitorOutputFrontend::pdouble(const char* name, double value)
@@ -768,9 +762,7 @@ void CMonitorOutputFrontend::pdouble(const char* name, double value)
     m_double++;
     assert(m_current_meas_list);
 
-    // with std::to_string() you cannot specify the accuracy (how many decimal digits)
-    auto fmt_string = fmt::format("{:.3f}", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), value, true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, value));
 }
 
 void CMonitorOutputFrontend::pstring(const char* name, const char* value)

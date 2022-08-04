@@ -132,17 +132,6 @@ static const prometheus_kpi_descriptor g_prometheus_kpi_cgroup_network[] = {
 
 /* structure for prometheus output : PROCESS/THREAD statistics */
 static const prometheus_kpi_descriptor g_prometheus_kpi_cgroup_processes[] = {
-    // proc_loadavg
-    { "proc_loadavg_load_avg_1min", prometheus::MetricType::Counter,
-        "Load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D) "
-        "averaged over 1min" },
-    { "proc_loadavg_load_avg_5min", prometheus::MetricType::Counter,
-        "Load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D) "
-        "averaged over 5min" },
-    { "proc_loadavg_load_avg_15min", prometheus::MetricType::Counter,
-        "Load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D) "
-        "averaged over 15min" },
-
     // cgroup : task/threads
     { "cgroup_tasks_last", prometheus::MetricType::Gauge, "CPU number last executed on" },
     { "cgroup_tasks_usr", prometheus::MetricType::Gauge,
