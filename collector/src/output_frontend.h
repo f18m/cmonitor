@@ -181,9 +181,10 @@ private:
             m_dvalue = value;
             m_numeric = true;
         }
+
         std::array<char, CMONITOR_MEASUREMENT_NAME_MAXLEN> m_name; // use std::array to void dynamic allocations
         std::array<char, CMONITOR_MEASUREMENT_VALUE_MAXLEN> m_value; // use std::array to void dynamic allocations
-        double m_dvalue; // double value to avoid atof conversion
+        double m_dvalue = 0; // double value to avoid atof conversion
         bool m_numeric;
     };
 
