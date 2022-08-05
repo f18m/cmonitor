@@ -628,6 +628,9 @@ void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metri
 {
 
     std::string prometheus_metric_name = metric_name + "_" + metric_data;
+    // FIXME: all this string processing for every single KPI is very inefficient.
+    // need to optimize this code, doing just 1 pass on the "metric_name" and "metric_data" strings to produce the
+    // correct output in a local buffer.
     std::replace(prometheus_metric_name.begin(), prometheus_metric_name.end(), '-', '_');
     std::replace(prometheus_metric_name.begin(), prometheus_metric_name.end(), '.', '_');
     std::replace(prometheus_metric_name.begin(), prometheus_metric_name.end(), '(', '_');
