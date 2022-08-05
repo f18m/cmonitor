@@ -136,7 +136,7 @@ void CMonitorOutputFrontend::init_prometheus_connection(
     m_prometheus_enabled = true;
     CMonitorLogger::instance()->LogDebug("init_prometheus_connection() initialized Prometheus port to %s", url.c_str());
 
-    m_default_labels = { { "app", "cmonitor" } };
+    m_default_labels = { { "function", "cmonitor" } };
     // strore the metadata from command line.
     if (!metaData.empty()) {
         for (const auto& entry : metaData) {
