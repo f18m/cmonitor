@@ -35,6 +35,38 @@ void CMonitorSystem::init()
     m_loadavg.set_file("/proc/loadavg");
     m_meminfo.set_file("/proc/meminfo");
     m_vmstat.set_file("/proc/vmstat");
+
+#ifdef PROMETHEUS_SUPPORT
+    if (m_pOutput->is_prometheus_enabled() && (!(m_pCfg->m_nCollectFlags & PK_BAREMETAL_CPU) == 0)) {
+        size_t size = sizeof(g_prometheus_kpi_cpu) / sizeof(g_prometheus_kpi_cpu[0]);
+        m_pOutput->init_prometheus_kpi(g_prometheus_kpi_cpu, size);
+    }
+
+    if (m_pOutput->is_prometheus_enabled() && (!(m_pCfg->m_nCollectFlags & PK_BAREMETAL_DISK) == 0)) {
+        size_t size = sizeof(g_prometheus_kpi_disk) / sizeof(g_prometheus_kpi_disk[0]);
+        m_pOutput->init_prometheus_kpi(g_prometheus_kpi_disk, size);
+    }
+
+    if (m_pOutput->is_prometheus_enabled() && (!(m_pCfg->m_nCollectFlags & PK_BAREMETAL_MEMORY) == 0)) {
+        size_t size = sizeof(g_prometheus_kpi_proc_meminfo) / sizeof(g_prometheus_kpi_proc_meminfo[0]);
+        m_pOutput->init_prometheus_kpi(g_prometheus_kpi_proc_meminfo, size);
+
+        if (m_pCfg->m_nOutputFields == PF_ALL) {
+            size_t size = sizeof(g_prometheus_kpi_proc_vmstat) / sizeof(g_prometheus_kpi_proc_vmstat[0]);
+            m_pOutput->init_prometheus_kpi(g_prometheus_kpi_proc_vmstat, size);
+        }
+    }
+
+    if (m_pOutput->is_prometheus_enabled() && (!(m_pCfg->m_nCollectFlags & PK_BAREMETAL_NETWORK) == 0)) {
+        size_t size = sizeof(g_prometheus_kpi_network) / sizeof(g_prometheus_kpi_network[0]);
+        m_pOutput->init_prometheus_kpi(g_prometheus_kpi_network, size);
+    }
+
+    if (m_pOutput->is_prometheus_enabled() && (!(m_pCfg->m_nCollectFlags & PK_BAREMETAL_LOAD) == 0)) {
+        size_t size = sizeof(g_prometheus_kpi_load) / sizeof(g_prometheus_kpi_load[0]);
+        m_pOutput->init_prometheus_kpi(g_prometheus_kpi_load, size);
+    }
+#endif
 }
 
 /*

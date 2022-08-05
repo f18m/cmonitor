@@ -45,6 +45,12 @@ void CMonitorOutputFrontend::close()
         delete m_influxdb_client_conn;
         m_influxdb_client_conn = nullptr;
     }
+#ifdef PROMETHEUS_SUPPORT
+    for (const auto& kpi : m_prometheus_kpi_map) {
+        delete kpi.second;
+    }
+    m_prometheus_kpi_map.clear();
+#endif
 }
 
 void CMonitorOutputFrontend::init_json_output_file(const std::string& filenamePrefix)
@@ -118,6 +124,47 @@ void CMonitorOutputFrontend::init_influxdb_connection(
     CMonitorLogger::instance()->LogDebug("init_influxdb_connection() initialized InfluxDB connection to %s:%d",
         m_influxdb_client_conn->host, m_influxdb_client_conn->port);
 }
+
+#ifdef PROMETHEUS_SUPPORT
+void CMonitorOutputFrontend::init_prometheus_connection(
+    const std::string& url, const std::map<std::string, std::string>& metaData)
+{
+    m_prometheus_exposer = prometheus::detail::make_unique<prometheus::Exposer>(url);
+    m_prometheus_registry = std::make_shared<prometheus::Registry>();
+    m_prometheus_exposer->RegisterCollectable(m_prometheus_registry);
+
+    m_prometheus_enabled = true;
+    CMonitorLogger::instance()->LogDebug("init_prometheus_connection() initialized Prometheus port to %s", url.c_str());
+
+    m_default_labels = { { "function", "cmonitor" } };
+    // strore the metadata from command line.
+    if (!metaData.empty()) {
+        for (const auto& entry : metaData) {
+            m_default_labels.insert(std::make_pair(entry.first, entry.second));
+        }
+    }
+}
+
+void CMonitorOutputFrontend::init_prometheus_kpi(const prometheus_kpi_descriptor* kpi, size_t size)
+{
+    // loop the metric list and create the prometheus KPI metrics.
+    for (size_t i = 0; i < size; i++) {
+        PrometheusKpi* prometheus_kpi = NULL;
+        if (kpi[i].kpi_type == prometheus::MetricType::Counter) {
+            prometheus_kpi
+                = new PrometheusCounter(m_prometheus_registry, kpi[i].kpi_name, kpi[i].description, m_default_labels);
+        } else if (kpi[i].kpi_type == prometheus::MetricType::Gauge) {
+            prometheus_kpi
+                = new PrometheusGauge(m_prometheus_registry, kpi[i].kpi_name, kpi[i].description, m_default_labels);
+        } else {
+            assert(0);
+        }
+        if (prometheus_kpi) {
+            m_prometheus_kpi_map.insert(std::pair<std::string, PrometheusKpi*>(kpi[i].kpi_name, prometheus_kpi));
+        }
+    }
+}
+#endif
 
 void CMonitorOutputFrontend::enable_json_pretty_print()
 {
@@ -494,6 +541,11 @@ void CMonitorOutputFrontend::push_current_sections(bool is_header)
     if (m_influxdb_client_conn)
         push_current_sections_to_influxdb(is_header);
 
+#ifdef PROMETHEUS_SUPPORT
+    if (m_prometheus_enabled)
+        push_current_sections_to_prometheus();
+#endif
+
     fflush(NULL); /* force I/O output now */
 
     // IMPORTANT: clear() but do not shrink_to_fit() to avoid a bunch of reallocations for next sample:
@@ -525,6 +577,77 @@ size_t CMonitorOutputFrontend::get_current_sample_measurements() const
 
     return ntotal_meas;
 }
+
+#ifdef PROMETHEUS_SUPPORT
+void CMonitorOutputFrontend::push_current_sections_to_prometheus()
+{
+    std::string metric_name;
+    std::map<std::string, std::string> lbl;
+    for (size_t i = 0; i < m_current_sections.size(); i++) {
+        auto& sec = m_current_sections[i];
+        metric_name = sec.m_name;
+        if (sec.m_measurements.empty()) {
+            for (size_t i = 0; i < sec.m_subsections.size(); i++) {
+                auto& subsec = sec.m_subsections[i];
+                if (subsec.m_measurements.empty()) {
+                    for (size_t i = 0; i < subsec.m_subsubsections.size(); i++) {
+                        auto& subsubsec = subsec.m_subsubsections[i];
+                        lbl = { { "metric", subsubsec.m_name } };
+                        if (!subsubsec.m_labels.empty()) {
+                            for (const auto& entry : subsubsec.m_labels) {
+                                lbl.insert(std::make_pair(entry.first, entry.second));
+                            }
+                        }
+                        for (size_t n = 0; n < subsubsec.m_measurements.size(); n++) {
+                            auto& measurement = subsubsec.m_measurements[n];
+                            if (subsubsec.m_name != "proc_info")
+                                generate_prometheus_metric(
+                                    metric_name, measurement.m_name.data(), measurement.m_dvalue, lbl);
+                        }
+                    }
+
+                } else {
+                    for (size_t n = 0; n < subsec.m_measurements.size(); n++) {
+                        auto& measurement = subsec.m_measurements[n];
+                        lbl = { { "metric", subsec.m_name } };
+                        generate_prometheus_metric(metric_name, measurement.m_name.data(), measurement.m_dvalue, lbl);
+                    }
+                }
+            }
+        } else {
+            for (size_t n = 0; n < sec.m_measurements.size(); n++) {
+                auto& measurement = sec.m_measurements[n];
+                generate_prometheus_metric(sec.m_name, measurement.m_name.data(), measurement.m_dvalue);
+            }
+        }
+    }
+}
+
+void CMonitorOutputFrontend::generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data,
+    double metric_value, const std::map<std::string, std::string>& labels)
+{
+
+    std::string prometheus_metric_name = metric_name + "_" + metric_data;
+    // FIXME: all this string processing for every single KPI is very inefficient.
+    // need to optimize this code, doing just 1 pass on the "metric_name" and "metric_data" strings to produce the
+    // correct output in a local buffer.
+    std::replace(prometheus_metric_name.begin(), prometheus_metric_name.end(), '-', '_');
+    std::replace(prometheus_metric_name.begin(), prometheus_metric_name.end(), '.', '_');
+    std::replace(prometheus_metric_name.begin(), prometheus_metric_name.end(), '(', '_');
+    prometheus_metric_name.erase(
+        std ::remove(prometheus_metric_name.begin(), prometheus_metric_name.end(), ')'), prometheus_metric_name.end());
+
+    auto kpi = m_prometheus_kpi_map.find(prometheus_metric_name);
+    if (kpi != m_prometheus_kpi_map.end()) {
+        PrometheusKpi* prometheus_kpi = kpi->second;
+        prometheus_kpi->set_kpi_value(metric_value, labels);
+    } else {
+        CMonitorLogger::instance()->LogError(
+            "CMonitorOutputFrontend::generate_prometheus_metric KPI %s not found in the list \n",
+            prometheus_metric_name.c_str());
+    }
+}
+#endif
 
 //------------------------------------------------------------------------------
 // JSON objects
@@ -585,12 +708,13 @@ void CMonitorOutputFrontend::psection_end()
     m_current_meas_list = nullptr;
 }
 
-void CMonitorOutputFrontend::psubsection_start(const char* subsection)
+void CMonitorOutputFrontend::psubsection_start(const char* subsection, const std::map<std::string, std::string>& labels)
 {
     m_subsections++;
 
     CMonitorOutputSubsection subsec;
     subsec.m_name = subsection;
+    subsec.m_labels = labels;
     m_current_sections.back().m_subsections.push_back(subsec);
 
     // when adding new measurements, add them as children of this new subsection:
@@ -603,12 +727,14 @@ void CMonitorOutputFrontend::psubsection_end()
     m_current_meas_list = nullptr;
 }
 
-void CMonitorOutputFrontend::psubsubsection_start(const char* resource)
+void CMonitorOutputFrontend::psubsubsection_start(
+    const char* resource, const std::map<std::string, std::string>& labels)
 {
     m_subsubsections++;
 
     CMonitorOutputSubSubsection subsubsec;
     subsubsec.m_name = resource;
+    subsubsec.m_labels = labels;
     m_current_sections.back().m_subsections.back().m_subsubsections.push_back(subsubsec);
 
     // when adding new measurements, add them as children of this new sub-subsection:
@@ -625,29 +751,12 @@ void CMonitorOutputFrontend::psubsubsection_end()
 // JSON field/values
 //------------------------------------------------------------------------------
 
-void CMonitorOutputFrontend::phex(const char* name, long long value)
-{
-    m_hex++;
-    assert(m_current_meas_list);
-
-    auto fmt_string = fmt::format("hex:{:#08x}", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
-}
-
 void CMonitorOutputFrontend::plong(const char* name, long long value)
 {
     m_long++;
     assert(m_current_meas_list);
 
-    // according to
-    //   https://www.zverovich.net/2020/06/13/fast-int-to-string-revisited.html
-    // fmt::format_int is be the fastest way to convert integers
-#if FMTLIB_MAJOR_VER >= 6
-    auto fmt_string = fmt::format_int(value);
-#else
-    auto fmt_string = fmt::format("{}", value);
-#endif
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, value));
 }
 
 void CMonitorOutputFrontend::pdouble(const char* name, double value)
@@ -655,9 +764,7 @@ void CMonitorOutputFrontend::pdouble(const char* name, double value)
     m_double++;
     assert(m_current_meas_list);
 
-    // with std::to_string() you cannot specify the accuracy (how many decimal digits)
-    auto fmt_string = fmt::format("{:.3f}", value);
-    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, fmt_string.c_str(), true));
+    m_current_meas_list->push_back(CMonitorOutputMeasurement(name, value));
 }
 
 void CMonitorOutputFrontend::pstring(const char* name, const char* value)

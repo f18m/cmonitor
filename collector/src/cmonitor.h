@@ -50,6 +50,7 @@ enum PerformanceKpiFamily {
     PK_BAREMETAL_DISK = 4, // collect disk stats from /proc/diskstats
     PK_BAREMETAL_MEMORY = 8, // collect memory stats from /proc/meminfo
     PK_BAREMETAL_NETWORK = 16, // collect cpu stats from /proc/net/dev
+    PK_BAREMETAL_LOAD = 32, // collect avg load stats from /proc/loadavg
 
     PK_CGROUP_CPU_ACCT = 128, // collect CPU stats for the whole cgroup from controller "cpu accounting"
     PK_CGROUP_MEMORY = 256, // collect memory stats for the whole cgroup from controller "memory"
@@ -61,11 +62,13 @@ enum PerformanceKpiFamily {
 
     PK_MAX,
 
-    PK_ALL_BAREMETAL = PK_BAREMETAL_CPU | PK_BAREMETAL_DISK | PK_BAREMETAL_MEMORY | PK_BAREMETAL_NETWORK,
+    PK_ALL_BAREMETAL
+    = PK_BAREMETAL_CPU | PK_BAREMETAL_DISK | PK_BAREMETAL_MEMORY | PK_BAREMETAL_NETWORK | PK_BAREMETAL_LOAD,
     PK_ALL_CGROUP
     = PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_NETWORK_INTERFACES | PK_CGROUP_PROCESSES,
 
-    PK_ALL = PK_BAREMETAL_CPU | PK_BAREMETAL_DISK | PK_BAREMETAL_MEMORY | PK_BAREMETAL_NETWORK // force newline
+    PK_ALL = PK_BAREMETAL_CPU | PK_BAREMETAL_DISK | PK_BAREMETAL_MEMORY | PK_BAREMETAL_NETWORK
+        | PK_BAREMETAL_LOAD // force newline
         | PK_CGROUP_CPU_ACCT | PK_CGROUP_MEMORY | PK_CGROUP_BLKIO | PK_CGROUP_NETWORK_INTERFACES | PK_CGROUP_PROCESSES
 };
 
@@ -164,7 +167,7 @@ typedef struct proc_topper_s {
 
 class CMonitorCollectorAppConfig {
 public:
-    CMonitorCollectorAppConfig() { }
+    CMonitorCollectorAppConfig() {}
 
     // configuration for this process:
     bool m_bAllowMultipleInstances = false; // --allow-multiple-instances
@@ -189,6 +192,7 @@ public:
     std::string m_strCGroupName; // --cgroup-name
     uint64_t m_nProcessScoreThreshold = 1; // --score-threshold
     std::map<std::string, std::string> m_mapCustomMetadata; // --custom-metadata
+    std::string m_strRemote; // -- influxdb|prometheus
 };
 
 //------------------------------------------------------------------------------

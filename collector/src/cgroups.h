@@ -33,6 +33,10 @@
 #include <unistd.h>
 #include <vector>
 
+#ifdef PROMETHEUS_SUPPORT
+#include "prometheus_kpi.h"
+#endif
+
 // ----------------------------------------------------------------------------------
 // Constants
 // ----------------------------------------------------------------------------------
@@ -52,6 +56,122 @@ std::string CGroupDetected2string(CGroupDetected k);
 //------------------------------------------------------------------------------
 // Types
 //------------------------------------------------------------------------------
+
+#ifdef PROMETHEUS_SUPPORT
+/* structure for prometheus output : CPU utilization as reported by cpuacct cgroup */
+static const prometheus_kpi_descriptor g_prometheus_kpi_cgroup_cpu[] = {
+    // cgroup : cpu
+    { "cgroup_cpuacct_stats_user", prometheus::MetricType::Gauge, "CPU time consumed by tasks in user mode" },
+    { "cgroup_cpuacct_stats_sys", prometheus::MetricType::Gauge,
+        "CPU time consumed by tasks in system (kernel) mode" },
+    { "cgroup_cpuacct_stats_nr_periods", prometheus::MetricType::Gauge,
+        "Number of periods that any thread in the cgroup was runnable" },
+    { "cgroup_cpuacct_stats_nr_throttled", prometheus::MetricType::Gauge,
+        "Number of runnable periods in which the application used its entire quota and was throttled" },
+    { "cgroup_cpuacct_stats_throttled_time", prometheus::MetricType::Gauge,
+        "Sum total amount of time individual threads within the cgroup were throttled" },
+};
+
+/* structure for prometheus output : Memory utilization as reported by cpuacct cgroup */
+static const prometheus_kpi_descriptor g_prometheus_kpi_cgroup_memory[] = {
+    // cgroup : memory
+    { "cgroup_memory_stats_stat_active_anon", prometheus::MetricType::Counter,
+        "Number of bytes of anonymous and swap cache memory on active LRU list" },
+    { "cgroup_memory_stats_stat_inactive_anon", prometheus::MetricType::Counter,
+        "Number of bytes of anonymous and swap cache memory on inactive LRU list" },
+    { "cgroup_memory_stats_stat_active_file", prometheus::MetricType::Counter,
+        "Number of bytes of file-backed memory on active LRU list" },
+    { "cgroup_memory_stats_stat_inactive_file", prometheus::MetricType::Counter,
+        "Number of bytes of file-backed memory on inactive LRU list" },
+    { "cgroup_memory_stats_stat_cache", prometheus::MetricType::Counter, "Number of bytes of page cache memory" },
+    { "cgroup_memory_stats_stat_mapped_file", prometheus::MetricType::Counter,
+        "Number of bytes of mapped file (includes tmpfs/shmem)" },
+    { "cgroup_memory_stats_stat_pgfault", prometheus::MetricType::Counter, "Total number of page faults incurred" },
+    { "cgroup_memory_stats_stat_pgmajfault", prometheus::MetricType::Counter, "Number of major page faults incurred" },
+    { "cgroup_memory_stats_stat_pgpgin", prometheus::MetricType::Counter,
+        "Number of charging events to the memory cgroup" },
+    { "cgroup_memory_stats_stat_pgpgout", prometheus::MetricType::Counter,
+        "Number of uncharging events to the memory cgroup" },
+    { "cgroup_memory_stats_stat_rss", prometheus::MetricType::Counter,
+        "Number of bytes of anonymous and swap cache memory (includes transparent hugepages)" },
+    { "cgroup_memory_stats_stat_rss_huge", prometheus::MetricType::Counter,
+        "Number of bytes of anonymous transparent hugepages" },
+    { "cgroup_memory_stats_stat_swap", prometheus::MetricType::Counter, "Number of bytes of swap usage" },
+    { "cgroup_memory_stats_stat_unevictable", prometheus::MetricType::Counter,
+        "Number of bytes of memory that cannot be reclaimed (mlocked etc)" },
+    { "cgroup_memory_stats_events_failcnt", prometheus::MetricType::Counter,
+        "Number of times that a usage counter hit its limit" },
+};
+
+/* structure for prometheus output : Network utilization as reported by BY-NETWORK-INTERFACE */
+static const prometheus_kpi_descriptor g_prometheus_kpi_cgroup_network[] = {
+    // cgroup : network
+    { "cgroup_network_ibytes", prometheus::MetricType::Gauge,
+        "Total number of bytes of data received by the interface" },
+    { "cgroup_network_ipackets", prometheus::MetricType::Gauge,
+        "Total number of packets of data received by the interface" },
+    { "cgroup_network_ierrs", prometheus::MetricType::Gauge,
+        "Total number of receive errors detected by the device driver" },
+    { "cgroup_network_idrop", prometheus::MetricType::Gauge, "Total number of packets dropped by the device driver" },
+    { "cgroup_network_ififo", prometheus::MetricType::Gauge, "Total number of FIFO buffer errors" },
+    { "cgroup_network_iframe", prometheus::MetricType::Gauge, "Total number of packet framing errors" },
+    { "cgroup_network_obytes", prometheus::MetricType::Gauge,
+        "Total number of bytes of data transmitted by the interface" },
+    { "cgroup_network_opackets", prometheus::MetricType::Gauge,
+        "Total number of packets of data transmitted by the interface" },
+    { "cgroup_network_oerrs", prometheus::MetricType::Gauge,
+        "Total number of transmitted errors detected by the device driver" },
+    { "cgroup_network_odrop", prometheus::MetricType::Gauge, "Total number of packets dropped by the interface" },
+    { "cgroup_network_ofifo", prometheus::MetricType::Gauge, "Total number of FIFO buffer errors" },
+    { "cgroup_network_ocolls", prometheus::MetricType::Gauge,
+        "Total number of collisions detected on the interface" },
+    { "cgroup_network_ocarrier", prometheus::MetricType::Gauge,
+        "Total number of carrier losses detected by the device driver" },
+
+};
+
+/* structure for prometheus output : PROCESS/THREAD statistics */
+static const prometheus_kpi_descriptor g_prometheus_kpi_cgroup_processes[] = {
+    // cgroup : task/threads
+    { "cgroup_tasks_last", prometheus::MetricType::Gauge, "CPU number last executed on" },
+    { "cgroup_tasks_usr", prometheus::MetricType::Gauge,
+        "Amount of time that this process has been scheduled in user mode, measured in clock ticks" },
+    { "cgroup_tasks_sys", prometheus::MetricType::Gauge,
+        "Amount of time that this process has been scheduled in kernel mode, measured in clock ticks" },
+    { "cgroup_tasks_usr_total_secs", prometheus::MetricType::Counter,
+        "Total amount of time that this process has been scheduled in kernel mode, measured in clock ticks" },
+    { "cgroup_tasks_sys_total_secs", prometheus::MetricType::Counter,
+        "Total amount of time that this process has been scheduled in kernel mode, measured in clock ticks" },
+    { "cgroup_tasks_size_kb", prometheus::MetricType::Counter, "Total program size" },
+    { "cgroup_tasks_resident_kb", prometheus::MetricType::Counter, "Resident set size" },
+    { "cgroup_tasks_restext_kb", prometheus::MetricType::Counter, "Resident text" },
+    { "cgroup_tasks_resdata_kb", prometheus::MetricType::Counter, "Resident data" },
+    { "cgroup_tasks_share_kb", prometheus::MetricType::Counter, "Shared pages" },
+    { "cgroup_tasks_rss_limit_bytes", prometheus::MetricType::Counter,
+        "Current soft limit in bytes on the rss of the process" },
+    { "cgroup_tasks_minor_fault", prometheus::MetricType::Gauge,
+        "The number of minor faults the process has made which have not required loading a memory page from disk" },
+    { "cgroup_tasks_major_fault", prometheus::MetricType::Gauge,
+        "The number of major faults the process has made which have required loading a memory page from disk" },
+    { "cgroup_tasks_virtual_bytes", prometheus::MetricType::Counter, "Virtual memory size in bytes" },
+    { "cgroup_tasks_rss_bytes", prometheus::MetricType::Counter,
+        "Resident Set Size: number of pages the process has in real memory" },
+    { "cgroup_tasks_swap_pages", prometheus::MetricType::Counter, "Number of pages swapped " },
+    { "cgroup_tasks_child_swap_pages", prometheus::MetricType::Counter, "Cumulative nswap for child processes" },
+    { "cgroup_tasks_realtime_priority", prometheus::MetricType::Counter, "Real-time scheduling priority" },
+    { "cgroup_tasks_sched_policy", prometheus::MetricType::Counter, "Scheduling policy" },
+    { "cgroup_tasks_delayacct_blkio_secs", prometheus::MetricType::Counter,
+        "Aggregated block I/O delays, measured in clock ticks" },
+    { "cgroup_tasks_rchar", prometheus::MetricType::Gauge,
+        "The number of bytes which this task has caused to be read from storage" },
+    { "cgroup_tasks_wchar", prometheus::MetricType::Gauge,
+        "The number of bytes which this task has caused, or shall cause to be written to disk" },
+    { "cgroup_tasks_read_bytes", prometheus::MetricType::Gauge, "Bytes read" },
+    { "cgroup_tasks_write_bytes", prometheus::MetricType::Gauge, "Bytes written" },
+    { "cgroup_tasks_total_read", prometheus::MetricType::Counter, "Total bytes read" },
+    { "cgroup_tasks_total_write", prometheus::MetricType::Counter, "Total bytes written" },
+};
+#endif
 
 /* structure to save CPU utilization as reported by cpuacct cgroup */
 typedef struct {
@@ -90,7 +210,7 @@ public:
         m_memory_prev_values.v1_failcnt = 0;
     }
 
-    ~CMonitorCgroups() { }
+    ~CMonitorCgroups() {}
 
     // main setup
     // NOTE: arguments _for_test are used only during unit testing
