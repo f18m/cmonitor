@@ -432,7 +432,7 @@ which uses Docker files to deploy a temporary setup and fill the InfluxDB with 1
 
 ### Connecting with Prometheus and Grafana
 
-The `cmonitor_collector` can be connected to an [Prometheus](https://prometheus.io/) instance where the collected metrics gets exposed to(this can happen
+The `cmonitor_collector` can be connected to an [Prometheus](https://prometheus.io/) instance where the collected metrics gets exposed to (this can happen
 in parallel to the JSON default storage). This can be done by simply providing the IP and port for the Prometheus when launching the collector.
 
 To support prometheus [prometheus-cpp](https://github.com/jupp0r/prometheus-cpp) client library needs to be installed.
@@ -459,8 +459,8 @@ cmonitor_collector \
    --num-samples=until-cgroup-alive \
    --cgroup-name=${FULL_CGROUP_NAME} \
    --collect=cgroup_threads,cgroup_cpu,cgroup_memory --score-threshold=0 \
-   --custom-metadata=cmonitor_chart_name:${PODNAME} \
-   --sampling-interval=3 \
+   --custom-metadata=function:cmonitor \
+   --sampling-interval=5 \
    --output-filename=pod-performances.json \
    --remote-ip 10.1.2.3 --remote-port 9092 --remote prometheus
 ```
@@ -523,15 +523,15 @@ Options to save data locally
                                         
 Options to stream data remotely
   -i, --remote-ip=<REQ ARG>             IP address or hostname of the InfluxDB instance to send measurements to;
-                                        cmonitor_collector will use a database named 'cmonitor' to store them.
-                                        This can be used to set the hostname for Prometheus instance.
+                                        cmonitor_collector will use a database named 'cmonitor' to store them,
+                                        or this can be used to set the hostname for Prometheus instance.
   -p, --remote-port=<REQ ARG>           Port to be used by InfluxDB or Prometheus instance.
   -X, --remote-secret=<REQ ARG>         Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).
                                         
   -D, --remote-dbname=<REQ ARG>         Set the InfluxDB database name.
 
 Options to set remote
-  -r, --remote=<REQ ARG>                Set the target influxdb|prometheus.
+  -r, --remote=<REQ ARG>                Set the target influxdb or prometheus.
                                         
 Other options
   -v, --version                         Show version and exit
