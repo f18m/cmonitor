@@ -27,7 +27,7 @@ Can also be used with InfluxDB and Grafana.
 %build
 # this command invokes the root Makefile of cmonitor repo, from inside the source tarball
 # produced by COPR that will pass all the options listed here to collector/Makefile
-pip3 install conan
+pip3 install --user conan
 sudo conan profile new default --detect
 sudo conan profile update settings.compiler.libcxx=libstdc++11 default
 conan install $(ROOT_DIR)/conanfile.txt --build=missing
