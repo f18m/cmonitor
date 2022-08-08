@@ -30,7 +30,7 @@ Can also be used with InfluxDB and Grafana.
 pip3 install --user conan
 conan profile new default --detect
 conan profile update settings.compiler.libcxx=libstdc++11 default
-conan install $(ROOT_DIR)/conanfile.txt --build=missing
+conan install conanfile.txt --build=missing
 %make_build PROMETHEUS_SUPPORT=1 DISABLE_UNIT_TESTS_BUILD=1 DISABLE_BENCHMARKS_BUILD=1 FMTLIB_MAJOR_VER=6 CMONITOR_LAST_COMMIT_HASH=__LAST_COMMIT_HASH__
 
 %install
