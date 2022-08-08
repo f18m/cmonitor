@@ -28,6 +28,9 @@ test:
 	$(MAKE) -C examples all
 	if [ -d "tools" ]; then	$(MAKE) -C tools test ; fi
 
+format_check:
+	black --check .
+
 clean:
 	$(MAKE) -C collector clean
 	$(MAKE) -C tools clean

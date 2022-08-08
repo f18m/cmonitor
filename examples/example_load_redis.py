@@ -19,10 +19,7 @@ cmd_batch_len = 30
 
 
 def get_ext_test_port(internal_port, full_container_name):
-    formatArg = (
-        "--format='{{(index (index .NetworkSettings.Ports \"%d/tcp\") 0).HostPort}}'"
-        % (internal_port)
-    )
+    formatArg = "--format='{{(index (index .NetworkSettings.Ports \"%d/tcp\") 0).HostPort}}'" % (internal_port)
     command_output = subprocess.run(
         ["docker", "inspect", formatArg, full_container_name],
         stdout=subprocess.PIPE,
@@ -35,9 +32,7 @@ def get_ext_test_port(internal_port, full_container_name):
     port_str = command_output.stdout.replace("'", "")
     try:
         ext_port = int(port_str)
-        print(
-            f"The docker container {full_container_name} has its internal port {internal_port} exposed to localhost port {ext_port}..."
-        )
+        print(f"The docker container {full_container_name} has its internal port {internal_port} exposed to localhost port {ext_port}...")
         return ext_port
     except:
         return 0

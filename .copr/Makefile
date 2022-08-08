@@ -5,8 +5,6 @@ include $(ROOT_DIR)/Constants.mk
 
 $(info Launching COPR build from directory: $(COPR_CURRENT_SUBDIRECTORY))
 
-COPR_PACKAGE_NAMES_SUFFIX:=1.8-4 2.0-0 2.2-0 latest
-
 #
 # This target is used by Fedora COPR to automatically produce RPMs for lots of distros.
 # COPR will invoke this target like that:
@@ -44,18 +42,5 @@ ifndef COPR_TOKEN
 	@echo "*** ERROR: please call this makefile supplying explicitly the COPR_TOKEN variable"
 	@exit 1
 endif
-	for pkgname in $(COPR_PACKAGE_NAMES_SUFFIX); do \
-		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-collector-$${pkgname}/ ; \
-		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-tools-$${pkgname}/ ; \
-	done
-
-rebuild_latest_copr_packages:
-	# IMPORTANT: take the COPR_TOKEN from the webpage: https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/integrations/
-ifndef COPR_TOKEN
-	@echo "*** ERROR: please call this makefile supplying explicitly the COPR_TOKEN variable"
-	@exit 1
-endif
-	for pkgname in latest; do \
-		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-collector-$${pkgname}/ ; \
-		curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-tools-$${pkgname}/ ; \
-	done
+	curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-collector/
+	curl -X POST https://copr.fedorainfracloud.org/webhooks/custom/24475/$(COPR_TOKEN)/cmonitor-tools/
