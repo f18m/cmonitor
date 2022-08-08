@@ -10,8 +10,7 @@ Requires:       fmt
 # these are the requirements that we need on COPR builds:
 # IMPORTANT: cmonitor-collector RPM is built also on the 'old' Centos7 platform shipping fmt-devel-6.2.1
 #            so make sure not to use any feature of libfmt > 6.2.1
-BuildRequires:  gcc-c++, make, gtest-devel, fmt-devel, git
-# python3-pip works and gets installed but then it fails later for unknown reasons
+BuildRequires:  gcc-c++, make, gtest-devel, fmt-devel, git, python3-pip
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
 # of debug info files apparently:
