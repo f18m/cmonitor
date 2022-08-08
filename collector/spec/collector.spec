@@ -28,8 +28,8 @@ Can also be used with InfluxDB and Grafana.
 # this command invokes the root Makefile of cmonitor repo, from inside the source tarball
 # produced by COPR that will pass all the options listed here to collector/Makefile
 pip3 install --user conan
-sudo conan profile new default --detect
-sudo conan profile update settings.compiler.libcxx=libstdc++11 default
+conan profile new default --detect
+conan profile update settings.compiler.libcxx=libstdc++11 default
 conan install $(ROOT_DIR)/conanfile.txt --build=missing
 %make_build PROMETHEUS_SUPPORT=1 DISABLE_UNIT_TESTS_BUILD=1 DISABLE_BENCHMARKS_BUILD=1 FMTLIB_MAJOR_VER=6 CMONITOR_LAST_COMMIT_HASH=__LAST_COMMIT_HASH__
 
