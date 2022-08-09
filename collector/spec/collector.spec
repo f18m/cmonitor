@@ -36,6 +36,7 @@ conan remote list
 
 # secondly, Conan is used to fetch prometheus-cpp library, building it with cmake when needed:
 echo "[Inside RPM build] installing prometheus-cpp"
+ln -sf /usr/bin/cmake3 /usr/bin/cmake # civetweb dependency has broken Conan package asking for 'cmake' instead of 'cmake3'
 conan install conanfile.txt --build=missing --profile %{buildroot}/cmonitor_rpmbuild
 
 # this command invokes the root Makefile of cmonitor repo, from inside the source tarball
