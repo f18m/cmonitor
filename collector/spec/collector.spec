@@ -29,8 +29,8 @@ Can also be used with InfluxDB and Grafana.
 # prometheus-cpp, since that library is not, unfortunately, packaged by Fedora/COPR
 echo "[Inside RPM build] installing Conan"
 pip3 install --user conan==1.42.0
-echo "[Inside RPM build] bootstrappingcon    Conan"
-conan profile new default --detect
+echo "[Inside RPM build] bootstrappingcon Conan"
+conan profile new default --detect || true
 conan profile update settings.compiler.libcxx=libstdc++11 default
 
 # secondly, Conan is used to fetch prometheus-cpp library, building it with cmake when needed:
