@@ -27,15 +27,19 @@ Can also be used with InfluxDB and Grafana.
 %build
 # first of all install in the buildroot the Conan package manager, which we use to fetch
 # prometheus-cpp, since that library is not, unfortunately, packaged by Fedora/COPR
-pip3 install --user conan
+echo "[Inside RPM build] installing Conan"
+pip3 install --user conan==1.42.0
+echo "[Inside RPM build] bootstrappingcon    Conan"
 conan profile new default --detect
 conan profile update settings.compiler.libcxx=libstdc++11 default
 
 # secondly, Conan is used to fetch prometheus-cpp library, building it with cmake when needed:
+echo "[Inside RPM build] installing prometheus-cpp"
 conan install conanfile.txt --build=missing
 
 # this command invokes the root Makefile of cmonitor repo, from inside the source tarball
 # produced by COPR; that root Makefile will pass all the options listed here to collector/Makefile
+echo "[Inside RPM build] launching cmonitor collector build"
 %make_build PROMETHEUS_SUPPORT=1 DISABLE_UNIT_TESTS_BUILD=1 DISABLE_BENCHMARKS_BUILD=1 FMTLIB_MAJOR_VER=6 CMONITOR_LAST_COMMIT_HASH=__LAST_COMMIT_HASH__
 
 %install
