@@ -616,8 +616,8 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
         exit(54);
     }
     std::transform(m_cfg.m_strRemote.begin(), m_cfg.m_strRemote.end(), m_cfg.m_strRemote.begin(), ::tolower);
-    if ((m_cfg.m_strRemote != "prometheus") && (m_cfg.m_strRemote != "influxdb")) {
-        printf("Incorrect --remote option provided: <%s>\n", m_cfg.m_strRemote.c_str());
+    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_strRemote != "prometheus" && m_cfg.m_strRemote != "influxdb") {
+        printf("Option --remote provided but the --remote value is not supporeed: <%s>\n", m_cfg.m_strRemote.c_str());
         exit(55);
     }
     if ((m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) && (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {

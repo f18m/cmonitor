@@ -24,8 +24,10 @@ endif
 LIBS += -lfmt
 
 ifeq ($(PROMETHEUS_SUPPORT),1)
-LIBS += -lprometheus-cpp-pull -lprometheus-cpp-core -lz
-CXXFLAGS += -DPROMETHEUS_SUPPORT=1
+# include prometheus-cpp depedency through the GNU make variables provided by Conan at install time
+include $(ROOT_DIR)/conanbuildinfo.mak
+LIBS += $(foreach libdir,$(CONAN_LIB_DIRS),-L$(libdir)) $(foreach lib,$(CONAN_LIBS),-l$(lib))
+CXXFLAGS += -DPROMETHEUS_SUPPORT=1 $(CONAN_CXXFLAGS) -I$(CONAN_INCLUDE_DIRS_PROMETHEUS-CPP)
 endif
 
 ifeq ($(MUSL_BUILD),1)

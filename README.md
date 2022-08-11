@@ -40,6 +40,7 @@ Table of contents of this README:
       - [Monitoring your Docker container](#monitoring-your-docker-container)
       - [Monitoring your Kubernetes POD](#monitoring-your-kubernetes-pod)
     - [Connecting with InfluxDB and Grafana](#connecting-with-influxdb-and-grafana)
+    - [Connecting with Prometheus and Grafana](#connecting-with-prometheus-and-grafana)
     - [Reference Manual](#reference-manual)
   - [Project History](#project-history)
   - [License](#license)
@@ -80,6 +81,7 @@ You may be thinking "yet another monitoring project" for containers. Indeed ther
 - [netdata](https://github.com/netdata/netdata): a web application targeting monitoring of large clusters
 - [collectd](https://collectd.org/): a system statics collection daemon (not much container-oriented though)
 - [metrics-server](https://github.com/kubernetes-sigs/metrics-server): the Kubernetes official metric server (Kubernetes only)
+- [process-exporter](https://github.com/ncabatoff/process-exporter): an utility to export generic processes' stats to Prometheus 
 
 Almost all of these are very complete solutions that allow you to monitor swarms of containers, in real time.
 The downside is that all these projects require you to setup an infrastructure (usually a time-series database) that collects
