@@ -5,6 +5,7 @@
 THIS_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/../..)
 include $(ROOT_DIR)/Constants.mk
+include $(ROOT_DIR)/Prometheus-Support.mk
 
 DEFS=-DVERSION_STRING=\"$(CMONITOR_VERSION)-$(CMONITOR_RELEASE)\" -DCMONITOR_LAST_COMMIT_HASH=\"$(CMONITOR_LAST_COMMIT_HASH)\" -DFMTLIB_MAJOR_VER=$(FMTLIB_MAJOR_VER)
 
@@ -22,14 +23,6 @@ CXXFLAGS += -g -O2   # release mode; NOTE: without -g the creation of debuginfo 
 LDFLAGS += -g -O2
 endif
 LIBS += -lfmt
-
-ifeq ($(PROMETHEUS_SUPPORT),1)
-# include prometheus-cpp depedency through the GNU make variables provided by Conan at install time
-# NOTE: for some reason "dl pthread" libraries must be explicitly listed
-include $(ROOT_DIR)/conanbuildinfo.mak
-LIBS += $(foreach libdir,$(CONAN_LIB_DIRS),-L$(libdir)) $(foreach lib,$(CONAN_LIBS),-l$(lib)) -ldl -lpthread
-CXXFLAGS += -DPROMETHEUS_SUPPORT=1 $(CONAN_CXXFLAGS) -I$(CONAN_INCLUDE_DIRS_PROMETHEUS-CPP)
-endif
 
 ifeq ($(MUSL_BUILD),1)
 OUTDIR=../bin/musl
