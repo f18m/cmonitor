@@ -27,8 +27,11 @@ Can also be used with InfluxDB and Grafana.
 %build
 # first of all install in the buildroot the Conan package manager, which we use to fetch
 # prometheus-cpp, since that library is not, unfortunately, packaged by Fedora/COPR
+# NOTE: prometheus-cpp & its dependencies wants at least Conan 1.51.0
+#       for some reason from FC35 and up we also need to request 'setuptools' pypi to install
+#       successfully the 'conan' pypi 
 echo "[Inside RPM build] installing Conan"
-pip3 install --user conan # NOTE: prometheus-cpp wants at least Conan 1.43.0
+pip3 install --user setuptools 'conan==1.51.2' 
 echo "[Inside RPM build] bootstrapping Conan"
 conan profile new %{buildroot}/cmonitor_rpmbuild --detect 
 conan profile update settings.compiler.libcxx=libstdc++11 %{buildroot}/cmonitor_rpmbuild

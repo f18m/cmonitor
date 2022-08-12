@@ -196,17 +196,44 @@ utility to access the stats of all other running containers; this is required by
 
 ## How to build from sources
 
+The build process is composed by 2 steps, as for most projects:
+1) install dependencies
+2) compile cmonitor C/C++ code
+
+The step 1 changes very much depending on whether you want to enable the Prometheus integration or not.
+Indeed to support prometheus the [prometheus-cpp client library](https://github.com/jupp0r/prometheus-cpp) needs to be installed, together
+with all its dependencies (civetweb, openSSL, libcurl). Since prometheus-cpp library is not packaged in distributions (at least as of Aug 2022)
+we use Conan package manager to fetch the [prometheus-cpp Conan package](https://conan.io/center/prometheus-cpp).
+
+
 ### On Fedora, Centos
 
 First of all, checkout this repository on your Linux box using git or decompressing a tarball of a release.
 Then run:
 
 ```
+# install compiler tools & library dependencies with YUM:
 sudo dnf install -y gcc-c++ make gtest-devel fmt-devel
 make all -j
 make test                                    # optional step to run unit tests
 sudo make install DESTDIR=/usr/local BINDIR=bin   # to install in /usr/local/bin
 ```
+
+
+
+```
+manual steps:
+ sudo pip3 install conan
+ sudo conan profile new default --detect
+ sudo conan profile update settings.compiler.libcxx=libstdc++11 default
+ sudo conan install conanfile.txt --build=missing
+```
+
+```
+build:
+ make PROMETHEUS_SUPPORT=1
+```
+
 
 ### On Debian, Ubuntu
 
@@ -437,23 +464,7 @@ which uses Docker files to deploy a temporary setup and fill the InfluxDB with 1
 The `cmonitor_collector` can be connected to an [Prometheus](https://prometheus.io/) instance where the collected metrics gets exposed to (this can happen
 in parallel to the JSON default storage). This can be done by simply providing the IP and port for the Prometheus when launching the collector.
 
-To support prometheus [prometheus-cpp](https://github.com/jupp0r/prometheus-cpp) client library needs to be installed.
-
 #### How to install:
-Conan package manager contains prometheus-cpp package as well in [ConanCenter](https://conan.io/center/prometheus-cpp) repository
-
-```
-manual steps:
- sudo pip3 install conan
- sudo conan profile new default --detect
- sudo conan profile update settings.compiler.libcxx=libstdc++11 default
- sudo conan install conanfile.txt --build=missing
-```
-
-```
-build:
- make PROMETHEUS_SUPPORT=1
-```
 
 ```
 usage:
