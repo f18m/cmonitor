@@ -10,7 +10,9 @@ Requires:       fmt
 # these are the requirements that we need on COPR builds:
 # IMPORTANT: cmonitor-collector RPM is built also on the 'old' Centos7 platform shipping fmt-devel-6.2.1
 #            so make sure not to use any feature of libfmt > 6.2.1
-BuildRequires:  gcc-c++, make, gtest-devel, fmt-devel, git, python3-pip, zlib-devel, cmake3
+# IMPORTANT#2: for some reason from FC35 and up we also need to request 'setuptools' pypi to install
+#              successfully the 'conan' pypi 
+BuildRequires:  gcc-c++, make, gtest-devel, fmt-devel, git, zlib-devel, cmake3, python3-pip, python3-setuptools
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
 # of debug info files apparently:
@@ -28,10 +30,8 @@ Can also be used with InfluxDB and Grafana.
 # first of all install in the buildroot the Conan package manager, which we use to fetch
 # prometheus-cpp, since that library is not, unfortunately, packaged by Fedora/COPR
 # NOTE: prometheus-cpp & its dependencies wants at least Conan 1.51.0
-#       for some reason from FC35 and up we also need to request 'setuptools' pypi to install
-#       successfully the 'conan' pypi 
 echo "[Inside RPM build] installing Conan"
-pip3 install --user setuptools 'conan==1.51.2' 
+pip3 install --user 'conan==1.51.2' 
 echo "[Inside RPM build] bootstrapping Conan"
 conan profile new %{buildroot}/cmonitor_rpmbuild --detect 
 conan profile update settings.compiler.libcxx=libstdc++11 %{buildroot}/cmonitor_rpmbuild
