@@ -8,7 +8,7 @@ A **Docker, LXC, Kubernetes, database-free, lightweight container performance mo
 containers in real-time.
 
 The project is composed by 2 parts: 
-1) a **lightweight agent** (80KB, native binary; no JVM, Python or other interpreters needed) to collect actual CPU/memory/disk statistics (Linux-only)
+1) a **lightweight agent** (80KB native binary when built without Prometheus support; no JVM, Python or other interpreters needed) to collect actual CPU/memory/disk statistics (Linux-only)
    and store them in a JSON file; this is the so-called `cmonitor-collector` utility;
 2) some simple **Python tools to process the generated JSONs**; most important one is "cmonitor_chart" that turns the JSON into a self-contained HTML page
    using [Google Charts](https://developers.google.com/chart) to visualize all collected data.

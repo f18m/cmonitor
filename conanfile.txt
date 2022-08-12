@@ -7,6 +7,7 @@
   prometheus-cpp/1.0.0@
 
 [options]
+  # by using shared=False we create a cmonitor_collector binary that is self-contained
   prometheus-cpp:shared=False                    # default is True
   prometheus-cpp:with_pull=True                  # default is True 
   prometheus-cpp:with_push=False                 # default is False 
