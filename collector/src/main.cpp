@@ -26,6 +26,7 @@
 #include "utils_files.h"
 #include "utils_misc.h"
 #include "utils_string.h"
+#include <algorithm>
 #include <assert.h>
 #include <fcntl.h>
 #include <getopt.h>
