@@ -11,7 +11,3 @@ include $(ROOT_DIR)/conanbuildinfo.mak
 LIBS += $(foreach libdir,$(CONAN_LIB_DIRS),-L$(libdir)) $(foreach lib,$(CONAN_LIBS),-l$(lib)) -ldl -lpthread
 CXXFLAGS += -DPROMETHEUS_SUPPORT=1 $(CONAN_CXXFLAGS) -I$(CONAN_INCLUDE_DIRS_PROMETHEUS-CPP)
 endif
-
-prometheus_debug:
-	@echo "DEBUGDEBUG"
-	ls -l $(foreach libdir,$(CONAN_LIB_DIRS),$(libdir))
