@@ -8,11 +8,21 @@ Source0:        cmonitor-collector-__RPM_VERSION__.tar.gz
 Requires:       fmt
 
 # these are the requirements that we need on COPR builds:
-# IMPORTANT: cmonitor-collector RPM is built also on the 'old' Centos7 platform shipping fmt-devel-6.2.1
-#            so make sure not to use any feature of libfmt > 6.2.1
-# IMPORTANT#2: for some reason from FC35 and up we also need to request 'setuptools' pypi to install
-#              successfully the 'conan' pypi 
-BuildRequires:  gcc-c++, make, gtest-devel, fmt-devel, git, zlib-devel, cmake3, python3-pip, python3-setuptools
+# gcc-c++, make    basic compiler and GNU make
+# git              used by cmonitor Makefiles to get latest commit hash and include it in --version output
+# gtest-devel      for gtest-based unit tests
+# fmt-devel        libfmt dependency; note however cmonitor-collector RPM is built also on the 'old' 
+#                  Centos7 platform shipping fmt-devel-6.2.1 so make sure not to use any feature of libfmt > 6.2.1
+# zlib-devel,       
+#    cmake3,         
+#    python3-pip, 
+#    python3-setuptools, 
+#    perl-FindBin  
+#                  requirements for libprometheus and its build system (Conan-based, cmake3-based);
+#                  note that for some reason from FC35 and up we also need to request 'setuptools' pypi to install
+#                  successfully the 'conan' pypi, and we install it with python3-setuptools
+#                  perl3-FindBin is instead required from FC35 upward to build OpenSSL Conan package successfully
+BuildRequires:  gcc-c++, make, git, gtest-devel, fmt-devel, zlib-devel, cmake3, python3-pip, python3-setuptools, perl-FindBin
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
 # of debug info files apparently:
