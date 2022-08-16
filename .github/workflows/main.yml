@@ -21,10 +21,11 @@ jobs:
          sudo conan profile new default --detect
          sudo conan profile update settings.compiler.libcxx=libstdc++11 default
          sudo conan install conanfile.txt --build=missing
-         make PROMETHEUS_SUPPORT=1
     - name: check Python formatting
       run: make format_check
-    #- name: build cmonitor (with Prometheus support)
-    #  run: make PROMETHEUS_SUPPORT=1
+    - name: DEBUG
+      run: make prometheus_debug
+    - name: build cmonitor (with Prometheus support)
+      run: make PROMETHEUS_SUPPORT=1
     - name: run unit tests
       run: make test
