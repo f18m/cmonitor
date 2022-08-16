@@ -24,7 +24,7 @@ jobs:
     - name: check Python formatting
       run: make format_check
     - name: DEBUG
-      run: make prometheus_debug
+      run: make prometheus_debug -C collector/src
     - name: build cmonitor (with Prometheus support)
       run: make PROMETHEUS_SUPPORT=1
     - name: run unit tests
