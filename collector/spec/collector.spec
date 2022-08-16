@@ -17,12 +17,12 @@ Requires:       fmt
 #    cmake3,         
 #    python3-pip, 
 #    python3-setuptools, 
-#    perl-FindBin  
+#    perl  
 #                  requirements for libprometheus and its build system (Conan-based, cmake3-based);
 #                  note that for some reason from FC35 and up we also need to request 'setuptools' pypi to install
 #                  successfully the 'conan' pypi, and we install it with python3-setuptools
-#                  perl3-FindBin is instead required from FC35 upward to build OpenSSL Conan package successfully
-BuildRequires:  gcc-c++, make, git, gtest-devel, fmt-devel, zlib-devel, cmake3, python3-pip, python3-setuptools, perl-FindBin
+#                  perl is instead required from FC35 upward to build OpenSSL Conan package successfully
+BuildRequires:  gcc-c++, make, git, gtest-devel, fmt-devel, zlib-devel, cmake3, python3-pip, python3-setuptools, perl
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
 # of debug info files apparently:
