@@ -12,11 +12,13 @@ include $(ROOT_DIR)/Constants.mk
 TOOLS = \
 	chart/cmonitor_chart.py \
 	filter/cmonitor_filter.py \
-	statistics/cmonitor_statistics.py
+	statistics/cmonitor_statistics.py \
+	launcher/cmonitor_launcher.py
 SYMLINKS = \
 	chart/cmonitor_chart \
 	filter/cmonitor_filter \
-	statistics/cmonitor_statistics
+	statistics/cmonitor_statistics \
+	launcher/cmonitor_launcher
 
 # cmonitor_version.py has to be listed explicitly because it does not exist yet
 # when the $(wilcard) runs (after a clean checkout)
