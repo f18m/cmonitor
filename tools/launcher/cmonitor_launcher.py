@@ -199,6 +199,8 @@ def main():
     logging.info("Started")
     logging.info(f"timeout set for sleep: {timeout}")
 
+    # flag has to be set in case inotify_events() needed to be unblocked
+    # default False : keep blocking
     exit_flag = False
 
     cGroupWatcher = CgroupWatcher(input_path, filter, timeout)
