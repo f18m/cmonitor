@@ -81,7 +81,7 @@ class CmonitorLauncher:
                     time.sleep(self.timeout)
                     logging.info(f"In processing event Queue is empty - sleeping: {self.timeout} sec")
         except event.Empty():
-           pass 
+            pass
 
     def __launch_cmonitor(self, filename, ip):
         """
@@ -199,11 +199,13 @@ def main():
     logging.info("Started")
     logging.info(f"timeout set for sleep: {timeout}")
 
+    exit_flag = False
+
     cGroupWatcher = CgroupWatcher(input_path, filter, timeout)
     cMonitorLauncher = CmonitorLauncher(input_path, filter, ip, command, timeout)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        executor.submit(cGroupWatcher.inotify_events, queue)
+        executor.submit(cGroupWatcher.inotify_events, queue, exit_flag)
         executor.submit(cMonitorLauncher.process_events, queue)
 
 

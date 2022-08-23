@@ -57,6 +57,7 @@ endif
 test:
 	$(MAKE) -C filter        test
 	$(MAKE) -C statistics    test
+	$(MAKE) -C launcher      test
 	# FIXME:
 	# $(MAKE) -C chart         test
 

@@ -160,7 +160,7 @@ class CgroupWatcher:
             if process_name in e:
                 return True
 
-    def inotify_events(self, queue):
+    def inotify_events(self, queue, exit_flag):
         """Main thread function for notifying events.
             Monitored events that match with the white-list provided will be stored in this queue.
             The events from this queue will be processed by cMonitorLauncher threading function to
@@ -186,5 +186,9 @@ class CgroupWatcher:
                         if fileList:
                             logging.info(f"CgroupWatcher event in Queue:{fileList}")
                             queue.put(fileList)
+                        # global exit_flag
+                        if exit_flag is True:
+                            exit(0)
+
         finally:
             i.remove_watch(path)
