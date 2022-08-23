@@ -21,7 +21,7 @@ all:
 
 centos_install_prereq:
 	# this is just the list present in "BuildRequires" field of the RPM spec file:
-	yum install gcc-c++ make gtest-devel fmt-devel git
+	yum install gcc-c++ make gtest-devel fmt-devel git inotify
 
 test:
 	$(MAKE) -C collector test
