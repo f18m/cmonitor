@@ -29,6 +29,21 @@
 #include <string>
 #include <vector>
 
+#include "system.h"
+
+// Prometheus
+#ifdef PROMETHEUS_SUPPORT
+#include "prometheus_counter.h"
+#include "prometheus_gauge.h"
+#include <prometheus/counter.h>
+#include <prometheus/detail/future_std.h>
+#include <prometheus/exposer.h>
+#include <prometheus/family.h>
+#include <prometheus/gauge.h>
+#include <prometheus/labels.h>
+#include <prometheus/registry.h>
+#endif
+
 //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
@@ -79,6 +94,12 @@ public:
     void enable_json_pretty_print();
     void close();
 
+#ifdef PROMETHEUS_SUPPORT
+    void init_prometheus_connection(const std::string& port, const std::map<std::string, std::string>& metaData = {});
+    void init_prometheus_kpi(const prometheus_kpi_descriptor* kpi, size_t size);
+    bool is_prometheus_enabled() { return m_prometheus_enabled; }
+#endif
+
     //------------------------------------------------------------------------------
     // Sample/Section/Subsection
     //------------------------------------------------------------------------------
@@ -92,10 +113,10 @@ public:
     void psection_start(const char* section);
     void psection_end();
 
-    void psubsection_start(const char* resource);
+    void psubsection_start(const char* resource, const std::map<std::string, std::string>& labels = {});
     void psubsection_end();
 
-    void psubsubsection_start(const char* resource);
+    void psubsubsection_start(const char* resource, const std::map<std::string, std::string>& labels = {});
     void psubsubsection_end();
 
     //------------------------------------------------------------------------------
@@ -120,11 +141,45 @@ public:
 private:
     class CMonitorOutputMeasurement {
     public:
-        CMonitorOutputMeasurement(const char* name = "", const char* value = "", bool numeric = false)
+        CMonitorOutputMeasurement(const char* name = "", const char* value = "")
         {
             strncpy(m_name.data(), name, CMONITOR_MEASUREMENT_NAME_MAXLEN - 1);
             strncpy(m_value.data(), value, CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
-            m_numeric = numeric;
+            m_dvalue = 0;
+            m_numeric = false;
+        }
+        CMonitorOutputMeasurement(const char* name, double value)
+        {
+            strncpy(m_name.data(), name, CMONITOR_MEASUREMENT_NAME_MAXLEN - 1);
+            // FIXME1: we should find a way to format directly into m_value!
+            // FIXME:2 we should do the double -> string conversion only when JSON output is enabled; e.g. Prometheus
+            // output frontend does not need m_value conversion; or even better we should remove entirely m_value and do
+            // the conversion on the fly ONLY when producing JSON output
+
+            // with std::to_string() you cannot specify the accuracy (how many decimal digits)
+            auto tmp = fmt::format("{:.3f}", value);
+            strncpy(m_value.data(), tmp.c_str(), CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
+            m_dvalue = value;
+            m_numeric = true;
+        }
+        CMonitorOutputMeasurement(const char* name, long long value)
+        {
+            strncpy(m_name.data(), name, CMONITOR_MEASUREMENT_NAME_MAXLEN - 1);
+            // FIXME1: we should find a way to format directly into m_value!
+            // FIXME:2 we should do the double -> string conversion only when JSON output is enabled; e.g. Prometheus
+            // output frontend does not need m_value conversion; or even better we should remove entirely m_value and do
+            // the conversion on the fly ONLY when producing JSON output
+
+            // according to https://www.zverovich.net/2020/06/13/fast-int-to-string-revisited.html
+            // fmt::format_int is be the fastest way to convert integers
+#if FMTLIB_MAJOR_VER >= 6
+            auto tmp = fmt::format_int(value);
+#else
+            auto tmp = fmt::format("{}", value);
+#endif
+            strncpy(m_value.data(), tmp.c_str(), CMONITOR_MEASUREMENT_VALUE_MAXLEN - 1);
+            m_dvalue = value;
+            m_numeric = true;
         }
 
         void enforce_valid_json_string_value()
@@ -146,6 +201,7 @@ private:
 
         std::array<char, CMONITOR_MEASUREMENT_NAME_MAXLEN> m_name; // use std::array to void dynamic allocations
         std::array<char, CMONITOR_MEASUREMENT_VALUE_MAXLEN> m_value; // use std::array to void dynamic allocations
+        double m_dvalue = 0; // double value to avoid atof conversion
         bool m_numeric;
     };
 
@@ -154,6 +210,7 @@ private:
     class CMonitorOutputSubSubsection {
     public:
         std::string m_name;
+        std::map<std::string, std::string> m_labels;
         CMonitorMeasurementVector m_measurements;
 
         std::string get_value_for_measurement(const std::string& name) const
@@ -168,6 +225,7 @@ private:
     class CMonitorOutputSubsection {
     public:
         std::string m_name;
+        std::map<std::string, std::string> m_labels;
         std::vector<CMonitorOutputSubSubsection> m_subsubsections;
         CMonitorMeasurementVector m_measurements;
 
@@ -223,6 +281,15 @@ private:
     // main output routine:
     void push_current_sections(bool is_header);
 
+//------------------------------------------------------------------------------
+// Prometheus low-level functions
+//------------------------------------------------------------------------------
+#ifdef PROMETHEUS_SUPPORT
+    void push_current_sections_to_prometheus();
+    void generate_prometheus_metric(const std::string& metric_name, const std::string& metric_data, double metric_value,
+        const std::map<std::string, std::string>& labels = {});
+#endif
+
 private:
     // Structured measurements generated so far for last sample:
     std::vector<CMonitorOutputSection> m_current_sections;
@@ -237,6 +304,15 @@ private:
     FILE* m_outputJson = nullptr;
     std::string m_onelevel_indent_string;
     bool m_json_pretty_print = false;
+
+// Prometheus exposer
+#ifdef PROMETHEUS_SUPPORT
+    bool m_prometheus_enabled = false;
+    std::unique_ptr<prometheus::Exposer> m_prometheus_exposer;
+    std::shared_ptr<prometheus::Registry> m_prometheus_registry;
+    std::map<std::string, PrometheusKpi*> m_prometheus_kpi_map;
+    std::map<std::string, std::string> m_default_labels;
+#endif
 
     // Stats on the generated output
     unsigned int m_samples = 0;

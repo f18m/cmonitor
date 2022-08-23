@@ -144,6 +144,7 @@ struct option g_long_opts[] = {
     { "remote-port", required_argument, 0, 'p' }, // force newline
     { "remote-secret", required_argument, 0, 'X' }, // force newline
     { "remote-dbname", required_argument, 0, 'D' }, // force newline
+    { "remote", required_argument, 0, 'r' }, // force newline
 
     // Other options
     { "version", no_argument, 0, 'v' }, // force newline
@@ -224,12 +225,13 @@ struct option_extended {
     { "Options to stream data remotely", &g_long_opts[14],
         "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).\n" },
     { "Options to stream data remotely", &g_long_opts[15], "Set the InfluxDB database name.\n" },
+    { "Options to set remote", &g_long_opts[16], "Set the target influxdb|prometheus.\n" },
 
     // help
-    { "Other options", &g_long_opts[16], "Show version and exit" }, // force newline
-    { "Other options", &g_long_opts[17],
+    { "Other options", &g_long_opts[17], "Show version and exit" }, // force newline
+    { "Other options", &g_long_opts[18],
         "Enable debug mode; automatically activates --foreground mode" }, // force newline
-    { "Other options", &g_long_opts[18], "Show this help" },
+    { "Other options", &g_long_opts[19], "Show this help" },
 
     { NULL, NULL, NULL }
 };
@@ -267,6 +269,8 @@ PerformanceKpiFamily string2PerformanceKpiFamily(const std::string& str)
         return PK_BAREMETAL_MEMORY;
     if (to_lower(str) == "network")
         return PK_BAREMETAL_NETWORK;
+    if (to_lower(str) == "load")
+        return PK_BAREMETAL_LOAD;
 
     if (to_lower(str) == "cgroup_cpu")
         return PK_CGROUP_CPU_ACCT;
@@ -302,6 +306,8 @@ std::string performanceKpiFamily2string(PerformanceKpiFamily k)
         return "memory";
     case PK_BAREMETAL_NETWORK:
         return "network";
+    case PK_BAREMETAL_LOAD:
+        return "load";
 
     case PK_CGROUP_CPU_ACCT:
         return "cgroup_cpu";
@@ -559,7 +565,9 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'D':
                 m_cfg.m_strRemoteDatabaseName = optarg;
                 break;
-
+            case 'r':
+                m_cfg.m_strRemote = optarg;
+                break;
             // help
             case 'v':
                 printf("%s (commit %s)\n", VERSION_STRING, CMONITOR_LAST_COMMIT_HASH);
@@ -603,10 +611,19 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
         printf("Option --remote-port=%lu provided but the --remote-ip option was not provided\n", m_cfg.m_nRemotePort);
         exit(53);
     }
+    if ((!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort > 0) && m_cfg.m_strRemote.empty()) {
+        printf("Option --remote-ip and remort-port provided but the --remote option was not provided\n");
+        exit(54);
+    }
+    std::transform(m_cfg.m_strRemote.begin(), m_cfg.m_strRemote.end(), m_cfg.m_strRemote.begin(), ::tolower);
+    if ((m_cfg.m_strRemote != "prometheus") && (m_cfg.m_strRemote != "influxdb")) {
+        printf("Incorrect --remote option provided: <%s>\n", m_cfg.m_strRemote.c_str());
+        exit(55);
+    }
     if ((m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) && (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {
         printf("If --collect=cgroup_threads is provided, it is not required to provide --collect=cgroup_processes "
                "since implicitly statistics for all processes will already be collected\n");
-        exit(54);
+        exit(56);
     }
 
     optind = 0; /* reset getopt lib */
@@ -678,7 +695,7 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
 
     // init the output channels:
     m_output.init_json_output_file(m_cfg.m_strOutputFilenamePrefix);
-    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort != 0) {
+    if (!m_cfg.m_strRemoteAddress.empty() && (m_cfg.m_nRemotePort != 0) && (m_cfg.m_strRemote == "influxdb")) {
         // We are attempting to send the data remotely
         m_output.init_influxdb_connection(m_cfg.m_strRemoteAddress, m_cfg.m_nRemotePort, m_cfg.m_strRemoteDatabaseName);
     }
@@ -703,6 +720,15 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
         setpgrp(); /* become process group leader */
         signal(SIGHUP, SIG_IGN); /* ignore hangups */
     }
+
+#ifdef PROMETHEUS_SUPPORT
+    // initialize prometheus exposer to scrape the registry on incoming HTTP requests
+    if (!m_cfg.m_strRemoteAddress.empty() && (m_cfg.m_nRemotePort != 0) && (m_cfg.m_strRemote == "prometheus")) {
+        auto listenAddress = m_cfg.m_strRemoteAddress + ":" + std::to_string(m_cfg.m_nRemotePort);
+        m_output.init_prometheus_connection(listenAddress, m_cfg.m_mapCustomMetadata);
+        printf("Prometheus listening on port: %s\n", listenAddress.c_str());
+    }
+#endif
 
     bool bCollectCGroupInfo = // force newline
         (m_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) || // force newline
