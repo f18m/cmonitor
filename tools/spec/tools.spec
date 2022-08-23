@@ -12,7 +12,7 @@ Source0:        cmonitor-tools-__RPM_VERSION__.tar.gz
 
 # these are the requirements that we need on COPR builds:
 # IMPORTANT: python3-devel provide macros like %{python3_sitelib}
-BuildRequires:  gcc-c++, make, python3-devel, inotify
+BuildRequires:  gcc-c++, make, python3-devel, inotify-tools
 
 # cmonitor_filter uses dateutil library to parse dates.. of course to make our life easier the same python library
 # RPM has different names on different distro versions...
