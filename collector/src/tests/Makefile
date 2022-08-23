@@ -8,13 +8,20 @@ ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/../../..)
 CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 -fPIC -DVERSION_STRING=\"$(RPM_VERSION)-$(RPM_RELEASE)\"
 
 ifeq ($(DEBUG),1)
-CXXFLAGS += -g -O0    #useful for debugging
+CXXFLAGS += -g -O0   #useful for debugging
 LDFLAGS += -g -O0    #useful for debugging
 else
-CXXFLAGS += -g -O2     # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
+CXXFLAGS += -g -O2   # release mode; NOTE: without -g the creation of debuginfo RPMs will fail in COPR!
 LDFLAGS += -g -O2
 endif
 LIBS += -lfmt -lgtest -lpthread
+
+ifeq ($(PROMETHEUS_SUPPORT),1)
+LDFLAGS += -Wl,--rpath,/usr/lib64
+LIBS += -lprometheus-cpp-pull -lprometheus-cpp-core -lz
+CXXFLAGS += -DPROMETHEUS_SUPPORT=1
+endif
+
 
 ifeq ($(MUSL_BUILD),1)
 OUTDIR=../../bin/musl
@@ -37,6 +44,8 @@ OBJS_CMONITOR_COLLECTOR = \
 	$(OUTDIR)/cgroups_processes.o \
 	$(OUTDIR)/fast_file_reader.o \
     $(OUTDIR)/logger.o \
+    $(OUTDIR)/prometheus_counter.o \
+    $(OUTDIR)/prometheus_gauge.o \
     $(OUTDIR)/output_frontend.o \
     $(OUTDIR)/system.o \
     $(OUTDIR)/system_network.o \

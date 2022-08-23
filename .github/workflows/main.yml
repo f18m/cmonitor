@@ -16,7 +16,13 @@ jobs:
       run: sudo apt install -y libgtest-dev libbenchmark-dev libfmt-dev tidy git python3 python3-dateutil python3-pip  inotify
     - name: install PyDeps
       run: sudo pip3 install pytest
+    - name: install Prometheus
+      run: | 
+         sudo pip3 install conan
+         sudo conan profile new default --detect
+         sudo conan profile update settings.compiler.libcxx=libstdc++11 default
+         sudo conan install conanfile.txt --build=missing
     - name: make all
-      run: make
+      run: make PROMETHEUS_SUPPORT=1
     - name: make test
       run: make test

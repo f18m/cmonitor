@@ -16,6 +16,11 @@ LDFLAGS += -g -O2
 endif
 LIBS += -lfmt -lbenchmark -lpthread
 
+ifeq ($(PROMETHEUS_SUPPORT),1)
+LIBS += -lprometheus-cpp-pull -lprometheus-cpp-core -lz
+CXXFLAGS += -DPROMETHEUS_SUPPORT=1
+endif
+
 ifeq ($(MUSL_BUILD),1)
 OUTDIR=../../bin/musl
 else
@@ -34,6 +39,8 @@ OBJS_CMONITOR_COLLECTOR = \
 	$(OUTDIR)/cgroups_processes.o \
 	$(OUTDIR)/fast_file_reader.o \
     $(OUTDIR)/logger.o \
+    $(OUTDIR)/prometheus_counter.o \
+    $(OUTDIR)/prometheus_gauge.o \
     $(OUTDIR)/output_frontend.o \
     $(OUTDIR)/system.o \
     $(OUTDIR)/system_network.o \
