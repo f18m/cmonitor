@@ -28,4 +28,4 @@ jobs:
     - name: build cmonitor (with Prometheus support)
       run: make PROMETHEUS_SUPPORT=1
     - name: run unit tests
-      run: make test
+      run: make test PROMETHEUS_SUPPORT=1
