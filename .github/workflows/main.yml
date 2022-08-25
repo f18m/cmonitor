@@ -12,17 +12,20 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: install deps
+    - name: install debian-packaged dependencies
       run: sudo apt install -y libgtest-dev libbenchmark-dev libfmt-dev tidy git python3 python3-dateutil python3-pip
-    - name: install PyDeps
-      run: sudo pip3 install pytest
-    - name: install Prometheus
-      run: | 
-         sudo pip3 install conan
-         sudo conan profile new default --detect
-         sudo conan profile update settings.compiler.libcxx=libstdc++11 default
-         sudo conan install conanfile.txt --build=missing
-    - name: make all
+    - name: install pypi-packaged dependencies
+      run: sudo pip3 install pytest black conan
+
+    # NOTE: since we later run "make" using the normal "builder" user, we must use Conan using that same user (so avoid the "sudo"!!)
+    - name: install Conan-packaged dependencies
+      run: |
+         conan profile new default --detect
+         conan profile update settings.compiler.libcxx=libstdc++11 default
+         conan install conanfile.txt --build=missing
+    - name: check Python formatting
+      run: make format_check
+    - name: build cmonitor (with Prometheus support)
       run: make PROMETHEUS_SUPPORT=1
-    - name: make test
-      run: make test
+    - name: run unit tests
+      run: make test PROMETHEUS_SUPPORT=1

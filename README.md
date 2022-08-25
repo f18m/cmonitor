@@ -8,7 +8,7 @@ A **Docker, LXC, Kubernetes, database-free, lightweight container performance mo
 containers in real-time.
 
 The project is composed by 2 parts: 
-1) a **lightweight agent** (80KB, native binary; no JVM, Python or other interpreters needed) to collect actual CPU/memory/disk statistics (Linux-only)
+1) a **lightweight agent** (80KB native binary when built without Prometheus support; no JVM, Python or other interpreters needed) to collect actual CPU/memory/disk statistics (Linux-only)
    and store them in a JSON file; this is the so-called `cmonitor-collector` utility;
 2) some simple **Python tools to process the generated JSONs**; most important one is "cmonitor_chart" that turns the JSON into a self-contained HTML page
    using [Google Charts](https://developers.google.com/chart) to visualize all collected data.
@@ -40,6 +40,7 @@ Table of contents of this README:
       - [Monitoring your Docker container](#monitoring-your-docker-container)
       - [Monitoring your Kubernetes POD](#monitoring-your-kubernetes-pod)
     - [Connecting with InfluxDB and Grafana](#connecting-with-influxdb-and-grafana)
+    - [Connecting with Prometheus and Grafana](#connecting-with-prometheus-and-grafana)
     - [Reference Manual](#reference-manual)
   - [Project History](#project-history)
   - [License](#license)
@@ -80,6 +81,7 @@ You may be thinking "yet another monitoring project" for containers. Indeed ther
 - [netdata](https://github.com/netdata/netdata): a web application targeting monitoring of large clusters
 - [collectd](https://collectd.org/): a system statics collection daemon (not much container-oriented though)
 - [metrics-server](https://github.com/kubernetes-sigs/metrics-server): the Kubernetes official metric server (Kubernetes only)
+- [process-exporter](https://github.com/ncabatoff/process-exporter): an utility to export generic processes' stats to Prometheus 
 
 Almost all of these are very complete solutions that allow you to monitor swarms of containers, in real time.
 The downside is that all these projects require you to setup an infrastructure (usually a time-series database) that collects
@@ -194,15 +196,38 @@ utility to access the stats of all other running containers; this is required by
 
 ## How to build from sources
 
+The build process is composed by 2 steps, as for most projects:
+1) install dependencies
+2) compile cmonitor C/C++ code
+
+The step 1 changes very much depending on whether you want to enable the Prometheus integration or not.
+Indeed to support prometheus the [prometheus-cpp client library](https://github.com/jupp0r/prometheus-cpp) needs to be installed, together
+with all its dependencies (civetweb, openSSL, libcurl). Since prometheus-cpp library is not packaged in most distributions (at least as of Aug 2022)
+we use Conan package manager to fetch the [prometheus-cpp Conan package](https://conan.io/center/prometheus-cpp).
+If you are confident with Conan you can thus build from sources with Prometheus support by using PROMETHEUS_SUPPORT=1 flag to GNU make.
+If instead you are not interested in Prometheus support or you have troubles with Conan, it's suggested to build with PROMETHEUS_SUPPORT=0 flag to GNU make.
+
 ### On Fedora, Centos
 
 First of all, checkout this repository on your Linux box using git or decompressing a tarball of a release.
 Then run:
 
 ```
-sudo dnf install -y gcc-c++ make gtest-devel fmt-devel
+# install compiler tools & library dependencies with YUM:
+sudo dnf install -y gcc-c++ make gtest-devel fmt-devel google-benchmark-devel
+
+# install dependencies with Conan:
+# (this part can be skipped if you are not interested in Prometheus support)
+pip3 install conan
+conan profile new default --detect
+conan profile update settings.compiler.libcxx=libstdc++11 default
+conan install . --build=missing
+# if all Conan steps were successful, then enable Prometheus support:
+export PROMETHEUS_SUPPORT=1
+
+# finally build cmonitor C/C++ code:
 make all -j
-make test                                    # optional step to run unit tests
+make test                                         # optional step to run unit tests
 sudo make install DESTDIR=/usr/local BINDIR=bin   # to install in /usr/local/bin
 ```
 
@@ -411,7 +436,8 @@ in parallel to the JSON default storage). This can be done by simply providing t
 the collector:
 
 ```
-cmonitor_collector --remote-ip 1.2.3.4 --remote-port 8086 --remote influxdb
+cmonitor_collector \
+   --remote-ip 1.2.3.4 --remote-port 8086 --remote influxdb
 ```
 
 The InfluxDB instance can then be used as data source for graphing tools like [Grafana](https://grafana.com/)
@@ -432,40 +458,17 @@ which uses Docker files to deploy a temporary setup and fill the InfluxDB with 1
 
 ### Connecting with Prometheus and Grafana
 
-The `cmonitor_collector` can be connected to an [Prometheus](https://prometheus.io/) instance where the collected metrics gets exposed to (this can happen
-in parallel to the JSON default storage). This can be done by simply providing the IP and port for the Prometheus when launching the collector.
-
-To support prometheus [prometheus-cpp](https://github.com/jupp0r/prometheus-cpp) client library needs to be installed.
-
-#### How to install:
-Conan package manager contains prometheus-cpp package as well in [ConanCenter](https://conan.io/center/prometheus-cpp) repository
+The `cmonitor_collector` can be connected to a [Prometheus](https://prometheus.io/) instance to store collected data (this can happen
+in parallel to the JSON default storage). This can be done by simply providing the IP and port for the Prometheus instance when launching the collector:
 
 ```
-manual steps:
- sudo pip3 install conan
- sudo conan profile new default --detect
- sudo conan profile update settings.compiler.libcxx=libstdc++11 default
- sudo conan install conanfile.txt --build=missing
-```
-
-```
-build:
- make PROMETHEUS_SUPPORT=1
-```
-
-```
-usage:
 cmonitor_collector \
-   --num-samples=until-cgroup-alive \
-   --cgroup-name=${FULL_CGROUP_NAME} \
-   --collect=cgroup_threads,cgroup_cpu,cgroup_memory --score-threshold=0 \
-   --custom-metadata=function:cmonitor \
-   --sampling-interval=5 \
-   --output-filename=pod-performances.json \
    --remote-ip 10.1.2.3 --remote-port 9092 --remote prometheus
 ```
 
-Later Grafana can be configured to provide a seamless way to connect to the Prometheus as a data source.
+The Prometheus instance can then be used as data source for graphing tools like [Grafana](https://grafana.com/)
+which allow you to create nice interactive dashboards (see examples in InfluxDB section).
+
 
 ### Reference Manual
 

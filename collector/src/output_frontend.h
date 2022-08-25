@@ -96,8 +96,8 @@ public:
 
 #ifdef PROMETHEUS_SUPPORT
     void init_prometheus_connection(const std::string& port, const std::map<std::string, std::string>& metaData = {});
-    void init_prometheus_kpi(const prometheus_kpi_descriptor* kpi, size_t size);
-    bool is_prometheus_enabled() { return m_prometheus_enabled; }
+    void init_prometheus_kpis(const prometheus_kpi_descriptor* kpi, size_t size);
+    bool is_prometheus_enabled() const { return m_prometheus_enabled; }
 #endif
 
     //------------------------------------------------------------------------------
