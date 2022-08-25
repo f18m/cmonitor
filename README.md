@@ -202,9 +202,10 @@ The build process is composed by 2 steps, as for most projects:
 
 The step 1 changes very much depending on whether you want to enable the Prometheus integration or not.
 Indeed to support prometheus the [prometheus-cpp client library](https://github.com/jupp0r/prometheus-cpp) needs to be installed, together
-with all its dependencies (civetweb, openSSL, libcurl). Since prometheus-cpp library is not packaged in distributions (at least as of Aug 2022)
+with all its dependencies (civetweb, openSSL, libcurl). Since prometheus-cpp library is not packaged in most distributions (at least as of Aug 2022)
 we use Conan package manager to fetch the [prometheus-cpp Conan package](https://conan.io/center/prometheus-cpp).
-
+If you are confident with Conan you can thus build from sources with Prometheus support by using PROMETHEUS_SUPPORT=1 flag to GNU make.
+If instead you are not interested in Prometheus support or you have troubles with Conan, it's suggested to build with PROMETHEUS_SUPPORT=0 flag to GNU make.
 
 ### On Fedora, Centos
 
@@ -213,27 +214,22 @@ Then run:
 
 ```
 # install compiler tools & library dependencies with YUM:
-sudo dnf install -y gcc-c++ make gtest-devel fmt-devel
+sudo dnf install -y gcc-c++ make gtest-devel fmt-devel google-benchmark-devel
+
+# install dependencies with Conan:
+# (this part can be skipped if you are not interested in Prometheus support)
+pip3 install conan
+conan profile new default --detect
+conan profile update settings.compiler.libcxx=libstdc++11 default
+conan install . --build=missing
+# if all Conan steps were successful, then enable Prometheus support:
+export PROMETHEUS_SUPPORT=1
+
+# finally build cmonitor C/C++ code:
 make all -j
-make test                                    # optional step to run unit tests
+make test                                         # optional step to run unit tests
 sudo make install DESTDIR=/usr/local BINDIR=bin   # to install in /usr/local/bin
 ```
-
-
-
-```
-manual steps:
- sudo pip3 install conan
- sudo conan profile new default --detect
- sudo conan profile update settings.compiler.libcxx=libstdc++11 default
- sudo conan install conanfile.txt --build=missing
-```
-
-```
-build:
- make PROMETHEUS_SUPPORT=1
-```
-
 
 ### On Debian, Ubuntu
 

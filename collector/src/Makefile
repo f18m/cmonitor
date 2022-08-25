@@ -7,13 +7,11 @@ ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/../..)
 include $(ROOT_DIR)/Constants.mk
 include $(ROOT_DIR)/Prometheus-Support.mk
 
-DEFS=-DVERSION_STRING=\"$(CMONITOR_VERSION)-$(CMONITOR_RELEASE)\" -DCMONITOR_LAST_COMMIT_HASH=\"$(CMONITOR_LAST_COMMIT_HASH)\" -DFMTLIB_MAJOR_VER=$(FMTLIB_MAJOR_VER)
-
 # IMPORTANT: we do require c++11, i.e. GCC 4.8.1 or higher;
 #            Centos7 which is one of the oldest-supported distributions provides gcc 4.8.5 so we
 #            cannot move to e.g. c++14/17/20 yet
 # IMPORTANT#2: -fPIC is required to build on fedora-rawhide
-CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 -fPIC $(DEFS)
+CXXFLAGS += -Wall -Werror -Wno-switch-bool -std=c++11 -fPIC $(DEFS)
 
 ifeq ($(DEBUG),1)
 CXXFLAGS += -g -O0   #useful for debugging
