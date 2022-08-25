@@ -344,7 +344,7 @@ void CMonitorCollectorApp::print_help()
     static_assert(sizeof(g_opts_extended) / sizeof(g_opts_extended[0]) == sizeof(g_long_opts) / sizeof(g_long_opts[0]),
         "Mismatching number of options");
 
-    std::cerr << "cmonitor_collector: Performance stats collector outputting JSON format." << std::endl;
+    std::cerr << "cmonitor_collector: Performance statistics collector." << std::endl;
     std::cerr << "List of arguments that can be provided follows:" << std::endl;
     std::cerr << std::endl;
 
