@@ -436,7 +436,8 @@ in parallel to the JSON default storage). This can be done by simply providing t
 the collector:
 
 ```
-cmonitor_collector --remote-ip 1.2.3.4 --remote-port 8086 --remote influxdb
+cmonitor_collector \
+   --remote-ip 1.2.3.4 --remote-port 8086 --remote influxdb
 ```
 
 The InfluxDB instance can then be used as data source for graphing tools like [Grafana](https://grafana.com/)
@@ -457,24 +458,17 @@ which uses Docker files to deploy a temporary setup and fill the InfluxDB with 1
 
 ### Connecting with Prometheus and Grafana
 
-The `cmonitor_collector` can be connected to an [Prometheus](https://prometheus.io/) instance where the collected metrics gets exposed to (this can happen
-in parallel to the JSON default storage). This can be done by simply providing the IP and port for the Prometheus when launching the collector.
-
-#### How to install:
+The `cmonitor_collector` can be connected to a [Prometheus](https://prometheus.io/) instance to store collected data (this can happen
+in parallel to the JSON default storage). This can be done by simply providing the IP and port for the Prometheus instance when launching the collector:
 
 ```
-usage:
 cmonitor_collector \
-   --num-samples=until-cgroup-alive \
-   --cgroup-name=${FULL_CGROUP_NAME} \
-   --collect=cgroup_threads,cgroup_cpu,cgroup_memory --score-threshold=0 \
-   --custom-metadata=function:cmonitor \
-   --sampling-interval=5 \
-   --output-filename=pod-performances.json \
    --remote-ip 10.1.2.3 --remote-port 9092 --remote prometheus
 ```
 
-Later Grafana can be configured to provide a seamless way to connect to the Prometheus as a data source.
+The Prometheus instance can then be used as data source for graphing tools like [Grafana](https://grafana.com/)
+which allow you to create nice interactive dashboards (see examples in InfluxDB section).
+
 
 ### Reference Manual
 

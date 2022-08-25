@@ -48,16 +48,16 @@ conan profile update settings.compiler.libcxx=libstdc++11 %{buildroot}/cmonitor_
 conan remote list
 
 # secondly, Conan is used to fetch prometheus-cpp library, building it with cmake when needed:
+# NOTE: civetweb dependency has broken Conan package asking for 'cmake' instead of 'cmake3'
+#       so we need to create a "cmake" binary in %{buildroot}/bin which points to 'cmake3'
 echo "[Inside RPM build] installing prometheus-cpp"
-#ln -sf /usr/bin/cmake3 /usr/bin/cmake # civetweb dependency has broken Conan package asking for 'cmake' instead of 'cmake3'
-echo $PATH
 mkdir -p %{buildroot}/bin
 ln -sf /usr/bin/cmake3 %{buildroot}/bin/cmake
 export PATH="%{buildroot}/bin:$PATH"
-echo $PATH
+echo "[Inside RPM build] the PATH adjusted to contain a cmake3->cmake symlink is: $PATH"
 conan install conanfile.txt --build=missing --profile %{buildroot}/cmonitor_rpmbuild
 
-# this command invokes the root Makefile of cmonitor repo, from inside the source tarball
+# finally, this command invokes the root Makefile of cmonitor repo, from inside the source tarball
 # produced by COPR; that root Makefile will pass all the options listed here to collector/Makefile
 echo "[Inside RPM build] launching cmonitor collector build"
 %make_build PROMETHEUS_SUPPORT=1 DISABLE_UNIT_TESTS_BUILD=1 DISABLE_BENCHMARKS_BUILD=1 FMTLIB_MAJOR_VER=6 CMONITOR_LAST_COMMIT_HASH=__LAST_COMMIT_HASH__
