@@ -9,13 +9,15 @@ containers in real-time.
 
 The project is composed by 2 parts: 
 1) a **lightweight agent** (80KB native binary when built without Prometheus support; no JVM, Python or other interpreters needed) to collect actual CPU/memory/disk statistics (Linux-only)
-   and store them in a JSON file; this is the so-called `cmonitor-collector` utility;
-2) some simple **Python tools to process the generated JSONs**; most important one is "cmonitor_chart" that turns the JSON into a self-contained HTML page
+   and store them in a JSON file or stream them to a time-series database (InfluxDB and Prometheus are supported); this is the so-called `cmonitor-collector` utility;
+2) some simple **Python tools to process the generated JSONs**; the most important one is "cmonitor_chart" that turns the JSON into a self-contained HTML page
    using [Google Charts](https://developers.google.com/chart) to visualize all collected data.
 
-The collector utility is a cgroup-aware statistics collector; cgroups (i.e. Linux Control Groups) are the basic technology used 
-to create containers (you can [read more on them here](https://en.wikipedia.org/wiki/Cgroups)); this project is thus aimed at
-monitoring your LXC/Docker/Kubernetes POD container performances. Of course the utility is generic and can still monitor physical servers.
+The collector utility is a cgroup-aware statistics collector; cgroups (i.e. Linux Control Groups) are the basic Linux technology used 
+to create containers (you can [read more on them here](https://en.wikipedia.org/wiki/Cgroups)); this project thus aims at
+monitoring your LXC/Docker/Kubernetes POD container performances by monitoring only the cgroup-level kernel-provided stats. 
+However, considering that systemd runs all software inside cgroups, `cmonitor-collector` can also be used to sample statistics about
+a software running outside any "containerization" technology (like LXC, Docker or Kubernetes).
 
 This project supports only **Linux x86_64 architectures**.
 
@@ -70,8 +72,8 @@ typically takes around 1msec). This allow to explore fast transients in CPU/memo
 
 Finally the project allows you to easily post-process collected data to:
 * produce a **self-contained** HTML page which allows to visualize all the performance data easily using [Google Charts](https://developers.google.com/chart/);
-* extract statistics information e.g. average/median/peak CPU usage and CPU throttling, average/median/peak memory usage etc.
-
+* extract statistics information e.g. average/median/peak CPU usage and CPU throttling, average/median/peak memory usage etc;
+* hold large amounts of statistics when connected to time-series databases like InfluxDB and Prometheus.
 
 ## Yet-Another-Monitoring-Project?
 

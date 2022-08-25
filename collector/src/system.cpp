@@ -102,6 +102,9 @@ void CMonitorSystem::sample_uptime()
 
 void CMonitorSystem::sample_loadavg()
 {
+    if ((m_pCfg->m_nCollectFlags & PK_BAREMETAL_LOAD) == 0)
+        return;
+
     DEBUGLOG_FUNCTION_START();
 
     if (!m_loadavg.open_or_rewind()) {

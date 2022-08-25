@@ -69,8 +69,7 @@ void CMonitorOutputFrontend::init_json_output_file(const std::string& filenamePr
     } else if (filenamePrefix == "none") {
         m_outputJson = nullptr;
         CMonitorLogger::instance()->LogDebug("Disabled JSON generation (filename prefix = none)");
-        printf("Disabling JSON file generation (collected data will be available only via InfluxDB, if IP/port is "
-               "provided)\n");
+        printf("Disabling JSON file generation\n");
     } else {
 
         std::string outFile(filenamePrefix);
@@ -128,6 +127,7 @@ void CMonitorOutputFrontend::init_influxdb_connection(
 
     CMonitorLogger::instance()->LogDebug("init_influxdb_connection() initialized InfluxDB connection to %s:%d",
         m_influxdb_client_conn->host, m_influxdb_client_conn->port);
+    printf("Initialized InfluxDB connection to %s:%d\n", m_influxdb_client_conn->host, m_influxdb_client_conn->port);
 }
 
 #ifdef PROMETHEUS_SUPPORT
@@ -140,9 +140,10 @@ void CMonitorOutputFrontend::init_prometheus_connection(
 
     m_prometheus_enabled = true;
     CMonitorLogger::instance()->LogDebug("init_prometheus_connection() initialized Prometheus port to %s", url.c_str());
+    printf("Initialized Prometheus HTTP support listening at %s\n", url.c_str());
 
     m_default_labels = { { "function", "cmonitor" } };
-    // strore the metadata from command line.
+    // store the metadata from command line.
     if (!metaData.empty()) {
         for (const auto& entry : metaData) {
             m_default_labels.insert(std::make_pair(entry.first, entry.second));

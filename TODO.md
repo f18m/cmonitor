@@ -12,6 +12,7 @@
 
 - add more sampled data for CMonitorCGroup, for several kernels
 - test more configurations for CMonitorCGroup, like dockers having no memory limit or no cpu limits
+- add tests to Prometheus integration
 
 ## TODO tools-side
 
@@ -20,6 +21,6 @@
 - rewrite in pytest the cmonitor_filter unit tests
 - publish Pypi package
 
-## TODO influxdb/grafana
+## TODO influxdb/prometheus/grafana
 
 - Provide a nice dashboard to get started

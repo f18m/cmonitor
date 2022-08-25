@@ -89,7 +89,6 @@ public:
     {
     }
 
-    void init_defaults();
     void parse_args(int argc, char** argv);
     void init_collector(int argc, char** argv);
     int run_main_loop();
@@ -99,6 +98,7 @@ private:
     void check_pid_file();
     void output_sample_date_time(long loop, const std::string& utcTime);
     void do_sampling_sleep();
+    void fill_with_defaults();
 
 private:
     //------------------------------------------------------------------------------
@@ -141,11 +141,11 @@ struct option g_long_opts[] = {
     { "output-pretty", no_argument, 0, 'P' }, // force newline
 
     // Options to stream data remotely
+    { "remote", required_argument, 0, 'r' }, // force newline
     { "remote-ip", required_argument, 0, 'i' }, // force newline
     { "remote-port", required_argument, 0, 'p' }, // force newline
     { "remote-secret", required_argument, 0, 'X' }, // force newline
     { "remote-dbname", required_argument, 0, 'D' }, // force newline
-    { "remote", required_argument, 0, 'r' }, // force newline
 
     // Other options
     { "version", no_argument, 0, 'v' }, // force newline
@@ -176,6 +176,7 @@ struct option_extended {
         "  'memory': collect memory stats from /proc/meminfo, /proc/vmstat\n" // force newline
         "  'disk': collect disk stats from /proc/diskstats\n" // force newline
         "  'network': collect network stats from /proc/net/dev\n" // force newline
+        "  'load': collect system load stats from /proc/loadavg\n" // force newline
         "  'cgroup_cpu': collect CPU stats from the 'cpuacct' cgroup\n" // force newline
         "  'cgroup_memory': collect memory stats from 'memory' cgroup\n" // force newline
         /*"  'cgroup_blkio': collect IO stats from 'blkio' cgroup\n" NOT YET AVAILABLE */
@@ -220,13 +221,19 @@ struct option_extended {
 
     // Options to stream data remotely
     { "Options to stream data remotely", &g_long_opts[12],
-        "IP address or hostname of the InfluxDB instance to send measurements to;\n"
-        "cmonitor_collector will use a database named 'cmonitor' to store them." },
-    { "Options to stream data remotely", &g_long_opts[13], "Port used by InfluxDB." },
+        "Set the type of remote target: 'influxdb' or 'prometheus'." },
+    { "Options to stream data remotely", &g_long_opts[13],
+        "When remote is InfluxDB: IP address or hostname of the InfluxDB instance to send measurements to;\n"
+        "cmonitor_collector will use a database named 'cmonitor' to store them.\n"
+        "When remote is Prometheus: listen address, typically 127.0.0.1 (to accept connections from localhost only)\n"
+        "or 0.0.0.0 (to accept connections from all)." },
     { "Options to stream data remotely", &g_long_opts[14],
-        "Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).\n" },
-    { "Options to stream data remotely", &g_long_opts[15], "Set the InfluxDB database name.\n" },
-    { "Options to set remote", &g_long_opts[16], "Set the target influxdb|prometheus.\n" },
+        "When remote is InfluxDB: port of server;\n"
+        "When remote is Prometheus: listen port, typically 8080." },
+    { "Options to stream data remotely", &g_long_opts[15],
+        "InfluxDB only: set the collector secret (by default use environment variable CMONITOR_SECRET)." },
+    { "Options to stream data remotely", &g_long_opts[16],
+        "InfluxDB only: set the InfluxDB database name (default is 'cmonitor').\n" },
 
     // help
     { "Other options", &g_long_opts[17], "Show version and exit" }, // force newline
@@ -410,28 +417,6 @@ void CMonitorCollectorApp::print_help()
     exit(0);
 }
 
-void CMonitorCollectorApp::init_defaults()
-{
-    if (getenv("CMONITOR_SECRET"))
-        m_cfg.m_strRemoteSecret = getenv("CMONITOR_SECRET");
-
-    // output file names
-    get_hostname();
-
-    time_t timer; /* used to work out the time details*/
-    struct tm* tim = nullptr; /* used to work out the local hour/min/second */
-
-    timer = time(0);
-    tim = localtime(&timer);
-    tim->tm_year += 1900; /* read localtime() manual page!! */
-    tim->tm_mon += 1; /* because it is 0 to 11 */
-
-    char filename[1024];
-    sprintf(filename, "%s_%02d%02d%02d_%02d%02d", get_hostname().c_str(), tim->tm_year, tim->tm_mon, tim->tm_mday,
-        tim->tm_hour, tim->tm_min);
-    m_cfg.m_strOutputFilenamePrefix = filename;
-}
-
 void CMonitorCollectorApp::parse_args(int argc, char** argv)
 {
     // assemble the string of short options by the long options:
@@ -603,31 +588,63 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
 
     // check arguments we just parsed:
 
+    std::transform(m_cfg.m_strRemote.begin(), m_cfg.m_strRemote.end(), m_cfg.m_strRemote.begin(), ::tolower);
+    if (m_cfg.m_strRemote != "" && m_cfg.m_strRemote != "prometheus" && m_cfg.m_strRemote != "influxdb") {
+        printf("Option --remote provided but the --remote value is not supported: <%s>\n", m_cfg.m_strRemote.c_str());
+        exit(52);
+    }
     if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort <= 0) {
         printf("Option --remote-ip=%s provided but the --remote-port option was not provided\n",
             m_cfg.m_strRemoteAddress.c_str());
-        exit(52);
+        exit(53);
     }
     if (m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort > 0) {
         printf("Option --remote-port=%lu provided but the --remote-ip option was not provided\n", m_cfg.m_nRemotePort);
-        exit(53);
-    }
-    if ((!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort > 0) && m_cfg.m_strRemote.empty()) {
-        printf("Option --remote-ip and remort-port provided but the --remote option was not provided\n");
         exit(54);
     }
-    std::transform(m_cfg.m_strRemote.begin(), m_cfg.m_strRemote.end(), m_cfg.m_strRemote.begin(), ::tolower);
-    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_strRemote != "prometheus" && m_cfg.m_strRemote != "influxdb") {
-        printf("Option --remote provided but the --remote value is not supporeed: <%s>\n", m_cfg.m_strRemote.c_str());
-        exit(55);
-    }
+
     if ((m_cfg.m_nCollectFlags & PK_CGROUP_PROCESSES) && (m_cfg.m_nCollectFlags & PK_CGROUP_THREADS)) {
         printf("If --collect=cgroup_threads is provided, it is not required to provide --collect=cgroup_processes "
                "since implicitly statistics for all processes will already be collected\n");
-        exit(56);
+        exit(55);
     }
 
     optind = 0; /* reset getopt lib */
+
+    // if some options were not provided, we'll provide good defaults:
+
+    fill_with_defaults();
+}
+
+void CMonitorCollectorApp::fill_with_defaults()
+{
+    if (m_cfg.m_strRemoteSecret.empty()) {
+        if (getenv("CMONITOR_SECRET"))
+            m_cfg.m_strRemoteSecret = getenv("CMONITOR_SECRET");
+    }
+
+    if (m_cfg.m_strOutputFilenamePrefix.empty()) {
+        // output file names
+        time_t timer; /* used to work out the time details*/
+        struct tm* tim = nullptr; /* used to work out the local hour/min/second */
+
+        timer = time(0);
+        tim = localtime(&timer);
+        tim->tm_year += 1900; /* read localtime() manual page!! */
+        tim->tm_mon += 1; /* because it is 0 to 11 */
+
+        char filename[1024];
+        sprintf(filename, "%s_%02d%02d%02d_%02d%02d", get_hostname().c_str(), tim->tm_year, tim->tm_mon, tim->tm_mday,
+            tim->tm_hour, tim->tm_min);
+        m_cfg.m_strOutputFilenamePrefix = filename;
+    }
+
+    if (m_cfg.m_strRemote == "prometheus" && m_cfg.m_nRemotePort == 0)
+        // provide a good default port:
+        m_cfg.m_nRemotePort = 8080;
+    if (m_cfg.m_strRemote == "prometheus" && m_cfg.m_strRemoteAddress == "")
+        // provide a good default listen address:
+        m_cfg.m_strRemoteAddress = "0.0.0.0";
 }
 
 //------------------------------------------------------------------------------
@@ -696,10 +713,17 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
 
     // init the output channels:
     m_output.init_json_output_file(m_cfg.m_strOutputFilenamePrefix);
-    if (!m_cfg.m_strRemoteAddress.empty() && (m_cfg.m_nRemotePort != 0) && (m_cfg.m_strRemote == "influxdb")) {
+    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort != 0 && m_cfg.m_strRemote == "influxdb") {
         // We are attempting to send the data remotely
         m_output.init_influxdb_connection(m_cfg.m_strRemoteAddress, m_cfg.m_nRemotePort, m_cfg.m_strRemoteDatabaseName);
     }
+#ifdef PROMETHEUS_SUPPORT
+    // initialize prometheus exposer to scrape the registry on incoming HTTP requests
+    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort != 0 && m_cfg.m_strRemote == "prometheus") {
+        auto listenAddress = m_cfg.m_strRemoteAddress + ":" + std::to_string(m_cfg.m_nRemotePort);
+        m_output.init_prometheus_connection(listenAddress, m_cfg.m_mapCustomMetadata);
+    }
+#endif
 
     // daemonize or stay foreground:
     if (!m_cfg.m_bForeground) {
@@ -721,15 +745,6 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
         setpgrp(); /* become process group leader */
         signal(SIGHUP, SIG_IGN); /* ignore hangups */
     }
-
-#ifdef PROMETHEUS_SUPPORT
-    // initialize prometheus exposer to scrape the registry on incoming HTTP requests
-    if (!m_cfg.m_strRemoteAddress.empty() && (m_cfg.m_nRemotePort != 0) && (m_cfg.m_strRemote == "prometheus")) {
-        auto listenAddress = m_cfg.m_strRemoteAddress + ":" + std::to_string(m_cfg.m_nRemotePort);
-        m_output.init_prometheus_connection(listenAddress, m_cfg.m_mapCustomMetadata);
-        printf("Prometheus listening on port: %s\n", listenAddress.c_str());
-    }
-#endif
 
     bool bCollectCGroupInfo = // force newline
         (m_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) || // force newline
@@ -845,10 +860,8 @@ int CMonitorCollectorApp::run_main_loop()
         // always provide basic sample information like timestamp
         output_sample_date_time(loop, current_time_str);
 
-        // loadavg stats are always collected, regardless of m_cfg.m_nCollectFlags
-        m_system_collector.sample_loadavg();
-
         // baremetal stats:
+        m_system_collector.sample_loadavg();
         m_system_collector.sample_cpu_stat(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
         m_system_collector.sample_memory(charted_stats_from_meminfo);
         m_system_collector.sample_net_dev(elapsed, m_cfg.m_nOutputFields /* emit JSON */);
@@ -881,6 +894,7 @@ int CMonitorCollectorApp::run_main_loop()
 
     /* finish-of */
     m_output.psample_array_end();
+    m_output.close();
     fflush(NULL);
 
     CMonitorLogger::instance()->LogDebug("Exiting gracefully with return code 0. Logged %lu errors in this run.",
@@ -896,7 +910,6 @@ int main(int argc, char** argv)
 {
     // init defaults (can be overridden by cmd line options):
     CMonitorCollectorApp app;
-    app.init_defaults();
 
     // parse cmd line:
     app.parse_args(argc, argv);
