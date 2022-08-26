@@ -428,28 +428,6 @@ cmonitor_collector \
    --output-filename=pod-performances.json
 ```
 
-### CMonitor helper tool:
-cmonitor_launcher tool can be used to automate the monitoring the Kubernetes PODs.
-
-It will perform following steps:
-
- - Watch all files below a directory and notify an event for changes Pod restart or creation of a new Pod.
- - check the process name against the white-list given in the filter list.
- - Execute command to launch CMonitor if the process name matches with the filter.
-
-```
-Example:
-         cmonitor_launcher.py --path /sys/fs/cgroup/memory/kubepods/burstable/
-			      --filter process_1 process_2
-			      --ip-port 172.0.0.1:9090 172.0.0.2:9099
-			      --command "./cmonitor_collector --num-samples=until-cgroup-alive
-                                        --deep-collect --collect=cgroup_threads,cgroup_cpu,cgroup_memory,cgroup_network
-                                        --score-threshold=0  --sampling-interval=3 --output-directory=/home
-                                        --allow-multiple-instances --remote prometheus"
-			      --log /home
-			      --timeout 20
-```
-
 ### Connecting with InfluxDB and Grafana
 
 The `cmonitor_collector` can be connected to an [InfluxDB](https://www.influxdata.com/) deployment to store collected data (this can happen
@@ -490,6 +468,27 @@ cmonitor_collector \
 The Prometheus instance can then be used as data source for graphing tools like [Grafana](https://grafana.com/)
 which allow you to create nice interactive dashboards (see examples in InfluxDB section).
 
+### CMonitor helper tool:
+cmonitor_launcher tool can be used to automate the monitoring the Kubernetes PODs.
+
+It will perform following steps:
+
+ - Watch all files below a directory and notify an event for changes Pod restart or creation of a new Pod.
+ - check the process name against the white-list given in the filter list.
+ - Execute command to launch CMonitor if the process name matches with the filter.
+
+```
+Example:
+         cmonitor_launcher    --path /sys/fs/cgroup/memory/kubepods/burstable/
+                              --filter process_1 process_2
+                              --ip-port 172.0.0.1:9090 172.0.0.2:9099
+                              --command "./cmonitor_collector --num-samples=until-cgroup-alive
+                                        --deep-collect --collect=cgroup_threads,cgroup_cpu,cgroup_memory,cgroup_network
+                                        --score-threshold=0  --sampling-interval=3 --output-directory=/home
+                                        --allow-multiple-instances --remote prometheus"
+                              --log /home
+                              --timeout 20
+```
 
 ### Reference Manual
 
