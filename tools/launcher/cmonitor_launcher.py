@@ -19,6 +19,8 @@ import time
 import logging
 from datetime import datetime
 
+import signal
+
 from cmonitor_watcher import CgroupWatcher
 from argparse import RawTextHelpFormatter
 
@@ -43,6 +45,7 @@ class CmonitorLauncher:
         self.command = command
         self.timeout = timeout
         self.process_host_dict = {}
+        self.monitored_processes = {}
 
         """
         Should add the list of IPs as key to the dictionary
@@ -74,32 +77,48 @@ class CmonitorLauncher:
                         process_name = value
                     logging.info(f"In processing event from the Queue - event: {entry},file: {filename},process_name: {process_name}")
                     logging.info(f"Launching cMonitor with: {filename} with IP :{self.process_host_dict.get(process_name)}")
-                    self.__launch_cmonitor(filename, self.process_host_dict.get(process_name))
+                    # self.__launch_cmonitor(filename, self.process_host_dict.get(process_name))
+                    self.__launch_cmonitor(filename, process_name)
                     entry = entry + 1
                 else:
-                    # time.sleep(10)
                     time.sleep(self.timeout)
                     logging.info(f"In processing event Queue is empty - sleeping: {self.timeout} sec")
         except event.Empty():
             pass
 
-    def __launch_cmonitor(self, filename, ip):
+    def __launch_cmonitor(self, filename, process_name):
         """
         - Lauch cMonitor with appropriate command.
         """
 
         for c in self.command:
             cmd = c.strip()
+            ip = self.process_host_dict.get(process_name)
             ip_port = ip.split(":")
             ip = ip_port[0]
             port = ip_port[1]
             base_path = os.path.dirname(filename)
             path = "/".join(base_path.split("/")[5:])
-            cmd = f"{cmd} --cgroup-name={path} --remote-ip {ip} --remote-port {port}"
-            print("Launch cMonitor with command:", cmd)
-            logging.info(f"Launch cMonitor with command: {cmd}")
-            # os.system(cmd)
-            subprocess.run(cmd, shell=True)
+            monitor_cmd = f"{cmd} --cgroup-name={path} --remote-ip {ip} --remote-port {port}"
+            monitor_cmd = [
+                f"{cmd}",
+                f"--cgroup-name={path}",
+                f"--remote-ip {ip}",
+                f"--remote-port {port}",
+            ]
+            print("Launch cMonitor with command:", monitor_cmd)
+            logging.info(f"Launch cMonitor with command: {monitor_cmd }")
+            # monitor_process = subprocess.Popen(monitor_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            monitor_process = subprocess.Popen(monitor_cmd, shell=True)
+            self.monitored_processes[process_name] = monitor_process
+
+    def handler(self, signum, frame):
+        for process_name, monitor_process in self.monitored_processes.items():
+            logging.info(f"Stopping cmonitor_collector from pid '{monitor_process.pid}' of container '{process_name}'")
+            # monitor_process is a subprocess.Popen object:
+            monitor_process.terminate()
+            monitor_process.wait()
+            exit(1)
 
 
 def parse_command_line():
@@ -155,11 +174,6 @@ Example:
         parser.print_help()
         sys.exit(os.EX_USAGE)
 
-    if args.ip_port is None:
-        print("Please provide the input ip:port to launch cMonitor")
-        parser.print_help()
-        sys.exit(os.EX_USAGE)
-
     return {
         "input_path": args.path,
         "input_filter": args.filter,
@@ -196,7 +210,7 @@ def main():
         filename=log_file_name,
         filemode="w",
     )
-    logging.info("Started")
+    logging.info("Started cMonitor Launcher")
     logging.info(f"timeout set for sleep: {timeout}")
 
     # flag has to be set in case inotify_events() needed to be unblocked
@@ -206,9 +220,10 @@ def main():
     cGroupWatcher = CgroupWatcher(input_path, filter, timeout)
     cMonitorLauncher = CmonitorLauncher(input_path, filter, ip, command, timeout)
 
+    signal.signal(signal.SIGINT, cMonitorLauncher.handler)
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        executor.submit(cGroupWatcher.inotify_events, queue, exit_flag)
-        executor.submit(cMonitorLauncher.process_events, queue)
+        executer1 = executor.submit(cGroupWatcher.inotify_events, queue, exit_flag)
+        executer2 = executor.submit(cMonitorLauncher.process_events, queue)
 
 
 if __name__ == "__main__":
