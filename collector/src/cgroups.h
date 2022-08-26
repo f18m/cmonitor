@@ -62,8 +62,7 @@ std::string CGroupDetected2string(CGroupDetected k);
 static const prometheus_kpi_descriptor g_prometheus_kpi_cgroup_cpu[] = {
     // cgroup : cpu
     { "cgroup_cpuacct_stats_user", prometheus::MetricType::Gauge, "CPU time consumed by tasks in user mode" },
-    { "cgroup_cpuacct_stats_sys", prometheus::MetricType::Gauge,
-        "CPU time consumed by tasks in system (kernel) mode" },
+    { "cgroup_cpuacct_stats_sys", prometheus::MetricType::Gauge, "CPU time consumed by tasks in system (kernel) mode" },
     { "cgroup_cpuacct_stats_nr_periods", prometheus::MetricType::Gauge,
         "Number of periods that any thread in the cgroup was runnable" },
     { "cgroup_cpuacct_stats_nr_throttled", prometheus::MetricType::Gauge,
@@ -123,8 +122,7 @@ static const prometheus_kpi_descriptor g_prometheus_kpi_cgroup_network[] = {
         "Total number of transmitted errors detected by the device driver" },
     { "cgroup_network_odrop", prometheus::MetricType::Gauge, "Total number of packets dropped by the interface" },
     { "cgroup_network_ofifo", prometheus::MetricType::Gauge, "Total number of FIFO buffer errors" },
-    { "cgroup_network_ocolls", prometheus::MetricType::Gauge,
-        "Total number of collisions detected on the interface" },
+    { "cgroup_network_ocolls", prometheus::MetricType::Gauge, "Total number of collisions detected on the interface" },
     { "cgroup_network_ocarrier", prometheus::MetricType::Gauge,
         "Total number of carrier losses detected by the device driver" },
 
@@ -210,7 +208,7 @@ public:
         m_memory_prev_values.v1_failcnt = 0;
     }
 
-    ~CMonitorCgroups() {}
+    ~CMonitorCgroups() { }
 
     // main setup
     // NOTE: arguments _for_test are used only during unit testing
@@ -268,6 +266,8 @@ private:
 
     // cpuset controller
     bool is_allowed_cpu(int cpu);
+    unsigned int get_min_allowed_cpu_index() const;
+    unsigned int get_max_allowed_cpu_index() const;
     bool read_cpuset_cpus(std::string kernelPath, std::set<uint64_t>& cpus);
 
     // memory controller
