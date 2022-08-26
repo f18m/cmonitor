@@ -7,6 +7,7 @@
 import pytest
 import queue
 import os
+import time
 import sys
 import subprocess
 from subprocess import Popen
@@ -24,14 +25,9 @@ myDict = {}
 test_list = [
     # run0
     {
-        "expected_task_file": "/tmp/unit_test_cmonitor/task/tasks",
+        "expected_task_file": "/tmp/unit_test_cmonitor/cgroup_memory_kubepods/task/tasks",
         "expected_process_name": "python3",
     },
-    # run1
-    # {
-    #    "expected_task_file": "/tmp/unit_test_cmonitor/task/tasks",
-    #    "expected_process_name": "python3",
-    # },
 ]
 
 
@@ -53,7 +49,7 @@ def create_task_file(path, pid):
 
 def process_task_file(path, queue):
     # create the dummy process
-    cmd = "python3 dummy.py"
+    cmd = "python3 -c 'time.sleep(5)'"
     p = Popen(cmd.split())
     # process id of the dummy process
     pid = p.pid
@@ -82,10 +78,11 @@ def test_outputCmonitorWatcherInotifyEvent(testrun_idx):
     global test_list
     testrun = test_list[testrun_idx]
 
-    path = "/tmp/unit_test_cmonitor/"
+    path = "/tmp/unit_test_cmonitor/cgroup_memory_kubepods/"
     filter = ["python3"]
     if not os.path.exists(path):
-        os.mkdir(path)
+        #os.mkdir(path)
+        os.makedirs(path)
         print("Directory '% s' created" % path)
 
     watcher = CgroupWatcher(path, filter, 10)
