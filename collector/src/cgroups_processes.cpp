@@ -458,7 +458,7 @@ void CMonitorCgroups::init_processes(const std::string& cgroup_prefix_for_test)
         && ((!(m_pCfg->m_nCollectFlags & PK_CGROUP_PROCESSES) == 0)
             || (!(m_pCfg->m_nCollectFlags & PK_CGROUP_THREADS) == 0))) {
         size_t size = sizeof(g_prometheus_kpi_cgroup_processes) / sizeof(g_prometheus_kpi_cgroup_processes[0]);
-        m_pOutput->init_prometheus_kpi(g_prometheus_kpi_cgroup_processes, size);
+        m_pOutput->init_prometheus_kpis(g_prometheus_kpi_cgroup_processes, size);
     }
 #endif
 

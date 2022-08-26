@@ -45,3 +45,11 @@ collector/src/tests/fedora35-Linux-5.14.17-x86_64-systemd/current-sample
 
 # more unit tests on tools
 tools/filter/tests/result.json
+
+# files created by Conan install
+conan.lock
+conanbuildinfo.mak
+conanbuildinfo.txt
+conaninfo.txt
+graph_info.json
+

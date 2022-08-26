@@ -50,6 +50,11 @@ void CMonitorOutputFrontend::close()
         delete kpi.second;
     }
     m_prometheus_kpi_map.clear();
+    m_default_labels.clear();
+
+    // finally release exposer first (which holds references to the registry):
+    m_prometheus_exposer = nullptr;
+    m_prometheus_registry = nullptr;
 #endif
 }
 
@@ -145,7 +150,7 @@ void CMonitorOutputFrontend::init_prometheus_connection(
     }
 }
 
-void CMonitorOutputFrontend::init_prometheus_kpi(const prometheus_kpi_descriptor* kpi, size_t size)
+void CMonitorOutputFrontend::init_prometheus_kpis(const prometheus_kpi_descriptor* kpi, size_t size)
 {
     // loop the metric list and create the prometheus KPI metrics.
     for (size_t i = 0; i < size; i++) {

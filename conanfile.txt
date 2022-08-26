@@ -1,13 +1,18 @@
+#
+# Conanfile to retrieve prometheus-cpp library (and its dependencies: civetweb, openssl, libcurl)
+# This Conanfile is used also by COPR during RPM creation.
+#
+
 [requires]
   prometheus-cpp/1.0.0@
 
 [options]
-  prometheus-cpp:shared=True                     # default is True
+  # by using shared=False we create a cmonitor_collector binary that is self-contained
+  prometheus-cpp:shared=False                    # default is True
   prometheus-cpp:with_pull=True                  # default is True 
   prometheus-cpp:with_push=False                 # default is False 
   prometheus-cpp:with_compression=False          # default is False
   prometheus-cpp:fPIC=True                       # default is True
 
-[imports]
-  lib, *.so* -> /usr/lib64
-  include, * -> /usr/include
+[generators]
+  make

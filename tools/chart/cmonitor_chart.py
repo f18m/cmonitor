@@ -114,9 +114,7 @@ if __name__ == "__main__":
     my_ver = CmonitorToolVersion().get()
 
     # load the JSON
-    entry = CmonitorCollectorJsonLoader().load(
-        config["input_json"], this_tool_version=my_ver, min_num_samples=2, be_verbose=verbose
-    )
+    entry = CmonitorCollectorJsonLoader().load(config["input_json"], this_tool_version=my_ver, min_num_samples=2, be_verbose=verbose)
     jheader = entry["header"]
     jdata = entry["samples"]
     if verbose:
