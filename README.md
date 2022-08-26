@@ -489,7 +489,7 @@ Example:
                               --log /home
                               --timeout 20
 ```
-In the above example,cmonitor_collector will be lauched automatically for process_1 and process_2 with prometheus instance at 172.0.0.1:9090 and 172.0.0.2:9099 respectively.
+In the above example, cmonitor_collector will be launched automatically for process_1 and process_2 with Prometheus instance at 172.0.0.1:9090 and 172.0.0.2:9099 respectively.
 
 ### Reference Manual
 
