@@ -81,7 +81,6 @@ def test_outputCmonitorWatcherInotifyEvent(testrun_idx):
     path = "/tmp/unit_test_cmonitor/cgroup_memory_kubepods/"
     filter = ["python3"]
     if not os.path.exists(path):
-        #os.mkdir(path)
         os.makedirs(path)
         print("Directory '% s' created" % path)
 
