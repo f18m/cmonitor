@@ -474,14 +474,14 @@ cmonitor_launcher tool can be used to automate the monitoring the Kubernetes POD
 It will perform following steps:
 
  - Watch all files below a directory and notify an event for changes of a Pod restart or creation of a new Pod.
- - check the process name against the white-list given in the filter list.
+ - Check the process name against the white-list given in the filter list.
  - Execute command to launch CMonitor if the process name matches with the filter.
 
 ```
 Example:
          cmonitor_launcher    --path /sys/fs/cgroup/memory/kubepods/burstable/
                               --filter process_1 process_2
-                              --ip-port 172.0.0.1:9090 172.0.0.2:9099
+                              --ip-port 172.0.0.1:9090 172.0.0.2:9090
                               --command "./cmonitor_collector --num-samples=until-cgroup-alive
                                         --deep-collect --collect=cgroup_threads,cgroup_cpu,cgroup_memory,cgroup_network
                                         --score-threshold=0  --sampling-interval=3 --output-directory=/home
@@ -489,7 +489,7 @@ Example:
                               --log /home
                               --timeout 20
 ```
-In the above example, cmonitor_collector will be launched automatically for process_1 and process_2 with Prometheus instance at 172.0.0.1:9090 and 172.0.0.2:9099 respectively.
+In the above example, cmonitor_collector will be launched automatically for process_1 and process_2 with Prometheus instance at 172.0.0.1:9090 and 172.0.0.2:9090 respectively.
 
 ### Reference Manual
 
