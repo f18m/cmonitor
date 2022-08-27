@@ -81,6 +81,16 @@ enum OutputFields {
     PF_USED_BY_CHART_SCRIPT_ONLY // force newline
 };
 
+enum RemoteType {
+    REMOTE_INVALID,
+    REMOTE_NONE,
+    REMOTE_INFLUXDB,
+    REMOTE_PROMETHEUS,
+};
+
+RemoteType string2RemoteType(const std::string&);
+std::string RemoteType2string(RemoteType k);
+
 //------------------------------------------------------------------------------
 // Types
 //------------------------------------------------------------------------------
@@ -167,7 +177,7 @@ typedef struct proc_topper_s {
 
 class CMonitorCollectorAppConfig {
 public:
-    CMonitorCollectorAppConfig() {}
+    CMonitorCollectorAppConfig() { }
 
     // configuration for this process:
     bool m_bAllowMultipleInstances = false; // --allow-multiple-instances
@@ -192,7 +202,7 @@ public:
     std::string m_strCGroupName; // --cgroup-name
     uint64_t m_nProcessScoreThreshold = 1; // --score-threshold
     std::map<std::string, std::string> m_mapCustomMetadata; // --custom-metadata
-    std::string m_strRemote; // -- influxdb|prometheus
+    RemoteType m_nRemote = REMOTE_NONE; // --remote=none|influxdb|prometheus
 };
 
 //------------------------------------------------------------------------------

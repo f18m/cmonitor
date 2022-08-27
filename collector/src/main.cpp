@@ -221,7 +221,7 @@ struct option_extended {
 
     // Options to stream data remotely
     { "Options to stream data remotely", &g_long_opts[12],
-        "Set the type of remote target: 'influxdb' or 'prometheus'." },
+        "Set the type of remote target: 'none' (default), 'influxdb' or 'prometheus'." },
     { "Options to stream data remotely", &g_long_opts[13],
         "When remote is InfluxDB: IP address or hostname of the InfluxDB instance to send measurements to;\n"
         "cmonitor_collector will use a database named 'cmonitor' to store them.\n"
@@ -329,6 +329,35 @@ std::string performanceKpiFamily2string(PerformanceKpiFamily k)
         return "cgroup_processes";
     case PK_CGROUP_THREADS:
         return "cgroup_threads";
+
+    default:
+        return "";
+    }
+}
+
+RemoteType string2RemoteType(const std::string& str)
+{
+    if (to_lower(str) == "none")
+        return REMOTE_NONE;
+#ifdef PROMETHEUS_SUPPORT
+    if (to_lower(str) == "prometheus")
+        return REMOTE_PROMETHEUS;
+#endif
+    if (to_lower(str) == "influxdb")
+        return REMOTE_INFLUXDB;
+
+    return REMOTE_INVALID;
+}
+
+std::string RemoteType2string(RemoteType k)
+{
+    switch (k) {
+    case REMOTE_NONE:
+        return "NONE";
+    case REMOTE_INFLUXDB:
+        return "InfluxDB";
+    case REMOTE_PROMETHEUS:
+        return "Prometheus";
 
     default:
         return "";
@@ -551,9 +580,15 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             case 'D':
                 m_cfg.m_strRemoteDatabaseName = optarg;
                 break;
-            case 'r':
-                m_cfg.m_strRemote = optarg;
-                break;
+            case 'r': {
+                RemoteType t = string2RemoteType(optarg);
+                if (t == REMOTE_INVALID) {
+                    printf("Unrecognized remote type: %s\n", optarg);
+                    exit(52);
+                }
+                m_cfg.m_nRemote = t;
+            } break;
+
             // help
             case 'v':
                 printf("%s (commit %s)\n", VERSION_STRING, CMONITOR_LAST_COMMIT_HASH);
@@ -588,11 +623,6 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
 
     // check arguments we just parsed:
 
-    std::transform(m_cfg.m_strRemote.begin(), m_cfg.m_strRemote.end(), m_cfg.m_strRemote.begin(), ::tolower);
-    if (m_cfg.m_strRemote != "" && m_cfg.m_strRemote != "prometheus" && m_cfg.m_strRemote != "influxdb") {
-        printf("Option --remote provided but the --remote value is not supported: <%s>\n", m_cfg.m_strRemote.c_str());
-        exit(52);
-    }
     if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort <= 0) {
         printf("Option --remote-ip=%s provided but the --remote-port option was not provided\n",
             m_cfg.m_strRemoteAddress.c_str());
@@ -639,10 +669,10 @@ void CMonitorCollectorApp::fill_with_defaults()
         m_cfg.m_strOutputFilenamePrefix = filename;
     }
 
-    if (m_cfg.m_strRemote == "prometheus" && m_cfg.m_nRemotePort == 0)
+    if (m_cfg.m_nRemote == REMOTE_PROMETHEUS && m_cfg.m_nRemotePort == 0)
         // provide a good default port:
         m_cfg.m_nRemotePort = 8080;
-    if (m_cfg.m_strRemote == "prometheus" && m_cfg.m_strRemoteAddress == "")
+    if (m_cfg.m_nRemote == REMOTE_PROMETHEUS && m_cfg.m_strRemoteAddress == "")
         // provide a good default listen address:
         m_cfg.m_strRemoteAddress = "0.0.0.0";
 }
@@ -704,27 +734,6 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
         }
     }
 
-    // init debug/error channels:
-    CMonitorLogger::instance()->init_error_output_file(m_cfg.m_strOutputFilenamePrefix);
-#ifndef TEST_COLLECTOR_PERFORMANCES // when testing performances we don't want logging that would fake results
-    if (m_cfg.m_bDebug)
-        CMonitorLogger::instance()->enable_debug();
-#endif
-
-    // init the output channels:
-    m_output.init_json_output_file(m_cfg.m_strOutputFilenamePrefix);
-    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort != 0 && m_cfg.m_strRemote == "influxdb") {
-        // We are attempting to send the data remotely
-        m_output.init_influxdb_connection(m_cfg.m_strRemoteAddress, m_cfg.m_nRemotePort, m_cfg.m_strRemoteDatabaseName);
-    }
-#ifdef PROMETHEUS_SUPPORT
-    // initialize prometheus exposer to scrape the registry on incoming HTTP requests
-    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort != 0 && m_cfg.m_strRemote == "prometheus") {
-        auto listenAddress = m_cfg.m_strRemoteAddress + ":" + std::to_string(m_cfg.m_nRemotePort);
-        m_output.init_prometheus_connection(listenAddress, m_cfg.m_mapCustomMetadata);
-    }
-#endif
-
     // daemonize or stay foreground:
     if (!m_cfg.m_bForeground) {
         assert(!m_cfg.m_bDebug); // in debug mode we enable foreground mode!
@@ -739,12 +748,39 @@ void CMonitorCollectorApp::init_collector(int argc, char** argv)
         CMonitorLogger::instance()->LogDebug("Running in daemon process:\n");
 
         // close default file descriptors
+        // IMPORTANT: by doing that, the daemon will stop writing to the terminal/stdout; that means that all
+        //            the useful messages print()ed after this point, won't be visible. Use -F option to see all those
+        //            prints.
         close(STDIN_FILENO);
         close(STDOUT_FILENO);
         close(STDERR_FILENO);
         setpgrp(); /* become process group leader */
         signal(SIGHUP, SIG_IGN); /* ignore hangups */
     }
+
+    // init debug/error channels:
+    CMonitorLogger::instance()->init_error_output_file(m_cfg.m_strOutputFilenamePrefix);
+#ifndef TEST_COLLECTOR_PERFORMANCES // when testing performances we don't want logging that would fake results
+    if (m_cfg.m_bDebug)
+        CMonitorLogger::instance()->enable_debug();
+#endif
+
+    // init the output channels:
+    m_output.init_json_output_file(m_cfg.m_strOutputFilenamePrefix);
+    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort != 0 && m_cfg.m_nRemote == REMOTE_INFLUXDB) {
+        // We are attempting to send the data remotely
+        m_output.init_influxdb_connection(m_cfg.m_strRemoteAddress, m_cfg.m_nRemotePort, m_cfg.m_strRemoteDatabaseName);
+    }
+#ifdef PROMETHEUS_SUPPORT
+    // initialize prometheus exposer to scrape the registry on incoming HTTP requests
+    // IMPORTANT: for some reason cmonitor_collector will deadlock (inside CivetServer used by prometheus client
+    // library) if prometheus server is initialized BEFORE daemonization happens, so it's important to run this
+    // initialization step AFTER the fork()
+    if (!m_cfg.m_strRemoteAddress.empty() && m_cfg.m_nRemotePort != 0 && m_cfg.m_nRemote == REMOTE_PROMETHEUS) {
+        auto listenAddress = m_cfg.m_strRemoteAddress + ":" + std::to_string(m_cfg.m_nRemotePort);
+        m_output.init_prometheus_connection(listenAddress, m_cfg.m_mapCustomMetadata);
+    }
+#endif
 
     bool bCollectCGroupInfo = // force newline
         (m_cfg.m_nCollectFlags & PK_CGROUP_CPU_ACCT) || // force newline

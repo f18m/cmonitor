@@ -140,7 +140,7 @@ void CMonitorOutputFrontend::init_prometheus_connection(
 
     m_prometheus_enabled = true;
     CMonitorLogger::instance()->LogDebug("init_prometheus_connection() initialized Prometheus port to %s", url.c_str());
-    printf("Initialized Prometheus HTTP support listening at %s\n", url.c_str());
+    printf("Initialized Prometheus HTTP server listening at http://%s/metrics\n", url.c_str());
 
     m_default_labels = { { "function", "cmonitor" } };
     // store the metadata from command line.
