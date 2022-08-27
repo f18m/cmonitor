@@ -70,6 +70,12 @@
 */
 #define MIN_SAMPLING_TIME_SEC (0.01)
 
+#ifdef PROMETHEUS_SUPPORT
+#define VERSION_OUTPUT_PROMETHEUS_SUPPORT "with Prometheus support"
+#else
+#define VERSION_OUTPUT_PROMETHEUS_SUPPORT "without Prometheus support"
+#endif
+
 //------------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------------
@@ -591,7 +597,8 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
 
             // help
             case 'v':
-                printf("%s (commit %s)\n", VERSION_STRING, CMONITOR_LAST_COMMIT_HASH);
+                printf("%s (commit %s, %s)\n", VERSION_STRING, CMONITOR_LAST_COMMIT_HASH,
+                    VERSION_OUTPUT_PROMETHEUS_SUPPORT);
                 exit(0);
                 break;
             case 'd':
