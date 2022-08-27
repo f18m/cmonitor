@@ -29,9 +29,9 @@ $(info Launching COPR build from directory: $(COPR_CURRENT_SUBDIRECTORY))
 srpm:
 	@echo "Env variables in this COPR build:"
 	@export
-	@echo "Installing git client:"
+	@echo "Installing git client (required later on to embed commit hash into RPM binaries):"
 	dnf -y install git
-	git config --global --add safe.directory $(COPR_CURRENT_SUBDIRECTORY)
+	git config --global --add safe.directory $(COPR_CURRENT_SUBDIRECTORY)/..
 	@echo "Running srpm target from .copr/Makefile"
 	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
 	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
