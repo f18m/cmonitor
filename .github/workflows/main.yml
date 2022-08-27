@@ -22,6 +22,7 @@ jobs:
     needs: install_deps
 
     # NOTE: since we later run "make" using the normal "builder" user, we must use Conan using that same user (so avoid the "sudo"!!)
+    steps:
     - name: install Conan-packaged dependencies
       run: |
          conan profile new default --detect
@@ -38,6 +39,7 @@ jobs:
   build_test_without_prometheus_support:
     needs: install_deps
 
+    steps:
     - name: build cmonitor (with Prometheus support)
       run: make PROMETHEUS_SUPPORT=0
     - name: run unit tests
