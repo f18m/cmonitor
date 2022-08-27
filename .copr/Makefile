@@ -31,7 +31,7 @@ srpm:
 	@export
 	@echo "Installing git client (required later on to embed commit hash into RPM binaries):"
 	dnf -y install git
-	git config --global --add safe.directory $(COPR_CURRENT_SUBDIRECTORY)/..
+	git config --global --add safe.directory $(shell readlink -f ..)
 	@echo "Running srpm target from .copr/Makefile"
 	mkdir -p $(RPM_TMP_DIR)/ $(RPM_TARBALL_DIR)/
 	rm -rf $(RPM_TMP_DIR)/* $(RPM_TARBALL_DIR)/*
