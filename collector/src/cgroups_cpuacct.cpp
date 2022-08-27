@@ -86,6 +86,13 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
      */
 
     bool bValidData = true;
+
+    // most of the time the files /sys/fs/cgroup/cpu,cpuacct/cpuacct.usage_percpu_sys contain a lot of numbers, more
+    // than the number of CPUs available in the system (probably to support CPU hotplug) ... but we will limit ourselves
+    // to checking stats only for the CPUs that are inside the 'cpuset' list of allowed CPUs:
+    size_t min_cpu_index = get_min_allowed_cpu_index();
+    size_t max_cpu_index = get_max_allowed_cpu_index();
+
     if (m_cgroup_cpuacct_v1_supports_split_user_and_system_time) {
 
         // this system supports per-cpu system/user stats:
@@ -100,11 +107,19 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
             bValidData = false;
 
         if (bValidData) {
+
             CMonitorLogger::instance()->LogDebug("Found cpuacct.usage_percpu_sys/user cgroups; computing CPU usage "
                                                  "for %.2fsec delta time and %zu CPUs (print=%d)\n",
                 elapsed_sec, counter_nsec_user_mode.size(), print);
 
-            for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
+            for (size_t i = min_cpu_index; i < std::min(max_cpu_index + 1, counter_nsec_user_mode.size()); i++) {
+
+                if (!is_allowed_cpu(i)) {
+                    CMonitorLogger::instance()->LogDebug("CPU %zu was found in cpuacct stats but is not allowed since "
+                                                         "it's not inside cpuset cgroup config... skipping",
+                        i);
+                    continue;
+                }
 
                 /*
                  * We know how much time has elapsed; we thus divide the delta
@@ -123,7 +138,7 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
                     "CPU %zu, current user=%lu, current sys=%lu, prev user=%lu, prev sys=%lu", // force newline
                     i, counter_nsec_user_mode[i], counter_nsec_sys_mode[i],
                     m_cpuacct_prev_values[i].counter_nsec_user_mode, m_cpuacct_prev_values[i].counter_nsec_sys_mode);
-                if (is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
+                if (print && elapsed_sec > MIN_ELAPSED_SECS) {
                     double cpuUserPercent = // force newline
                         100 * ((double)(counter_nsec_user_mode[i] - m_cpuacct_prev_values[i].counter_nsec_user_mode))
                         / (elapsed_sec * 1E9);
@@ -149,7 +164,7 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
         }
 
     } else {
-        // just get the per-cpu total (system+user space):
+        // just get the per-cpu total (system+user):
 
         std::vector<uint64_t> counter_nsec_user_mode;
         if (!read_cpuacct_line(m_cgroup_cpuacct_v1_reader_combined_stat, counter_nsec_user_mode))
@@ -160,12 +175,19 @@ bool CMonitorCgroups::sample_cpuacct_v1_counters_by_cpu(
         if (bValidData) {
             CMonitorLogger::instance()->LogDebug("Found data from cgroup cpuacct.usage_percpu");
 
-            for (size_t i = 0; i < counter_nsec_user_mode.size(); i++) {
+            for (size_t i = min_cpu_index; i < std::min(max_cpu_index + 1, counter_nsec_user_mode.size()); i++) {
+
+                if (!is_allowed_cpu(i)) {
+                    CMonitorLogger::instance()->LogDebug("CPU %zu was found in cpuacct stats but is not allowed since "
+                                                         "it's not inside cpuset cgroup config... skipping",
+                        i);
+                    continue;
+                }
 
                 /*
                  * Same comments for USER/SYS computations done above apply here!
                  */
-                if (is_allowed_cpu(i) && print && elapsed_sec > MIN_ELAPSED_SECS) {
+                if (print && elapsed_sec > MIN_ELAPSED_SECS) {
                     double cpuUserPercent = // force newline
                         100 * ((double)(counter_nsec_user_mode[i] - m_cpuacct_prev_values[i].counter_nsec_user_mode))
                         / (elapsed_sec * 1E9);
@@ -299,6 +321,20 @@ bool CMonitorCgroups::is_allowed_cpu(int cpu)
     if (m_nCGroupsFound == CG_NONE)
         return true; // allowed
     return m_cgroup_cpus.find(cpu) != m_cgroup_cpus.end();
+}
+
+unsigned int CMonitorCgroups::get_min_allowed_cpu_index() const
+{
+    if (m_nCGroupsFound == CG_NONE || m_cgroup_cpus.empty())
+        return 0;
+    return *m_cgroup_cpus.begin(); // a std::set is ordered, first element is the MIN
+}
+
+unsigned int CMonitorCgroups::get_max_allowed_cpu_index() const
+{
+    if (m_nCGroupsFound == CG_NONE || m_cgroup_cpus.empty())
+        return MAX_LOGICAL_CPU;
+    return *m_cgroup_cpus.rbegin(); // a std::set is ordered, last element is the MAX
 }
 
 void CMonitorCgroups::init_cpuacct(const std::string& cgroup_prefix_for_test)

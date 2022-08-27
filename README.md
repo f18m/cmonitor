@@ -9,13 +9,15 @@ containers in real-time.
 
 The project is composed by 2 parts: 
 1) a **lightweight agent** (80KB native binary when built without Prometheus support; no JVM, Python or other interpreters needed) to collect actual CPU/memory/disk statistics (Linux-only)
-   and store them in a JSON file; this is the so-called `cmonitor-collector` utility;
-2) some simple **Python tools to process the generated JSONs**; most important one is "cmonitor_chart" that turns the JSON into a self-contained HTML page
+   and store them in a JSON file or stream them to a time-series database (InfluxDB and Prometheus are supported); this is the so-called `cmonitor-collector` utility;
+2) some simple **Python tools to process the generated JSONs**; the most important one is "cmonitor_chart" that turns the JSON into a self-contained HTML page
    using [Google Charts](https://developers.google.com/chart) to visualize all collected data.
 
-The collector utility is a cgroup-aware statistics collector; cgroups (i.e. Linux Control Groups) are the basic technology used 
-to create containers (you can [read more on them here](https://en.wikipedia.org/wiki/Cgroups)); this project is thus aimed at
-monitoring your LXC/Docker/Kubernetes POD container performances. Of course the utility is generic and can still monitor physical servers.
+The collector utility is a cgroup-aware statistics collector; cgroups (i.e. Linux Control Groups) are the basic Linux technology used 
+to create containers (you can [read more on them here](https://en.wikipedia.org/wiki/Cgroups)); this project thus aims at
+monitoring your LXC/Docker/Kubernetes POD container performances by monitoring only the cgroup-level kernel-provided stats. 
+However, considering that systemd runs all software inside cgroups, `cmonitor-collector` can also be used to sample statistics about
+a software running outside any "containerization" technology (like LXC, Docker or Kubernetes).
 
 This project supports only **Linux x86_64 architectures**.
 
@@ -70,8 +72,8 @@ typically takes around 1msec). This allow to explore fast transients in CPU/memo
 
 Finally the project allows you to easily post-process collected data to:
 * produce a **self-contained** HTML page which allows to visualize all the performance data easily using [Google Charts](https://developers.google.com/chart/);
-* extract statistics information e.g. average/median/peak CPU usage and CPU throttling, average/median/peak memory usage etc.
-
+* extract statistics information e.g. average/median/peak CPU usage and CPU throttling, average/median/peak memory usage etc;
+* hold large amounts of statistics when connected to time-series databases like InfluxDB and Prometheus.
 
 ## Yet-Another-Monitoring-Project?
 
@@ -475,22 +477,23 @@ which allow you to create nice interactive dashboards (see examples in InfluxDB 
 The most detailed documentation on how to use cmonitor tool is available from `--help` option:
 
 ```
-cmonitor_collector: Performance stats collector outputting JSON format.
+cmonitor_collector: Performance statistics collector.
 List of arguments that can be provided follows:
 
 Data sampling options
-  -s, --sampling-interval=<REQ ARG>     Seconds between samples of data (default 60 seconds). Minimum value is 0.01sec, i.e. 10msecs.
+  -s, --sampling-interval=<REQ ARG>     Seconds between samples of data (default is 60 seconds). Minimum value is 0.01sec, i.e. 10msecs.
   -c, --num-samples=<REQ ARG>           Number of samples to collect; special values are:
                                            '0': means forever (default value)
-                                           'until-cgroup-alive': until the selected cgroup is alive
+                                           'until-cgroup-alive': until the cgroup selected by --cgroup-name is alive
   -k, --allow-multiple-instances        Allow multiple simultaneously-running instances of cmonitor_collector on this system.
+                                        Default is to block attempts to start more than one background instance.
   -F, --foreground                      Stay in foreground.
   -C, --collect=<REQ ARG>               Collect specified list of performance stats. Available performance stats are:
                                           'cpu': collect per-core CPU stats from /proc/stat
                                           'memory': collect memory stats from /proc/meminfo, /proc/vmstat
                                           'disk': collect disk stats from /proc/diskstats
                                           'network': collect network stats from /proc/net/dev
-                                          'load': collect avg load stats from /proc/loadavg
+                                          'load': collect system load stats from /proc/loadavg
                                           'cgroup_cpu': collect CPU stats from the 'cpuacct' cgroup
                                           'cgroup_memory': collect memory stats from 'memory' cgroup
                                           'cgroup_network': collect network statistics by interface for the network namespace of the cgroup
@@ -500,42 +503,41 @@ Data sampling options
                                           'all_cgroup': the combination of 'cgroup_cpu', 'cgroup_memory', 'cgroup_processes'
                                           'all': the combination of all previous stats (this is the default)
                                         Note that a comma-separated list of above stats can be provided.
-  -e, --deep-collect                    Collect all available details about the stats families enabled by --collect.
-                                        By default, for each family, only the stats that are used by the 'cmonitor_chart' companion utility
-                                        are collected. With this option a more detailed but larger JSON / InfluxDB / Prometheus data stream is produced.
+  -e, --deep-collect                    Collect all available details for the performance statistics enabled by --collect.
+                                        By default, for each category, only the stats that are used by the 'cmonitor_chart' companion utility
+                                        are collected. With this option a more detailed but larger JSON / InfluxDB data stream is produced.
   -g, --cgroup-name=<REQ ARG>           If cgroup sampling is active (--collect=cgroups*), this option allows to provide explicitly the name of
-                                        the cgroup to monitor. If 'self' value is passed (the default), the statistics of the cgroups where 
-                                        cmonitor_collector runs will be collected. Note that this option is mostly useful when running 
+                                        the cgroup to monitor. If 'self' value is passed (the default), the statistics of the cgroups where
+                                        cmonitor_collector runs will be collected. Note that this option is mostly useful when running
                                         cmonitor_collector directly on the baremetal since a process running inside a container cannot monitor
                                         the performances of other containers.
   -t, --score-threshold=<REQ ARG>       If cgroup process/thread sampling is active (--collect=cgroup_processes/cgroup_threads) use the provided
                                         score threshold to filter out non-interesting processes/threads. The 'score' is a number that is linearly
-                                        increasing with the CPU usage. Defaults to value '1' to filter out all processes/threads having zero CPU
-                                        usage. Use '0' to turn off filtering by score.
+                                        increasing with the CPU usage. Defaults to '1' to filter out all processes/threads having zero CPU usage.
+                                        Use '0' to turn off filtering by score.
   -M, --custom-metadata=<REQ ARG>       Allows to specify custom metadata key:value pairs that will be saved into the JSON output (if saving data
-                                        locally) under the 'header.custom_metadata' path. See usage examples below.
-                                        
+                                        locally) under the 'header.custom_metadata' path. Can be used multiple times. See usage examples below.
+
 Options to save data locally
-  -m, --output-directory=<REQ ARG>      Program will write output files to provided directory (default cwd).
+  -m, --output-directory=<REQ ARG>      Write output JSON and .err files to provided directory (defaults to current working directory).
   -f, --output-filename=<REQ ARG>       Name the output files using provided prefix instead of defaulting to the filenames:
                                                 hostname_<year><month><day>_<hour><minutes>.json  (for JSON data)
                                                 hostname_<year><month><day>_<hour><minutes>.err   (for error log)
-                                        Use special prefix 'stdout' to indicate that you want the utility to write on stdout.
-                                        Use special prefix 'none' to indicate that you want to disable JSON generation.
+                                        Special argument 'stdout' means JSON output should be printed on stdout and errors/warnings on stderr.
+                                        Special argument 'none' means that JSON output must be disabled.
   -P, --output-pretty                   Generate a pretty-printed JSON file instead of a machine-friendly JSON (the default).
-                                        
-Options to stream data remotely
-  -i, --remote-ip=<REQ ARG>             IP address or hostname of the InfluxDB instance to send measurements to;
-                                        cmonitor_collector will use a database named 'cmonitor' to store them,
-                                        or this can be used to set the hostname for Prometheus instance.
-  -p, --remote-port=<REQ ARG>           Port to be used by InfluxDB or Prometheus instance.
-  -X, --remote-secret=<REQ ARG>         Set the InfluxDB collector secret (by default use environment variable CMONITOR_SECRET).
-                                        
-  -D, --remote-dbname=<REQ ARG>         Set the InfluxDB database name.
 
-Options to set remote
-  -r, --remote=<REQ ARG>                Set the target influxdb or prometheus.
-                                        
+Options to stream data remotely
+  -r, --remote=<REQ ARG>                Set the type of remote target: 'influxdb' or 'prometheus'.
+  -i, --remote-ip=<REQ ARG>             When remote is InfluxDB: IP address or hostname of the InfluxDB instance to send measurements to;
+                                        cmonitor_collector will use a database named 'cmonitor' to store them.
+                                        When remote is Prometheus: listen address, typically 127.0.0.1 (to accept connections from localhost only)
+                                        or 0.0.0.0 (to accept connections from all).
+  -p, --remote-port=<REQ ARG>           When remote is InfluxDB: port of server;
+                                        When remote is Prometheus: listen port, typically 8080.
+  -X, --remote-secret=<REQ ARG>         InfluxDB only: set the collector secret (by default use environment variable CMONITOR_SECRET).
+  -D, --remote-dbname=<REQ ARG>         InfluxDB only: set the InfluxDB database name (default is 'cmonitor').
+
 Other options
   -v, --version                         Show version and exit
   -d, --debug                           Enable debug mode; automatically activates --foreground mode
@@ -547,8 +549,9 @@ Examples:
     2) Collect data from a docker container:
         DOCKER_NAME=your_docker_name
         DOCKER_ID=$(docker ps -aq --no-trunc -f "name=$DOCKER_NAME")
-        cmonitor_collector --allow-multiple-instances --num-samples=until-cgroup-alive 
+        cmonitor_collector --allow-multiple-instances --num-samples=until-cgroup-alive
                         --cgroup-name=docker/$DOCKER_ID --custom-metadata='cmonitor_chart_name:$DOCKER_NAME'
+                        --custom-metadata='additional_metadata:some-data'
     3) Use the defaults (-s 60, collect forever), saving to custom file in background:
         cmonitor_collector --output-filename=my_server_today
     4) Crontab entry:
@@ -573,6 +576,7 @@ Some key differences now include:
  - HTML page generated by `cmonitor_chart` differently organized;
  - `cmonitor_collector` is able to connect to InfluxDB directly and does not need intermediate Python scripts to transform
    from JSON streamed data to InfluxDB-compatible stream.
+ - Prometheus support
 
 This fork supports only Linux x86_64 architectures; support for AIX/PowerPC (present in original `nmon`) has been dropped.
 
