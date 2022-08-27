@@ -34,7 +34,9 @@ perfect for ephemeral containers (e.g. containers used for DevOps automatic test
 Can also be used with InfluxDB and Grafana.
 
 %prep
+echo "[Inside RPM prep] running setup"
 %setup
+git config --global --add safe.directory $(pwd)
 
 %build
 # first of all install in the buildroot the Conan package manager, which we use to fetch
