@@ -20,6 +20,7 @@ jobs:
 
   build_test_with_prometheus_support:
     needs: install_deps
+    runs-on: ubuntu-latest
 
     # NOTE: since we later run "make" using the normal "builder" user, we must use Conan using that same user (so avoid the "sudo"!!)
     steps:
@@ -38,6 +39,7 @@ jobs:
 
   build_test_without_prometheus_support:
     needs: install_deps
+    runs-on: ubuntu-latest
 
     steps:
     - name: build cmonitor (with Prometheus support)
