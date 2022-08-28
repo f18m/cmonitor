@@ -1,5 +1,5 @@
 # NOTE: the version of Alpine used here must be aligned with the one in Dcokerfile.builder
-FROM alpine:3.15
+FROM alpine:3.16.2
 
 # make sure you did run the "cmonitor_musl" target before building this image:
 RUN apk add libstdc++ libc6-compat fmt-dev
