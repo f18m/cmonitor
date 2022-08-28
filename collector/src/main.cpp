@@ -71,9 +71,9 @@
 #define MIN_SAMPLING_TIME_SEC (0.01)
 
 #ifdef PROMETHEUS_SUPPORT
-#define VERSION_OUTPUT_PROMETHEUS_SUPPORT "with Prometheus support"
+#define VERSION_STRING_SUPPORTED_REMOTES "with Prometheus, InfluxDB support"
 #else
-#define VERSION_OUTPUT_PROMETHEUS_SUPPORT "without Prometheus support"
+#define VERSION_STRING_SUPPORTED_REMOTES "with InfluxDB support"
 #endif
 
 //------------------------------------------------------------------------------
@@ -598,7 +598,7 @@ void CMonitorCollectorApp::parse_args(int argc, char** argv)
             // help
             case 'v':
                 printf("%s (commit %s, %s)\n", VERSION_STRING, CMONITOR_LAST_COMMIT_HASH,
-                    VERSION_OUTPUT_PROMETHEUS_SUPPORT);
+                    VERSION_STRING_SUPPORTED_REMOTES);
                 exit(0);
                 break;
             case 'd':
