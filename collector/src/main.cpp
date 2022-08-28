@@ -70,6 +70,9 @@
 */
 #define MIN_SAMPLING_TIME_SEC (0.01)
 
+#define CMONITOR_DEFAULT_PROMETHEUS_PORT 8080
+#define CMONITOR_DEFAULT_PROMETHEUS_PORT_STR "8080"
+
 #ifdef PROMETHEUS_SUPPORT
 #define VERSION_STRING_SUPPORTED_REMOTES "with Prometheus, InfluxDB support"
 #else
@@ -230,12 +233,10 @@ struct option_extended {
         "Set the type of remote target: 'none' (default), 'influxdb' or 'prometheus'." },
     { "Options to stream data remotely", &g_long_opts[13],
         "When remote is InfluxDB: IP address or hostname of the InfluxDB instance to send measurements to;\n"
-        "cmonitor_collector will use a database named 'cmonitor' to store them.\n"
-        "When remote is Prometheus: listen address, typically 127.0.0.1 (to accept connections from localhost only)\n"
-        "or 0.0.0.0 (to accept connections from all)." },
+        "When remote is Prometheus: listen address, defaults to 0.0.0.0 (to accept connections from all)." },
     { "Options to stream data remotely", &g_long_opts[14],
         "When remote is InfluxDB: port of server;\n"
-        "When remote is Prometheus: listen port, typically 8080." },
+        "When remote is Prometheus: listen port, defaults to " CMONITOR_DEFAULT_PROMETHEUS_PORT_STR "." },
     { "Options to stream data remotely", &g_long_opts[15],
         "InfluxDB only: set the collector secret (by default use environment variable CMONITOR_SECRET)." },
     { "Options to stream data remotely", &g_long_opts[16],
@@ -426,19 +427,26 @@ void CMonitorCollectorApp::print_help()
     std::cerr << "Examples:" << std::endl;
     std::cerr << "    1) Collect data from OS every 5 mins all day:" << std::endl;
     std::cerr << "\tcmonitor_collector -s 300 -c 288 -m /home/perf" << std::endl;
-    std::cerr << "    2) Collect data from a docker container:" << std::endl;
+    std::cerr << "    2) Use the defaults (-s 60, collect forever), saving to custom file in background:" << std::endl;
+    std::cerr << "\tcmonitor_collector --output-filename=my_server_today" << std::endl;
+    std::cerr << "    3) Collect data from a docker container:" << std::endl;
     std::cerr << "\tDOCKER_NAME=your_docker_name" << std::endl;
     std::cerr << "\tDOCKER_ID=$(docker ps -aq --no-trunc -f \"name=$DOCKER_NAME\")" << std::endl;
     std::cerr << "\tcmonitor_collector --allow-multiple-instances --num-samples=until-cgroup-alive " << std::endl;
     std::cerr << "\t\t\t--cgroup-name=docker/$DOCKER_ID --custom-metadata='cmonitor_chart_name:$DOCKER_NAME'"
               << std::endl;
     std::cerr << "\t\t\t--custom-metadata='additional_metadata:some-data'" << std::endl;
-    std::cerr << "    3) Use the defaults (-s 60, collect forever), saving to custom file in background:" << std::endl;
-    std::cerr << "\tcmonitor_collector --output-filename=my_server_today" << std::endl;
-    std::cerr << "    4) Crontab entry:" << std::endl;
-    std::cerr << "\t0 4 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -m /home/perf" << std::endl;
-    std::cerr << "    5) Crontab entry for pumping data to an InfluxDB:" << std::endl;
-    std::cerr << "\t* 0 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -i admin.acme.com -p 8086" << std::endl;
+    std::cerr << "    4) Monitor a docker container sending data to an InfluxDB (only, no JSON output):" << std::endl;
+    std::cerr << "\tcmonitor_collector --num-samples=until-cgroup-alive --cgroup-name=docker/$DOCKER_ID " << std::endl;
+    std::cerr << "\t\t\t--output-filename=none --remote=influxdb --remote-ip myinfluxdb.foobar.com --remote-port 8086"
+              << std::endl;
+    std::cerr << "    5) Monitor a docker container and expose HTTP endpoint for Prometheus scraping (no JSON output):"
+              << std::endl;
+    std::cerr << "\tcmonitor_collector -s 5 --num-samples=until-cgroup-alive --cgroup-name=docker/$DOCKER_ID "
+              << std::endl;
+    std::cerr << "\t\t\t--output-filename=none --remote=prometheus  --collect=all_cgroup --score-threshold=0"
+              << std::endl;
+    std::cerr << "\tcurl http://localhost:8080/metrics # test scraping" << std::endl;
     std::cerr << "    6) Pipe into 'myprog' half-a-day of sampled performance data:" << std::endl;
     std::cerr << "\tcmonitor_collector --sampling-interval=30 --num-samples=1440 --output-filename=stdout --foreground "
                  "| myprog"
@@ -678,7 +686,7 @@ void CMonitorCollectorApp::fill_with_defaults()
 
     if (m_cfg.m_nRemote == REMOTE_PROMETHEUS && m_cfg.m_nRemotePort == 0)
         // provide a good default port:
-        m_cfg.m_nRemotePort = 8080;
+        m_cfg.m_nRemotePort = CMONITOR_DEFAULT_PROMETHEUS_PORT;
     if (m_cfg.m_nRemote == REMOTE_PROMETHEUS && m_cfg.m_strRemoteAddress == "")
         // provide a good default listen address:
         m_cfg.m_strRemoteAddress = "0.0.0.0";
