@@ -34,6 +34,7 @@ perfect for ephemeral containers (e.g. containers used for DevOps automatic test
 Can also be used with InfluxDB and Grafana.
 
 %prep
+echo "[Inside RPM prep] running setup"
 %setup
 
 %build

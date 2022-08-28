@@ -149,6 +149,9 @@ yum install -y cmonitor-collector cmonitor-tools
 Note that the RPM `cmonitor-collector` has no dependencies from Python and has very small set of dependencies (GNU libc and few others)
 so can be installed easily everywhere. The RPM `cmonitor-tools` instead requires Python3.
 
+Finally note that Fedora COPR infrastructure will retain only the very **latest** version of cmonitor RPMs.
+If your CI/CD relies on a particular version of cmonitor, the suggestion is to download and store the RPM version you need.
+
 
 ### Debian package (for Debian, Ubuntu, etc)
 
@@ -528,13 +531,11 @@ Options to save data locally
   -P, --output-pretty                   Generate a pretty-printed JSON file instead of a machine-friendly JSON (the default).
 
 Options to stream data remotely
-  -r, --remote=<REQ ARG>                Set the type of remote target: 'influxdb' or 'prometheus'.
+  -r, --remote=<REQ ARG>                Set the type of remote target: 'none' (default), 'influxdb' or 'prometheus'.
   -i, --remote-ip=<REQ ARG>             When remote is InfluxDB: IP address or hostname of the InfluxDB instance to send measurements to;
-                                        cmonitor_collector will use a database named 'cmonitor' to store them.
-                                        When remote is Prometheus: listen address, typically 127.0.0.1 (to accept connections from localhost only)
-                                        or 0.0.0.0 (to accept connections from all).
+                                        When remote is Prometheus: listen address, defaults to 0.0.0.0 (to accept connections from all).
   -p, --remote-port=<REQ ARG>           When remote is InfluxDB: port of server;
-                                        When remote is Prometheus: listen port, typically 8080.
+                                        When remote is Prometheus: listen port, defaults to 8080.
   -X, --remote-secret=<REQ ARG>         InfluxDB only: set the collector secret (by default use environment variable CMONITOR_SECRET).
   -D, --remote-dbname=<REQ ARG>         InfluxDB only: set the InfluxDB database name (default is 'cmonitor').
 
@@ -546,18 +547,21 @@ Other options
 Examples:
     1) Collect data from OS every 5 mins all day:
         cmonitor_collector -s 300 -c 288 -m /home/perf
-    2) Collect data from a docker container:
+    2) Use the defaults (-s 60, collect forever), saving to custom file in background:
+        cmonitor_collector --output-filename=my_server_today
+    3) Collect data from a docker container:
         DOCKER_NAME=your_docker_name
         DOCKER_ID=$(docker ps -aq --no-trunc -f "name=$DOCKER_NAME")
         cmonitor_collector --allow-multiple-instances --num-samples=until-cgroup-alive
                         --cgroup-name=docker/$DOCKER_ID --custom-metadata='cmonitor_chart_name:$DOCKER_NAME'
                         --custom-metadata='additional_metadata:some-data'
-    3) Use the defaults (-s 60, collect forever), saving to custom file in background:
-        cmonitor_collector --output-filename=my_server_today
-    4) Crontab entry:
-        0 4 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -m /home/perf
-    5) Crontab entry for pumping data to an InfluxDB:
-        * 0 * * * /usr/bin/cmonitor_collector -s 300 -c 288 -i admin.acme.com -p 8086
+    4) Monitor a docker container sending data to an InfluxDB (only, no JSON output):
+        cmonitor_collector --num-samples=until-cgroup-alive --cgroup-name=docker/$DOCKER_ID
+                        --output-filename=none --remote=influxdb --remote-ip myinfluxdb.foobar.com --remote-port 8086
+    5) Monitor a docker container and expose HTTP endpoint for Prometheus scraping (no JSON output):
+        cmonitor_collector -s 5 --num-samples=until-cgroup-alive --cgroup-name=docker/$DOCKER_ID
+                        --output-filename=none --remote=prometheus  --collect=all_cgroup --score-threshold=0
+        curl http://localhost:8080/metrics # test scraping
     6) Pipe into 'myprog' half-a-day of sampled performance data:
         cmonitor_collector --sampling-interval=30 --num-samples=1440 --output-filename=stdout --foreground | myprog
 
