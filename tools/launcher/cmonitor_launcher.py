@@ -21,6 +21,7 @@ from datetime import datetime
 
 import signal
 
+import cmonitor_watcher
 from cmonitor_watcher import CgroupWatcher
 from argparse import RawTextHelpFormatter
 
@@ -83,6 +84,10 @@ class CmonitorLauncher:
                 else:
                     time.sleep(self.timeout)
                     logging.info(f"In processing event Queue is empty - sleeping: {self.timeout} sec")
+                    if cmonitor_watcher.exit_flag is True:
+                       logging.info(f"In processing event_flag set to {cmonitor_watcher.exit_flag}")
+                       exit(1)
+
         except event.Empty():
             pass
 
@@ -116,6 +121,8 @@ class CmonitorLauncher:
         for process_name, monitor_process in self.monitored_processes.items():
             logging.info(f"Stopping cmonitor_collector from pid '{monitor_process.pid}' of container '{process_name}'")
             # monitor_process is a subprocess.Popen object:
+            cmonitor_watcher.exit_flag = True
+            time.sleep(10)
             monitor_process.terminate()
             monitor_process.wait()
             exit(1)
@@ -215,14 +222,14 @@ def main():
 
     # flag has to be set in case inotify_events() needed to be unblocked
     # default False : keep blocking
-    exit_flag = False
+    #exit_flag = False
 
     cGroupWatcher = CgroupWatcher(input_path, filter, timeout)
     cMonitorLauncher = CmonitorLauncher(input_path, filter, ip, command, timeout)
 
     signal.signal(signal.SIGINT, cMonitorLauncher.handler)
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        executer1 = executor.submit(cGroupWatcher.inotify_events, queue, exit_flag)
+        executer1 = executor.submit(cGroupWatcher.inotify_events, queue)
         executer2 = executor.submit(cMonitorLauncher.process_events, queue)
 
 

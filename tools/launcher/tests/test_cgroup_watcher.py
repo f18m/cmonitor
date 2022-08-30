@@ -15,6 +15,7 @@ import concurrent.futures
 from concurrent.futures import ProcessPoolExecutor
 
 # import cmonitor_watcher
+import cmonitor_watcher
 from cmonitor_watcher import CgroupWatcher
 
 # import dateutil.parser as datetime_parser
@@ -68,6 +69,7 @@ def process_task_file(path, queue):
     myDict = d.copy()
     if queue.empty():
         print("Queue is Empty")
+        cmonitor_watcher.exit_flag = True
         # terminate the dummy process
         p.terminate()
         return
@@ -85,9 +87,9 @@ def test_outputCmonitorWatcherInotifyEvent(testrun_idx):
         print("Directory '% s' created" % path)
 
     watcher = CgroupWatcher(path, filter, 10)
-    flag = True
+    #flag = True
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        future1 = executor.submit(watcher.inotify_events, queue, flag)
+        future1 = executor.submit(watcher.inotify_events, queue)
         future2 = executor.submit(process_task_file, path, queue)
 
     # both threads completely executed
