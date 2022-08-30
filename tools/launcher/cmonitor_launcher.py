@@ -85,8 +85,8 @@ class CmonitorLauncher:
                     time.sleep(self.timeout)
                     logging.info(f"In processing event Queue is empty - sleeping: {self.timeout} sec")
                     if cmonitor_watcher.exit_flag is True:
-                       logging.info(f"In processing event_flag set to {cmonitor_watcher.exit_flag}")
-                       exit(1)
+                        logging.info(f"In processing event_flag set to {cmonitor_watcher.exit_flag}")
+                        exit(1)
 
         except event.Empty():
             pass
@@ -222,7 +222,7 @@ def main():
 
     # flag has to be set in case inotify_events() needed to be unblocked
     # default False : keep blocking
-    #exit_flag = False
+    # exit_flag = False
 
     cGroupWatcher = CgroupWatcher(input_path, filter, timeout)
     cMonitorLauncher = CmonitorLauncher(input_path, filter, ip, command, timeout)

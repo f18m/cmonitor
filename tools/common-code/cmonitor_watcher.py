@@ -189,9 +189,8 @@ class CgroupWatcher:
                             queue.put(fileList)
                 # global exit_flag
                 if exit_flag is True:
-                   logging.info(f"CgroupWatcher exit_flag {exit_flag}")
-                   exit(1)
-
+                    logging.info(f"CgroupWatcher exit_flag {exit_flag}")
+                    exit(1)
 
         finally:
             i.remove_watch(path)

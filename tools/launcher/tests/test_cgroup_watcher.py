@@ -87,7 +87,7 @@ def test_outputCmonitorWatcherInotifyEvent(testrun_idx):
         print("Directory '% s' created" % path)
 
     watcher = CgroupWatcher(path, filter, 10)
-    #flag = True
+    # flag = True
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         future1 = executor.submit(watcher.inotify_events, queue)
         future2 = executor.submit(process_task_file, path, queue)
