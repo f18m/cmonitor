@@ -14,9 +14,9 @@ jobs:
     # install deps
     - uses: actions/checkout@v2
     - name: install debian-packaged dependencies
-      run: sudo apt install -y libgtest-dev libbenchmark-dev libfmt-dev tidy git python3 python3-dateutil python3-pip
+      run: sudo apt install -y libgtest-dev libbenchmark-dev libfmt-dev tidy git python3 python3-dateutil python3-pip inotify-tools
     - name: install pypi-packaged dependencies
-      run: sudo pip3 install pytest black conan
+      run: sudo pip3 install pytest black conan inotify
 
     # NOTE: since we later run "make" using the normal "builder" user, we must use Conan using that same user (so avoid the "sudo"!!)
     - name: install Conan-packaged dependencies
