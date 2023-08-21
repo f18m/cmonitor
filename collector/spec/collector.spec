@@ -31,7 +31,7 @@ BuildRequires:  gcc-c++, make, git, gtest-devel, fmt-devel, zlib-devel, cmake3, 
 %description
 A Docker/LXC/Kubernetes, database-free, lightweight container performance monitoring solution, 
 perfect for ephemeral containers (e.g. containers used for DevOps automatic testing). 
-Can also be used with InfluxDB and Grafana.
+Can also be used with InfluxDB, Prometheus and Grafana.
 
 %prep
 echo "[Inside RPM prep] running setup"
@@ -42,7 +42,7 @@ echo "[Inside RPM prep] running setup"
 # prometheus-cpp, since that library is not, unfortunately, packaged by Fedora/COPR
 # NOTE: prometheus-cpp & its dependencies wants at least Conan 1.51.0
 echo "[Inside RPM build] installing Conan"
-pip3 install --user 'conan==1.51.2' 
+pip3 install 'conan==1.51.2' 
 echo "[Inside RPM build] bootstrapping Conan"
 conan profile new %{buildroot}/cmonitor_rpmbuild --detect 
 conan profile update settings.compiler.libcxx=libstdc++11 %{buildroot}/cmonitor_rpmbuild
@@ -64,6 +64,7 @@ echo "[Inside RPM build] launching cmonitor collector build"
 %make_build PROMETHEUS_SUPPORT=1 DISABLE_UNIT_TESTS_BUILD=1 DISABLE_BENCHMARKS_BUILD=1 FMTLIB_MAJOR_VER=6 CMONITOR_LAST_COMMIT_HASH=__LAST_COMMIT_HASH__
 
 %install
+echo "[Inside RPM install] installing collector binary in the buildroot"
 rm -rf %{buildroot}
 # we use j2cli during the "install" phase... 
 #pip3 install j2cli    # for unknown reasons the pip3 program works but then the 'j2' utility won't work
