@@ -42,7 +42,7 @@ echo "[Inside RPM prep] running setup"
 # prometheus-cpp, since that library is not, unfortunately, packaged by Fedora/COPR
 # NOTE: prometheus-cpp & its dependencies wants at least Conan 1.51.0
 echo "[Inside RPM build] installing Conan"
-pip3 install 'conan==1.51.2' 
+pip3 install --user 'conan==1.51.2' 
 echo "[Inside RPM build] bootstrapping Conan"
 conan profile new %{buildroot}/cmonitor_rpmbuild --detect 
 conan profile update settings.compiler.libcxx=libstdc++11 %{buildroot}/cmonitor_rpmbuild
