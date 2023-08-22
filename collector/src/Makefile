@@ -7,9 +7,9 @@ ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/../..)
 include $(ROOT_DIR)/Constants.mk
 include $(ROOT_DIR)/Prometheus-Support.mk
 
-# IMPORTANT: we do require c++11, i.e. GCC 4.8.1 or higher;
-#            Centos7 which is one of the oldest-supported distributions provides gcc 4.8.5 so we
-#            cannot move to e.g. c++14/17/20 yet
+# IMPORTANT: Centos7 which is one of the oldest-supported distributions provides gcc 4.8.5;
+#            GCC 4.8.x is able to build C++11 but not e.g. C++14/17/20 yet... so we will stay with C++11
+#            till Centos7 has to be supported...
 # IMPORTANT#2: -fPIC is required to build on fedora-rawhide
 CXXFLAGS += -Wall -Werror -Wno-switch-bool -std=c++11 -fPIC $(DEFS)
 

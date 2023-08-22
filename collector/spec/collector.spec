@@ -17,12 +17,15 @@ Requires:       fmt
 #    cmake3,         
 #    python3-pip, 
 #    python3-setuptools, 
-#    perl  
-#                  requirements for libprometheus and its build system (Conan-based, cmake3-based);
+#    perl,
+#    perl-IPC-Cmd,
+#    perl-Digest-SHA
+#                  requirements for prometheus-cpp 3rd party lib and its build system (Conan-based, cmake3-based);
 #                  note that for some reason from FC35 and up we also need to request 'setuptools' pypi to install
 #                  successfully the 'conan' pypi, and we install it with python3-setuptools
-#                  perl is instead required from FC35 upward to build OpenSSL Conan package successfully
-BuildRequires:  gcc-c++, make, git, gtest-devel, fmt-devel, zlib-devel, cmake3, python3-pip, python3-setuptools, perl
+#                  perl* are instead required from FC35 upward to build OpenSSL Conan package successfully
+
+BuildRequires:  gcc-c++, make, git, gtest-devel, fmt-devel, zlib-devel, cmake3, python3-pip, python3-setuptools, perl, perl-IPC-Cmd, perl-Digest-SHA
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
 # of debug info files apparently:
@@ -42,8 +45,9 @@ echo "[Inside RPM prep] running setup"
 # prometheus-cpp, since that library is not, unfortunately, packaged by Fedora/COPR
 # NOTE: prometheus-cpp & its dependencies wants at least Conan 1.51.0
 echo "[Inside RPM build] installing Conan"
-pip3 install 'conan==1.51.2' 
+pip3 install --user 'conan==1.60.2' 
 echo "[Inside RPM build] bootstrapping Conan"
+export PATH="$HOME/.local/bin:$PATH"
 conan profile new %{buildroot}/cmonitor_rpmbuild --detect 
 conan profile update settings.compiler.libcxx=libstdc++11 %{buildroot}/cmonitor_rpmbuild
 conan remote list
