@@ -18,7 +18,7 @@ jobs:
 
     # NOTE: prometheus-cpp & its dependencies wants at least Conan 1.51.0
     - name: install pypi-packaged dependencies
-      run: sudo pip3 install pytest black 'conan==1.51.2'
+      run: sudo pip3 install pytest black 'conan==1.60.2'
 
     # NOTE: since we later run "make" using the normal "builder" user, we must use Conan using that same user (so avoid the "sudo"!!)
     - name: install Conan-packaged dependencies
