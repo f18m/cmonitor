@@ -23,6 +23,7 @@
 // Includes
 //------------------------------------------------------------------------------
 
+#include <cstdint>
 #include <map>
 #include <set>
 #include <string.h>
