@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/f18m/cmonitor.svg?branch=master)](https://travis-ci.com/f18m/cmonitor "TravisCI status")
+[![Build Status](https://github.com/f18m/cmonitor/actions/workflows/main.yml/badge.svg)](https://github.com/f18m/cmonitor/actions)
 [![Copr build status](https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/package/cmonitor-collector/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/f18m/cmonitor/ "RPMs on Fedora COPR")
 
 # cmonitor - lightweight container monitor
