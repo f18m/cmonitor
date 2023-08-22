@@ -36,6 +36,7 @@
 #include "prometheus_counter.h"
 #include "prometheus_gauge.h"
 #include <prometheus/counter.h>
+#include <prometheus/detail/future_std.h>
 #include <prometheus/exposer.h>
 #include <prometheus/family.h>
 #include <prometheus/gauge.h>

@@ -4,7 +4,9 @@
 #
 
 [requires]
-  prometheus-cpp/1.1.0@
+  # prometheus-cpp 1.1.0 cannot be used because it supports only C++14 onward; however the compiler shipping with Centos7
+  # supports at most the C++11 dialect... so till we want to support Centos7, we need to stick with prometheus-cpp 1.0.0
+  prometheus-cpp/1.0.0@
 
 [options]
   # by using shared=False we create a cmonitor_collector binary that is self-contained
