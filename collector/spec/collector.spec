@@ -44,6 +44,7 @@ echo "[Inside RPM prep] running setup"
 echo "[Inside RPM build] installing Conan"
 pip3 install --user 'conan==1.60.2' 
 echo "[Inside RPM build] bootstrapping Conan"
+export PATH="$HOME/.local/bin:$PATH"
 conan profile new %{buildroot}/cmonitor_rpmbuild --detect 
 conan profile update settings.compiler.libcxx=libstdc++11 %{buildroot}/cmonitor_rpmbuild
 conan remote list
