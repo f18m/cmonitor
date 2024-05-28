@@ -16,11 +16,12 @@ $(info Launching COPR build from directory: $(COPR_CURRENT_SUBDIRECTORY))
 #
 # This Makefile is currently invoked twice:
 # 1) from "collector" subdirectory; test by running
-#        cd /home/fmontorsi/git/cmonitor/collector
-#        make -f /home/fmontorsi/git/cmonitor/.copr/Makefile srpm outdir=/tmp/cmonitor-collector-rpm
+#        export BASE_DIR=/home/fmontorsi/git     (adjust to your case)
+#        cd ${BASEDIR}/cmonitor/collector
+#        make -f ${BASEDIR}/cmonitor/.copr/Makefile srpm outdir=/tmp/cmonitor-collector-rpm
 # 2) from "tools" subdirectory; test by running
-#        cd /home/fmontorsi/git/cmonitor/tools
-#        make -f /home/fmontorsi/git/cmonitor/.copr/Makefile srpm outdir=/tmp/cmonitor-tools-rpm
+#        cd ${BASEDIR}/cmonitor/tools
+#        make -f ${BASEDIR}/cmonitor/.copr/Makefile srpm outdir=/tmp/cmonitor-tools-rpm
 #
 # NOTE: 
 # see https://docs.pagure.org/copr.copr/user_documentation.html#how-long-do-you-keep-the-builds
