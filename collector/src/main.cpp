@@ -879,6 +879,8 @@ int CMonitorCollectorApp::run_main_loop()
         charted_stats_from_cgroup_memory_v1.insert("failcnt");
         // cgroups v2
         charted_stats_from_cgroup_memory_v2.insert("stat.anon");
+        charted_stats_from_cgroup_memory_v2.insert("stat.file");
+        charted_stats_from_cgroup_memory_v2.insert("events.oom_kill");
     }
     // else: leave empty
 
