@@ -50,6 +50,7 @@ pip3 install --user 'conan==2.9.1'
 echo "[Inside RPM build] bootstrapping Conan"
 export PATH="$HOME/.local/bin:$PATH"
 conan profile detect --force
+conan remote update conancenter --url https://center2.conan.io
 conan remote list
 
 # secondly, Conan is used to fetch prometheus-cpp library, building it with cmake when needed:
