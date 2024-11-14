@@ -7,7 +7,7 @@ ROOT_DIR:=$(shell readlink -f $(THIS_DIR)/../../..)
 include $(ROOT_DIR)/Constants.mk
 include $(ROOT_DIR)/Prometheus-Support.mk
 
-CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++11 -fPIC $(DEFS)
+CXXFLAGS=-Wall -Werror -Wno-switch-bool -std=c++14 -fPIC $(DEFS)
 
 ifeq ($(DEBUG),1)
 CXXFLAGS += -g -O0    #useful for debugging
