@@ -22,6 +22,7 @@ jobs:
     - name: install Conan-packaged dependencies
       run: |
          conan profile detect --force
+         conan remote update conancenter --url https://center2.conan.io
          conan install conanfile.txt --build=missing
 
     # build & test
