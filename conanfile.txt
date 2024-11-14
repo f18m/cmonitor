@@ -4,7 +4,7 @@
 #
 
 [requires]
-  prometheus-cpp/1.2.4@
+  prometheus-cpp/1.3.0@
 
 [options]
   # by using shared=False we create a cmonitor_collector binary that is self-contained

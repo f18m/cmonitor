@@ -75,7 +75,7 @@ debug:
 	gdb $(OUT)
 
 $(OUT): $(OBJS) $(ROOT_DIR)/Constants.mk
-	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBS)
+	$(CXX) $(LDFLAGS) -o $(OUT) $(OBJS) -Wl,--start-group $(LIBS) -Wl,--end-group
 
 clean:
 	rm -f $(OUT) $(OBJS) 
