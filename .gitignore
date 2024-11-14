@@ -53,3 +53,11 @@ conanbuildinfo.txt
 conaninfo.txt
 graph_info.json
 
+# files created by Conan v2 install
+conanbuild.sh
+conanbuildenv-release-x86_64.sh
+conandeps.mk
+conanrun.sh
+conanrunenv-release-x86_64.sh
+deactivate_conanbuild.sh
+deactivate_conanrun.sh

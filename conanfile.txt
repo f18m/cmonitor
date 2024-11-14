@@ -1,20 +1,18 @@
 #
-# Conanfile to retrieve prometheus-cpp library (and its dependencies: civetweb, openssl, libcurl)
+# Conanfile to retrieve prometheus-cpp library (and its dependencies/*: civetweb, openssl, libcurl)
 # This Conanfile is used also by COPR during RPM creation.
 #
 
 [requires]
-  # prometheus-cpp 1.1.0 cannot be used because it supports only C++14 onward; however the compiler shipping with Centos7
-  # supports at most the C++11 dialect... so till we want to support Centos7, we need to stick with prometheus-cpp 1.0.0
-  prometheus-cpp/1.2.4@
+  prometheus-cpp/1.3.0@
 
 [options]
   # by using shared=False we create a cmonitor_collector binary that is self-contained
-  prometheus-cpp:shared=False                    # default is True
-  prometheus-cpp:with_pull=True                  # default is True 
-  prometheus-cpp:with_push=False                 # default is False 
-  prometheus-cpp:with_compression=False          # default is False
-  prometheus-cpp:fPIC=True                       # default is True
+  prometheus-cpp/*:shared=False                    # default is True
+  prometheus-cpp/*:with_pull=True                  # default is True 
+  prometheus-cpp/*:with_push=False                 # default is False 
+  prometheus-cpp/*:with_compression=False          # default is False
+  prometheus-cpp/*:fPIC=True                       # default is True
 
 [generators]
-  make
+  MakeDeps

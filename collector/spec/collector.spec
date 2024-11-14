@@ -43,13 +43,13 @@ echo "[Inside RPM prep] running setup"
 %build
 # first of all install in the buildroot the Conan package manager, which we use to fetch
 # prometheus-cpp, since that library is not, unfortunately, packaged by Fedora/COPR
-# NOTE: prometheus-cpp & its dependencies wants at least Conan 1.51.0
+# NOTE: prometheus-cpp & its dependencies want at least Conan 1.51.0... but versions below 1.64 fail to 
+#       install properly in Fedora >= 39
 echo "[Inside RPM build] installing Conan"
-pip3 install --user 'conan==1.60.2' 
+pip3 install --user 'conan==2.9.1' 
 echo "[Inside RPM build] bootstrapping Conan"
 export PATH="$HOME/.local/bin:$PATH"
-conan profile new %{buildroot}/cmonitor_rpmbuild --detect 
-conan profile update settings.compiler.libcxx=libstdc++11 %{buildroot}/cmonitor_rpmbuild
+conan profile detect --force
 conan remote list
 
 # secondly, Conan is used to fetch prometheus-cpp library, building it with cmake when needed:
@@ -59,8 +59,9 @@ echo "[Inside RPM build] installing prometheus-cpp"
 mkdir -p %{buildroot}/bin
 ln -sf /usr/bin/cmake3 %{buildroot}/bin/cmake
 export PATH="%{buildroot}/bin:$PATH"
+
 echo "[Inside RPM build] the PATH adjusted to contain a cmake3->cmake symlink is: $PATH"
-conan install conanfile.txt --build=missing --profile %{buildroot}/cmonitor_rpmbuild
+conan install conanfile.txt --build=missing
 
 # finally, this command invokes the root Makefile of cmonitor repo, from inside the source tarball
 # produced by COPR; that root Makefile will pass all the options listed here to collector/Makefile
