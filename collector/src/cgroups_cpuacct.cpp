@@ -35,8 +35,12 @@
 
 bool CMonitorCgroups::read_cpuset_cpus(std::string kernelPath, std::set<uint64_t>& cpus)
 {
-    std::set<uint64_t> empty_set;
-    return read_integers_with_range_validation(kernelPath + "/cpuset.cpus", 0, INT32_MAX, cpus);
+    if (m_nCGroupsFound == CG_NONE)
+        return false;
+
+    std::string cpuset_path = kernelPath + ((m_nCGroupsFound == CG_VERSION2)? "/cpuset.cpus.effective" : "/cpuset.cpus");
+
+    return read_integers_with_range_validation(cpuset_path, 0, INT32_MAX, cpus);
 }
 
 bool CMonitorCgroups::read_cpuacct_line(FastFileReader& reader, std::vector<uint64_t>& valuesINT /* OUT */)

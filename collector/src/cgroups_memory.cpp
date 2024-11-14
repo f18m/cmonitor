@@ -192,7 +192,7 @@ void CMonitorCgroups::sample_memory(
     case CG_VERSION2: {
         key_value_map_t newEventsValues;
         if (sample_flat_keyed_file(m_cgroup_memory_v2_events, allowedStatsNames, "events.", newEventsValues)) {
-            if (print) {
+            if (print) { 
                 for (auto entry : newEventsValues) {
                     auto prevValue = m_memory_prev_values.v2_events.find(entry.first);
                     if (prevValue != m_memory_prev_values.v2_events.end())
