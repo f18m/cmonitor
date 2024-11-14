@@ -21,7 +21,7 @@ jobs:
     # NOTE: since we later run "make" using the normal "builder" user, we must use Conan using that same user (so avoid the "sudo"!!)
     - name: install Conan-packaged dependencies
       run: |
-         conan profile new default --detect
+         conan profile detect --force
          conan install conanfile.txt --build=missing
 
     # build & test
