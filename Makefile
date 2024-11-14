@@ -1,7 +1,7 @@
 #
 # Main makefile for cmonitor project
 # https://github.com/f18m/cmonitor
-# Francesco Montorsi (c) 2019
+# Francesco Montorsi (c) 2019-2024
 #
 
 # constants

@@ -16,7 +16,9 @@
 // GTest helpers
 //------------------------------------------------------------------------------
 
+#ifndef PATH_MAX
 #define PATH_MAX (4096)
+#endif
 
 std::string get_unit_test_abs_dir()
 {
