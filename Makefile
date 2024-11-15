@@ -29,6 +29,9 @@ all:
 	if [ -d "collector" ]; then	$(MAKE) -C collector CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) CMONITOR_LAST_COMMIT_HASH=$(CMONITOR_LAST_COMMIT_HASH) DOCKER_TAG=$(DOCKER_TAG) PROMETHEUS_SUPPORT=$(PROMETHEUS_SUPPORT) ; fi
 	if [ -d "tools" ]; then	$(MAKE) -C tools CMONITOR_VERSION=$(CMONITOR_VERSION) CMONITOR_RELEASE=$(CMONITOR_RELEASE) CMONITOR_LAST_COMMIT_HASH=$(CMONITOR_LAST_COMMIT_HASH) ; fi
 
+conan_install:
+	conan install . --build=missing
+
 centos_install_prereq:
 	# this is just the list present in "BuildRequires" field of the RPM spec file:
 	yum install gcc-c++ make gtest-devel fmt-devel git
@@ -61,6 +64,13 @@ endif
 
 valgrind:
 	$(MAKE) -C collector valgrind
+
+
+
+#
+# DOCKER IMAGE
+#
+
 cmonitor_musl:
 	$(MAKE) -C collector cmonitor_musl
 docker_image:
@@ -104,7 +114,7 @@ endif
 	dpkg-buildpackage --post-clean --build=source --force-sign  # build source only otherwise Ubuntu PPA rejects with "Source/binary (i.e. mixed) uploads are not allowed"
 	debsign -S                                                  # you must have the GPG key setup properly for this to work (see e.g. https://help.github.com/en/articles/generating-a-new-gpg-key)
 	@echo "When ready to upload to your PPA run dput as e.g.:"
-	@echo "    cd .. && dput ppa:francesco-montorsi/cmonitor cmonitor_$(CMONITOR_VERSION).$(CMONITOR_RELEASE)-1ubuntu1_source.changes"
+	@echo "    cd .. && dput ppa:francesco-montorsi/cmonitor cmonitor_$(CMONITOR_VERSION)*_source.changes"
 
 deb_local_test:
 ifeq ($(shell whoami),root)
