@@ -1,3 +1,9 @@
+cmonitor (2.6.0-1ubuntu1) bionic; urgency=medium
+
+  * New major release. See upstream https://github.com/f18m/cmonitor/releases page for more info.
+
+ -- Francesco Montorsi <francesco.montorsi@gmail.com>  Fri, 15 Nov 2024 15:26:29 +0000
+
 cmonitor (2.1.0-1ubuntu2) bionic; urgency=medium
 
   * Fix debian package by declaring libfmt-dev dependency
