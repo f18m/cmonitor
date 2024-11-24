@@ -158,14 +158,12 @@ class CmonitorStatisticsEngine:
             print("This tool requires at least 3 samples in the input JSON file. Aborting.")
             return False
 
-        cgroup_version = None
+        cgroup_version = 1
         jheader = json_data["header"]
         if "cgroup_config" in jheader and "version" in jheader["cgroup_config"]:
             cgroup_version = int(jheader["cgroup_config"]["version"])
-
-        if cgroup_version == None:
-            print(f"Unsupported cgroup version -> {cgroup_version}")
-            return False
+        else:
+            print(f"WARNING: cgroup version not found in header using default value {cgroup_version}")
 
         # skip sample 0 because it contains less statistics due to the differential logic that requires some
         # initialization sample for most of the stats
