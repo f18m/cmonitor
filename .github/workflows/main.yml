@@ -51,6 +51,7 @@ jobs:
     - name: run unit tests
       run: make test PROMETHEUS_SUPPORT=0
 
+  # this step is useful to check that the Dockerfile still works fine
   alpine_docker_image_creation:
     runs-on: ubuntu-latest
 
