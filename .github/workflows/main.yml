@@ -50,3 +50,35 @@ jobs:
       run: make PROMETHEUS_SUPPORT=0
     - name: run unit tests
       run: make test PROMETHEUS_SUPPORT=0
+
+  alpine_docker_image_creation:
+    runs-on: ubuntu-latest
+
+    steps:
+    # # install deps
+    # - uses: actions/checkout@v4
+    # - name: install debian-packaged dependencies
+    #   run: sudo apt install -y libgtest-dev libbenchmark-dev libfmt-dev tidy git python3 python3-dateutil python3-pip
+    # - name: install pypi-packaged dependencies
+    #   run: sudo pip3 install pytest black
+
+    # # build & test
+    # - name: build cmonitor (with Prometheus support)
+    #   run: make PROMETHEUS_SUPPORT=0
+    # - name: run unit tests
+    #   run: make test PROMETHEUS_SUPPORT=0
+
+    - name: Build Docker image (no push)
+      # see https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions#accessing-secrets
+      # for the reason why DependaBot pull requests have no access to secrets like ${{ secrets.PAT_TOKEN_FOR_GITHUB }}
+      # if: ${{ github.actor == 'dependabot[bot]' }}
+      uses: mr-smithers-excellent/docker-build-push@v6
+      with:
+        # options related to BUILDing the docker image:
+        dockerfile: ./collector/docker/Dockerfile.builder
+        multiPlatform: false
+        platform: linux/amd64
+        image: cmonitor
+        # options related to PUSHing the docker image:
+        registry: ghcr.io
+        pushImage: false
