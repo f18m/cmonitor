@@ -50,3 +50,21 @@ jobs:
       run: make PROMETHEUS_SUPPORT=0
     - name: run unit tests
       run: make test PROMETHEUS_SUPPORT=0
+
+  # this step is useful to check that the Dockerfile still works fine
+  alpine_docker_image_creation:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Docker image (no push)
+      uses: mr-smithers-excellent/docker-build-push@v6
+      with:
+        # options related to BUILDing the docker image:
+        dockerfile: ./collector/docker/Dockerfile
+        multiPlatform: false
+        platform: linux/amd64
+        image: cmonitor
+        # options related to PUSHing the docker image:
+        registry: docker.io
+        pushImage: false # for now official docker images are published on DockerHub manually on new tags...

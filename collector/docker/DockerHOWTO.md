@@ -20,8 +20,14 @@ This project supports only **Linux x86_64 architectures**.
 The cmonitor Docker image exposes a shared volume under /perf, so you can mount a host directory to that point to access the generated JSON file (if using JSON output mode). A typical invocation of the container might be:
 
 ```
-    @docker run 
+    docker run -d \
+        --rm \
         --name=cmonitor-baremetal-collector \
-        -v /root:/perf \
-        f18m/cmonitor
+        --network=host \
+        --pid=host \
+        --volume=/sys:/sys:ro \
+        --volume=/etc/os-release:/etc/os-release:ro \
+        --volume=$(pwd):/perf:rw \
+        f18m/cmonitor:latest \
+        --sampling-interval=1  ...
 ```
