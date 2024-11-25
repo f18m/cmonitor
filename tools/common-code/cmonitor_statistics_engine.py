@@ -104,13 +104,19 @@ class CgroupTasksStatistics:
         return self.cpu_throttle.dump_json(verbose)
 
     def insert_memory_stats(self, stats: dict, sample_index: int, cgroup_version: int) -> None:
-        stat_label = "stat.rss" if cgroup_version == 1 else "stat.file"
-        if stat_label in stats:
-            self.memory.insert_stat(stats[stat_label])
-        else:
-            print(
-                f"WARNING: The JSON file provided does not contain the '{stat_label}' measurement for sample #{sample_index}. Skipping this sample."
-            )
+        stat_labels = ["stat.rss"] if cgroup_version == 1 else ["stats.anon", "stat.file"]
+        rss = 0
+        all_stat_found = True
+        for stat_label in stat_labels:
+            if stat_label in stats:
+                rss += stats[stat_label]
+            else:
+                print(
+                    f"WARNING: The JSON file provided does not contain the '{stat_label}' measurement for sample #{sample_index}. Skipping this sample."
+                )
+                all_stat_found = False
+        if all_stat_found:
+            self.memory.insert_stat(rss)
 
         stat_label = "events.failcnt" if cgroup_version == 1 else "events.oom_kill"
         if stat_label in stats:
