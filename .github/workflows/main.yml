@@ -66,4 +66,5 @@ jobs:
         platform: linux/amd64
         image: cmonitor
         # options related to PUSHing the docker image:
+        registry: docker.io
         pushImage: false # for now official docker images are published on DockerHub manually on new tags...
