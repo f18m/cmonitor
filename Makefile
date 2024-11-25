@@ -71,8 +71,6 @@ valgrind:
 # DOCKER IMAGE
 #
 
-cmonitor_musl:
-	$(MAKE) -C collector cmonitor_musl
 docker_image:
 	$(MAKE) -C collector docker_image
 docker_run:
