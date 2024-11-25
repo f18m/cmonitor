@@ -57,9 +57,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build Docker image (no push)
-      # see https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions#accessing-secrets
-      # for the reason why DependaBot pull requests have no access to secrets like ${{ secrets.PAT_TOKEN_FOR_GITHUB }}
-      # if: ${{ github.actor == 'dependabot[bot]' }}
       uses: mr-smithers-excellent/docker-build-push@v6
       with:
         # options related to BUILDing the docker image:
@@ -68,5 +65,4 @@ jobs:
         platform: linux/amd64
         image: cmonitor
         # options related to PUSHing the docker image:
-        registry: ghcr.io
-        pushImage: false
+        pushImage: false # for now official docker images are published on DockerHub manually on new tags...
