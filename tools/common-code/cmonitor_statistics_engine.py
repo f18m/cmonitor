@@ -104,7 +104,7 @@ class CgroupTasksStatistics:
         return self.cpu_throttle.dump_json(verbose)
 
     def insert_memory_stats(self, stats: dict, sample_index: int, cgroup_version: int) -> None:
-        stat_labels = ["stat.rss"] if cgroup_version == 1 else ["stats.anon", "stat.file"]
+        stat_labels = ["stat.rss"] if cgroup_version == 1 else ["stat.anon", "stat.file"]
         rss = 0
         all_stat_found = True
         for stat_label in stat_labels:
