@@ -63,7 +63,7 @@ jobs:
       uses: mr-smithers-excellent/docker-build-push@v6
       with:
         # options related to BUILDing the docker image:
-        dockerfile: ./collector/docker/Dockerfile.builder
+        dockerfile: ./collector/docker/Dockerfile
         multiPlatform: false
         platform: linux/amd64
         image: cmonitor
