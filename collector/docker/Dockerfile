@@ -12,7 +12,9 @@ WORKDIR /opt/src/cmonitor
 # Copy all source files from the host to the working directory in the builder stage
 COPY . .
 
-# Build the cmonitor_collector utility, clean up, and strip debug symbols
+# Build the cmonitor_collector utility and strip debug symbols
+# NOTE: by default debug symbols are embedded in the binary (to support COPR builds) but
+#        for docker builds, we strip them away to reduce docker size:
 RUN git config --global --add safe.directory /opt/src && \
     cd /opt/src/cmonitor/collector && \
     make -j MUSL_BUILD=1 DISABLE_BENCHMARKS_BUILD=1 && \
