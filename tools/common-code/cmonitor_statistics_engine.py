@@ -14,6 +14,7 @@ import sys
 import gzip
 from statistics import mean, median, mode, StatisticsError
 
+
 # =======================================================================================================
 # Helper classes
 # =======================================================================================================
@@ -102,16 +103,27 @@ class CgroupTasksStatistics:
     def dump_cpu_throttle_stats(self, verbose) -> dict:
         return self.cpu_throttle.dump_json(verbose)
 
-    def insert_memory_stats(self, stats: dict, sample_index: int) -> None:
-        if "stat.rss" in stats:
-            self.memory.insert_stat(stats["stat.rss"])
-        else:
-            print(f"WARNING: The JSON file provided does not contain the 'stat.rss' measurement for sample #{sample_index}. Skipping this sample.")
-        if "events.failcnt" in stats:
-            self.memory_failcnt.insert_stat(stats["events.failcnt"])
+    def insert_memory_stats(self, stats: dict, sample_index: int, cgroup_version: int) -> None:
+        stat_labels = ["stat.rss"] if cgroup_version == 1 else ["stat.anon", "stat.file"]
+        rss = 0
+        all_stat_found = True
+        for stat_label in stat_labels:
+            if stat_label in stats:
+                rss += stats[stat_label]
+            else:
+                print(
+                    f"WARNING: The JSON file provided does not contain the '{stat_label}' measurement for sample #{sample_index}. Skipping this sample."
+                )
+                all_stat_found = False
+        if all_stat_found:
+            self.memory.insert_stat(rss)
+
+        stat_label = "events.failcnt" if cgroup_version == 1 else "events.oom_kill"
+        if stat_label in stats:
+            self.memory_failcnt.insert_stat(stats[stat_label])
         else:
             print(
-                f"WARNING: The JSON file provided does not contain the 'events.failcnt' measurement for sample #{sample_index}. Skipping this sample."
+                f"WARNING: The JSON file provided does not contain the '{stat_label}' measurement for sample #{sample_index}. Skipping this sample."
             )
 
     def dump_memory_stats(self, verbose) -> dict:
@@ -152,6 +164,13 @@ class CmonitorStatisticsEngine:
             print("This tool requires at least 3 samples in the input JSON file. Aborting.")
             return False
 
+        cgroup_version = 1
+        jheader = json_data["header"]
+        if "cgroup_config" in jheader and "version" in jheader["cgroup_config"]:
+            cgroup_version = int(jheader["cgroup_config"]["version"])
+        else:
+            print(f"WARNING: cgroup version not found in header using default value {cgroup_version}")
+
         # skip sample 0 because it contains less statistics due to the differential logic that requires some
         # initialization sample for most of the stats
         first_sample = json_data["samples"][1]
@@ -183,7 +202,7 @@ class CmonitorStatisticsEngine:
             if do_cpu_stats:
                 self.cgroup_statistics.insert_cpu_stats(sample["cgroup_cpuacct_stats"], nsample)
             if do_memory_stats:
-                self.cgroup_statistics.insert_memory_stats(sample["cgroup_memory_stats"], nsample)
+                self.cgroup_statistics.insert_memory_stats(sample["cgroup_memory_stats"], nsample, cgroup_version)
 
         self.num_samples_analyzed = len(samples_to_analyze)
         # self.cgroup_statistics.insert_io_stats(stats)     # cgroup_blkio not yet available

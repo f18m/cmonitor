@@ -219,7 +219,7 @@ Then run:
 
 ```
 # install compiler tools & library dependencies with YUM:
-sudo dnf install -y gcc-c++ make gtest-devel fmt-devel google-benchmark-devel
+sudo dnf install -y gcc-c++ make gtest-devel fmt-devel benchmark-dev
 
 # install dependencies with Conan:
 # (this part can be skipped if you are not interested in Prometheus support)
