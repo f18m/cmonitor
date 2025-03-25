@@ -39,6 +39,14 @@ jobs:
     - name: run unit tests
       run: make test PROMETHEUS_SUPPORT=1
 
+    # save binary
+    - name: save built binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: cmonitor, Linux x86_64, Prometheus Support
+        path: collector/bin/glibc/cmonitor_collector
+        if-no-files-found: error
+
 
   build_test_without_prometheus_support:
     runs-on: ubuntu-latest
@@ -56,6 +64,14 @@ jobs:
       run: make PROMETHEUS_SUPPORT=0
     - name: run unit tests
       run: make test PROMETHEUS_SUPPORT=0
+
+    # save binary
+    - name: save built binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: cmonitor, Linux x86_64, No Prometheus Support
+        path: collector/bin/glibc/cmonitor_collector
+        if-no-files-found: error
 
   # this step is useful to check that the Dockerfile still works fine
   alpine_docker_image_creation:
