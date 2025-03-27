@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  trigger_copr_build:
+  copr_build_collector:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,9 +29,33 @@ jobs:
         mkdir -p ~/.config
         echo "$COPR_CONFIG" > ~/.config/copr
 
-    - name: Trigger COPR build
+    - name: Trigger COPR build [collector]
       run: |
         copr-cli buildscm \
           --type git --clone-url https://github.com/f18m/cmonitor.git \
           --subdir collector --method make_srpm --commit ${{ github.head_ref || github.ref_name }} \
+          cmonitor
+
+  copr_build_tools:
+    runs-on: ubuntu-latest
+
+    steps:
+    # install deps
+    - name: install COPR CLI
+      run: pip3 install copr-cli
+    
+    - name: Setup Copr config file
+      env:
+        # You need to have those secrets in your repo.
+        # See also: https://copr.fedorainfracloud.org/api/.
+        COPR_CONFIG: ${{ secrets.COPR_CONFIG }}
+      run: |
+        mkdir -p ~/.config
+        echo "$COPR_CONFIG" > ~/.config/copr
+
+    - name: Trigger COPR build [tools]
+      run: |
+        copr-cli buildscm \
+          --type git --clone-url https://github.com/f18m/cmonitor.git \
+          --subdir tools --method make_srpm --commit ${{ github.head_ref || github.ref_name }} \
           cmonitor
