@@ -77,3 +77,8 @@ rm -rf %{buildroot}
 
 %files
 %{_bindir}/cmonitor_collector
+
+%changelog
+
+* Thu Mar 27 2025 Francesco Montorsi <francesco.montorsi@gmail.com>
+- Fixed RPM build for Fedora 42 with this changelog entry   
