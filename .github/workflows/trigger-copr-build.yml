@@ -31,4 +31,7 @@ jobs:
 
     - name: Trigger COPR build
       run: |
-        copr-cli buildscm --type git --clone-url https://github.com/f18m/cmonitor.git --subdir collector --method make_srpm --commit ${{ github.head_ref || github.ref_name }} cmonitor
+        copr-cli buildscm \
+          --type git --clone-url https://github.com/f18m/cmonitor.git \
+          --subdir collector --method make_srpm --commit ${{ github.head_ref || github.ref_name }} \
+          cmonitor
