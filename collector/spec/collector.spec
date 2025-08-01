@@ -45,7 +45,7 @@ echo "[Inside RPM prep] running setup"
 # prometheus-cpp, since that library is not packaged in most distributions;
 # it is available with version 1.1.0 in Fedora39 and 1.2.4 in Fedora40 and Fedora41 though
 echo "[Inside RPM build] installing Conan"
-pip3 install --user 'conan==2.9.1' 
+pip3 install --user 'conan==2.19.1' 
 echo "[Inside RPM build] bootstrapping Conan"
 export PATH="$HOME/.local/bin:$PATH"
 conan profile detect --force

@@ -23,7 +23,7 @@ jobs:
       run: |
         sudo pip3 install pytest 'black==22.8.0'
         sudo pipx ensurepath
-        sudo pipx install 'conan==2.14.0'
+        sudo pipx install 'conan==2.19.1'
 
     # NOTE: since we later run "make" using the normal "builder" user, we must use Conan using that same user (so avoid the "sudo"!!)
     - name: install Conan-packaged dependencies
