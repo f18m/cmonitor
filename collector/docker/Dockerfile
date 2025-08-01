@@ -1,7 +1,7 @@
 # This Dockerfile uses a multi-stage build to create the cmonitor_collector utility
 
 # Stage 1: Build stage
-FROM alpine:3.20.2 AS builder
+FROM alpine:3.22.1 AS builder
 
 # Install necessary dependencies for building
 RUN apk update && apk add --no-cache binutils make libgcc musl-dev gcc g++ fmt-dev gtest-dev git
@@ -22,7 +22,7 @@ RUN git config --global --add safe.directory /opt/src && \
 
 
 # Stage 2: Final stage
-FROM alpine:3.20.2 AS final
+FROM alpine:3.22.1 AS final
 
 RUN apk add libstdc++ libc6-compat fmt-dev
 
