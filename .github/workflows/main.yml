@@ -16,7 +16,7 @@ jobs:
 
     steps:
     # install deps
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: install debian-packaged dependencies
       run: sudo apt install -y libgtest-dev libbenchmark-dev libfmt-dev tidy git python3 python3-dateutil pipx
     - name: install pypi-packaged dependencies
@@ -53,7 +53,7 @@ jobs:
 
     steps:
     # install deps
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: install debian-packaged dependencies
       run: sudo apt install -y libgtest-dev libbenchmark-dev libfmt-dev tidy git python3 python3-dateutil python3-pip
     - name: install pypi-packaged dependencies
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Build Docker image (no push)
       uses: mr-smithers-excellent/docker-build-push@v6
       with:
