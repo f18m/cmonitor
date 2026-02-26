@@ -41,7 +41,7 @@ jobs:
 
     # save binary
     - name: save built binary
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: cmonitor, Linux x86_64, Prometheus Support
         path: collector/bin/glibc/cmonitor_collector
@@ -67,7 +67,7 @@ jobs:
 
     # save binary
     - name: save built binary
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: cmonitor, Linux x86_64, No Prometheus Support
         path: collector/bin/glibc/cmonitor_collector
