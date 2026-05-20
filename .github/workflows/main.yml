@@ -80,7 +80,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: Build Docker image (no push)
-      uses: mr-smithers-excellent/docker-build-push@v6
+      uses: mr-smithers-excellent/docker-build-push@v7
       with:
         # options related to BUILDing the docker image:
         dockerfile: ./collector/docker/Dockerfile
