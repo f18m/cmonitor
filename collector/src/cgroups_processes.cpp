@@ -301,7 +301,7 @@ bool CMonitorCgroups::get_process_infos(
             CMonitorLogger::instance()->LogErrorWithErrno("failed to open file %s", filename.c_str());
             return false;
         }
-        for (int i = 0;; i++) {
+        for (;;) {
             if (fgets(buf, 1024, fp) == NULL) {
                 break;
             }

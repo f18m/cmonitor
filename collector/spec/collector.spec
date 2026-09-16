@@ -14,18 +14,24 @@ Requires:       fmt
 # fmt-devel        libfmt dependency; note however cmonitor-collector RPM is built also on the 'old' 
 #                  Centos7 platform shipping fmt-devel-6.2.1 so make sure not to use any feature of libfmt > 6.2.1
 # zlib-devel,       
-#    cmake3,         
+#    cmake,
 #    python3-pip, 
 #    python3-setuptools, 
 #    perl,
 #    perl-IPC-Cmd,
 #    perl-Digest-SHA
-#                  requirements for prometheus-cpp 3rd party lib and its build system (Conan-based, cmake3-based);
+#                  requirements for prometheus-cpp 3rd party lib and its build system (Conan-based, cmake-based);
 #                  note that for some reason from FC35 and up we also need to request 'setuptools' pypi to install
 #                  successfully the 'conan' pypi, and we install it with python3-setuptools
 #                  perl* are instead required from FC35 upward to build OpenSSL Conan package successfully
 
-BuildRequires:  gcc-c++, make, git, gtest-devel, fmt-devel, zlib-devel, cmake3, python3-pip, python3-setuptools, perl, perl-IPC-Cmd, perl-Digest-SHA
+BuildRequires:  gcc-c++, make, git, gtest-devel, fmt-devel, zlib-devel, cmake, python3-pip, python3-setuptools, perl, perl-IPC-Cmd, perl-Digest-SHA
+
+%if 0%{?fedora} >= 44
+%global conan_version 2.32.0
+%else
+%global conan_version 2.19.1
+%endif
 
 # Disable automatic debug package creation: it fails within Fedora 28, 29 and 30 for the lack
 # of debug info files apparently:
@@ -45,22 +51,15 @@ echo "[Inside RPM prep] running setup"
 # prometheus-cpp, since that library is not packaged in most distributions;
 # it is available with version 1.1.0 in Fedora39 and 1.2.4 in Fedora40 and Fedora41 though
 echo "[Inside RPM build] installing Conan"
-pip3 install --user 'conan==2.19.1' 
+pip3 install --user 'conan==%{conan_version}'
 echo "[Inside RPM build] bootstrapping Conan"
 export PATH="$HOME/.local/bin:$PATH"
 conan profile detect --force
 conan remote update conancenter --url https://center2.conan.io
 conan remote list
 
-# secondly, Conan is used to fetch prometheus-cpp library, building it with cmake when needed:
-# NOTE: civetweb dependency has broken Conan package asking for 'cmake' instead of 'cmake3'
-#       so we need to create a "cmake" binary in %{buildroot}/bin which points to 'cmake3'
+# secondly, Conan is used to fetch prometheus-cpp library, building it with cmake when needed
 echo "[Inside RPM build] installing prometheus-cpp"
-mkdir -p %{buildroot}/bin
-ln -sf /usr/bin/cmake3 %{buildroot}/bin/cmake
-export PATH="%{buildroot}/bin:$PATH"
-
-echo "[Inside RPM build] the PATH adjusted to contain a cmake3->cmake symlink is: $PATH"
 conan install conanfile.txt --build=missing
 
 # finally, this command invokes the root Makefile of cmonitor repo, from inside the source tarball
