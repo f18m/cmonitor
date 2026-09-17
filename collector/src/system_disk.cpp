@@ -39,7 +39,6 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
         /* popen variables */
         FILE* pop;
         char tmpstr[1024 + 1];
-        long i;
         long j;
         long len;
 
@@ -47,7 +46,7 @@ void CMonitorSystem::sample_diskstats(double elapsed_sec, OutputFields output_op
         if (pop != NULL) {
             /* throw away the headerline */
             if (fgets(tmpstr, 70, pop)) {
-                for (i = 0;; i++) {
+                for (;;) {
                     tmpstr[0] = 0;
                     if (fgets(tmpstr, 70, pop) == NULL)
                         break;
